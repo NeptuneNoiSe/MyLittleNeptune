@@ -1,10 +1,9 @@
 import os
-
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen
+from PySide6.QtCore import QTimerEvent, Qt, QTimer
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QGuiApplication
@@ -41,22 +40,70 @@ class Win(QOpenGLWidget):
 
         self.audioPlayed = False
 
+        # Animation Vars
+        self.tired = 1
+        self.sleep = False
+        # Tired Animation Time Scale
+        self.time_scale = 1
+
+        # Init Animation
         self.idle_anim = True
         self.on_mouse_anim = False
         self.tap_body_anim = False
+
         self.resize(200, 400)
+
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
         # Center on Axis X
-        self.frmX = (self.SrcSize.width() - self.width()) / 1.05
+        self.frmX = (self.SrcSize.width() - self.width()) / 1
         # Center on Axis Y
-        self.frmY = (self.SrcSize.height() - self.height()) / 0.98
+        self.frmY = (self.SrcSize.height() - self.height()) / 1
         # Move window
-        self.move(self.frmX, self.frmY)
+        self.move(int(self.frmX), int(self.frmY))
+
         self.read = False
         self.clickX = -1
         self.clickY = -1
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
+
+        # Init idle timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.idle_timer)
+        self.timer.start(int(6000 / self.time_scale))
+
+        # Fadeout timer
+        self.fadeout_t = QTimer()
+        self.fadeout_t.timeout.connect(self.reset_expression)
+
+
+    def reset_expression(self):
+        print("Reset Expression")
+        self.fadeout_t.stop()
+        self.model.ResetExpression()
+
+    def idle_timer(self):
+        self.tired += 1
+        if self.tired <=60:
+            self.idle_anim = True
+        print(self.tired)
+        if self.tired == 30:
+            self.model.SetExpression("Sad")
+            print("I'm Sad")
+        if self.tired == 40:
+            self.model.SetExpression("Tired")
+            print("I'm Tired")
+        if self.tired == 60:
+            self.model.SetExpression("Close")
+            self.idle_anim = False
+            self.sleep = True
+            print("I'm Sleep")
+        if self.tired == 120:
+            self.model.ResetExpression()
+            self.model.SetExpression("Star", fadeout=10000)
+            self.tired = 0
+            self.idle_anim = True
+            print("I'm WakeUp")
 
 
     def initializeGL(self) -> None:
@@ -135,7 +182,7 @@ class Win(QOpenGLWidget):
 
         if self.idle_anim:
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=callback)
-            self.idle_anim = True
+            self.idle_anim = False
 
         if self.on_mouse_anim:
             self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=callback)
@@ -145,7 +192,8 @@ class Win(QOpenGLWidget):
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
             self.clickInLA = True
-            self.on_mouse_anim = True
+            if not self.sleep: # False
+                self.on_mouse_anim = True
             #print("in l2d area")
         else:
             self.isInLA = False
@@ -165,6 +213,10 @@ class Win(QOpenGLWidget):
             self.clickInLA = True
             self.clickX, self.clickY = x, y
             self.model.StopAllMotions()
+            if not self.sleep: # False
+                self.model.SetExpression("Funny")
+            if self.sleep: # True
+                self.model.SetExpression("Surprised")
             print("pressed")
 
     def mouseReleaseEvent(self, event):
@@ -177,7 +229,17 @@ class Win(QOpenGLWidget):
             if self.tap_body_anim:
                 self.model.StartRandomMotion("TapBody",live2d.MotionPriority.FORCE, onFinishMotionHandler=callback)
                 self.tap_body_anim = False
+                if not self.sleep: # False
+                    self.model.SetRandomExpression()
+                    self.fadeout_t.start(3500)
+                    self.tired = 1
+                if self.sleep: # True
+                    self.model.ResetExpression()
+                    self.model.SetExpression("Distaste", fadeout=10000)
+                    self.tired = 1
+                    self.sleep = False
             print("released")
+
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()
@@ -189,6 +251,9 @@ if __name__ == "__main__":
     import sys
 
     live2d.init()
+    format = QSurfaceFormat.defaultFormat()
+    format.setSwapInterval(0)
+    QSurfaceFormat.setDefaultFormat(format)
 
     app = QApplication(sys.argv)
     win = Win()

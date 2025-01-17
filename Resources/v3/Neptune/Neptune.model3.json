@@ -32,12 +32,12 @@
 				"File": "expressions/Bitterness.json"
 			},
 			{
-				"Name": "Close",
-				"File": "expressions/Close.json"
+				"Name": "CloseEyes",
+				"File": "expressions/CloseEyes.json"
 			},
 			{
-				"Name": "Tired",
-				"File": "expressions/Tired.json"
+				"Name": "Cry",
+				"File": "expressions/Cry.json"
 			},
 			{
 				"Name": "Distaste",

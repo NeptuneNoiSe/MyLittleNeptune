@@ -24,11 +24,18 @@ class Win(QOpenGLWidget):
         self.models_switch = 0
             # Neptune = 0
             # Purple Heart = 1
-        # Models Size
+            # Noire = 2
+
+        # AutoScale: If True, the models is scaled based on the screen size
+        self.auto_scale = True
+
+        # Models Scale
         self.models_scale = 1
-        #####
-        self.w_corr = 0
-        self.h_corr = 0
+
+        # Init Vars
+        self.w_correction = 0
+        self.h_correction = 0
+        self.a_scale = 1
         self.isInLA = False
         self.clickInLA = False
         self.click = False
@@ -38,15 +45,115 @@ class Win(QOpenGLWidget):
         self.clickY = -1
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
+        self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
+        self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
 
+        # Screens Size for AutoScale
+        if self.auto_scale:
+            if self.sc_height_size == 120:
+                self.a_scale = 0.111
+            if self.sc_height_size == 160:
+                self.a_scale = 0.148
+            if self.sc_height_size == 192:
+                self.a_scale = 0.178
+            if self.sc_height_size == 240:
+                self.a_scale = 0.222
+            if self.sc_height_size == 272:
+                self.a_scale = 0.252
+            if self.sc_height_size == 320:
+                self.a_scale = 0.296
+            if self.sc_height_size == 360:
+                self.a_scale = 0.333
+            if self.sc_height_size == 384:
+                self.a_scale = 0.355
+            if self.sc_height_size == 480:
+                self.a_scale = 0.444
+            if self.sc_height_size == 540:
+                self.a_scale = 0.5
+            if self.sc_height_size == 576:
+                self.a_scale = 0.533
+            if self.sc_height_size == 600:
+                self.a_scale = 0.555
+            if self.sc_height_size == 640:
+                self.a_scale = 0.592
+            if self.sc_height_size == 720:
+                self.a_scale = 0.666
+            if self.sc_height_size == 768:
+                self.a_scale = 0.711
+            if self.sc_height_size == 800:
+                self.a_scale = 0.741
+            if self.sc_height_size == 810:
+                self.a_scale = 0.75
+            if self.sc_height_size == 864:
+                self.a_scale = 0.8
+            if self.sc_height_size == 900:
+                self.a_scale = 0.833
+            if self.sc_height_size == 960:
+                self.a_scale = 0.888
+            if self.sc_height_size == 1024:
+                self.a_scale = 0.948
+            if self.sc_height_size == 1050:
+                self.a_scale = 0.972
+            if self.sc_height_size == 1080:
+                self.a_scale = 1
+            if self.sc_height_size == 1152:
+                self.a_scale = 1.066
+            if self.sc_height_size == 1200:
+                self.a_scale = 1.111
+            if self.sc_height_size == 1280:
+                self.a_scale = 1.185
+            if self.sc_height_size == 1350:
+                self.a_scale = 1.25
+            if self.sc_height_size == 1440:
+                self.a_scale = 1.333
+            if self.sc_height_size == 1536:
+                self.a_scale = 1.422
+            if self.sc_height_size == 1600:
+                self.a_scale = 1.481
+            if self.sc_height_size == 1620:
+                self.a_scale = 1.5
+            if self.sc_height_size == 1800:
+                self.a_scale = 1.666
+            if self.sc_height_size == 2048:
+                self.a_scale = 1.896
+            if self.sc_height_size == 2160:
+                self.a_scale = 2
+            if self.sc_height_size == 2400:
+                self.a_scale = 2.222
+            if self.sc_height_size == 2560:
+                self.a_scale = 2.370
+            if self.sc_height_size == 2880:
+                self.a_scale = 2.666
+            if self.sc_height_size == 3072:
+                self.a_scale = 2.844
+            if self.sc_height_size == 3200:
+                self.a_scale = 2.963
+            if self.sc_height_size == 3240:
+                self.a_scale = 3
+            if self.sc_height_size == 3384:
+                self.a_scale = 3.133
+            if self.sc_height_size == 4096:
+                self.a_scale = 3.793
+            if self.sc_height_size == 4320:
+                self.a_scale = 4
+            if self.sc_height_size == 4800:
+                self.a_scale = 4.444
+            if self.sc_height_size == 8640:
+                self.a_scale = 8
+
+        # Models switch parameters
         if self.models_switch == 0:
             # Neptune
-            self.w_resize = 150 * self.models_scale
-            self.h_resize = 400 * self.models_scale
+            self.w_resize = 350 * self.a_scale * self.models_scale
+            self.h_resize = 600 * self.a_scale * self.models_scale
         elif self.models_switch == 1:
             # Purple Heart
-            self.w_resize = 500 * self.models_scale
-            self.h_resize = 500 * self.models_scale
+            self.w_resize = 700 * self.a_scale * self.models_scale
+            self.h_resize = 650 * self.a_scale * self.models_scale
+        elif self.models_switch == 2:
+            # Noire
+            self.w_resize = 470 * self.a_scale * self.models_scale
+            self.h_resize = 660 * self.a_scale * self.models_scale
 
         self.setWindowFlags(self.windowFlags()
                             | Qt.WindowType.X11BypassWindowManagerHint
@@ -75,11 +182,10 @@ class Win(QOpenGLWidget):
 
         self.resize(int(self.w_resize), int(self.h_resize))
 
-        self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
         # Center on Axis X
-        self.frmX = ((self.SrcSize.width() + self.w_corr) - self.width())
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         # Center on Axis Y
-        self.frmY = ((self.SrcSize.height() + self.h_corr) - self.height())
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
         # Move window
         self.move(int(self.frmX), int(self.frmY))
 
@@ -106,7 +212,7 @@ class Win(QOpenGLWidget):
             self.model.SetExpression("Sad")
             print("I'm Sad")
         if self.tired == 40:
-            self.model.SetExpression("Cry")
+            self.model.SetExpression("Bitterness")
             print("I'm Tired")
         if self.tired == 60:
             self.model.SetExpression("CloseEyes")
@@ -116,6 +222,7 @@ class Win(QOpenGLWidget):
         if self.tired == 120:
             self.model.ResetExpression()
             self.model.SetExpression("Star", fadeout=10000)
+            self.model.SetExpression("Serious", fadeout=10000)
             self.tired = 0
             self.idle_anim = True
             print("I'm WakeUp")
@@ -136,6 +243,10 @@ class Win(QOpenGLWidget):
             elif self.models_switch == 1:
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
+
+            elif self.models_switch == 2:
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
@@ -256,7 +367,6 @@ class Win(QOpenGLWidget):
                     self.tired = 1
                     self.sleep = False
             print("released")
-
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()

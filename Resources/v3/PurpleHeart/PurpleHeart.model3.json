@@ -120,24 +120,24 @@
 				}
                 ]
 		},
-				"Groups": [
-    {
-      "Target": "Parameter",
-      "Name": "EyeBlink",
-      "Ids": [
-        "ParamEyeROpen",
-        "ParamEyeLOpen"
-      ]
-    },
-    {
-      "Target": "Parameter",
-      "Name": "LipSync",
-      "Ids": [
-        "ParamMouthForm",
-        "ParamMouthOpenY"
-      ]
-    }
-  ]
+		"Groups": [
+			{
+				"Target": "Parameter",
+				"Name": "EyeBlink",
+				"Ids": [
+					"ParamEyeROpen",
+					"ParamEyeLOpen"
+				]
+			},
+			{
+				"Target": "Parameter",
+				"Name": "LipSync",
+				"Ids": [
+					"ParamMouthForm",
+					"ParamMouthOpenY"
+				]
+			}
+		]
 	},
 	"HitAreas": [
 				{

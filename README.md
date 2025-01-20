@@ -1,19 +1,19 @@
 <div align="center" style="padding-top: 10px">
-    <img src="./docs/nep.svg" alt="nep" width="50px" height="50px">
-    <img src="./docs/nep_logo.svg" alt="my_little_neptune" height="40px">
+    <img src="./docs/nep.svg" alt="nep" width="100px" height="100px">
+    <img src="./docs/nep_logo.svg" alt="my_little_neptune" height="60px">
 </div>
 <p align="center" style="font-family: 'Roboto', sans-serif; font-size: 1em; color: #555;">
     <br>
-    <img title="Python Version" src="https://img.shields.io/badge/Python-3.1.2-blue" alt="Python Version" style="margin: 0 10px;">
+    <img title="Python Version" src="https://img.shields.io/badge/Python-3.12.0-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
-    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.4-orange" alt="live2d-py Version Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.1.2-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.4-orange" alt="live2d-py Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.1.3-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
 
 ## The application is based on:
-* Python 3.1.2
+* Python 3.12.0
 * PySide6
 * [live2d-py by Arkueid](https://github.com/Arkueid/live2d-py)
 * Compile Heart / Idea Factory Live2D Models
@@ -23,20 +23,30 @@
 2. `python -m pip install -r requirements.txt`
 
 ## Usage:
-Run:
+### Run:
 `python package/neptune_main.py`
 
 ### Models Select:
 Edit `self.models_switch = 0` parameter in package/neptune_main.py file, to the model I'd:
 * Neptune = 0
 * Purple Heart = 1
+* Noire = 2
+
+### Auto Scale:
+If `self.auto_scale = True` parameter in package/neptune_main.py file is `True`, models is scaled based on the screen size
+
+To disable the auto-scale function, change the parameter to `False`
+
 ### Models Scale:
-Edit `self.models_scale = 1` parameter in package/neptune_main.py file,  to scale model
+Edit `self.models_scale = 1` parameter in package/neptune_main.py file, to scale model
 
 ## Models Available:
 <div align="center" style="padding-top: 10px">
     <img src="./docs/model_preview/neptune.svg" alt="neptune" width="300px" height="300px">
-    <img src="./docs/model_preview/purple_heart.svg" alt="purple_heart" width="300px" height="300px">
+    <img src="./docs/model_preview/purple_heart.svg" alt="purple_heart" width="330px" height="330px">
+</div>
+<div align="center" style="padding-top: 30px">
+    <img src="./docs/model_preview/noire.svg" alt="noire" width="330px" height="330px">
 </div>
 
 ## Important to read:

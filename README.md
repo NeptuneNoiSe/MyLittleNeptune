@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12.0-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.4-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.1.3-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.1.4-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -20,7 +20,7 @@
 
 ## Install:
 1. Clone or Download Project on your desktop
-2. `python -m pip install -r requirements.txt`
+2. Install requirements `python -m pip install -r requirements.txt`
 
 ## Usage:
 ### Run:
@@ -31,6 +31,7 @@ Edit `self.models_switch = 0` parameter in package/neptune_main.py file, to the 
 * Neptune = 0
 * Purple Heart = 1
 * Noire = 2
+* Black Heart = 3
 
 ### Auto Scale:
 If `self.auto_scale = True` parameter in package/neptune_main.py file is `True`, models is scaled based on the screen size
@@ -45,11 +46,16 @@ Edit `self.models_scale = 1` parameter in package/neptune_main.py file, to scale
     <img src="./docs/model_preview/neptune.svg" alt="neptune" width="300px" height="300px">
     <img src="./docs/model_preview/purple_heart.svg" alt="purple_heart" width="330px" height="330px">
 </div>
-<div align="center" style="padding-top: 30px">
-    <img src="./docs/model_preview/noire.svg" alt="noire" width="330px" height="330px">
+<div align="center" style="padding-top: 50px">
+    <img src="./docs/model_preview/noire.svg" alt="noire" width="320px" height="320px">
+    <img src="./docs/model_preview/black_heart.svg" alt="black_heart" width="330px" height="330px">
 </div>
 
 ## Important to read:
+<div align="left" style="padding-left: 1px">
+    <img src="./docs/work_in_progress.svg" alt="work_in_progress" width="150px" height="150px">
+</div>
+
 #### 1. The application is at an early stage of development and may have bugs.
 #### 2. The animation of the models needs to be improved
 #### 3. In the next stages of development, it is planned to work on the GUI, AI assistant base on GPT model and compile the application into an .exe file

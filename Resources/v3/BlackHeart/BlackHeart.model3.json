@@ -1,0 +1,148 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "BlackHeart.moc3",
+		"Textures": [
+			"textures/texture_00.png"
+		],
+		"Physics": "BlackHeart.physics3.json",
+		"Expressions": [
+			{
+				"Name": "Normal",
+				"File": "expressions/Normal.json"
+			},
+			{
+				"Name": "Happy",
+				"File": "expressions/Happy.json"
+			},
+			{
+				"Name": "Angry",
+				"File": "expressions/Angry.json"
+			},
+			{
+				"Name": "Sad",
+				"File": "expressions/Sad.json"
+			},
+			{
+				"Name": "Smile",
+				"File": "expressions/Smile.json"
+			},
+			{
+				"Name": "Tired",
+				"File": "expressions/Tired.json"
+			},
+			{
+				"Name": "CloseEyes",
+				"File": "expressions/CloseEyes.json"
+			},
+			{
+				"Name": "Cry",
+				"File": "expressions/Cry.json"
+			},
+			{
+				"Name": "Fear",
+				"File": "expressions/Fear.json"
+			},
+			{
+				"Name": "Surprised",
+				"File": "expressions/Surprised.json"
+			},
+			{
+				"Name": "Funny",
+				"File": "expressions/Funny.json"
+			}
+		],
+				"Motions": {
+			"TapBody": [
+				{
+					"File": "motions/tap_m00.motion3.json"
+				},
+				{
+					"File": "motions/tap_m01.motion3.json"
+				},
+              {
+					"File": "motions/tap_m02.motion3.json"
+				},
+              {
+					"File": "motions/tap_m03.motion3.json"
+				},
+              {
+					"File": "motions/tap_m04.motion3.json"
+				},
+              {
+					"File": "motions/tap_m05.motion3.json"
+				},
+              {
+					"File": "motions/tap_m06.motion3.json"
+				}
+			],
+            "Idle": [
+                {
+                    "File": "motions/idle_m00.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m01.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m02.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m03.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m04.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m05.motion3.json"
+                },
+                {
+                    "File": "motions/idle_m06.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m07.motion3.json"
+                }
+			],
+			"OnMouse": [
+				{
+					"File": "motions/mtn_01.motion3.json"
+				},
+				{
+					"File": "motions/mtn_02.motion3.json"
+				},
+                  {
+					"File": "motions/mtn_03.motion3.json"
+				},
+				{
+					"File": "motions/mtn_04.motion3.json"
+				},
+                  {
+					"File": "motions/mtn_05.motion3.json"
+				}
+                ]
+		},
+		"Groups": [
+			{
+				"Target": "Parameter",
+				"Name": "EyeBlink",
+				"Ids": [
+					"ParamEyeROpen",
+					"ParamEyeLOpen"
+				]
+			},
+			{
+				"Target": "Parameter",
+				"Name": "LipSync",
+				"Ids": [
+					"ParamMouthForm",
+					"ParamMouthOpenY"
+				]
+			}
+		]
+	},
+	"HitAreas": [
+		{
+			"Id": "HitAreaBody",
+			"Name": "Body"
+		}
+	]
+}

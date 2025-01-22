@@ -1,0 +1,57 @@
+{
+  "Type": "Live2D Expression",
+  "FadeInTime": 0.5,
+  "FadeOutTime": 0.5,
+  "Parameters": [
+    {
+      "Id": "PARAM_CHEEK",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_RAGE",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_HAIR_FLUFFY",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_TEAR",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_SP5",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_SP6",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_SP7",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_SP8",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_SP9",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "PARAM_SP10",
+      "Value": 0,
+      "Blend": "Add"
+    }
+  ]
+}

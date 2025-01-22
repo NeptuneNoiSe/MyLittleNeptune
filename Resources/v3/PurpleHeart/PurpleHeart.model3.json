@@ -28,8 +28,8 @@
 				"File": "expressions/Smile.json"
 			},
 			{
-				"Name": "Bitterness",
-				"File": "expressions/Bitterness.json"
+				"Name": "Tired",
+				"File": "expressions/Tired.json"
 			},
 			{
 				"Name": "CloseEyes",
@@ -40,8 +40,8 @@
 				"File": "expressions/Cry.json"
 			},
 			{
-				"Name": "Distaste",
-				"File": "expressions/Distaste.json"
+				"Name": "Fear",
+				"File": "expressions/Fear.json"
 			},
 			{
 				"Name": "Surprised",
@@ -140,7 +140,7 @@
 		]
 	},
 	"HitAreas": [
-				{
+		{
 			"Id": "HitAreaBody",
 			"Name": "Body"
 		}

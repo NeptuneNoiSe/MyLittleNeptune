@@ -2,10 +2,11 @@ import os
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt, QTimer
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat
+from PySide6 import QtCore
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QEvent
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -21,10 +22,11 @@ class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
         # Models Switch:
-        self.models_switch = 0
+        self.models_switch = 3
             # Neptune = 0
             # Purple Heart = 1
             # Noire = 2
+            # Black Heart = 3
 
         # AutoScale: If True, the models is scaled based on the screen size
         self.auto_scale = True
@@ -46,6 +48,7 @@ class Win(QOpenGLWidget):
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
+        self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
 
         # Screens Size for AutoScale
@@ -144,33 +147,49 @@ class Win(QOpenGLWidget):
         # Models switch parameters
         if self.models_switch == 0:
             # Neptune
-            self.w_resize = 350 * self.a_scale * self.models_scale
-            self.h_resize = 600 * self.a_scale * self.models_scale
+            self.w_resize = 320 * self.a_scale * self.models_scale
+            self.h_resize = 570 * self.a_scale * self.models_scale
+            self.w_correction = 10
+            self.h_correction = 0
         elif self.models_switch == 1:
             # Purple Heart
             self.w_resize = 700 * self.a_scale * self.models_scale
             self.h_resize = 650 * self.a_scale * self.models_scale
+            self.w_correction = 10
+            self.h_correction = 0
         elif self.models_switch == 2:
             # Noire
-            self.w_resize = 470 * self.a_scale * self.models_scale
-            self.h_resize = 660 * self.a_scale * self.models_scale
+            self.w_resize = 460 * self.a_scale * self.models_scale
+            self.h_resize = 650 * self.a_scale * self.models_scale
+            self.w_correction = 10
+            self.h_correction = 0
+        elif self.models_switch == 3:
+            # Black Heart
+            self.w_resize = 420 * self.a_scale * self.models_scale
+            self.h_resize = 650 * self.a_scale * self.models_scale
+            self.w_correction = 10
+            self.h_correction = 0
 
         self.setWindowFlags(self.windowFlags()
                             | Qt.WindowType.X11BypassWindowManagerHint
                             | Qt.WindowType.FramelessWindowHint
                             #| Qt.WindowType.WindowTransparentForInput
-                            | Qt.WindowType.WindowStaysOnTopHint
-                            | Qt.WindowType.WindowType_Mask)
+                            #| Qt.WindowType.WindowType_Mask
+                            | Qt.WindowType.WindowStaysOnTopHint)
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
-        self.wavHandler = WavHandler()
-        self.lipSyncN = 2.5
-        self.audioPlayed = False
+        #self.wavHandler = WavHandler()
+        #self.lipSyncN = 2.5
+        #self.audioPlayed = False
 
         # Animation Vars
-        self.tired = 1
+        self.t_count = 1
         self.sleep = False
+        self.sad_v = 60
+        self.tired_v = 80
+        self.sleep_v = 100
+        self.wake_up_v = 160
 
         # Tired Animation Time Scale
         self.time_scale = 1
@@ -180,6 +199,13 @@ class Win(QOpenGLWidget):
         self.on_mouse_anim = False
         self.tap_body_anim = False
 
+        # Animation Switches
+        self.idle_switch = True
+        self.on_mouse_switch = True
+        self.tap_body_switch = True
+        self.sleep_switch = True
+
+        # Model Resize
         self.resize(int(self.w_resize), int(self.h_resize))
 
         # Center on Axis X
@@ -204,26 +230,28 @@ class Win(QOpenGLWidget):
         self.model.ResetExpression()
 
     def idle_timer(self):
-        self.tired += 1
-        if self.tired <=60:
+        self.t_count += 1
+        print(self.t_count)
+        if self.t_count <=self.sleep_v and self.idle_switch == True:
             self.idle_anim = True
-        print(self.tired)
-        if self.tired == 30:
+        if self.t_count >=10 and self.sleep_switch == False:
+            self.t_count = 1
+        if self.t_count == self.sad_v:
             self.model.SetExpression("Sad")
             print("I'm Sad")
-        if self.tired == 40:
-            self.model.SetExpression("Bitterness")
+        if self.t_count == self.tired_v and self.sleep_switch == True:
+            self.model.SetExpression("Tired")
             print("I'm Tired")
-        if self.tired == 60:
+        if self.t_count == self.sleep_v and self.sleep_switch == True:
             self.model.SetExpression("CloseEyes")
             self.idle_anim = False
             self.sleep = True
             print("I'm Sleep")
-        if self.tired == 120:
+        if self.t_count == self.wake_up_v and self.sleep_switch == True:
             self.model.ResetExpression()
             self.model.SetExpression("Star", fadeout=10000)
             self.model.SetExpression("Serious", fadeout=10000)
-            self.tired = 0
+            self.t_count = 0
             self.idle_anim = True
             print("I'm WakeUp")
 
@@ -247,6 +275,11 @@ class Win(QOpenGLWidget):
             elif self.models_switch == 2:
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
+
+            elif self.models_switch == 3:
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
+
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
@@ -312,7 +345,7 @@ class Win(QOpenGLWidget):
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=callback)
             self.idle_anim = False
 
-        if self.on_mouse_anim:
+        if self.on_mouse_anim and self.on_mouse_switch == True:
             self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=callback)
             self.on_mouse_anim = False
 
@@ -320,8 +353,9 @@ class Win(QOpenGLWidget):
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
             self.clickInLA = True
-            if not self.sleep: # False
-                self.on_mouse_anim = True
+            self.on_mouse_anim = True
+            if self.t_count >= self.sleep_v:
+                self.on_mouse_anim = False
             #print("in l2d area")
         else:
             self.isInLA = False
@@ -336,43 +370,240 @@ class Win(QOpenGLWidget):
         return alpha > 0
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        x, y = event.scenePosition().x(), event.scenePosition().y()
-        if self.isInL2DArea(x, y):
-            self.clickInLA = True
-            self.clickX, self.clickY = x, y
-            self.model.StopAllMotions()
-            if not self.sleep: # False
-                self.model.SetExpression("Funny")
-            if self.sleep: # True
-                self.model.SetExpression("Surprised")
-            print("pressed")
+        if event.button() == Qt.LeftButton:
+            x, y = event.scenePosition().x(), event.scenePosition().y()
+            if self.isInL2DArea(x, y):
+                self.clickInLA = True
+                self.clickX, self.clickY = x, y
+                #self.model.StopAllMotions()
+                if not self.sleep:  # False
+                    self.model.SetExpression("Funny")
+                if self.sleep:  # True
+                    self.model.SetExpression("Surprised")
+                print("pressed")
 
     def mouseReleaseEvent(self, event):
-        x, y = event.scenePosition().x(), event.scenePosition().y()
-        # if self.isInL2DArea(x, y):
-        if self.isInLA:
-            self.model.Touch(x, y)
-            self.clickInLA = False
-            self.tap_body_anim = True
-            if self.tap_body_anim:
-                self.model.StartRandomMotion("TapBody",live2d.MotionPriority.FORCE, onFinishMotionHandler=callback)
-                self.tap_body_anim = False
-                if not self.sleep: # False
-                    self.model.SetRandomExpression()
-                    self.fadeout_t.start(3500)
-                    self.tired = 1
-                if self.sleep: # True
+        if event.button() == Qt.LeftButton:
+            x, y = event.scenePosition().x(), event.scenePosition().y()
+            if self.isInLA:
+                self.model.Touch(x, y)
+                self.clickInLA = False
+                self.tap_body_anim = True
+                if self.tap_body_switch:
+                    self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=callback)
+                    self.tap_body_anim = False
+                    if not self.sleep:
+                        self.model.SetRandomExpression()
+                        self.fadeout_t.start(3500)
+                        self.t_count = 1
+                if self.sleep:
                     self.model.ResetExpression()
-                    self.model.SetExpression("Distaste", fadeout=10000)
-                    self.tired = 1
+                    self.model.SetExpression("Fear", fadeout=10000)
+                    self.t_count = 1
                     self.sleep = False
-            print("released")
+                if not self.tap_body_switch:
+                    self.model.ResetExpression()
+                    self.t_count = 1
+                print("released")
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()
         if self.clickInLA:
             self.move(int(self.x() + x - self.clickX), int(self.y() + y - self.clickY))
 
+    # Context Menu
+    def contextMenuEvent(self, e):
+        context_menu = QMenu(self).addMenu('&File')
+
+        # Window Submenu
+        submenu_window = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/window.svg")), '&Window')
+        action_minimize = submenu_window.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), '&Minimize')
+        action_minimize.triggered.connect(self.on_action_minimize)
+        action_normal = submenu_window.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), '&Normal')
+        action_normal.triggered.connect(self.on_action_normal)
+        action_maximize = submenu_window.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/window_max.svg")), '&Maximize')
+        action_maximize.triggered.connect(self.on_action_maximize)
+        context_menu.addMenu(submenu_window)
+        context_menu.addSeparator()
+
+        # Animations Submenu
+        submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/animation.svg")), '&Animations')
+
+        # Idle Animation Submenu
+        submenu_idle = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/idle_w.svg")), '&Idle Animation')
+        submenu_animations.addMenu(submenu_idle)
+        action_idle_true = submenu_idle.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_idle_true.triggered.connect(self.on_action_idle_true)
+        action_idle_false = submenu_idle.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_idle_false.triggered.connect(self.on_action_idle_false)
+
+        # On Mouse Animation Submenu
+        submenu_on_mouse = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/pointer.svg")), '&On Mouse Animation')
+        submenu_animations.addMenu(submenu_on_mouse)
+        action_on_mouse_true = submenu_on_mouse.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_on_mouse_true.triggered.connect(self.on_action_on_mouse_true)
+        action_on_mouse_false = submenu_on_mouse.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_on_mouse_false.triggered.connect(self.on_action_on_mouse_false)
+
+        # Tap Body Animation Submenu
+        submenu_tap_body = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/tap.svg")), '&Tap Body Animation')
+        submenu_animations.addMenu(submenu_tap_body)
+        action_tap_body_true = submenu_tap_body.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_tap_body_true.triggered.connect(self.on_action_tap_body_true)
+        action_tap_body_false = submenu_tap_body.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_tap_body_false.triggered.connect(self.on_action_tap_body_false)
+
+        # Stop All Motions
+        submenu_animations.addSeparator()
+        action_stop_all_motions = submenu_animations.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/stop.svg")), '&Stop All Motions')
+        action_stop_all_motions.triggered.connect(self.on_action_stop_all_motions)
+
+        context_menu.addMenu(submenu_animations)
+        context_menu.addSeparator()
+
+        # Settings Submenu
+        submenu_settings = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), '&Settings')
+
+        # Auto Blink Submenu
+        submenu_auto_blink = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/eye_closed.svg")), '&Auto Blink')
+        submenu_settings.addMenu(submenu_auto_blink)
+        action_auto_blink_true = submenu_auto_blink.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_auto_blink_true.triggered.connect(self.on_action_auto_blink_true)
+        action_auto_blink_false = submenu_auto_blink.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_auto_blink_false.triggered.connect(self.on_action_auto_blink_false)
+
+        # Auto Breath Submenu
+        submenu_auto_breath = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/breath.svg")), '&Auto Breath')
+        submenu_settings.addMenu(submenu_auto_breath)
+        action_auto_breath_true = submenu_auto_breath.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_auto_breath_true.triggered.connect(self.on_action_auto_breath_true)
+        action_auto_breath_false = submenu_auto_breath.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_auto_breath_false.triggered.connect(self.on_action_auto_breath_false)
+
+        # Sleep Submenu
+        submenu_sleep = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/sleep.svg")), '&Sleep')
+        submenu_settings.addMenu(submenu_sleep)
+        action_sleep_true = submenu_sleep.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_sleep_true.triggered.connect(self.on_action_sleep_true)
+        action_sleep_false = submenu_sleep.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_sleep_false.triggered.connect(self.on_action_sleep_false)
+
+        context_menu.addMenu(submenu_settings)
+        context_menu.addSeparator()
+
+        # About Action
+        about_action = QAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/about.svg")), '&About', self)
+        about_action.triggered.connect(self.on_action_about)
+        context_menu.addAction(about_action)
+        #context_menu.addSeparator()
+
+        # Exit Action
+        exit_action = QAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Exit', self)
+        exit_action.triggered.connect(self.on_action_quit)
+        context_menu.addAction(exit_action)
+
+        context_menu.exec(e.globalPos())
+
+    # Context Menu Actions
+    def on_action_normal(self):
+        self.showNormal()
+
+    def on_action_minimize(self):
+        self.showMinimized()
+
+    def on_action_maximize(self):
+        self.showMaximized()
+
+    def on_action_stop_all_motions(self):
+        self.model.StopAllMotions()
+
+    def on_action_idle_true(self):
+        self.idle_switch = True
+        self.idle_anim = True
+
+    def on_action_idle_false(self):
+        self.idle_switch = False
+        self.idle_anim = False
+
+    def on_action_on_mouse_true(self):
+        self.on_mouse_switch = True
+        self.on_mouse_anim = True
+
+    def on_action_on_mouse_false(self):
+        self.on_mouse_switch = False
+        self.on_mouse_anim = False
+
+    def on_action_tap_body_true(self):
+        self.tap_body_switch = True
+        self.tap_body_anim = True
+
+    def on_action_tap_body_false(self):
+        self.tap_body_switch = False
+        self.tap_body_anim = False
+
+    def on_action_auto_blink_true(self):
+        self.model.SetAutoBlinkEnable(True)
+
+    def on_action_auto_blink_false(self):
+        self.model.SetAutoBlinkEnable(False)
+
+    def on_action_auto_breath_true(self):
+        self.model.SetAutoBreathEnable(True)
+
+    def on_action_auto_breath_false(self):
+        self.model.SetAutoBreathEnable(False)
+
+    def on_action_sleep_true(self):
+        self.sleep_switch = True
+        self.t_count = 1
+
+    def on_action_sleep_false(self):
+        self.sleep_switch = False
+        self.sleep = False
+        self.t_count = 1
+
+    def on_action_about(self):
+        QMessageBox.information(self, "About Me", "My Little Neptune\n"
+                                                  "\nThe assistant application on your desktop,"
+                                                  "\nwhich pleases you with its appearance every day:)\n"
+                                                  "\nDeveloper: Neptune NoiSe"
+                                                  "\n(https://github.com/NeptuneNoiSe)\n"
+                                                  "\nThe application is based on:"
+                                                  "\nPython 3.12.0"
+                                                  "\nPySide6"
+                                                  "\nlive2d-py by Arkueid (https://github.com/Arkueid/live2d-py)"
+                                                  "\nCompile Heart / Idea Factory Live2D Models\n\n"
+                                                  "\n© 2025")
+
+    def on_action_quit(self):
+        self.close()
 
 if __name__ == "__main__":
     import sys
@@ -385,6 +616,9 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = Win()
     win.setWindowTitle("Nep Assistant")
+    win.setWindowIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/Chell_Logo")))
+
     win.show()
     app.exec()
 

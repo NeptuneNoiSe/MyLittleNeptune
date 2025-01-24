@@ -28,7 +28,7 @@ def main():
     pygame.mixer.init()
     live2d.init()
 
-    display = (300, 400)
+    display = (500, 700)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL, vsync=1)
     pygame.display.set_caption("pygame window")
 
@@ -39,7 +39,7 @@ def main():
 
     if live2d.LIVE2D_VERSION == 3:
         model.LoadModelJson(
-            os.path.join(resources.RESOURCES_DIRECTORY, "v3/nn/nn.model3.json")
+            os.path.join(resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json")
         )
     else:
         model.LoadModelJson(
@@ -55,7 +55,7 @@ def main():
     scale: float = 1.0
 
     # 关闭自动眨眼
-    model.SetAutoBlinkEnable(False)
+    model.SetAutoBlinkEnable(True)
     # 关闭自动呼吸
     model.SetAutoBreathEnable(False)
 

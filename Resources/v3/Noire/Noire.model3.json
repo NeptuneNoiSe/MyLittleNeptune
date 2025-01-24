@@ -56,7 +56,7 @@
 				"File": "expressions/Funny.json"
 			}
 		],
-				"Motions": {
+		"Motions": {
 			"TapBody": [
 				{
 					"File": "motions/tap_m00.motion3.json"

@@ -2,7 +2,6 @@ import os
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QEvent
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
@@ -15,18 +14,34 @@ from live2d.v3 import StandardParams
 #import live2d.v2 as live2d
 import resources
 
+motion_end_log = False
+
 def callback():
-    print("motion end")
+    if motion_end_log:
+        print("motion end")
 
 class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
+        # LOGS:
+        # l2d-py Main Log:
+        live2d.setLogEnable(False)
+        # l2d-py Area Log:
+        self.l2d_area_log = False
+        # Mouse Click Log:
+        self.mouse_click_log = False
+        # Mouse Tracking Log:
+        self.mouse_tracking_log = False
+        # Timer Diagnostic Log:
+        self.timer_log = False
+
         # Models Switch:
-        self.models_switch = 3
+        self.models_switch = 4
             # Neptune = 0
             # Purple Heart = 1
             # Noire = 2
             # Black Heart = 3
+            # Blanc = 4
 
         # AutoScale: If True, the models is scaled based on the screen size
         self.auto_scale = True
@@ -34,17 +49,25 @@ class Win(QOpenGLWidget):
         # Models Scale
         self.models_scale = 1
 
+        # Tracking the mouse position
+        self.tracking_mouse = True
+
         # Init Vars
         self.w_correction = 0
         self.h_correction = 0
         self.a_scale = 1
+        self.mouse_move = False
+        self.mouse_timer = None
         self.isInLA = False
         self.clickInLA = False
         self.click = False
         self.a = 0
+        self.test = False
         self.read = False
         self.clickX = -1
         self.clickY = -1
+        self.posX = -1
+        self.posY = -1
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -144,29 +167,38 @@ class Win(QOpenGLWidget):
             if self.sc_height_size == 8640:
                 self.a_scale = 8
 
+        # Character Name
+        self.character_name = None
+
         # Models switch parameters
         if self.models_switch == 0:
-            # Neptune
-            self.w_resize = 320 * self.a_scale * self.models_scale
-            self.h_resize = 570 * self.a_scale * self.models_scale
+            self.character_name = "Neptune"
+            self.w_resize = 350 * self.a_scale * self.models_scale
+            self.h_resize = 600 * self.a_scale * self.models_scale
             self.w_correction = 10
             self.h_correction = 0
         elif self.models_switch == 1:
-            # Purple Heart
-            self.w_resize = 700 * self.a_scale * self.models_scale
-            self.h_resize = 650 * self.a_scale * self.models_scale
+            self.character_name = "Purple Heart"
+            self.w_resize = 725 * self.a_scale * self.models_scale
+            self.h_resize = 720 * self.a_scale * self.models_scale
             self.w_correction = 10
             self.h_correction = 0
         elif self.models_switch == 2:
-            # Noire
-            self.w_resize = 460 * self.a_scale * self.models_scale
-            self.h_resize = 650 * self.a_scale * self.models_scale
+            self.character_name = "Noire"
+            self.w_resize = 420 * self.a_scale * self.models_scale
+            self.h_resize = 700 * self.a_scale * self.models_scale
             self.w_correction = 10
             self.h_correction = 0
         elif self.models_switch == 3:
-            # Black Heart
-            self.w_resize = 420 * self.a_scale * self.models_scale
-            self.h_resize = 650 * self.a_scale * self.models_scale
+            self.character_name = "Black Heart"
+            self.w_resize = 430 * self.a_scale * self.models_scale
+            self.h_resize = 700 * self.a_scale * self.models_scale
+            self.w_correction = 10
+            self.h_correction = 0
+        elif self.models_switch == 4:
+            self.character_name = "Blanc"
+            self.w_resize = 440 * self.a_scale * self.models_scale
+            self.h_resize = 600 * self.a_scale * self.models_scale
             self.w_correction = 10
             self.h_correction = 0
 
@@ -184,8 +216,9 @@ class Win(QOpenGLWidget):
         #self.audioPlayed = False
 
         # Animation Vars
-        self.t_count = 1
+        self.condition = "Idle"
         self.sleep = False
+        self.t_count = 1
         self.sad_v = 60
         self.tired_v = 80
         self.sleep_v = 100
@@ -204,6 +237,7 @@ class Win(QOpenGLWidget):
         self.on_mouse_switch = True
         self.tap_body_switch = True
         self.sleep_switch = True
+        self.tracking_mouse_switch = True
 
         # Model Resize
         self.resize(int(self.w_resize), int(self.h_resize))
@@ -220,40 +254,57 @@ class Win(QOpenGLWidget):
         self.timer.timeout.connect(self.idle_timer)
         self.timer.start(int(6000 / self.time_scale))
 
-        # Fadeout timer
-        self.fadeout_t = QTimer()
-        self.fadeout_t.timeout.connect(self.reset_expression)
+        # Mouse tracking timer
+        self.mouse_t = QTimer()
+        self.mouse_t.timeout.connect(self.mouse_tracking)
+        if not self.mouse_move:
+            self.tracking_mouse = False
+            self.mouse_t.start(10000)
 
-    def reset_expression(self):
-        print("Reset Expression")
-        self.fadeout_t.stop()
-        self.model.ResetExpression()
+    def mouse_tracking(self):
+        self.tracking_mouse = False
+        if self.posX <= 0 or self.posY <= 0:
+            self.posX = 0 - self.frmX * 0.25
+            self.posY = 0 + self.h_resize * 0.25
+
+        if self.mouse_tracking_log:
+            print("Mouse is steady", self.tracking_mouse, self.posX,self.posY)
+        self.model.Drag(self.posX,self.posY)
 
     def idle_timer(self):
+        # Timer Diagnostic Log
+        if self.timer_log:
+            print(self.t_count, "-", self.condition, "Condition")
         self.t_count += 1
-        print(self.t_count)
+        if self.t_count <= self.sad_v:
+            self.condition = "Idle"
         if self.t_count <=self.sleep_v and self.idle_switch == True:
             self.idle_anim = True
         if self.t_count >=10 and self.sleep_switch == False:
             self.t_count = 1
         if self.t_count == self.sad_v:
+            self.condition = "Sad"
             self.model.SetExpression("Sad")
-            print("I'm Sad")
+            print(self.character_name + ":", "I'm Sad")
         if self.t_count == self.tired_v and self.sleep_switch == True:
+            self.condition = "Tired"
             self.model.SetExpression("Tired")
-            print("I'm Tired")
+            print(self.character_name + ":", "I'm Tired")
         if self.t_count == self.sleep_v and self.sleep_switch == True:
+            self.condition = "Sleep"
             self.model.SetExpression("CloseEyes")
+            if self.tracking_mouse_switch:
+                self.tracking_mouse = False
             self.idle_anim = False
             self.sleep = True
-            print("I'm Sleep")
+            print(self.character_name + ":", "I'm Sleep")
         if self.t_count == self.wake_up_v and self.sleep_switch == True:
             self.model.ResetExpression()
             self.model.SetExpression("Star", fadeout=10000)
             self.model.SetExpression("Serious", fadeout=10000)
             self.t_count = 0
             self.idle_anim = True
-            print("I'm WakeUp")
+            print(self.character_name + ":", "I'm WakeUp")
 
     def initializeGL(self) -> None:
         self.makeCurrent()
@@ -279,6 +330,10 @@ class Win(QOpenGLWidget):
             elif self.models_switch == 3:
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
+
+            elif self.models_switch == 4:
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -350,17 +405,45 @@ class Win(QOpenGLWidget):
             self.on_mouse_anim = False
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
+
+        # Mouse Triggers
+        count = 0
+        while True:
+            saved_position = QCursor.pos().y()
+            if count > 20 * 20:
+                break
+            current_position = QCursor.pos().y()
+            if saved_position != current_position:
+                if self.tracking_mouse_switch:
+                    if self.mouse_tracking_log:
+                        print("Mouse is moving", self.tracking_mouse, local_x, local_y)
+                    if self.t_count >= self.sleep_v:
+                        self.tracking_mouse = False
+                        self.mouse_move = False
+                    else:
+                        self.tracking_mouse = True
+                        self.mouse_move = True
+            else:
+                self.mouse_move = False
+            count += 1
+
+        # Tracking the mouse position
+        if self.tracking_mouse:
+            self.model.Drag(local_x, local_y)
+
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
             self.clickInLA = True
             self.on_mouse_anim = True
             if self.t_count >= self.sleep_v:
                 self.on_mouse_anim = False
-            #print("in l2d area")
+            if self.l2d_area_log:
+                print("in l2d area")
         else:
             self.isInLA = False
             self.clickInLA = False
-            #print("out of l2d area")
+            if self.l2d_area_log:
+                print("out of l2d area")
 
         self.update()
 
@@ -372,19 +455,21 @@ class Win(QOpenGLWidget):
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.button() == Qt.LeftButton:
             x, y = event.scenePosition().x(), event.scenePosition().y()
+            self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
-                #self.model.StopAllMotions()
                 if not self.sleep:  # False
                     self.model.SetExpression("Funny")
                 if self.sleep:  # True
                     self.model.SetExpression("Surprised")
-                print("pressed")
+                if self.mouse_click_log:
+                    print("Left Button Pressed")
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             x, y = event.scenePosition().x(), event.scenePosition().y()
+            self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
                 self.model.Touch(x, y)
                 self.clickInLA = False
@@ -393,8 +478,8 @@ class Win(QOpenGLWidget):
                     self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=callback)
                     self.tap_body_anim = False
                     if not self.sleep:
-                        self.model.SetRandomExpression()
-                        self.fadeout_t.start(3500)
+                        self.model.ResetExpression()
+                        self.model.SetRandomExpression(fadeout=3500)
                         self.t_count = 1
                 if self.sleep:
                     self.model.ResetExpression()
@@ -404,7 +489,8 @@ class Win(QOpenGLWidget):
                 if not self.tap_body_switch:
                     self.model.ResetExpression()
                     self.t_count = 1
-                print("released")
+                if self.mouse_click_log:
+                    print("Left Button Released")
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()
@@ -502,6 +588,17 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
         action_auto_breath_false.triggered.connect(self.on_action_auto_breath_false)
 
+        # Tracking Mouse Submenu
+        submenu_tracking_mouse = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/mouse.svg")), '&Tracking Mouse Position')
+        submenu_settings.addMenu(submenu_tracking_mouse)
+        action_tracking_mouse_true = submenu_tracking_mouse.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
+        action_tracking_mouse_true.triggered.connect(self.on_action_tracking_mouse_true)
+        action_tracking_mouse_false = submenu_tracking_mouse.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
+        action_tracking_mouse_false.triggered.connect(self.on_action_tracking_mouse_false)
+
         # Sleep Submenu
         submenu_sleep = QMenu(self).addMenu(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/sleep.svg")), '&Sleep')
@@ -579,6 +676,12 @@ class Win(QOpenGLWidget):
 
     def on_action_auto_breath_false(self):
         self.model.SetAutoBreathEnable(False)
+
+    def on_action_tracking_mouse_true(self):
+        self.tracking_mouse_switch = True
+
+    def on_action_tracking_mouse_false(self):
+        self.tracking_mouse_switch = False
 
     def on_action_sleep_true(self):
         self.sleep_switch = True

@@ -6,8 +6,8 @@
     <br>
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12.0-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
-    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.4-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.1.4-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.5-orange" alt="live2d-py Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.1.5-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -32,6 +32,7 @@ Edit `self.models_switch = 0` parameter in package/neptune_main.py file, to the 
 * Purple Heart = 1
 * Noire = 2
 * Black Heart = 3
+* Blanc = 4
 
 ### Auto Scale:
 If `self.auto_scale = True` parameter in package/neptune_main.py file is `True`, models is scaled based on the screen size
@@ -41,6 +42,23 @@ To disable the auto-scale function, change the parameter to `False`
 ### Models Scale:
 Edit `self.models_scale = 1` parameter in package/neptune_main.py file, to scale model
 
+### Tracking the mouse position:
+Tracking the mouse position On as default
+
+If you want Off this function as default:
+
+Edit `self.tracking_mouse = True` parameter in package/neptune_main.py file is `False`
+
+You can also change this parameter from the context menu while the application is running.
+
+### Logs:
+If you want, you can enable logging to the console, Edit parameter to `True`.
+ * l2d-py Main Log: `live2d.setLogEnable(False)`
+ * l2d-py Area Log: `self.l2d_area_log = False`
+ * Mouse Click Log: `self.mouse_click_log = False`
+ * Mouse Tracking Log: `self.mouse_tracking_log = False`
+ * Timer Diagnostic Log: `self.timer_log = False`
+
 ## Models Available:
 <div align="center" style="padding-top: 10px">
     <img src="./docs/model_preview/neptune.svg" alt="neptune" width="300px" height="300px">
@@ -49,6 +67,9 @@ Edit `self.models_scale = 1` parameter in package/neptune_main.py file, to scale
 <div align="center" style="padding-top: 50px">
     <img src="./docs/model_preview/noire.svg" alt="noire" width="320px" height="320px">
     <img src="./docs/model_preview/black_heart.svg" alt="black_heart" width="330px" height="330px">
+</div>
+<div align="center" style="padding-top: 50px">
+    <img src="./docs/model_preview/blanc.svg" alt="blanc" width="300px" height="300px">
 </div>
 
 ## Important to read:

@@ -1,0 +1,57 @@
+{
+  "Type": "Live2D Expression",
+  "FadeInTime": 0.5,
+  "FadeOutTime": 0.5,
+  "Parameters": [
+    {
+      "Id": "Param_02nico",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_03anger",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_04sad",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_shy",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_06surprise",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_08cry",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_scar",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_12pokan",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_anger2",
+      "Value": 0,
+      "Blend": "Add"
+    },
+    {
+      "Id": "Param_15disgusted",
+      "Value": 0,
+      "Blend": "Add"
+    }
+  ]
+}

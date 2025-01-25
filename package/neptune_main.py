@@ -36,12 +36,13 @@ class Win(QOpenGLWidget):
         self.timer_log = False
 
         # Models Switch:
-        self.models_switch = 4
+        self.models_switch = 5
             # Neptune = 0
             # Purple Heart = 1
             # Noire = 2
             # Black Heart = 3
             # Blanc = 4
+            # White Heart = 5
 
         # AutoScale: If True, the models is scaled based on the screen size
         self.auto_scale = True
@@ -201,6 +202,12 @@ class Win(QOpenGLWidget):
             self.h_resize = 600 * self.a_scale * self.models_scale
             self.w_correction = 10
             self.h_correction = 0
+        elif self.models_switch == 5:
+            self.character_name = "White Heart"
+            self.w_resize = 390 * self.a_scale * self.models_scale
+            self.h_resize = 650 * self.a_scale * self.models_scale
+            self.w_correction = 10
+            self.h_correction = 0
 
         self.setWindowFlags(self.windowFlags()
                             | Qt.WindowType.X11BypassWindowManagerHint
@@ -334,6 +341,10 @@ class Win(QOpenGLWidget):
             elif self.models_switch == 4:
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
+
+            elif self.models_switch == 5:
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(

@@ -32,8 +32,8 @@
 				"File": "expressions/Tired.json"
 			},
 			{
-				"Name": "CloseEyes",
-				"File": "expressions/CloseEyes.json"
+				"Name": "ClosedEyes",
+				"File": "expressions/ClosedEyes.json"
 			},
 			{
 				"Name": "Cry",

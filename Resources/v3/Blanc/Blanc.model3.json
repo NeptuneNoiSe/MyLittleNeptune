@@ -6,6 +6,7 @@
 			"textures/texture_00.png",
 			"textures/texture_01.png"
 		],
+		"Physics": null,
 		"Expressions": [
 			{
 				"Name": "Normal",

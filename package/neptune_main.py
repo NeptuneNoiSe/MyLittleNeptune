@@ -36,7 +36,7 @@ class Win(QOpenGLWidget):
         self.timer_log = False
 
         # Models Switch:
-        self.models_switch = 5
+        self.models_switch = 0
             # Neptune = 0
             # Purple Heart = 1
             # Noire = 2
@@ -180,9 +180,9 @@ class Win(QOpenGLWidget):
             self.h_correction = 0
         elif self.models_switch == 1:
             self.character_name = "Purple Heart"
-            self.w_resize = 725 * self.a_scale * self.models_scale
+            self.w_resize = 800 * self.a_scale * self.models_scale
             self.h_resize = 720 * self.a_scale * self.models_scale
-            self.w_correction = 10
+            self.w_correction = -125
             self.h_correction = 0
         elif self.models_switch == 2:
             self.character_name = "Noire"
@@ -213,7 +213,7 @@ class Win(QOpenGLWidget):
                             | Qt.WindowType.X11BypassWindowManagerHint
                             | Qt.WindowType.FramelessWindowHint
                             #| Qt.WindowType.WindowTransparentForInput
-                            #| Qt.WindowType.WindowType_Mask
+                            | Qt.WindowType.WindowType_Mask
                             | Qt.WindowType.WindowStaysOnTopHint)
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -271,7 +271,7 @@ class Win(QOpenGLWidget):
     def mouse_tracking(self):
         self.tracking_mouse = False
         if self.posX <= 0 or self.posY <= 0:
-            self.posX = 0 - self.frmX * 0.25
+            self.posX = 0 + self.frmX * 0.15
             self.posY = 0 + self.h_resize * 0.25
 
         if self.mouse_tracking_log:
@@ -299,7 +299,7 @@ class Win(QOpenGLWidget):
             print(self.character_name + ":", "I'm Tired")
         if self.t_count == self.sleep_v and self.sleep_switch == True:
             self.condition = "Sleep"
-            self.model.SetExpression("CloseEyes")
+            self.model.SetExpression("ClosedEyes")
             if self.tracking_mouse_switch:
                 self.tracking_mouse = False
             self.idle_anim = False
@@ -323,26 +323,32 @@ class Win(QOpenGLWidget):
 
         if live2d.LIVE2D_VERSION == 3:
             if self.models_switch == 0:
+                print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
 
             elif self.models_switch == 1:
+                print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
 
             elif self.models_switch == 2:
+                print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
 
             elif self.models_switch == 3:
+                print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
 
             elif self.models_switch == 4:
+                print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
             elif self.models_switch == 5:
+                print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
@@ -527,6 +533,35 @@ class Win(QOpenGLWidget):
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
+        # Character Submenu
+        submenu_character = QMenu(self).addMenu(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Characters')
+        # Neptune
+        action_neptune = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Neptune')
+        action_neptune.triggered.connect(self.on_action_neptune)
+        # Purple Heart
+        action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Purple Heart')
+        action_purple_heart.triggered.connect(self.on_action_purple_heart)
+        # Noire
+        action_noire = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Noire')
+        action_noire.triggered.connect(self.on_action_noire)
+        # Black Heart
+        action_black_heart = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Black Heart')
+        action_black_heart.triggered.connect(self.on_action_black_heart)
+        # Blanc
+        action_blanc = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Blanc')
+        action_blanc.triggered.connect(self.on_action_blanc)
+        # White Heart
+        action_white_heart = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&White Heart')
+        action_white_heart.triggered.connect(self.on_action_white_heart)
+        context_menu.addMenu(submenu_character)
+
         # Animations Submenu
         submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/animation.svg")), '&Animations')
@@ -640,6 +675,7 @@ class Win(QOpenGLWidget):
         context_menu.exec(e.globalPos())
 
     # Context Menu Actions
+    # Windows Actions
     def on_action_normal(self):
         self.showNormal()
 
@@ -649,9 +685,146 @@ class Win(QOpenGLWidget):
     def on_action_maximize(self):
         self.showMaximized()
 
-    def on_action_stop_all_motions(self):
-        self.model.StopAllMotions()
+    # Characters Actions
+    def on_action_neptune(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Neptune"
+        self.models_switch = 0
+        self.t_count = 1
+        self.w_resize = 350 * self.a_scale * self.models_scale
+        self.h_resize = 600 * self.a_scale * self.models_scale
+        self.w_correction = 10
+        self.h_correction = 0
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
 
+    def on_action_purple_heart(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Purple Heart"
+        self.models_switch = 1
+        self.t_count = 1
+        self.w_resize = 800 * self.a_scale * self.models_scale
+        self.h_resize = 720 * self.a_scale * self.models_scale
+        self.w_correction = -125
+        self.h_correction = 0
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_noire(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Noire"
+        self.models_switch = 2
+        self.t_count = 1
+        self.w_resize = 420 * self.a_scale * self.models_scale
+        self.h_resize = 700 * self.a_scale * self.models_scale
+        self.w_correction = 10
+        self.h_correction = 0
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_black_heart(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Black Heart"
+        self.models_switch = 3
+        self.t_count = 1
+        self.w_resize = 430 * self.a_scale * self.models_scale
+        self.h_resize = 700 * self.a_scale * self.models_scale
+        self.w_correction = 10
+        self.h_correction = 0
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_blanc(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Blanc"
+        self.models_switch = 4
+        self.t_count = 1
+        self.w_resize = 440 * self.a_scale * self.models_scale
+        self.h_resize = 600 * self.a_scale * self.models_scale
+        self.w_correction = 10
+        self.h_correction = 0
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_white_heart(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "White Heart"
+        self.models_switch = 5
+        self.t_count = 1
+        self.w_resize = 390 * self.a_scale * self.models_scale
+        self.h_resize = 650 * self.a_scale * self.models_scale
+        self.w_correction = 10
+        self.h_correction = 0
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
+
+    # Animations Actions
     def on_action_idle_true(self):
         self.idle_switch = True
         self.idle_anim = True
@@ -676,6 +849,10 @@ class Win(QOpenGLWidget):
         self.tap_body_switch = False
         self.tap_body_anim = False
 
+    def on_action_stop_all_motions(self):
+        self.model.StopAllMotions()
+
+    # Settings Actions
     def on_action_auto_blink_true(self):
         self.model.SetAutoBlinkEnable(True)
 
@@ -717,7 +894,8 @@ class Win(QOpenGLWidget):
                                                   "\n© 2025")
 
     def on_action_quit(self):
-        self.close()
+        print(self.character_name + ":", "GoodBye (^3^)")
+        exit(0)
 
 if __name__ == "__main__":
     import sys
@@ -729,7 +907,7 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     win = Win()
-    win.setWindowTitle("Nep Assistant")
+    win.setWindowTitle("My Little Neptune")
     win.setWindowIcon(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/Chell_Logo")))
 

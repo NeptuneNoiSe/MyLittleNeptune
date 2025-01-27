@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12.0-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.5-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.1.5-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.1.6-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -33,6 +33,9 @@ Edit `self.models_switch = 0` parameter in package/neptune_main.py file, to the 
 * Noire = 2
 * Black Heart = 3
 * Blanc = 4
+* White Heart = 5
+
+You can also change character from the context menu while the application is running.
 
 ### Auto Scale:
 If `self.auto_scale = True` parameter in package/neptune_main.py file is `True`, models is scaled based on the screen size
@@ -61,7 +64,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 
 ## Models Available:
 <div align="center" style="padding-top: 10px">
-    <img src="./docs/model_preview/neptune.svg" alt="neptune" width="300px" height="300px">
+    <img src="./docs/model_preview/neptune.svg" alt="neptune" width="310px" height="310px">
     <img src="./docs/model_preview/purple_heart.svg" alt="purple_heart" width="330px" height="330px">
 </div>
 <div align="center" style="padding-top: 50px">
@@ -69,7 +72,8 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
     <img src="./docs/model_preview/black_heart.svg" alt="black_heart" width="330px" height="330px">
 </div>
 <div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/blanc.svg" alt="blanc" width="300px" height="300px">
+    <img src="./docs/model_preview/blanc.svg" alt="blanc" width="310px" height="310px">
+    <img src="./docs/model_preview/white_heart.svg" alt="white_heart" width="340px" height="340px">
 </div>
 
 ## Important to read:
@@ -78,6 +82,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 </div>
 
 #### 1. The application is at an early stage of development and may have bugs.
-#### 2. The animation of the models needs to be improved
+#### 2. The animations need to be improved
 #### 3. In the next stages of development, it is planned to work on the GUI, AI assistant base on GPT model and compile the application into an .exe file
-### Thanks for your attention!
+### Please specify me, when using my code in your projects
+## Thanks for your attention!

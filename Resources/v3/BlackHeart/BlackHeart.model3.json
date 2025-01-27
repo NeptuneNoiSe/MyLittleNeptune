@@ -32,8 +32,8 @@
 				"File": "expressions/Tired.json"
 			},
 			{
-				"Name": "CloseEyes",
-				"File": "expressions/CloseEyes.json"
+				"Name": "ClosedEyes",
+				"File": "expressions/ClosedEyes.json"
 			},
 			{
 				"Name": "Cry",
@@ -52,7 +52,7 @@
 				"File": "expressions/Funny.json"
 			}
 		],
-				"Motions": {
+		"Motions": {
 			"TapBody": [
 				{
 					"File": "motions/tap_m00.motion3.json"

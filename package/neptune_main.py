@@ -2,28 +2,105 @@ import os
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt, QTimer, QEvent
+from PySide6.QtCore import QTimerEvent, Qt, QTimer
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
 from PySide6.QtGui import QGuiApplication
+from configparser import ConfigParser
 
 import live2d.v3 as live2d
-from live2d.utils.lipsync import WavHandler
-from live2d.v3 import StandardParams
-#import live2d.v2 as live2d
+# from live2d.utils.lipsync import WavHandler
+# from live2d.v3 import StandardParams
+# import live2d.v2 as live2d
 import resources
 
-motion_end_log = False
+def main_config():
+    config = ConfigParser()
+    config.read('config.ini')
+    if not config.has_section('Main'):
+        config.add_section('Main')
+        config.set('Main', 'screen_width', '0')
+        config.set('Main', 'screen_height', '0')
+
+    if not config.has_section('WindowFlags'):
+        config.add_section('WindowFlags')
+        config.set('WindowFlags', 'X11BypassWindowManagerHint', 'True')
+        config.set('WindowFlags', 'FramelessWindowHint', 'True')
+        config.set('WindowFlags', 'WindowTransparentForInput', 'False')
+        config.set('WindowFlags', 'WindowType_Mask', 'True')
+        config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
+
+    if not config.has_section('Scale'):
+        config.add_section('Scale')
+        config.set('Scale', 'auto_scale', 'True')
+        config.set('Scale', 'models_scale', '1')
+
+    if not config.has_section('Model'):
+        config.add_section('Model')
+        config.set('Model', 'character_name', 'Neptune')
+        config.set('Model', 'selected_model', '0')
+        config.set('Model', 'x_param', '0')
+        config.set('Model', 'y_param', '0')
+        config.set('Model', 'w_resize', '0')
+        config.set('Model', 'h_resize', '0')
+        config.set('Model', 'w_correction', '0')
+        config.set('Model', 'h_correction', '0')
+
+    if not config.has_section('Animations'):
+        config.add_section('Animations')
+        config.set('Animations', 'idle_animation', 'True')
+        config.set('Animations', 'on_mouse_animation', 'True')
+        config.set('Animations', 'tap_body_animation', 'True')
+
+    if not config.has_section('Settings'):
+        config.add_section('Settings')
+        config.set('Settings', 'auto_blink', 'True')
+        config.set('Settings', 'auto_breath', 'True')
+        config.set('Settings', 'tracking_mouse', 'True')
+        config.set('Settings', 'sleep', 'True')
+
+    with open('config.ini', 'w') as cfg:
+        cfg:[str, int, tuple, object]
+        config.write(cfg)
+    return config
+
+def models_config(ms,cn,mx,my,wr,hr,wc,hc):
+    config = ConfigParser()
+    config.read('config.ini')
+    models_select = ms
+    character_name = cn
+    mx_param = mx
+    my_param = my
+    w_resize = wr
+    h_resize = hr
+    w_correction = wc
+    h_correction = hc
+    config.set('Model', 'selected_model', str(models_select))
+    config.set('Model', 'character_name', character_name)
+    config.set('Model', 'x_param', str(mx_param))
+    config.set('Model', 'y_param', str(my_param))
+    config.set('Model', 'w_resize', str(w_resize))
+    config.set('Model', 'h_resize', str(h_resize))
+    config.set('Model', 'w_correction', str(w_correction))
+    config.set('Model', 'h_correction', str(h_correction))
+    with open('config.ini', 'w') as cfg:
+        cfg: [str, int, tuple, object]
+        config.write(cfg)
+    #return
+
+config_main = main_config()
 
 def callback():
+    motion_end_log = False
     if motion_end_log:
         print("motion end")
 
 class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
-        # LOGS:
+        self.config = config_main
+        # LOGS:`
         # l2d-py Main Log:
         live2d.setLogEnable(False)
         # l2d-py Area Log:
@@ -36,19 +113,13 @@ class Win(QOpenGLWidget):
         self.timer_log = False
 
         # Models Switch:
-        self.models_switch = 0
-            # Neptune = 0
-            # Purple Heart = 1
-            # Noire = 2
-            # Black Heart = 3
-            # Blanc = 4
-            # White Heart = 5
+        self.models_switch = self.config.getint('Model', 'selected_model')
 
         # AutoScale: If True, the models is scaled based on the screen size
-        self.auto_scale = True
+        self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
 
         # Models Scale
-        self.models_scale = 1
+        self.models_scale = self.config.getfloat('Scale', 'models_scale')
 
         # Tracking the mouse position
         self.tracking_mouse = True
@@ -74,6 +145,15 @@ class Win(QOpenGLWidget):
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
         self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
+        #Set screen size
+        self.config.set('Main', 'screen_width', str(self.sc_width_size))
+        self.config.set('Main', 'screen_height',str(self.sc_height_size))
+        if self.models_switch == 0:
+            self.config.set('Model', 'x_param', '350')
+            self.config.set('Model', 'y_param', '600')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
 
         # Screens Size for AutoScale
         if self.auto_scale:
@@ -169,52 +249,49 @@ class Win(QOpenGLWidget):
                 self.a_scale = 8
 
         # Character Name
-        self.character_name = None
+        self.character_name = self.config.get('Model', 'character_name')
 
-        # Models switch parameters
+        # Neptune Model parameters
         if self.models_switch == 0:
-            self.character_name = "Neptune"
-            self.w_resize = 350 * self.a_scale * self.models_scale
-            self.h_resize = 600 * self.a_scale * self.models_scale
-            self.w_correction = 10
-            self.h_correction = 0
-        elif self.models_switch == 1:
-            self.character_name = "Purple Heart"
-            self.w_resize = 800 * self.a_scale * self.models_scale
-            self.h_resize = 720 * self.a_scale * self.models_scale
-            self.w_correction = -125
-            self.h_correction = 0
-        elif self.models_switch == 2:
-            self.character_name = "Noire"
-            self.w_resize = 420 * self.a_scale * self.models_scale
-            self.h_resize = 700 * self.a_scale * self.models_scale
-            self.w_correction = 10
-            self.h_correction = 0
-        elif self.models_switch == 3:
-            self.character_name = "Black Heart"
-            self.w_resize = 430 * self.a_scale * self.models_scale
-            self.h_resize = 700 * self.a_scale * self.models_scale
-            self.w_correction = 10
-            self.h_correction = 0
-        elif self.models_switch == 4:
-            self.character_name = "Blanc"
-            self.w_resize = 440 * self.a_scale * self.models_scale
-            self.h_resize = 600 * self.a_scale * self.models_scale
-            self.w_correction = 10
-            self.h_correction = 0
-        elif self.models_switch == 5:
-            self.character_name = "White Heart"
-            self.w_resize = 390 * self.a_scale * self.models_scale
-            self.h_resize = 650 * self.a_scale * self.models_scale
-            self.w_correction = 10
-            self.h_correction = 0
+            self.mx_param = self.config.getint('Model', 'x_param')
+            self.my_param = self.config.getint('Model', 'y_param')
+            self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
+            self.h_res = int(self.my_param * self.a_scale * self.models_scale)
+            self.config.set('Model', 'w_resize', str(self.w_res))
+            self.config.set('Model', 'h_resize', str(self.h_res))
+            self.config.set('Model', 'w_correction', '10')
+            self.config.set('Model', 'h_correction', '0')
+            with open('config.ini', 'w') as cfg:
+                cfg: [str, int, tuple, object]
+                self.config.write(cfg)
 
-        self.setWindowFlags(self.windowFlags()
-                            | Qt.WindowType.X11BypassWindowManagerHint
-                            | Qt.WindowType.FramelessWindowHint
-                            #| Qt.WindowType.WindowTransparentForInput
-                            | Qt.WindowType.WindowType_Mask
-                            | Qt.WindowType.WindowStaysOnTopHint)
+        # Model Resize
+        self.w_resize = self.config.getint('Model', 'w_resize')
+        self.h_resize = self.config.getint('Model', 'h_resize')
+        self.w_correction = self.config.getfloat('Model', 'w_correction')
+        self.h_correction = self.config.getfloat('Model', 'h_correction')
+
+        # Model Resize
+        self.resize(int(self.w_resize), int(self.h_resize))
+
+        # Center on Axis X
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        # Center on Axis Y
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        # Move window
+        self.move(int(self.frmX), int(self.frmY))
+
+        # Windows flags
+        self.setWindowFlag(Qt.WindowType.X11BypassWindowManagerHint,
+                           self.config.getboolean('WindowFlags', 'X11BypassWindowManagerHint'))
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint,
+                           self.config.getboolean('WindowFlags', 'FramelessWindowHint'))
+        self.setWindowFlag(Qt.WindowType.WindowTransparentForInput,
+                           self.config.getboolean('WindowFlags', 'WindowTransparentForInput'))
+        self.setWindowFlag(Qt.WindowType.WindowType_Mask,
+                           self.config.getboolean('WindowFlags', 'WindowType_Mask'))
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint,
+                           self.config.getboolean('WindowFlags', 'WindowStaysOnTopHint'))
 
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
@@ -240,21 +317,11 @@ class Win(QOpenGLWidget):
         self.tap_body_anim = False
 
         # Animation Switches
-        self.idle_switch = True
-        self.on_mouse_switch = True
-        self.tap_body_switch = True
-        self.sleep_switch = True
-        self.tracking_mouse_switch = True
-
-        # Model Resize
-        self.resize(int(self.w_resize), int(self.h_resize))
-
-        # Center on Axis X
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        # Center on Axis Y
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        # Move window
-        self.move(int(self.frmX), int(self.frmY))
+        self.idle_switch = self.config.getboolean('Animations', 'idle_animation')
+        self.on_mouse_switch = self.config.getboolean('Animations', 'on_mouse_animation')
+        self.tap_body_switch = self.config.getboolean('Animations', 'tap_body_animation')
+        self.sleep_switch = self.config.getboolean('Settings', 'sleep')
+        self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
 
         # Init idle timer
         self.timer = QTimer()
@@ -352,6 +419,11 @@ class Win(QOpenGLWidget):
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
+            elif self.models_switch == 6:
+                print(self.character_name + ":", "Hello! (^~^)/")
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
+
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
@@ -415,11 +487,11 @@ class Win(QOpenGLWidget):
 
         if self.idle_anim:
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=callback)
-            self.idle_anim = False
+            self.idle_anim = True
 
         if self.on_mouse_anim and self.on_mouse_switch == True:
             self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=callback)
-            self.on_mouse_anim = False
+            self.on_mouse_anim = True
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
@@ -493,7 +565,7 @@ class Win(QOpenGLWidget):
                 self.tap_body_anim = True
                 if self.tap_body_switch:
                     self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=callback)
-                    self.tap_body_anim = False
+                    self.tap_body_anim = True
                     if not self.sleep:
                         self.model.ResetExpression()
                         self.model.SetRandomExpression(fadeout=3500)
@@ -538,28 +610,32 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Characters')
         # Neptune
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Neptune')
+            resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), '&Neptune')
         action_neptune.triggered.connect(self.on_action_neptune)
         # Purple Heart
         action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Purple Heart')
+            resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), '&Purple Heart')
         action_purple_heart.triggered.connect(self.on_action_purple_heart)
         # Noire
         action_noire = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Noire')
+            resources.RESOURCES_DIRECTORY, "icons/noire.ico")), '&Noire')
         action_noire.triggered.connect(self.on_action_noire)
         # Black Heart
         action_black_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Black Heart')
+            resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), '&Black Heart')
         action_black_heart.triggered.connect(self.on_action_black_heart)
         # Blanc
         action_blanc = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Blanc')
+            resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), '&Blanc')
         action_blanc.triggered.connect(self.on_action_blanc)
         # White Heart
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&White Heart')
+            resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), '&White Heart')
         action_white_heart.triggered.connect(self.on_action_white_heart)
+        # Vert
+        action_white_heart = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/vert.ico")), '&Vert')
+        action_white_heart.triggered.connect(self.on_action_vert)
         context_menu.addMenu(submenu_character)
 
         # Animations Submenu
@@ -692,10 +768,16 @@ class Win(QOpenGLWidget):
         self.character_name = "Neptune"
         self.models_switch = 0
         self.t_count = 1
-        self.w_resize = 350 * self.a_scale * self.models_scale
-        self.h_resize = 600 * self.a_scale * self.models_scale
+        self.mx_param = 350
+        self.my_param = 600
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
         self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
         self.resize(int(self.w_resize), int(self.h_resize))
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
@@ -715,10 +797,16 @@ class Win(QOpenGLWidget):
         self.character_name = "Purple Heart"
         self.models_switch = 1
         self.t_count = 1
-        self.w_resize = 800 * self.a_scale * self.models_scale
-        self.h_resize = 720 * self.a_scale * self.models_scale
+        self.mx_param = 800
+        self.my_param = 720
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = -125
         self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
         self.resize(int(self.w_resize), int(self.h_resize))
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
@@ -738,10 +826,16 @@ class Win(QOpenGLWidget):
         self.character_name = "Noire"
         self.models_switch = 2
         self.t_count = 1
-        self.w_resize = 420 * self.a_scale * self.models_scale
-        self.h_resize = 700 * self.a_scale * self.models_scale
+        self.mx_param = 420
+        self.my_param = 700
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
         self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
         self.resize(int(self.w_resize), int(self.h_resize))
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
@@ -761,10 +855,16 @@ class Win(QOpenGLWidget):
         self.character_name = "Black Heart"
         self.models_switch = 3
         self.t_count = 1
-        self.w_resize = 430 * self.a_scale * self.models_scale
-        self.h_resize = 700 * self.a_scale * self.models_scale
+        self.mx_param = 430
+        self.my_param = 700
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
         self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
         self.resize(int(self.w_resize), int(self.h_resize))
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
@@ -784,10 +884,16 @@ class Win(QOpenGLWidget):
         self.character_name = "Blanc"
         self.models_switch = 4
         self.t_count = 1
-        self.w_resize = 440 * self.a_scale * self.models_scale
-        self.h_resize = 600 * self.a_scale * self.models_scale
+        self.mx_param = 440
+        self.my_param = 600
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
         self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
         self.resize(int(self.w_resize), int(self.h_resize))
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
@@ -807,10 +913,16 @@ class Win(QOpenGLWidget):
         self.character_name = "White Heart"
         self.models_switch = 5
         self.t_count = 1
-        self.w_resize = 390 * self.a_scale * self.models_scale
-        self.h_resize = 650 * self.a_scale * self.models_scale
+        self.mx_param = 390
+        self.my_param = 650
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
         self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
         self.resize(int(self.w_resize), int(self.h_resize))
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
@@ -824,28 +936,81 @@ class Win(QOpenGLWidget):
         self.model.Update()
         print(self.character_name + ":", "Hello! (^~^)/")
 
+    def on_action_vert(self):
+        print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Vert"
+        self.models_switch = 6
+        self.t_count = 1
+        self.mx_param = 500
+        self.my_param = 670
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
+        self.w_correction = 10
+        self.h_correction = 0
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        live2d.clearBuffer()
+        self.model.Update()
+        print(self.character_name + ":", "Hello! (^~^)/")
+
     # Animations Actions
     def on_action_idle_true(self):
+        self.config.set('Animations', 'idle_animation', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.idle_switch = True
         self.idle_anim = True
 
     def on_action_idle_false(self):
+        self.config.set('Animations', 'idle_animation', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.idle_switch = False
         self.idle_anim = False
 
     def on_action_on_mouse_true(self):
+        self.config.set('Animations', 'on_mouse_animation', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.on_mouse_switch = True
         self.on_mouse_anim = True
 
     def on_action_on_mouse_false(self):
+        self.config.set('Animations', 'on_mouse_animation', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.on_mouse_switch = False
         self.on_mouse_anim = False
 
     def on_action_tap_body_true(self):
+        self.config.set('Animations', 'tap_body_animation', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.tap_body_switch = True
         self.tap_body_anim = True
 
     def on_action_tap_body_false(self):
+        self.config.set('Animations', 'tap_body_animation', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.tap_body_switch = False
         self.tap_body_anim = False
 
@@ -854,28 +1019,64 @@ class Win(QOpenGLWidget):
 
     # Settings Actions
     def on_action_auto_blink_true(self):
-        self.model.SetAutoBlinkEnable(True)
+        self.config.set('Settings', 'auto_blink', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
+        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
+        self.model.SetAutoBlinkEnable(auto_blink_param)
 
     def on_action_auto_blink_false(self):
-        self.model.SetAutoBlinkEnable(False)
+        self.config.set('Settings', 'auto_blink', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
+        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
+        self.model.SetAutoBlinkEnable(auto_blink_param)
 
     def on_action_auto_breath_true(self):
-        self.model.SetAutoBreathEnable(True)
+        self.config.set('Settings', 'auto_breath', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
+        auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
+        self.model.SetAutoBreathEnable(auto_breath_param)
 
     def on_action_auto_breath_false(self):
-        self.model.SetAutoBreathEnable(False)
+        self.config.set('Settings', 'auto_breath', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
+        auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
+        self.model.SetAutoBreathEnable(auto_breath_param)
 
     def on_action_tracking_mouse_true(self):
+        self.config.set('Settings', 'tracking_mouse', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.tracking_mouse_switch = True
 
     def on_action_tracking_mouse_false(self):
+        self.config.set('Settings', 'tracking_mouse', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.tracking_mouse_switch = False
 
     def on_action_sleep_true(self):
+        self.config.set('Settings', 'sleep', 'True')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.sleep_switch = True
         self.t_count = 1
 
     def on_action_sleep_false(self):
+        self.config.set('Settings', 'sleep', 'False')
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
         self.sleep_switch = False
         self.sleep = False
         self.t_count = 1
@@ -909,7 +1110,7 @@ if __name__ == "__main__":
     win = Win()
     win.setWindowTitle("My Little Neptune")
     win.setWindowIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/Chell_Logo")))
+            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
     win.show()
     app.exec()

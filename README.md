@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12.0-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.5-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.1.6-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.1.7-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -26,33 +26,28 @@
 ### Run:
 `python package/neptune_main.py`
 
-### Models Select:
-Edit `self.models_switch = 0` parameter in package/neptune_main.py file, to the model I'd:
-* Neptune = 0
-* Purple Heart = 1
-* Noire = 2
-* Black Heart = 3
-* Blanc = 4
-* White Heart = 5
+### Configuration file
+The configuration file is created at the first startup, as config.ini
 
-You can also change character from the context menu while the application is running.
+### Models Select:
+Neptune model as default
+
+You can change character from the context menu while the application is running
 
 ### Auto Scale:
-If `self.auto_scale = True` parameter in package/neptune_main.py file is `True`, models is scaled based on the screen size
+If `auto_scale = True` parameter in config.ini file is `True`, models is scaled based on the screen size
 
 To disable the auto-scale function, change the parameter to `False`
 
 ### Models Scale:
-Edit `self.models_scale = 1` parameter in package/neptune_main.py file, to scale model
+Edit `models_scale = 1` parameter in config.ini file, to manual scale model
 
 ### Tracking the mouse position:
 Tracking the mouse position On as default
 
 If you want Off this function as default:
 
-Edit `self.tracking_mouse = True` parameter in package/neptune_main.py file is `False`
-
-You can also change this parameter from the context menu while the application is running.
+Change this parameter from the context menu while the application is running.
 
 ### Logs:
 If you want, you can enable logging to the console, Edit parameter to `True`.
@@ -74,6 +69,9 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 <div align="center" style="padding-top: 50px">
     <img src="./docs/model_preview/blanc.svg" alt="blanc" width="310px" height="310px">
     <img src="./docs/model_preview/white_heart.svg" alt="white_heart" width="340px" height="340px">
+</div>
+<div align="center" style="padding-top: 50px">
+    <img src="./docs/model_preview/vert.svg" alt="vert" width="320px" height="320px">
 </div>
 
 ## Important to read:

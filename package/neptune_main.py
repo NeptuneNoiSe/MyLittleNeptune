@@ -2,10 +2,10 @@ import os
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt, QTimer
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QApplication, QMenu, QMessageBox
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout
 from PySide6.QtGui import QGuiApplication
 from configparser import ConfigParser
 
@@ -134,12 +134,20 @@ class Win(QOpenGLWidget):
         self.clickInLA = False
         self.click = False
         self.a = 0
+        self.t = 0
         self.test = False
         self.read = False
         self.clickX = -1
         self.clickY = -1
         self.posX = -1
         self.posY = -1
+        self.layout = QVBoxLayout()
+        self.label = QLabel(self)
+        self.transform = False
+        self.goodness_form = None
+        self.transform_state = False
+        self.transform_lock = 0
+        self.input_lock = False
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -253,6 +261,7 @@ class Win(QOpenGLWidget):
 
         # Neptune Model parameters
         if self.models_switch == 0:
+            self.goodness_form = False
             self.mx_param = self.config.getint('Model', 'x_param')
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
@@ -335,6 +344,70 @@ class Win(QOpenGLWidget):
             self.tracking_mouse = False
             self.mouse_t.start(10000)
 
+        self.t_anim_in = os.path.join(
+            resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
+        self.t_anim_out = os.path.join(
+            resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
+        self.movie = QMovie(self.t_anim_in)
+        self.label.setMovie(self.movie)
+
+    def transform_initialize(self):
+        self.input_lock = True
+        if not self.goodness_form:
+            if self.character_name == "Neptune":
+                self.model.SetExpression("Star")
+            else:
+                self.model.SetExpression("Serious")
+        if self.goodness_form:
+            self.model.SetExpression("Funny")
+        self.movie = QMovie(self.t_anim_in)
+        self.label.setMovie(self.movie)
+        self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
+        self.movie.start()
+        self.label.move(-15,-5)
+        self.label.show()
+        self.transform = True
+        self.transform_lock = 0
+
+    def transform_complete(self):
+        if not self.goodness_form and self.transform_lock == 0:
+            self.transform_to_goodness_form()
+            self.transform_lock = 1
+        if self.goodness_form and self.transform_lock == 0:
+            self.transform_to_regular_form()
+            self.transform_lock = 1
+        self.model.ResetExpression()
+        self.model.SetExpression("Funny", fadeout = 10000)
+        self.movie = QMovie(self.t_anim_out)
+        self.label.setMovie(self.movie)
+        self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
+        self.movie.start()
+        self.label.move(-15, -5)
+        self.label.show()
+        self.transform = False
+
+    def transform_to_goodness_form(self):
+        # Transform to Goodness Form
+        if self.character_name == "Neptune":
+            self.on_action_purple_heart()
+        if self.character_name == "Noire":
+            self.on_action_black_heart()
+        if self.character_name == "Blanc":
+            self.on_action_white_heart()
+        if self.character_name == "Vert":
+            self.on_action_green_heart()
+
+    def transform_to_regular_form(self):
+        # Transform to Regular Form
+        if self.character_name == "Purple Heart":
+            self.on_action_neptune()
+        if self.character_name == "Black Heart":
+            self.on_action_noire()
+        if self.character_name == "White Heart":
+            self.on_action_blanc()
+        if self.character_name == "Green Heart":
+            self.on_action_vert()
+
     def mouse_tracking(self):
         self.tracking_mouse = False
         if self.posX <= 0 or self.posY <= 0:
@@ -382,7 +455,6 @@ class Win(QOpenGLWidget):
 
     def initializeGL(self) -> None:
         self.makeCurrent()
-
         if live2d.LIVE2D_VERSION == 3:
             live2d.glewInit()
 
@@ -390,39 +462,52 @@ class Win(QOpenGLWidget):
 
         if live2d.LIVE2D_VERSION == 3:
             if self.models_switch == 0:
+                self.goodness_form = False
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
 
             elif self.models_switch == 1:
+                self.goodness_form = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
 
             elif self.models_switch == 2:
+                self.goodness_form = False
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
 
             elif self.models_switch == 3:
+                self.goodness_form = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
 
             elif self.models_switch == 4:
+                self.goodness_form = False
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
             elif self.models_switch == 5:
+                self.goodness_form = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
             elif self.models_switch == 6:
+                self.goodness_form = False
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
+
+            elif self.models_switch == 7:
+                self.goodness_form = True
+                print(self.character_name + ":", "Hello! (^~^)/")
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -487,11 +572,25 @@ class Win(QOpenGLWidget):
 
         if self.idle_anim:
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=callback)
-            self.idle_anim = True
+            if self.t_count <= self.sleep_v:
+                self.idle_anim = True
+            else:
+                self.idle_anim = False
 
         if self.on_mouse_anim and self.on_mouse_switch == True:
             self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=callback)
             self.on_mouse_anim = True
+
+        if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == True:
+            self.label.movie().setScaledSize(QSize(int(1), int(1)))
+            self.movie.stop()
+            self.label.close()
+            self.transform_complete()
+
+        if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == False:
+            self.movie.stop()
+            self.label.close()
+            self.input_lock = False
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
@@ -546,11 +645,12 @@ class Win(QOpenGLWidget):
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInL2DArea(x, y):
+                # self.hl.close()
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
-                if not self.sleep:  # False
+                if not self.sleep and self.input_lock == False:  # False
                     self.model.SetExpression("Funny")
-                if self.sleep:  # True
+                if self.sleep and self.input_lock == False:  # True
                     self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
                     print("Left Button Pressed")
@@ -566,11 +666,11 @@ class Win(QOpenGLWidget):
                 if self.tap_body_switch:
                     self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=callback)
                     self.tap_body_anim = True
-                    if not self.sleep:
+                    if not self.sleep and self.input_lock == False:
                         self.model.ResetExpression()
                         self.model.SetRandomExpression(fadeout=3500)
                         self.t_count = 1
-                if self.sleep:
+                if self.sleep and self.input_lock == False:
                     self.model.ResetExpression()
                     self.model.SetExpression("Fear", fadeout=10000)
                     self.t_count = 1
@@ -599,10 +699,18 @@ class Win(QOpenGLWidget):
         action_normal = submenu_window.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), '&Normal')
         action_normal.triggered.connect(self.on_action_normal)
-        action_maximize = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_max.svg")), '&Maximize')
-        action_maximize.triggered.connect(self.on_action_maximize)
+        # action_maximize = submenu_window.addAction(QIcon(os.path.join(
+        #    resources.RESOURCES_DIRECTORY, "icons/window_max.svg")), '&Maximize')
+        # action_maximize.triggered.connect(self.on_action_maximize)
         context_menu.addMenu(submenu_window)
+        context_menu.addSeparator()
+
+        # Transform Action
+        transform_action = QAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/transform.svg")), '&Transform', self)
+        if not self.input_lock:
+            transform_action.triggered.connect(self.on_action_transform)
+        context_menu.addAction(transform_action)
         context_menu.addSeparator()
 
         # Character Submenu
@@ -611,31 +719,44 @@ class Win(QOpenGLWidget):
         # Neptune
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), '&Neptune')
-        action_neptune.triggered.connect(self.on_action_neptune)
+        if not self.input_lock:
+            action_neptune.triggered.connect(self.on_action_neptune)
         # Purple Heart
         action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), '&Purple Heart')
-        action_purple_heart.triggered.connect(self.on_action_purple_heart)
+        if not self.input_lock:
+            action_purple_heart.triggered.connect(self.on_action_purple_heart)
         # Noire
         action_noire = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/noire.ico")), '&Noire')
-        action_noire.triggered.connect(self.on_action_noire)
+        if not self.input_lock:
+            action_noire.triggered.connect(self.on_action_noire)
         # Black Heart
         action_black_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), '&Black Heart')
-        action_black_heart.triggered.connect(self.on_action_black_heart)
+        if not self.input_lock:
+            action_black_heart.triggered.connect(self.on_action_black_heart)
         # Blanc
         action_blanc = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), '&Blanc')
-        action_blanc.triggered.connect(self.on_action_blanc)
+        if not self.input_lock:
+            action_blanc.triggered.connect(self.on_action_blanc)
         # White Heart
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), '&White Heart')
-        action_white_heart.triggered.connect(self.on_action_white_heart)
+        if not self.input_lock:
+            action_white_heart.triggered.connect(self.on_action_white_heart)
         # Vert
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/vert.ico")), '&Vert')
-        action_white_heart.triggered.connect(self.on_action_vert)
+        if not self.input_lock:
+            action_white_heart.triggered.connect(self.on_action_vert)
+        # Green Heart
+        action_green_heart = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), '&Green Heart')
+        if not self.input_lock:
+            action_green_heart.triggered.connect(self.on_action_green_heart)
+
         context_menu.addMenu(submenu_character)
 
         # Animations Submenu
@@ -751,6 +872,10 @@ class Win(QOpenGLWidget):
         context_menu.exec(e.globalPos())
 
     # Context Menu Actions
+    def on_action_transform(self):
+        self.transform_initialize()
+        self.t_count = 1
+
     # Windows Actions
     def on_action_normal(self):
         self.showNormal()
@@ -763,7 +888,9 @@ class Win(QOpenGLWidget):
 
     # Characters Actions
     def on_action_neptune(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = False
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "Neptune"
         self.models_switch = 0
@@ -789,10 +916,13 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_purple_heart(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = True
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "Purple Heart"
         self.models_switch = 1
@@ -802,7 +932,7 @@ class Win(QOpenGLWidget):
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
         self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = -125
-        self.h_correction = 0
+        self.h_correction = 0 #-15
 
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
                       self.h_resize, self.w_correction, self.h_correction)
@@ -818,10 +948,13 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_noire(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = False
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "Noire"
         self.models_switch = 2
@@ -831,7 +964,7 @@ class Win(QOpenGLWidget):
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
         self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
-        self.h_correction = 0
+        self.h_correction = 0 #-15
 
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
                       self.h_resize, self.w_correction, self.h_correction)
@@ -847,10 +980,13 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_black_heart(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = True
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "Black Heart"
         self.models_switch = 3
@@ -860,7 +996,7 @@ class Win(QOpenGLWidget):
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
         self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
-        self.h_correction = 0
+        self.h_correction = 0 #-25
 
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
                       self.h_resize, self.w_correction, self.h_correction)
@@ -876,10 +1012,13 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_blanc(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = False
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "Blanc"
         self.models_switch = 4
@@ -905,10 +1044,13 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_white_heart(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = True
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "White Heart"
         self.models_switch = 5
@@ -918,7 +1060,7 @@ class Win(QOpenGLWidget):
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
         self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
-        self.h_correction = 0
+        self.h_correction = 0 #-10
 
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
                       self.h_resize, self.w_correction, self.h_correction)
@@ -934,10 +1076,13 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_vert(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
+        self.goodness_form = False
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
         self.resize(1, 1)
         self.character_name = "Vert"
         self.models_switch = 6
@@ -947,7 +1092,7 @@ class Win(QOpenGLWidget):
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
         self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
         self.w_correction = 10
-        self.h_correction = 0
+        self.h_correction = 0 #-20
 
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
                       self.h_resize, self.w_correction, self.h_correction)
@@ -963,7 +1108,39 @@ class Win(QOpenGLWidget):
         self.resizeGL(int(self.w_resize),int(self.h_resize))
         live2d.clearBuffer()
         self.model.Update()
-        print(self.character_name + ":", "Hello! (^~^)/")
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_green_heart(self):
+        self.goodness_form = True
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
+        self.resize(1, 1)
+        self.character_name = "Green Heart"
+        self.models_switch = 7
+        self.t_count = 1
+        self.mx_param = 700
+        self.my_param = 700
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
+        self.w_correction = -100
+        self.h_correction = 0 #-40
+
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        self.model.LoadModelJson(os.path.join(
+            resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
+        self.resizeGL(int(self.w_resize),int(self.h_resize))
+        self.model.Update()
+        if not self.transform:
+            print(self.character_name + ":", "Hello! (^~^)/")
 
     # Animations Actions
     def on_action_idle_true(self):

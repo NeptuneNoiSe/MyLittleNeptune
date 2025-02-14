@@ -6,8 +6,8 @@
     <br>
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12.0-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
-    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.5-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.1.7-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.3.6-orange" alt="live2d-py Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.1.8-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -26,7 +26,7 @@
 ### Run:
 `python package/neptune_main.py`
 
-### Configuration file
+### Configuration file:
 The configuration file is created at the first startup, as config.ini
 
 ### Models Select:
@@ -72,6 +72,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 </div>
 <div align="center" style="padding-top: 50px">
     <img src="./docs/model_preview/vert.svg" alt="vert" width="320px" height="320px">
+    <img src="./docs/model_preview/green_heart.svg" alt="green_heart" width="330px" height="330px">
 </div>
 
 ## Important to read:

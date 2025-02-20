@@ -67,6 +67,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 </div>
 <div align="center" style="padding-top: 50px">
     <img src="./docs/model_preview/nepgear.svg" alt="nepgear" width="320px" height="320px">
+    <img src="./docs/model_preview/purple_sister.svg" alt="purple_sister" width="330px" height="330px">
 </div>
 
 ## Important to read:

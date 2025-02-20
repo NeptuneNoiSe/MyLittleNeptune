@@ -271,6 +271,10 @@ class Win(QOpenGLWidget):
         self.transform_lock = 0
         self.input_lock = False
         self.can_transform = False
+        self.trm_mx = -50
+        self.trm_my = 5
+        self.trm_cmx = 100
+        self.trm_cmy = 5
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -395,9 +399,10 @@ class Win(QOpenGLWidget):
             self.model.SetExpression("Funny")
         self.movie = QMovie(self.t_anim_in)
         self.label.setMovie(self.movie)
-        self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
+        self.label.movie().setScaledSize(QSize(int(self.w_resize + self.trm_cmx * self.models_scale),
+                                               int(self.h_resize + self.trm_cmy * self.models_scale)))
         self.movie.start()
-        self.label.move(-25,-5)
+        self.label.move(int(self.trm_mx * self.models_scale),int(self.trm_my * self.models_scale))
         self.label.show()
         self.transform = True
         self.transform_lock = 0
@@ -413,9 +418,10 @@ class Win(QOpenGLWidget):
         self.model.SetExpression("Funny", fadeout = 10000)
         self.movie = QMovie(self.t_anim_out)
         self.label.setMovie(self.movie)
-        self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
+        self.label.movie().setScaledSize(QSize(int(self.w_resize + self.trm_cmx * self.models_scale),
+                                               int(self.h_resize + self.trm_cmy * self.models_scale)))
         self.movie.start()
-        self.label.move(-25, -5)
+        self.label.move(int(self.trm_mx * self.models_scale),int(self.trm_my * self.models_scale))
         self.label.show()
         self.transform = False
 
@@ -429,6 +435,8 @@ class Win(QOpenGLWidget):
             self.on_action_white_heart()
         if self.character_name == "Vert":
             self.on_action_green_heart()
+        if self.character_name == "NepGear":
+            self.on_action_purple_sister()
 
     def transform_to_regular_form(self):
         # Transform to Regular Form
@@ -440,6 +448,8 @@ class Win(QOpenGLWidget):
             self.on_action_blanc()
         if self.character_name == "Green Heart":
             self.on_action_vert()
+        if self.character_name == "Purple Sister":
+            self.on_action_nepgear()
 
     def mouse_tracking(self):
         self.tracking_mouse = False
@@ -564,10 +574,17 @@ class Win(QOpenGLWidget):
 
             elif self.models_switch == 8:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
+
+            elif self.models_switch == 9:
+                self.goodness_form = True
+                self.can_transform = True
+                print(self.character_name + ":", "Hello! (^~^)/")
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -717,7 +734,10 @@ class Win(QOpenGLWidget):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 if not self.sleep and self.input_lock == False:  # False
-                    self.model.SetExpression("Funny")
+                    if self.character_name == "Purple Sister":
+                        self.model.SetExpression("Smile")
+                    else:
+                        self.model.SetExpression("Funny")
                 if self.sleep and self.input_lock == False:  # True
                     self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
@@ -860,6 +880,15 @@ class Win(QOpenGLWidget):
             self.my_param = 620
             self.w_correction = 10
             self.h_correction = 0
+
+        if self.character_name == "Purple Sister":
+            self.character_name = "Purple Sister"
+            self.models_switch = 9
+            self.t_count = 1
+            self.mx_param = 380
+            self.my_param = 640
+            self.w_correction = 10
+            self.h_correction = 0
         # Update Size and Position
         self.resize(1, 1)
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
@@ -899,6 +928,9 @@ class Win(QOpenGLWidget):
         if self.character_name == "NepGear":
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
+        if self.character_name == "Purple Sister":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
@@ -979,6 +1011,11 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), '&NepGear')
         if not self.input_lock:
             action_nepgear.triggered.connect(self.on_action_nepgear)
+        # Purple Sister
+        action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), '&Purple Sister')
+        if not self.input_lock:
+            action_purple_sister.triggered.connect(self.on_action_purple_sister)
 
         context_menu.addMenu(submenu_character)
 
@@ -1169,11 +1206,23 @@ class Win(QOpenGLWidget):
 
     def on_action_nepgear(self):
         self.goodness_form = False
-        self.can_transform = False
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
         self.character_name = "NepGear"
         self.models_switch = 8
+        self.model_update()
+        if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
+            print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_purple_sister(self):
+        self.goodness_form = True
+        self.can_transform = True
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
+        self.character_name = "Purple Sister"
+        self.models_switch = 9
         self.model_update()
         if not self.transform:
             self.model.SetExpression("Smile", fadeout=10000)

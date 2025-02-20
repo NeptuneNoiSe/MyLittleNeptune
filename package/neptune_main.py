@@ -1,11 +1,14 @@
 import os
+import argparse
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
+from PySide6 import QtCore
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize, Slot
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
+    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox
 from PySide6.QtGui import QGuiApplication
 from configparser import ConfigParser
 
@@ -27,9 +30,14 @@ def main_config():
         config.add_section('WindowFlags')
         config.set('WindowFlags', 'X11BypassWindowManagerHint', 'True')
         config.set('WindowFlags', 'FramelessWindowHint', 'True')
+        config.set('WindowFlags', 'WindowMinimizeButtonHint', 'True')
+        config.set('WindowFlags', 'WindowMaximizeButtonHint', 'False')
+        config.set('WindowFlags', 'WindowCloseButtonHint', 'True')
         config.set('WindowFlags', 'WindowTransparentForInput', 'False')
-        config.set('WindowFlags', 'WindowType_Mask', 'True')
+        config.set('WindowFlags', 'WindowType_Mask', 'False')
         config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
+        config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
+
 
     if not config.has_section('Scale'):
         config.add_section('Scale')
@@ -89,6 +97,100 @@ def models_config(ms,cn,mx,my,wr,hr,wc,hc):
         config.write(cfg)
     #return
 
+def auto_scale(height):
+    sc_height_size = height
+    if sc_height_size == 120:
+        a_scale = 0.111
+    if sc_height_size == 160:
+        a_scale = 0.148
+    if sc_height_size == 192:
+        a_scale = 0.178
+    if sc_height_size == 240:
+        a_scale = 0.222
+    if sc_height_size == 272:
+        a_scale = 0.252
+    if sc_height_size == 320:
+        a_scale = 0.296
+    if sc_height_size == 360:
+        a_scale = 0.333
+    if sc_height_size == 384:
+        a_scale = 0.355
+    if sc_height_size == 480:
+        a_scale = 0.444
+    if sc_height_size == 540:
+        a_scale = 0.5
+    if sc_height_size == 576:
+        a_scale = 0.533
+    if sc_height_size == 600:
+        a_scale = 0.555
+    if sc_height_size == 640:
+        a_scale = 0.592
+    if sc_height_size == 720:
+        a_scale = 0.666
+    if sc_height_size == 768:
+        a_scale = 0.711
+    if sc_height_size == 800:
+        a_scale = 0.741
+    if sc_height_size == 810:
+        a_scale = 0.75
+    if sc_height_size == 864:
+        a_scale = 0.8
+    if sc_height_size == 900:
+        a_scale = 0.833
+    if sc_height_size == 960:
+        a_scale = 0.888
+    if sc_height_size == 1024:
+        a_scale = 0.948
+    if sc_height_size == 1050:
+        a_scale = 0.972
+    if sc_height_size == 1080:
+        a_scale = 1
+    if sc_height_size == 1152:
+        a_scale = 1.066
+    if sc_height_size == 1200:
+        a_scale = 1.111
+    if sc_height_size == 1280:
+        a_scale = 1.185
+    if sc_height_size == 1350:
+        a_scale = 1.25
+    if sc_height_size == 1440:
+        a_scale = 1.333
+    if sc_height_size == 1536:
+        a_scale = 1.422
+    if sc_height_size == 1600:
+        a_scale = 1.481
+    if sc_height_size == 1620:
+        a_scale = 1.5
+    if sc_height_size == 1800:
+        a_scale = 1.666
+    if sc_height_size == 2048:
+        a_scale = 1.896
+    if sc_height_size == 2160:
+        a_scale = 2
+    if sc_height_size == 2400:
+        a_scale = 2.222
+    if sc_height_size == 2560:
+        a_scale = 2.370
+    if sc_height_size == 2880:
+        a_scale = 2.666
+    if sc_height_size == 3072:
+        a_scale = 2.844
+    if sc_height_size == 3200:
+        a_scale = 2.963
+    if sc_height_size == 3240:
+        a_scale = 3
+    if sc_height_size == 3384:
+        a_scale = 3.133
+    if sc_height_size == 4096:
+        a_scale = 3.793
+    if sc_height_size == 4320:
+        a_scale = 4
+    if sc_height_size == 4800:
+        a_scale = 4.444
+    if sc_height_size == 8640:
+        a_scale = 8
+    return a_scale
+
 config_main = main_config()
 
 def callback():
@@ -99,6 +201,25 @@ def callback():
 class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
+        self.hintFlags: list[Qt.WindowType] = [
+            Qt.WindowType.MSWindowsFixedSizeDialogHint,
+            Qt.WindowType.X11BypassWindowManagerHint,
+            Qt.WindowType.FramelessWindowHint,
+            Qt.WindowType.NoDropShadowWindowHint,
+            Qt.WindowType.WindowTitleHint,
+            Qt.WindowType.WindowSystemMenuHint,
+            Qt.WindowType.WindowMinimizeButtonHint,
+            Qt.WindowType.WindowMaximizeButtonHint,
+            Qt.WindowType.WindowCloseButtonHint,
+            Qt.WindowType.WindowContextHelpButtonHint,
+            Qt.WindowType.WindowShadeButtonHint,
+            Qt.WindowType.WindowStaysOnTopHint,
+            Qt.WindowType.WindowStaysOnBottomHint,
+            Qt.WindowType.CustomizeWindowHint,
+            Qt.WindowType.WindowTransparentForInput,
+            Qt.WindowType.WindowType_Mask
+        ]
+
         self.config = config_main
         # LOGS:`
         # l2d-py Main Log:
@@ -128,6 +249,7 @@ class Win(QOpenGLWidget):
         self.w_correction = 0
         self.h_correction = 0
         self.a_scale = 1
+        self.auto_scale_init = False
         self.mouse_move = False
         self.mouse_timer = None
         self.isInLA = False
@@ -148,6 +270,7 @@ class Win(QOpenGLWidget):
         self.transform_state = False
         self.transform_lock = 0
         self.input_lock = False
+        self.can_transform = False
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -165,96 +288,9 @@ class Win(QOpenGLWidget):
 
         # Screens Size for AutoScale
         if self.auto_scale:
-            if self.sc_height_size == 120:
-                self.a_scale = 0.111
-            if self.sc_height_size == 160:
-                self.a_scale = 0.148
-            if self.sc_height_size == 192:
-                self.a_scale = 0.178
-            if self.sc_height_size == 240:
-                self.a_scale = 0.222
-            if self.sc_height_size == 272:
-                self.a_scale = 0.252
-            if self.sc_height_size == 320:
-                self.a_scale = 0.296
-            if self.sc_height_size == 360:
-                self.a_scale = 0.333
-            if self.sc_height_size == 384:
-                self.a_scale = 0.355
-            if self.sc_height_size == 480:
-                self.a_scale = 0.444
-            if self.sc_height_size == 540:
-                self.a_scale = 0.5
-            if self.sc_height_size == 576:
-                self.a_scale = 0.533
-            if self.sc_height_size == 600:
-                self.a_scale = 0.555
-            if self.sc_height_size == 640:
-                self.a_scale = 0.592
-            if self.sc_height_size == 720:
-                self.a_scale = 0.666
-            if self.sc_height_size == 768:
-                self.a_scale = 0.711
-            if self.sc_height_size == 800:
-                self.a_scale = 0.741
-            if self.sc_height_size == 810:
-                self.a_scale = 0.75
-            if self.sc_height_size == 864:
-                self.a_scale = 0.8
-            if self.sc_height_size == 900:
-                self.a_scale = 0.833
-            if self.sc_height_size == 960:
-                self.a_scale = 0.888
-            if self.sc_height_size == 1024:
-                self.a_scale = 0.948
-            if self.sc_height_size == 1050:
-                self.a_scale = 0.972
-            if self.sc_height_size == 1080:
-                self.a_scale = 1
-            if self.sc_height_size == 1152:
-                self.a_scale = 1.066
-            if self.sc_height_size == 1200:
-                self.a_scale = 1.111
-            if self.sc_height_size == 1280:
-                self.a_scale = 1.185
-            if self.sc_height_size == 1350:
-                self.a_scale = 1.25
-            if self.sc_height_size == 1440:
-                self.a_scale = 1.333
-            if self.sc_height_size == 1536:
-                self.a_scale = 1.422
-            if self.sc_height_size == 1600:
-                self.a_scale = 1.481
-            if self.sc_height_size == 1620:
-                self.a_scale = 1.5
-            if self.sc_height_size == 1800:
-                self.a_scale = 1.666
-            if self.sc_height_size == 2048:
-                self.a_scale = 1.896
-            if self.sc_height_size == 2160:
-                self.a_scale = 2
-            if self.sc_height_size == 2400:
-                self.a_scale = 2.222
-            if self.sc_height_size == 2560:
-                self.a_scale = 2.370
-            if self.sc_height_size == 2880:
-                self.a_scale = 2.666
-            if self.sc_height_size == 3072:
-                self.a_scale = 2.844
-            if self.sc_height_size == 3200:
-                self.a_scale = 2.963
-            if self.sc_height_size == 3240:
-                self.a_scale = 3
-            if self.sc_height_size == 3384:
-                self.a_scale = 3.133
-            if self.sc_height_size == 4096:
-                self.a_scale = 3.793
-            if self.sc_height_size == 4320:
-                self.a_scale = 4
-            if self.sc_height_size == 4800:
-                self.a_scale = 4.444
-            if self.sc_height_size == 8640:
-                self.a_scale = 8
+            self.a_scale = auto_scale(self.sc_height_size)
+        if not self.auto_scale:
+            self.a_scale = 1
 
         # Character Name
         self.character_name = self.config.get('Model', 'character_name')
@@ -262,6 +298,7 @@ class Win(QOpenGLWidget):
         # Neptune Model parameters
         if self.models_switch == 0:
             self.goodness_form = False
+            self.can_transform = True
             self.mx_param = self.config.getint('Model', 'x_param')
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
@@ -291,17 +328,6 @@ class Win(QOpenGLWidget):
         self.move(int(self.frmX), int(self.frmY))
 
         # Windows flags
-        self.setWindowFlag(Qt.WindowType.X11BypassWindowManagerHint,
-                           self.config.getboolean('WindowFlags', 'X11BypassWindowManagerHint'))
-        self.setWindowFlag(Qt.WindowType.FramelessWindowHint,
-                           self.config.getboolean('WindowFlags', 'FramelessWindowHint'))
-        self.setWindowFlag(Qt.WindowType.WindowTransparentForInput,
-                           self.config.getboolean('WindowFlags', 'WindowTransparentForInput'))
-        self.setWindowFlag(Qt.WindowType.WindowType_Mask,
-                           self.config.getboolean('WindowFlags', 'WindowType_Mask'))
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint,
-                           self.config.getboolean('WindowFlags', 'WindowStaysOnTopHint'))
-
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         #self.wavHandler = WavHandler()
@@ -344,6 +370,11 @@ class Win(QOpenGLWidget):
             self.tracking_mouse = False
             self.mouse_t.start(10000)
 
+        # Input release timer
+        self.mouse_input_timer = QTimer()
+        self.mouse_input_timer.timeout.connect(self.transparent_input)
+
+        # Transform Animations Resource
         self.t_anim_in = os.path.join(
             resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
         self.t_anim_out = os.path.join(
@@ -356,6 +387,8 @@ class Win(QOpenGLWidget):
         if not self.goodness_form:
             if self.character_name == "Neptune":
                 self.model.SetExpression("Star")
+            elif self.character_name == "NepGear":
+                self.model.SetExpression("Star")
             else:
                 self.model.SetExpression("Serious")
         if self.goodness_form:
@@ -364,7 +397,7 @@ class Win(QOpenGLWidget):
         self.label.setMovie(self.movie)
         self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
         self.movie.start()
-        self.label.move(-15,-5)
+        self.label.move(-25,-5)
         self.label.show()
         self.transform = True
         self.transform_lock = 0
@@ -382,7 +415,7 @@ class Win(QOpenGLWidget):
         self.label.setMovie(self.movie)
         self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
         self.movie.start()
-        self.label.move(-15, -5)
+        self.label.move(-25, -5)
         self.label.show()
         self.transform = False
 
@@ -416,42 +449,54 @@ class Win(QOpenGLWidget):
 
         if self.mouse_tracking_log:
             print("Mouse is steady", self.tracking_mouse, self.posX,self.posY)
-        self.model.Drag(self.posX,self.posY)
 
-    def idle_timer(self):
-        # Timer Diagnostic Log
-        if self.timer_log:
-            print(self.t_count, "-", self.condition, "Condition")
-        self.t_count += 1
-        if self.t_count <= self.sad_v:
-            self.condition = "Idle"
-        if self.t_count <=self.sleep_v and self.idle_switch == True:
-            self.idle_anim = True
-        if self.t_count >=10 and self.sleep_switch == False:
-            self.t_count = 1
-        if self.t_count == self.sad_v:
-            self.condition = "Sad"
-            self.model.SetExpression("Sad")
-            print(self.character_name + ":", "I'm Sad")
-        if self.t_count == self.tired_v and self.sleep_switch == True:
-            self.condition = "Tired"
-            self.model.SetExpression("Tired")
-            print(self.character_name + ":", "I'm Tired")
-        if self.t_count == self.sleep_v and self.sleep_switch == True:
-            self.condition = "Sleep"
-            self.model.SetExpression("ClosedEyes")
-            if self.tracking_mouse_switch:
-                self.tracking_mouse = False
-            self.idle_anim = False
-            self.sleep = True
-            print(self.character_name + ":", "I'm Sleep")
-        if self.t_count == self.wake_up_v and self.sleep_switch == True:
-            self.model.ResetExpression()
-            self.model.SetExpression("Star", fadeout=10000)
-            self.model.SetExpression("Serious", fadeout=10000)
-            self.t_count = 0
-            self.idle_anim = True
-            print(self.character_name + ":", "I'm WakeUp")
+        try:
+            self.model.Drag(self.posX,self.posY)
+        except AttributeError:
+            pass
+
+    def transparent_input(self):
+        self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowTransparentForInput)
+        self.show()
+        self.mouse_input_timer.stop()
+
+    def idle_timer(self) -> None:
+        try:
+            # Timer Diagnostic Log
+            if self.timer_log:
+                print(self.t_count, "-", self.condition, "Condition")
+            self.t_count += 1
+            if self.t_count <= self.sad_v:
+                self.condition = "Idle"
+            if self.t_count <= self.sleep_v and self.idle_switch == True:
+                self.idle_anim = True
+            if self.t_count >= 10 and self.sleep_switch == False:
+                self.t_count = 1
+            if self.t_count == self.sad_v:
+                self.condition = "Sad"
+                self.model.SetExpression("Sad")
+                print(self.character_name + ":", "I'm Sad")
+            if self.t_count == self.tired_v and self.sleep_switch == True:
+                self.condition = "Tired"
+                self.model.SetExpression("Tired")
+                print(self.character_name + ":", "I'm Tired")
+            if self.t_count == self.sleep_v and self.sleep_switch == True:
+                self.condition = "Sleep"
+                self.model.SetExpression("ClosedEyes")
+                if self.tracking_mouse_switch:
+                    self.tracking_mouse = False
+                self.idle_anim = False
+                self.sleep = True
+                print(self.character_name + ":", "I'm Sleep")
+            if self.t_count == self.wake_up_v and self.sleep_switch == True:
+                self.model.ResetExpression()
+                self.model.SetExpression("Star", fadeout=10000)
+                self.model.SetExpression("Serious", fadeout=10000)
+                self.t_count = 0
+                self.idle_anim = True
+                print(self.character_name + ":", "I'm WakeUp")
+        except AttributeError:
+            pass
 
     def initializeGL(self) -> None:
         self.makeCurrent()
@@ -463,51 +508,66 @@ class Win(QOpenGLWidget):
         if live2d.LIVE2D_VERSION == 3:
             if self.models_switch == 0:
                 self.goodness_form = False
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
 
             elif self.models_switch == 1:
                 self.goodness_form = True
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
 
             elif self.models_switch == 2:
                 self.goodness_form = False
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
 
             elif self.models_switch == 3:
                 self.goodness_form = True
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
 
             elif self.models_switch == 4:
                 self.goodness_form = False
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
             elif self.models_switch == 5:
                 self.goodness_form = True
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
             elif self.models_switch == 6:
                 self.goodness_form = False
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
 
             elif self.models_switch == 7:
                 self.goodness_form = True
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
+
+            elif self.models_switch == 8:
+                self.goodness_form = False
+                self.can_transform = False
+                print(self.character_name + ":", "Hello! (^~^)/")
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -569,6 +629,10 @@ class Win(QOpenGLWidget):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
+        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
+        self.model.SetAutoBlinkEnable(auto_blink_param)
+        auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
+        self.model.SetAutoBreathEnable(auto_breath_param)
 
         if self.idle_anim:
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=callback)
@@ -576,10 +640,6 @@ class Win(QOpenGLWidget):
                 self.idle_anim = True
             else:
                 self.idle_anim = False
-
-        if self.on_mouse_anim and self.on_mouse_switch == True:
-            self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=callback)
-            self.on_mouse_anim = True
 
         if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == True:
             self.label.movie().setScaledSize(QSize(int(1), int(1)))
@@ -623,8 +683,14 @@ class Win(QOpenGLWidget):
             self.isInLA = True
             self.clickInLA = True
             self.on_mouse_anim = True
+
             if self.t_count >= self.sleep_v:
                 self.on_mouse_anim = False
+
+            if self.on_mouse_anim and self.on_mouse_switch == True:
+                self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=callback)
+                self.on_mouse_anim = True
+
             if self.l2d_area_log:
                 print("in l2d area")
         else:
@@ -632,7 +698,6 @@ class Win(QOpenGLWidget):
             self.clickInLA = False
             if self.l2d_area_log:
                 print("out of l2d area")
-
         self.update()
 
     def isInL2DArea(self, click_x, click_y):
@@ -641,11 +706,14 @@ class Win(QOpenGLWidget):
         return alpha > 0
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and not self.input_lock:
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
+            if not self.clickInLA:
+                self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowTransparentForInput)
+                self.show()
+                self.mouse_input_timer.start(5000)
             if self.isInL2DArea(x, y):
-                # self.hl.close()
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 if not self.sleep and self.input_lock == False:  # False
@@ -656,8 +724,9 @@ class Win(QOpenGLWidget):
                     print("Left Button Pressed")
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and not self.input_lock:
             x, y = event.scenePosition().x(), event.scenePosition().y()
+            self.mouse_input_timer.start(6000)
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
                 self.model.Touch(x, y)
@@ -683,8 +752,160 @@ class Win(QOpenGLWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()
-        if self.clickInLA:
+        if self.clickInLA and not self.input_lock:
             self.move(int(self.x() + x - self.clickX), int(self.y() + y - self.clickY))
+
+    def setSettings(self, flags: Qt.WindowType) -> None:
+        #print(f"setSettings flags: {flags}")
+        self.setWindowFlags(flags)
+
+        windowType = flags & Qt.WindowType.WindowType_Mask
+
+        text = windowType.name
+
+        for hintFlag in self.hintFlags:
+            if flags & hintFlag:
+                text += f"\n| Qt.{hintFlag.name}"
+
+
+        if self.auto_scale and self.auto_scale_init:
+            self.a_scale = auto_scale(self.sc_height_size)
+            self.model_update()
+
+        if not self.auto_scale and self.auto_scale_init:
+            self.a_scale = 1
+            self.model_update()
+
+        self.auto_scale_init = True
+
+    def model_update(self):
+        # Update Params
+        if self.character_name == "Neptune":
+            self.character_name = "Neptune"
+            self.models_switch = 0
+            self.t_count = 1
+            self.mx_param = 350
+            self.my_param = 600
+            self.w_correction = 10
+            self.h_correction = 0
+
+        if self.character_name == "Purple Heart":
+            self.character_name = "Purple Heart"
+            self.models_switch = 1
+            self.t_count = 1
+            self.mx_param = 800
+            self.my_param = 720
+            self.w_correction = -125
+            self.h_correction = 0  # -15
+
+        if self.character_name == "Noire":
+            self.character_name = "Noire"
+            self.models_switch = 2
+            self.t_count = 1
+            self.mx_param = 420
+            self.my_param = 700
+            self.w_correction = 10
+            self.h_correction = 0  # -15
+
+        if self.character_name == "Black Heart":
+            self.character_name = "Black Heart"
+            self.models_switch = 3
+            self.t_count = 1
+            self.mx_param = 430
+            self.my_param = 700
+            self.w_correction = 10
+            self.h_correction = 0  # -25
+
+        if self.character_name == "Blanc":
+            self.character_name = "Blanc"
+            self.models_switch = 4
+            self.t_count = 1
+            self.mx_param = 440
+            self.my_param = 600
+            self.w_correction = 10
+            self.h_correction = 0
+
+        if self.character_name == "White Heart":
+            self.character_name = "White Heart"
+            self.models_switch = 5
+            self.t_count = 1
+            self.mx_param = 390
+            self.my_param = 650
+            self.w_correction = 10
+            self.h_correction = 0  # -10
+
+        if self.character_name == "Vert":
+            self.character_name = "Vert"
+            self.models_switch = 6
+            self.t_count = 1
+            self.mx_param = 500
+            self.my_param = 670
+            self.w_correction = 10
+            self.h_correction = 0  # -20
+
+        if self.character_name == "Green Heart":
+            self.character_name = "Green Heart"
+            self.models_switch = 7
+            self.t_count = 1
+            self.mx_param = 700
+            self.my_param = 700
+            self.w_correction = -100
+            self.h_correction = 0  # -40
+
+        if self.character_name == "NepGear":
+            self.character_name = "NepGear"
+            self.models_switch = 8
+            self.t_count = 1
+            self.mx_param = 340
+            self.my_param = 620
+            self.w_correction = 10
+            self.h_correction = 0
+        # Update Size and Position
+        self.resize(1, 1)
+        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
+        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
+        self.resize(int(self.w_resize), int(self.h_resize))
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+
+        # ReInitialize Model
+        self.model: live2d.LAppModel | None = None
+        self.model = live2d.LAppModel()
+        if self.character_name == "Neptune":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
+        if self.character_name == "Purple Heart":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
+        if self.character_name == "Noire":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
+        if self.character_name == "Black Heart":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
+        if self.character_name == "Blanc":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
+        if self.character_name == "White Heart":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
+        if self.character_name == "Vert":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
+        if self.character_name == "Green Heart":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
+        if self.character_name == "NepGear":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
+        self.resizeGL(int(self.w_resize), int(self.h_resize))
+        # Save Config
+        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
+                      self.h_resize, self.w_correction, self.h_correction)
+        # live2d Update
+        live2d.clearBuffer()
+        self.model.Update()
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -699,9 +920,6 @@ class Win(QOpenGLWidget):
         action_normal = submenu_window.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), '&Normal')
         action_normal.triggered.connect(self.on_action_normal)
-        # action_maximize = submenu_window.addAction(QIcon(os.path.join(
-        #    resources.RESOURCES_DIRECTORY, "icons/window_max.svg")), '&Maximize')
-        # action_maximize.triggered.connect(self.on_action_maximize)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
@@ -756,6 +974,11 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), '&Green Heart')
         if not self.input_lock:
             action_green_heart.triggered.connect(self.on_action_green_heart)
+        # NepGear
+        action_nepgear = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), '&NepGear')
+        if not self.input_lock:
+            action_nepgear.triggered.connect(self.on_action_nepgear)
 
         context_menu.addMenu(submenu_character)
 
@@ -805,55 +1028,12 @@ class Win(QOpenGLWidget):
         context_menu.addMenu(submenu_animations)
         context_menu.addSeparator()
 
-        # Settings Submenu
-        submenu_settings = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), '&Settings')
-
-        # Auto Blink Submenu
-        submenu_auto_blink = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/eye_closed.svg")), '&Auto Blink')
-        submenu_settings.addMenu(submenu_auto_blink)
-        action_auto_blink_true = submenu_auto_blink.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_auto_blink_true.triggered.connect(self.on_action_auto_blink_true)
-        action_auto_blink_false = submenu_auto_blink.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_auto_blink_false.triggered.connect(self.on_action_auto_blink_false)
-
-        # Auto Breath Submenu
-        submenu_auto_breath = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/breath.svg")), '&Auto Breath')
-        submenu_settings.addMenu(submenu_auto_breath)
-        action_auto_breath_true = submenu_auto_breath.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_auto_breath_true.triggered.connect(self.on_action_auto_breath_true)
-        action_auto_breath_false = submenu_auto_breath.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_auto_breath_false.triggered.connect(self.on_action_auto_breath_false)
-
-        # Tracking Mouse Submenu
-        submenu_tracking_mouse = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/mouse.svg")), '&Tracking Mouse Position')
-        submenu_settings.addMenu(submenu_tracking_mouse)
-        action_tracking_mouse_true = submenu_tracking_mouse.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_tracking_mouse_true.triggered.connect(self.on_action_tracking_mouse_true)
-        action_tracking_mouse_false = submenu_tracking_mouse.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_tracking_mouse_false.triggered.connect(self.on_action_tracking_mouse_false)
-
-        # Sleep Submenu
-        submenu_sleep = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/sleep.svg")), '&Sleep')
-        submenu_settings.addMenu(submenu_sleep)
-        action_sleep_true = submenu_sleep.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_sleep_true.triggered.connect(self.on_action_sleep_true)
-        action_sleep_false = submenu_sleep.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_sleep_false.triggered.connect(self.on_action_sleep_false)
-
-        context_menu.addMenu(submenu_settings)
+        # Settings Action
+        settings_action = QAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), '&Settings', self)
+        if not self.input_lock:
+            settings_action.triggered.connect(self.on_action_settings)
+        context_menu.addAction(settings_action)
         context_menu.addSeparator()
 
         # About Action
@@ -861,7 +1041,6 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/about.svg")), '&About', self)
         about_action.triggered.connect(self.on_action_about)
         context_menu.addAction(about_action)
-        #context_menu.addSeparator()
 
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
@@ -870,11 +1049,6 @@ class Win(QOpenGLWidget):
         context_menu.addAction(exit_action)
 
         context_menu.exec(e.globalPos())
-
-    # Context Menu Actions
-    def on_action_transform(self):
-        self.transform_initialize()
-        self.t_count = 1
 
     # Windows Actions
     def on_action_normal(self):
@@ -886,260 +1060,123 @@ class Win(QOpenGLWidget):
     def on_action_maximize(self):
         self.showMaximized()
 
+    # Context Menu Actions
+    def on_action_transform(self):
+        if self.can_transform:
+            self.transform_initialize()
+            self.t_count = 1
+            settings.close()
+        if not self.can_transform:
+            self.model.SetExpression("Sad", fadeout=10000)
+            print(self.character_name + ":", "I'm Can't Transform (T_T)")
+
     # Characters Actions
     def on_action_neptune(self):
         self.goodness_form = False
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Neptune"
         self.models_switch = 0
-        self.t_count = 1
-        self.mx_param = 350
-        self.my_param = 600
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = 10
-        self.h_correction = 0
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_purple_heart(self):
         self.goodness_form = True
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Purple Heart"
         self.models_switch = 1
-        self.t_count = 1
-        self.mx_param = 800
-        self.my_param = 720
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = -125
-        self.h_correction = 0 #-15
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_noire(self):
         self.goodness_form = False
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Noire"
         self.models_switch = 2
-        self.t_count = 1
-        self.mx_param = 420
-        self.my_param = 700
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = 10
-        self.h_correction = 0 #-15
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_black_heart(self):
         self.goodness_form = True
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Black Heart"
         self.models_switch = 3
-        self.t_count = 1
-        self.mx_param = 430
-        self.my_param = 700
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = 10
-        self.h_correction = 0 #-25
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_blanc(self):
         self.goodness_form = False
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Blanc"
         self.models_switch = 4
-        self.t_count = 1
-        self.mx_param = 440
-        self.my_param = 600
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = 10
-        self.h_correction = 0
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_white_heart(self):
         self.goodness_form = True
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "White Heart"
         self.models_switch = 5
-        self.t_count = 1
-        self.mx_param = 390
-        self.my_param = 650
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = 10
-        self.h_correction = 0 #-10
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_vert(self):
         self.goodness_form = False
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Vert"
         self.models_switch = 6
-        self.t_count = 1
-        self.mx_param = 500
-        self.my_param = 670
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = 10
-        self.h_correction = 0 #-20
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        live2d.clearBuffer()
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     def on_action_green_heart(self):
         self.goodness_form = True
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
-        self.resize(1, 1)
         self.character_name = "Green Heart"
         self.models_switch = 7
-        self.t_count = 1
-        self.mx_param = 700
-        self.my_param = 700
-        self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
-        self.h_resize = int(self.my_param * self.a_scale * self.models_scale)
-        self.w_correction = -100
-        self.h_correction = 0 #-40
-
-        models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
-        self.model: live2d.LAppModel | None = None
-        self.model = live2d.LAppModel()
-        self.model.LoadModelJson(os.path.join(
-            resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
-        self.resizeGL(int(self.w_resize),int(self.h_resize))
-        self.model.Update()
+        self.model_update()
         if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
+            print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_nepgear(self):
+        self.goodness_form = False
+        self.can_transform = False
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
+        self.character_name = "NepGear"
+        self.models_switch = 8
+        self.model_update()
+        if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
     # Animations Actions
@@ -1195,68 +1232,8 @@ class Win(QOpenGLWidget):
         self.model.StopAllMotions()
 
     # Settings Actions
-    def on_action_auto_blink_true(self):
-        self.config.set('Settings', 'auto_blink', 'True')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
-        self.model.SetAutoBlinkEnable(auto_blink_param)
-
-    def on_action_auto_blink_false(self):
-        self.config.set('Settings', 'auto_blink', 'False')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
-        self.model.SetAutoBlinkEnable(auto_blink_param)
-
-    def on_action_auto_breath_true(self):
-        self.config.set('Settings', 'auto_breath', 'True')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
-        self.model.SetAutoBreathEnable(auto_breath_param)
-
-    def on_action_auto_breath_false(self):
-        self.config.set('Settings', 'auto_breath', 'False')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
-        self.model.SetAutoBreathEnable(auto_breath_param)
-
-    def on_action_tracking_mouse_true(self):
-        self.config.set('Settings', 'tracking_mouse', 'True')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        self.tracking_mouse_switch = True
-
-    def on_action_tracking_mouse_false(self):
-        self.config.set('Settings', 'tracking_mouse', 'False')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        self.tracking_mouse_switch = False
-
-    def on_action_sleep_true(self):
-        self.config.set('Settings', 'sleep', 'True')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        self.sleep_switch = True
-        self.t_count = 1
-
-    def on_action_sleep_false(self):
-        self.config.set('Settings', 'sleep', 'False')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-        self.sleep_switch = False
-        self.sleep = False
-        self.t_count = 1
+    def on_action_settings(self):
+        settings.show()
 
     def on_action_about(self):
         QMessageBox.information(self, "About Me", "My Little Neptune\n"
@@ -1265,7 +1242,7 @@ class Win(QOpenGLWidget):
                                                   "\nDeveloper: Neptune NoiSe"
                                                   "\n(https://github.com/NeptuneNoiSe)\n"
                                                   "\nThe application is based on:"
-                                                  "\nPython 3.12.0"
+                                                  "\nPython 3.12"
                                                   "\nPySide6"
                                                   "\nlive2d-py by Arkueid (https://github.com/Arkueid/live2d-py)"
                                                   "\nCompile Heart / Idea Factory Live2D Models\n\n"
@@ -1275,8 +1252,259 @@ class Win(QOpenGLWidget):
         print(self.character_name + ":", "GoodBye (^3^)")
         exit(0)
 
+class SettingsWindow(QWidget):
+    def __init__(self, pythonic_window_registration: bool = False):
+        super().__init__()
+        self.config = config_main
+        self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
+        self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
+        self.getWindowFlag_WindowCloseButtonHint = self.config.getboolean('WindowFlags', 'WindowCloseButtonHint')
+        self.getWindowFlag_WindowStaysOnTopHint = self.config.getboolean('WindowFlags', 'WindowStaysOnTopHint')
+        self.getWindowFlag_WindowStaysOnBottomHint = self.config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
+        self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags', 'WindowTransparentForInput')
+        self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
+
+        self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
+        self.models_scale = self.config.getfloat('Scale', 'models_scale')
+        self.auto_blink = self.config.getboolean('Settings', 'auto_blink')
+        self.auto_breath = self.config.getboolean('Settings', 'auto_breath')
+        self.tracking_mouse = self.config.getboolean('Settings', 'tracking_mouse')
+        self.sleep = self.config.getboolean('Settings', 'sleep')
+
+        self.pythonic_reg = pythonic_window_registration
+        self.mainWindow = Win()
+
+        self.createHintsGroupBox()
+        self.createScaleGroupBox()
+        self.createOtherGroupBox()
+
+        # Windows Flags Control
+        self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
+        self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
+        self.windowStaysOnBottomCheckBox.setChecked(self.getWindowFlag_WindowStaysOnBottomHint)
+
+        # Settings Control
+        self.autoScaleCheckBox.setChecked(self.auto_scale)
+        self.autoBlinkCheckBox.setChecked(self.auto_blink)
+        self.autoBreathCheckBox.setChecked(self.auto_breath)
+        self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
+        self.sleepCheckBox.setChecked(self.sleep)
+
+        quitButton = QPushButton("&Quit")
+        quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+
+        bottomLayout = QHBoxLayout()
+        bottomLayout.addStretch()
+        bottomLayout.addWidget(quitButton)
+
+        mainLayout = QHBoxLayout()
+        mainLayout.addWidget(self.hintsGroupBox)
+        mainLayout.addWidget(self.scaleGroupBox)
+        mainLayout.addWidget(self.otherGroupBox)
+
+        mainLayout.addLayout(bottomLayout)
+        self.setLayout(mainLayout)
+        self.setWindowTitle("Settings")
+        self.mainWindow.setWindowTitle("My Little Neptune")
+        self.mainWindow.setWindowIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+        self.updateMainWindow()
+
+    @Slot()
+    def updateMainWindow(self) -> None:
+        flags = Qt.WindowType()
+        if self.getWindowFlag_WindowMinimizeButtonHint:
+            flags = flags | Qt.WindowType.WindowMinimizeButtonHint
+
+        if self.getWindowFlag_WindowCloseButtonHint:
+            flags = flags | Qt.WindowType.WindowCloseButtonHint
+
+        if self.getWindowFlag_WindowTransparentForInput:
+            flags = flags | Qt.WindowType.WindowTransparentForInput
+
+        if self.getWindowFlag_WindowType_Mask:
+            flags = flags | Qt.WindowType.WindowType_Mask
+
+        if self.pythonic_reg:
+            for checkBox, flag in self.hintFlagWidgets:
+                if checkBox.isChecked():
+                    flags = flags | flag
+        else:
+            if self.framelessWindowCheckBox.isChecked():
+                flags = flags | Qt.WindowType.FramelessWindowHint
+                self.config.set('WindowFlags', 'FramelessWindowHint', 'True')
+                self.framelessWindowCheckBox.setChecked(True)
+            else:
+                self.config.set('WindowFlags', 'FramelessWindowHint', 'False')
+                self.framelessWindowCheckBox.setChecked(False)
+
+            if self.windowStaysOnTopCheckBox.isChecked():
+                flags = flags | Qt.WindowType.WindowStaysOnTopHint
+                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
+                self.windowStaysOnTopCheckBox.setChecked(True)
+                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
+                self.windowStaysOnBottomCheckBox.setChecked(False)
+            else:
+                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
+                self.windowStaysOnTopCheckBox.setChecked(False)
+                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
+                self.windowStaysOnBottomCheckBox.setChecked(True)
+
+            if self.windowStaysOnBottomCheckBox.isChecked():
+                flags = flags | Qt.WindowType.WindowStaysOnBottomHint
+                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
+                self.windowStaysOnBottomCheckBox.setChecked(True)
+                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
+                self.windowStaysOnTopCheckBox.setChecked(False)
+            else:
+                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
+                self.windowStaysOnBottomCheckBox.setChecked(False)
+                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
+                self.windowStaysOnTopCheckBox.setChecked(True)
+
+            if self.autoScaleCheckBox.isChecked():
+                self.config.set('Scale', 'auto_scale', 'True')
+                self.autoScaleCheckBox.setChecked(True)
+                self.modelScaleBox.setReadOnly(True)
+                self.mainWindow.auto_scale = True
+                self.mainWindow.models_scale = 1
+                self.modelScaleBox.setValue(1)
+                self.config.set('Scale', 'models_scale', '1')
+            else:
+                self.config.set('Scale', 'auto_scale', 'False')
+                self.autoScaleCheckBox.setChecked(False)
+                self.modelScaleBox.setReadOnly(False)
+                self.mainWindow.auto_scale = False
+                scale_value = self.modelScaleBox.value()
+                self.mainWindow.models_scale = scale_value
+                self.config.set('Scale', 'models_scale', str(scale_value))
+
+            if self.autoBlinkCheckBox.isChecked():
+                self.config.set('Settings', 'auto_blink', 'True')
+                self.autoBlinkCheckBox.setChecked(True)
+            else:
+                self.config.set('Settings', 'auto_blink', 'False')
+                self.autoBlinkCheckBox.setChecked(False)
+
+            if self.autoBreathCheckBox.isChecked():
+                self.config.set('Settings', 'auto_breath', 'True')
+                self.autoBreathCheckBox.setChecked(True)
+            else:
+                self.config.set('Settings', 'auto_breath', 'False')
+                self.autoBreathCheckBox.setChecked(False)
+
+            if self.trackingMouseCheckBox.isChecked():
+                self.config.set('Settings', 'tracking_mouse', 'True')
+                self.trackingMouseCheckBox.setChecked(True)
+                self.mainWindow.tracking_mouse_switch = True
+            else:
+                self.config.set('Settings', 'tracking_mouse', 'False')
+                self.trackingMouseCheckBox.setChecked(False)
+                self.mainWindow.tracking_mouse_switch = False
+
+            if self.sleepCheckBox.isChecked():
+                self.config.set('Settings', 'sleep', 'True')
+                self.sleepCheckBox.setChecked(True)
+                self.mainWindow.sleep_switch = True
+            else:
+                self.config.set('Settings', 'sleep', 'False')
+                self.sleepCheckBox.setChecked(False)
+                self.mainWindow.sleep_switch = False
+
+        with open('config.ini', 'w') as cfg:
+            cfg: [str, int, tuple, object]
+            self.config.write(cfg)
+
+        self.mainWindow.setSettings(flags)
+        self.mainWindow.show()
+
+    def createHintsGroupBox(self) -> None:
+        self.hintsGroupBox = QGroupBox("Window")
+        layout = QGridLayout()
+
+        if self.pythonic_reg:
+            self.hintFlagWidgets: list[tuple[QCheckBox, Qt.WindowType]] = [
+                (self.createCheckBox(flag.name), flag) for flag in
+                self.mainWindow.hintFlags
+            ]
+
+            for i, (checkBox, _) in enumerate(self.hintFlagWidgets):
+                layout.addWidget(checkBox, i%3, int(i/3))
+
+            self.typeFlagWidgets[0][0].setChecked(True)
+        else:
+            self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
+            self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
+            self.windowStaysOnBottomCheckBox = self.createCheckBox("Window stays on bottom")
+
+            layout.addWidget(self.framelessWindowCheckBox, 0, 0)
+            layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
+            layout.addWidget(self.windowStaysOnBottomCheckBox, 2, 0)
+        self.hintsGroupBox.setLayout(layout)
+
+    def createScaleGroupBox(self) -> None:
+        self.scaleGroupBox = QGroupBox("Scale")
+        layout = QGridLayout()
+        self.modelFlagWidgets = QCheckBox()
+        self.modelScaleBox = QDoubleSpinBox()
+        self.text = QLabel("Scale multiplier:")
+        self.modelScaleBox.setMinimum(0.1)
+        self.modelScaleBox.setMaximum(10)
+        self.modelScaleBox.setSingleStep(0.5)
+        self.modelScaleBox.setValue(self.models_scale)
+
+        self.modelFlagWidgets.setChecked(True)
+
+        self.autoScaleCheckBox = self.createCheckBox("AutoScale")
+
+        layout.addWidget(self.autoScaleCheckBox)
+        layout.addWidget(self.text)
+        layout.addWidget(self.modelScaleBox)
+
+        self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
+        self.modelScaleBox.valueChanged.connect(self.updateMainWindow)
+
+        self.scaleGroupBox.setLayout(layout)
+
+    def createOtherGroupBox(self) -> None:
+        self.otherGroupBox = QGroupBox("Other")
+        layout = QGridLayout()
+        self.otherFlagWidgets = QCheckBox()
+        self.otherFlagWidgets.setChecked(True)
+        self.autoBlinkCheckBox = self.createCheckBox("Auto Blink")
+        self.autoBreathCheckBox = self.createCheckBox("Auto Breath")
+        self.trackingMouseCheckBox = self.createCheckBox("Tracking Mouse Position")
+        self.sleepCheckBox = self.createCheckBox("Sleep")
+
+        self.autoBlinkCheckBox.setIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/eye_closed.svg")))
+        self.autoBreathCheckBox.setIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/breath.svg")))
+        self.trackingMouseCheckBox.setIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/mouse.svg")))
+        self.sleepCheckBox.setIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/sleep.svg")))
+
+        layout.addWidget(self.autoBlinkCheckBox)
+        layout.addWidget(self.autoBreathCheckBox)
+        layout.addWidget(self.trackingMouseCheckBox)
+        layout.addWidget(self.sleepCheckBox)
+
+        self.otherFlagWidgets.clicked.connect(self.updateMainWindow)
+        self.otherGroupBox.setLayout(layout)
+
+    def createCheckBox(self, text: str) -> QCheckBox:
+        checkBox = QCheckBox(text)
+        checkBox.clicked.connect(self.updateMainWindow) # type: ignore[attr-defined]
+        return checkBox
+
 if __name__ == "__main__":
     import sys
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--pythonic", action='store_true',
+                        help="Create and register widgets pythonically.")
+    args = parser.parse_args()
 
     live2d.init()
     format = QSurfaceFormat.defaultFormat()
@@ -1285,11 +1513,12 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     win = Win()
-    win.setWindowTitle("My Little Neptune")
-    win.setWindowIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+    #win.show()
 
-    win.show()
+    settings = SettingsWindow(args.pythonic)
+    settings.setWindowIcon(QIcon(os.path.join(
+        resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
+    # settings.show()
     app.exec()
 
     live2d.dispose()

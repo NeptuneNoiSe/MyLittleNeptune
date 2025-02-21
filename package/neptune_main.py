@@ -1023,38 +1023,32 @@ class Win(QOpenGLWidget):
         submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/animation.svg")), '&Animations')
 
-        # Idle Animation Submenu
-        submenu_idle = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/idle_w.svg")), '&Idle Animation')
-        submenu_animations.addMenu(submenu_idle)
-        action_idle_true = submenu_idle.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_idle_true.triggered.connect(self.on_action_idle_true)
-        action_idle_false = submenu_idle.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_idle_false.triggered.connect(self.on_action_idle_false)
+        # Idle Animation CheckBox
+        action_checked_idle = submenu_animations.addAction('Idle Animation')
+        action_checked_idle.setCheckable(True)
+        action_checked_idle.setChecked(self.idle_switch)
+        if action_checked_idle.isChecked():
+            action_checked_idle.triggered.connect(self.on_action_idle_false)
+        else:
+            action_checked_idle.triggered.connect(self.on_action_idle_true)
 
-        # On Mouse Animation Submenu
-        submenu_on_mouse = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/pointer.svg")), '&On Mouse Animation')
-        submenu_animations.addMenu(submenu_on_mouse)
-        action_on_mouse_true = submenu_on_mouse.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_on_mouse_true.triggered.connect(self.on_action_on_mouse_true)
-        action_on_mouse_false = submenu_on_mouse.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_on_mouse_false.triggered.connect(self.on_action_on_mouse_false)
+        # OnMouse Animation CheckBox
+        action_checked_on_mouse = submenu_animations.addAction('OnMouse Animation')
+        action_checked_on_mouse.setCheckable(True)
+        action_checked_on_mouse.setChecked(self.on_mouse_switch)
+        if action_checked_on_mouse.isChecked():
+            action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_false)
+        else:
+            action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_true)
 
-        # Tap Body Animation Submenu
-        submenu_tap_body = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/tap.svg")), '&Tap Body Animation')
-        submenu_animations.addMenu(submenu_tap_body)
-        action_tap_body_true = submenu_tap_body.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_tap_body_true.triggered.connect(self.on_action_tap_body_true)
-        action_tap_body_false = submenu_tap_body.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_tap_body_false.triggered.connect(self.on_action_tap_body_false)
+        # Tap Body Animation CheckBox
+        action_checked_tap_body = submenu_animations.addAction('Tap Body Animation')
+        action_checked_tap_body.setCheckable(True)
+        action_checked_tap_body.setChecked(self.tap_body_switch)
+        if action_checked_tap_body.isChecked():
+            action_checked_tap_body.triggered.connect(self.on_action_tap_body_false)
+        else:
+            action_checked_tap_body.triggered.connect(self.on_action_tap_body_true)
 
         # Stop All Motions
         submenu_animations.addSeparator()
@@ -1229,7 +1223,8 @@ class Win(QOpenGLWidget):
             print(self.character_name + ":", "Hello! (^~^)/")
 
     # Animations Actions
-    def on_action_idle_true(self):
+    def on_action_idle_true(self, checked: bool):
+        QMessageBox.information(self, "Message", f"Idle Animation: {checked}")
         self.config.set('Animations', 'idle_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1237,7 +1232,8 @@ class Win(QOpenGLWidget):
         self.idle_switch = True
         self.idle_anim = True
 
-    def on_action_idle_false(self):
+    def on_action_idle_false(self, checked: bool):
+        QMessageBox.information(self, "Message", f"Idle Animation: {checked}")
         self.config.set('Animations', 'idle_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1245,7 +1241,8 @@ class Win(QOpenGLWidget):
         self.idle_switch = False
         self.idle_anim = False
 
-    def on_action_on_mouse_true(self):
+    def on_action_on_mouse_true(self, checked: bool):
+        QMessageBox.information(self, "Message", f"OnMouse Animation: {checked}")
         self.config.set('Animations', 'on_mouse_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1253,7 +1250,8 @@ class Win(QOpenGLWidget):
         self.on_mouse_switch = True
         self.on_mouse_anim = True
 
-    def on_action_on_mouse_false(self):
+    def on_action_on_mouse_false(self, checked: bool):
+        QMessageBox.information(self, "Message", f"OnMouse Animation: {checked}")
         self.config.set('Animations', 'on_mouse_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1261,7 +1259,8 @@ class Win(QOpenGLWidget):
         self.on_mouse_switch = False
         self.on_mouse_anim = False
 
-    def on_action_tap_body_true(self):
+    def on_action_tap_body_true(self, checked: bool):
+        QMessageBox.information(self, "Message", f"Tap Body Animation: {checked}")
         self.config.set('Animations', 'tap_body_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1269,7 +1268,8 @@ class Win(QOpenGLWidget):
         self.tap_body_switch = True
         self.tap_body_anim = True
 
-    def on_action_tap_body_false(self):
+    def on_action_tap_body_false(self, checked: bool):
+        QMessageBox.information(self, "Message", f"Tap Body Animation: {checked}")
         self.config.set('Animations', 'tap_body_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1298,8 +1298,34 @@ class Win(QOpenGLWidget):
                                                   "\n© 2025")
 
     def on_action_quit(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
-        exit(0)
+        self.model.SetExpression("Cry")
+        answer = QMessageBox.question(self,
+                                      'Message',
+                                      self.character_name + ": " + "Do you really want to leave? T_T",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                      QMessageBox.StandardButton.No)
+        if answer == QMessageBox.StandardButton.Yes:
+            print(self.character_name + ":", "GoodBye (^3^)")
+            exit(0)
+        else:
+            self.model.ResetExpression()
+            self.model.SetExpression("Happy",5000)
+
+    def closeEvent(self, event):
+        self.model.SetExpression("Cry")
+        settings.close()
+        answer = QMessageBox.question(self,
+                                      'Message',
+                                      self.character_name + ": " + "Do you really want to leave? T_T",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                      QMessageBox.StandardButton.No)
+        if answer == QMessageBox.StandardButton.Yes:
+            event.accept()
+            print(self.character_name + ":", "GoodBye (^3^)")
+        else:
+            self.model.ResetExpression()
+            self.model.SetExpression("Happy", 5000)
+            event.ignore()
 
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
@@ -1562,12 +1588,10 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     win = Win()
-    #win.show()
 
     settings = SettingsWindow(args.pythonic)
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
-    # settings.show()
     app.exec()
 
     live2d.dispose()

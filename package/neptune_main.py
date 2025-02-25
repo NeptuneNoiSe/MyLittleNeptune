@@ -271,6 +271,10 @@ class Win(QOpenGLWidget):
         self.transform_lock = 0
         self.input_lock = False
         self.can_transform = False
+        self.trm_mx = -50
+        self.trm_my = 5
+        self.trm_cmx = 100
+        self.trm_cmy = 5
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -395,9 +399,10 @@ class Win(QOpenGLWidget):
             self.model.SetExpression("Funny")
         self.movie = QMovie(self.t_anim_in)
         self.label.setMovie(self.movie)
-        self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
+        self.label.movie().setScaledSize(QSize(int(self.w_resize + self.trm_cmx * self.models_scale),
+                                               int(self.h_resize + self.trm_cmy * self.models_scale)))
         self.movie.start()
-        self.label.move(-25,-5)
+        self.label.move(int(self.trm_mx * self.models_scale),int(self.trm_my * self.models_scale))
         self.label.show()
         self.transform = True
         self.transform_lock = 0
@@ -413,9 +418,10 @@ class Win(QOpenGLWidget):
         self.model.SetExpression("Funny", fadeout = 10000)
         self.movie = QMovie(self.t_anim_out)
         self.label.setMovie(self.movie)
-        self.label.movie().setScaledSize(QSize(int(self.w_resize + 50), int(self.h_resize + 5)))
+        self.label.movie().setScaledSize(QSize(int(self.w_resize + self.trm_cmx * self.models_scale),
+                                               int(self.h_resize + self.trm_cmy * self.models_scale)))
         self.movie.start()
-        self.label.move(-25, -5)
+        self.label.move(int(self.trm_mx * self.models_scale),int(self.trm_my * self.models_scale))
         self.label.show()
         self.transform = False
 
@@ -429,6 +435,8 @@ class Win(QOpenGLWidget):
             self.on_action_white_heart()
         if self.character_name == "Vert":
             self.on_action_green_heart()
+        if self.character_name == "NepGear":
+            self.on_action_purple_sister()
 
     def transform_to_regular_form(self):
         # Transform to Regular Form
@@ -440,6 +448,8 @@ class Win(QOpenGLWidget):
             self.on_action_blanc()
         if self.character_name == "Green Heart":
             self.on_action_vert()
+        if self.character_name == "Purple Sister":
+            self.on_action_nepgear()
 
     def mouse_tracking(self):
         self.tracking_mouse = False
@@ -564,10 +574,17 @@ class Win(QOpenGLWidget):
 
             elif self.models_switch == 8:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 print(self.character_name + ":", "Hello! (^~^)/")
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
+
+            elif self.models_switch == 9:
+                self.goodness_form = True
+                self.can_transform = True
+                print(self.character_name + ":", "Hello! (^~^)/")
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -641,13 +658,13 @@ class Win(QOpenGLWidget):
             else:
                 self.idle_anim = False
 
-        if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == True:
+        if self.movie.currentFrameNumber() >= self.movie.frameCount() - 3 and self.transform == True:
             self.label.movie().setScaledSize(QSize(int(1), int(1)))
             self.movie.stop()
             self.label.close()
             self.transform_complete()
 
-        if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == False:
+        if self.movie.currentFrameNumber() >= self.movie.frameCount() - 3 and self.transform == False:
             self.movie.stop()
             self.label.close()
             self.input_lock = False
@@ -717,7 +734,10 @@ class Win(QOpenGLWidget):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 if not self.sleep and self.input_lock == False:  # False
-                    self.model.SetExpression("Funny")
+                    if self.character_name == "Purple Sister":
+                        self.model.SetExpression("Smile")
+                    else:
+                        self.model.SetExpression("Funny")
                 if self.sleep and self.input_lock == False:  # True
                     self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
@@ -860,6 +880,15 @@ class Win(QOpenGLWidget):
             self.my_param = 620
             self.w_correction = 10
             self.h_correction = 0
+
+        if self.character_name == "Purple Sister":
+            self.character_name = "Purple Sister"
+            self.models_switch = 9
+            self.t_count = 1
+            self.mx_param = 380
+            self.my_param = 640
+            self.w_correction = 10
+            self.h_correction = 0
         # Update Size and Position
         self.resize(1, 1)
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
@@ -899,6 +928,9 @@ class Win(QOpenGLWidget):
         if self.character_name == "NepGear":
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
+        if self.character_name == "Purple Sister":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
@@ -979,6 +1011,11 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), '&NepGear')
         if not self.input_lock:
             action_nepgear.triggered.connect(self.on_action_nepgear)
+        # Purple Sister
+        action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), '&Purple Sister')
+        if not self.input_lock:
+            action_purple_sister.triggered.connect(self.on_action_purple_sister)
 
         context_menu.addMenu(submenu_character)
 
@@ -986,38 +1023,32 @@ class Win(QOpenGLWidget):
         submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/animation.svg")), '&Animations')
 
-        # Idle Animation Submenu
-        submenu_idle = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/idle_w.svg")), '&Idle Animation')
-        submenu_animations.addMenu(submenu_idle)
-        action_idle_true = submenu_idle.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_idle_true.triggered.connect(self.on_action_idle_true)
-        action_idle_false = submenu_idle.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_idle_false.triggered.connect(self.on_action_idle_false)
+        # Idle Animation CheckBox
+        action_checked_idle = submenu_animations.addAction('Idle Animation')
+        action_checked_idle.setCheckable(True)
+        action_checked_idle.setChecked(self.idle_switch)
+        if action_checked_idle.isChecked():
+            action_checked_idle.triggered.connect(self.on_action_idle_false)
+        else:
+            action_checked_idle.triggered.connect(self.on_action_idle_true)
 
-        # On Mouse Animation Submenu
-        submenu_on_mouse = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/pointer.svg")), '&On Mouse Animation')
-        submenu_animations.addMenu(submenu_on_mouse)
-        action_on_mouse_true = submenu_on_mouse.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_on_mouse_true.triggered.connect(self.on_action_on_mouse_true)
-        action_on_mouse_false = submenu_on_mouse.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_on_mouse_false.triggered.connect(self.on_action_on_mouse_false)
+        # OnMouse Animation CheckBox
+        action_checked_on_mouse = submenu_animations.addAction('OnMouse Animation')
+        action_checked_on_mouse.setCheckable(True)
+        action_checked_on_mouse.setChecked(self.on_mouse_switch)
+        if action_checked_on_mouse.isChecked():
+            action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_false)
+        else:
+            action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_true)
 
-        # Tap Body Animation Submenu
-        submenu_tap_body = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/tap.svg")), '&Tap Body Animation')
-        submenu_animations.addMenu(submenu_tap_body)
-        action_tap_body_true = submenu_tap_body.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/check.svg")), '&Enable')
-        action_tap_body_true.triggered.connect(self.on_action_tap_body_true)
-        action_tap_body_false = submenu_tap_body.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/cross.svg")), '&Disable')
-        action_tap_body_false.triggered.connect(self.on_action_tap_body_false)
+        # Tap Body Animation CheckBox
+        action_checked_tap_body = submenu_animations.addAction('Tap Body Animation')
+        action_checked_tap_body.setCheckable(True)
+        action_checked_tap_body.setChecked(self.tap_body_switch)
+        if action_checked_tap_body.isChecked():
+            action_checked_tap_body.triggered.connect(self.on_action_tap_body_false)
+        else:
+            action_checked_tap_body.triggered.connect(self.on_action_tap_body_true)
 
         # Stop All Motions
         submenu_animations.addSeparator()
@@ -1044,7 +1075,7 @@ class Win(QOpenGLWidget):
 
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Exit', self)
+            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Quit', self)
         exit_action.triggered.connect(self.on_action_quit)
         context_menu.addAction(exit_action)
 
@@ -1169,7 +1200,7 @@ class Win(QOpenGLWidget):
 
     def on_action_nepgear(self):
         self.goodness_form = False
-        self.can_transform = False
+        self.can_transform = True
         if not self.transform:
             print(self.character_name + ":", "GoodBye (^3^)")
         self.character_name = "NepGear"
@@ -1179,8 +1210,21 @@ class Win(QOpenGLWidget):
             self.model.SetExpression("Smile", fadeout=10000)
             print(self.character_name + ":", "Hello! (^~^)/")
 
+    def on_action_purple_sister(self):
+        self.goodness_form = True
+        self.can_transform = True
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
+        self.character_name = "Purple Sister"
+        self.models_switch = 9
+        self.model_update()
+        if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
+            print(self.character_name + ":", "Hello! (^~^)/")
+
     # Animations Actions
     def on_action_idle_true(self):
+        QMessageBox.information(self, "Message", f"Idle Animation: Enable")
         self.config.set('Animations', 'idle_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1189,6 +1233,7 @@ class Win(QOpenGLWidget):
         self.idle_anim = True
 
     def on_action_idle_false(self):
+        QMessageBox.information(self, "Message", f"Idle Animation: Disable")
         self.config.set('Animations', 'idle_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1197,6 +1242,7 @@ class Win(QOpenGLWidget):
         self.idle_anim = False
 
     def on_action_on_mouse_true(self):
+        QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
         self.config.set('Animations', 'on_mouse_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1205,6 +1251,7 @@ class Win(QOpenGLWidget):
         self.on_mouse_anim = True
 
     def on_action_on_mouse_false(self):
+        QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
         self.config.set('Animations', 'on_mouse_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1213,6 +1260,7 @@ class Win(QOpenGLWidget):
         self.on_mouse_anim = False
 
     def on_action_tap_body_true(self):
+        QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
         self.config.set('Animations', 'tap_body_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1221,6 +1269,7 @@ class Win(QOpenGLWidget):
         self.tap_body_anim = True
 
     def on_action_tap_body_false(self):
+        QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
         self.config.set('Animations', 'tap_body_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1249,8 +1298,36 @@ class Win(QOpenGLWidget):
                                                   "\n© 2025")
 
     def on_action_quit(self):
-        print(self.character_name + ":", "GoodBye (^3^)")
-        exit(0)
+        self.model.SetExpression("Cry")
+        answer = QMessageBox.question(self,
+                                      'Quit',
+                                      self.character_name + ": " + "Do you really want to leave? T_T",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                      QMessageBox.StandardButton.No)
+        if answer == QMessageBox.StandardButton.Yes:
+            print(self.character_name + ":", "GoodBye (^3^)")
+            exit(0)
+        else:
+            self.t_count = 1
+            self.model.ResetExpression()
+            self.model.SetExpression("Happy",5000)
+
+    def closeEvent(self, event):
+        self.model.SetExpression("Cry")
+        settings.close()
+        answer = QMessageBox.question(self,
+                                      'Quit',
+                                      self.character_name + ": " + "Do you really want to leave? T_T",
+                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                      QMessageBox.StandardButton.No)
+        if answer == QMessageBox.StandardButton.Yes:
+            event.accept()
+            print(self.character_name + ":", "GoodBye (^3^)")
+        else:
+            self.t_count = 1
+            self.model.ResetExpression()
+            self.model.SetExpression("Happy", 5000)
+            event.ignore()
 
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
@@ -1513,12 +1590,10 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     win = Win()
-    #win.show()
 
     settings = SettingsWindow(args.pythonic)
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
-    # settings.show()
     app.exec()
 
     live2d.dispose()

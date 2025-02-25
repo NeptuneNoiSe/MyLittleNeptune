@@ -658,13 +658,13 @@ class Win(QOpenGLWidget):
             else:
                 self.idle_anim = False
 
-        if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == True:
+        if self.movie.currentFrameNumber() >= self.movie.frameCount() - 3 and self.transform == True:
             self.label.movie().setScaledSize(QSize(int(1), int(1)))
             self.movie.stop()
             self.label.close()
             self.transform_complete()
 
-        if self.movie.currentFrameNumber() == self.movie.frameCount() - 1 and self.transform == False:
+        if self.movie.currentFrameNumber() >= self.movie.frameCount() - 3 and self.transform == False:
             self.movie.stop()
             self.label.close()
             self.input_lock = False
@@ -1075,7 +1075,7 @@ class Win(QOpenGLWidget):
 
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Exit', self)
+            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Quit', self)
         exit_action.triggered.connect(self.on_action_quit)
         context_menu.addAction(exit_action)
 
@@ -1223,8 +1223,8 @@ class Win(QOpenGLWidget):
             print(self.character_name + ":", "Hello! (^~^)/")
 
     # Animations Actions
-    def on_action_idle_true(self, checked: bool):
-        QMessageBox.information(self, "Message", f"Idle Animation: {checked}")
+    def on_action_idle_true(self):
+        QMessageBox.information(self, "Message", f"Idle Animation: Enable")
         self.config.set('Animations', 'idle_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1232,8 +1232,8 @@ class Win(QOpenGLWidget):
         self.idle_switch = True
         self.idle_anim = True
 
-    def on_action_idle_false(self, checked: bool):
-        QMessageBox.information(self, "Message", f"Idle Animation: {checked}")
+    def on_action_idle_false(self):
+        QMessageBox.information(self, "Message", f"Idle Animation: Disable")
         self.config.set('Animations', 'idle_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1241,8 +1241,8 @@ class Win(QOpenGLWidget):
         self.idle_switch = False
         self.idle_anim = False
 
-    def on_action_on_mouse_true(self, checked: bool):
-        QMessageBox.information(self, "Message", f"OnMouse Animation: {checked}")
+    def on_action_on_mouse_true(self):
+        QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
         self.config.set('Animations', 'on_mouse_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1250,8 +1250,8 @@ class Win(QOpenGLWidget):
         self.on_mouse_switch = True
         self.on_mouse_anim = True
 
-    def on_action_on_mouse_false(self, checked: bool):
-        QMessageBox.information(self, "Message", f"OnMouse Animation: {checked}")
+    def on_action_on_mouse_false(self):
+        QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
         self.config.set('Animations', 'on_mouse_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1259,8 +1259,8 @@ class Win(QOpenGLWidget):
         self.on_mouse_switch = False
         self.on_mouse_anim = False
 
-    def on_action_tap_body_true(self, checked: bool):
-        QMessageBox.information(self, "Message", f"Tap Body Animation: {checked}")
+    def on_action_tap_body_true(self):
+        QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
         self.config.set('Animations', 'tap_body_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1268,8 +1268,8 @@ class Win(QOpenGLWidget):
         self.tap_body_switch = True
         self.tap_body_anim = True
 
-    def on_action_tap_body_false(self, checked: bool):
-        QMessageBox.information(self, "Message", f"Tap Body Animation: {checked}")
+    def on_action_tap_body_false(self):
+        QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
         self.config.set('Animations', 'tap_body_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1300,7 +1300,7 @@ class Win(QOpenGLWidget):
     def on_action_quit(self):
         self.model.SetExpression("Cry")
         answer = QMessageBox.question(self,
-                                      'Message',
+                                      'Quit',
                                       self.character_name + ": " + "Do you really want to leave? T_T",
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
@@ -1308,6 +1308,7 @@ class Win(QOpenGLWidget):
             print(self.character_name + ":", "GoodBye (^3^)")
             exit(0)
         else:
+            self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy",5000)
 
@@ -1315,7 +1316,7 @@ class Win(QOpenGLWidget):
         self.model.SetExpression("Cry")
         settings.close()
         answer = QMessageBox.question(self,
-                                      'Message',
+                                      'Quit',
                                       self.character_name + ": " + "Do you really want to leave? T_T",
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
@@ -1323,6 +1324,7 @@ class Win(QOpenGLWidget):
             event.accept()
             print(self.character_name + ":", "GoodBye (^3^)")
         else:
+            self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy", 5000)
             event.ignore()

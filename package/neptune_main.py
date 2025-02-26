@@ -586,12 +586,19 @@ class Win(QOpenGLWidget):
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
 
+            elif self.models_switch == 10:
+                self.goodness_form = False
+                self.can_transform = False
+                print(self.character_name + ":", "Hello! (^~^)/")
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
+
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
-        # fps = 30
-        self.startTimer(int(1000 / 30))
+        # fps
+        self.startTimer(int(1000 / 120))
 
     def resizeGL(self, w: int, h: int) -> None:
         # 使模型的参数按窗口大小进行更新
@@ -749,7 +756,7 @@ class Win(QOpenGLWidget):
             self.mouse_input_timer.start(6000)
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
-                self.model.Touch(x, y)
+                # self.model.Touch(x, y)
                 self.clickInLA = False
                 self.tap_body_anim = True
                 if self.tap_body_switch:
@@ -804,8 +811,8 @@ class Win(QOpenGLWidget):
             self.character_name = "Neptune"
             self.models_switch = 0
             self.t_count = 1
-            self.mx_param = 350
-            self.my_param = 600
+            self.mx_param = 300
+            self.my_param = 650
             self.w_correction = 10
             self.h_correction = 0
 
@@ -876,8 +883,8 @@ class Win(QOpenGLWidget):
             self.character_name = "NepGear"
             self.models_switch = 8
             self.t_count = 1
-            self.mx_param = 340
-            self.my_param = 620
+            self.mx_param = 300
+            self.my_param = 660
             self.w_correction = 10
             self.h_correction = 0
 
@@ -885,8 +892,17 @@ class Win(QOpenGLWidget):
             self.character_name = "Purple Sister"
             self.models_switch = 9
             self.t_count = 1
-            self.mx_param = 380
-            self.my_param = 640
+            self.mx_param = 400
+            self.my_param = 660
+            self.w_correction = 10
+            self.h_correction = 0
+
+        if self.character_name == "Uni":
+            self.character_name = "Uni"
+            self.models_switch = 10
+            self.t_count = 1
+            self.mx_param = 300
+            self.my_param = 680
             self.w_correction = 10
             self.h_correction = 0
         # Update Size and Position
@@ -931,6 +947,9 @@ class Win(QOpenGLWidget):
         if self.character_name == "Purple Sister":
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
+        if self.character_name == "Uni":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
@@ -1016,6 +1035,11 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), '&Purple Sister')
         if not self.input_lock:
             action_purple_sister.triggered.connect(self.on_action_purple_sister)
+        # Uni
+        action_uni = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/uni.ico")), '&Uni')
+        if not self.input_lock:
+            action_uni.triggered.connect(self.on_action_uni)
 
         context_menu.addMenu(submenu_character)
 
@@ -1217,6 +1241,18 @@ class Win(QOpenGLWidget):
             print(self.character_name + ":", "GoodBye (^3^)")
         self.character_name = "Purple Sister"
         self.models_switch = 9
+        self.model_update()
+        if not self.transform:
+            self.model.SetExpression("Smile", fadeout=10000)
+            print(self.character_name + ":", "Hello! (^~^)/")
+
+    def on_action_uni(self):
+        self.goodness_form = False
+        self.can_transform = False
+        if not self.transform:
+            print(self.character_name + ":", "GoodBye (^3^)")
+        self.character_name = "Uni"
+        self.models_switch = 10
         self.model_update()
         if not self.transform:
             self.model.SetExpression("Smile", fadeout=10000)

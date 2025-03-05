@@ -4,11 +4,11 @@ import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize, Slot
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize, Slot, Signal
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie, QPixmap, QFont
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
-    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox
+    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QRadioButton, QFrame, QFormLayout, QSpacerItem, QSizePolicy
 from PySide6.QtGui import QGuiApplication
 from configparser import ConfigParser
 
@@ -191,6 +191,12 @@ def auto_scale(height):
         a_scale = 8
     return a_scale
 
+def text_module(chn, txt):
+    name = chn
+    text = txt
+    output = name + ":", text
+    return output
+
 config_main = main_config()
 
 def callback():
@@ -201,6 +207,7 @@ def callback():
 class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
+        self.textShow = None
         self.hintFlags: list[Qt.WindowType] = [
             Qt.WindowType.MSWindowsFixedSizeDialogHint,
             Qt.WindowType.X11BypassWindowManagerHint,
@@ -221,7 +228,7 @@ class Win(QOpenGLWidget):
         ]
 
         self.config = config_main
-        # LOGS:`
+        # LOGS:
         # l2d-py Main Log:
         live2d.setLogEnable(False)
         # l2d-py Area Log:
@@ -265,6 +272,7 @@ class Win(QOpenGLWidget):
         self.posY = -1
         self.layout = QVBoxLayout()
         self.label = QLabel(self)
+        self.text = None
         self.transform = False
         self.goodness_form = None
         self.transform_state = False
@@ -275,6 +283,7 @@ class Win(QOpenGLWidget):
         self.trm_my = 5
         self.trm_cmx = 100
         self.trm_cmy = 5
+        self.talk = True
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -290,7 +299,7 @@ class Win(QOpenGLWidget):
             cfg: [str, int, tuple, object]
             self.config.write(cfg)
 
-        # Screens Size for AutoScale
+        # Screen Size for AutoScale
         if self.auto_scale:
             self.a_scale = auto_scale(self.sc_height_size)
         if not self.auto_scale:
@@ -378,6 +387,10 @@ class Win(QOpenGLWidget):
         self.mouse_input_timer = QTimer()
         self.mouse_input_timer.timeout.connect(self.transparent_input)
 
+        # Dialog close timer
+        self.dialogCloseTimer = QTimer()
+        self.dialogCloseTimer.timeout.connect(self.dialogClose)
+
         # Transform Animations Resource
         self.t_anim_in = os.path.join(
             resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
@@ -385,6 +398,52 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
         self.movie = QMovie(self.t_anim_in)
         self.label.setMovie(self.movie)
+
+    def dialogClose(self):
+        print("close")
+        self.talk = False
+        self.talkWidget.close()
+        self.dialogCloseTimer.stop()
+        self.talkTextLabel.repaint()
+        QApplication.processEvents()
+
+    def textUpdate(self):
+        self.talkTextLabel.setText(self.character_name + ": " + "Hello! (^~^)/")
+        self.talkTextLabel.repaint()
+        self.talkFrame.repaint()
+        QApplication.processEvents()
+        self.talk_function()
+
+    def talk_function(self):
+        # Talk Widget
+        if not self.talk:
+            self.talkWidget.show()
+
+        self.dialogCloseTimer.start(10000)
+        self.talkWidget.move(2, 0)
+
+        self.talkImage = os.path.join(
+            resources.RESOURCES_DIRECTORY, "images/talk.svg")
+
+        pixmap = QPixmap(self.talkImage).scaled(150, 100)
+        self.talkImageLabel.setPixmap(pixmap)
+
+        self.frameLayout.addWidget(self.talkImageLabel)
+
+        self.talkSubWidget.move(5, 0)
+
+        font = QFont("Segoe Print", 10)
+        font.setBold(True)
+        self.talkTextLabel.setText(self.character_name + ": " + "Hello! (^~^)/")
+        self.talkTextLabel.setFont(font)
+        self.talkTextLabel.setStyleSheet("color: gray")
+        self.talkTextLabel.setWordWrap(True)
+        # self.talkTextLabel.setMinimumSize(QSize(5, 5))
+        # self.talkTextLabel.setMaximumSize(QSize(150, 150))
+
+        self.talkFormLayout.setWidget(1, QFormLayout.LabelRole, self.talkTextLabel)
+        self.verticalSpacer = QSpacerItem(100, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.talkFormLayout.setItem(0, QFormLayout.LabelRole, self.verticalSpacer)
 
     def transform_initialize(self):
         self.input_lock = True
@@ -508,6 +567,18 @@ class Win(QOpenGLWidget):
         except AttributeError:
             pass
 
+    def talkWidgetInit(self) -> None:
+        #self.textLabel = QLabel(self)
+        self.talkWidget = QWidget(self)
+        self.talkGridLayout = QGridLayout(self.talkWidget)
+        self.talkFrame = QFrame(self.talkWidget)
+        self.frameLayout = QVBoxLayout(self.talkFrame)
+        self.talkImageLabel = QLabel()
+        self.talkSubWidget = QWidget(self.talkImageLabel)
+        self.talkFormLayout = QFormLayout(self.talkSubWidget)
+        self.talkTextLabel = QLabel()
+        self.talkGridLayout.addWidget(self.talkFrame, 1, 0, 1, 1)
+
     def initializeGL(self) -> None:
         self.makeCurrent()
         if live2d.LIVE2D_VERSION == 3:
@@ -516,80 +587,81 @@ class Win(QOpenGLWidget):
         self.model = live2d.LAppModel()
 
         if live2d.LIVE2D_VERSION == 3:
+            self.text = "Hello! (^~^)/"
             if self.models_switch == 0:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
 
             elif self.models_switch == 1:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
 
             elif self.models_switch == 2:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
 
             elif self.models_switch == 3:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
 
             elif self.models_switch == 4:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
             elif self.models_switch == 5:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
             elif self.models_switch == 6:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
 
             elif self.models_switch == 7:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
 
             elif self.models_switch == 8:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
 
             elif self.models_switch == 9:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
 
             elif self.models_switch == 10:
                 self.goodness_form = False
                 self.can_transform = False
-                print(self.character_name + ":", "Hello! (^~^)/")
+                print(self.character_name + ":", self.text)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
 
@@ -598,7 +670,9 @@ class Win(QOpenGLWidget):
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
         # fps
-        self.startTimer(int(1000 / 120))
+        self.startTimer(int(1000 / 60))
+        self.talkWidgetInit()
+        self.talk_function()
 
     def resizeGL(self, w: int, h: int) -> None:
         # 使模型的参数按窗口大小进行更新
@@ -753,7 +827,7 @@ class Win(QOpenGLWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton and not self.input_lock:
             x, y = event.scenePosition().x(), event.scenePosition().y()
-            self.mouse_input_timer.start(6000)
+            #self.mouse_input_timer.start(6000)
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
                 # self.model.Touch(x, y)
@@ -957,6 +1031,7 @@ class Win(QOpenGLWidget):
         # live2d Update
         live2d.clearBuffer()
         self.model.Update()
+        #self.textShow = text_module(self.character_name, self.text)
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -1130,133 +1205,168 @@ class Win(QOpenGLWidget):
         self.goodness_form = False
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Neptune"
         self.models_switch = 0
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        text_module(self.character_name, self.text)
+        self.textUpdate()
 
     def on_action_purple_heart(self):
         self.goodness_form = True
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Purple Heart"
         self.models_switch = 1
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_noire(self):
         self.goodness_form = False
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Noire"
         self.models_switch = 2
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_black_heart(self):
         self.goodness_form = True
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Black Heart"
         self.models_switch = 3
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_blanc(self):
         self.goodness_form = False
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Blanc"
         self.models_switch = 4
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_white_heart(self):
         self.goodness_form = True
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "White Heart"
         self.models_switch = 5
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_vert(self):
         self.goodness_form = False
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Vert"
         self.models_switch = 6
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_green_heart(self):
         self.goodness_form = True
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Green Heart"
         self.models_switch = 7
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_nepgear(self):
         self.goodness_form = False
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "NepGear"
         self.models_switch = 8
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_purple_sister(self):
         self.goodness_form = True
         self.can_transform = True
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Purple Sister"
         self.models_switch = 9
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        self.textUpdate()
 
     def on_action_uni(self):
         self.goodness_form = False
         self.can_transform = False
         if not self.transform:
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.text = "GoodBye (^3^)"
+            print(self.character_name + ":", self.text)
         self.character_name = "Uni"
         self.models_switch = 10
         self.model_update()
         if not self.transform:
+            self.text = "Hello! (^~^)/"
             self.model.SetExpression("Smile", fadeout=10000)
-            print(self.character_name + ":", "Hello! (^~^)/")
+            print(self.character_name + ":", self.text)
+        text_module(self.character_name, self.text)
+        self.textUpdate()
 
     # Animations Actions
     def on_action_idle_true(self):

@@ -6,8 +6,8 @@
     <br>
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.1.1-green" alt="PySide6 Version" style="margin: 0 10px;">
-    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.4.0-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/version-0.2.0.1-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.4.2-orange" alt="live2d-py Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/version-0.2.0.2-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -70,7 +70,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
     <img src="./docs/model_preview/purple_sister.svg" alt="purple_sister" width="330px" height="330px">
 </div>
 <div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/uni.svg" alt="uni" width="330px" height="330px">
+    <img src="./docs/model_preview/uni.svg" alt="uni" width="320px" height="320px">
 </div>
 
 ## Important to read:

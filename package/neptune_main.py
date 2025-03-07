@@ -17,85 +17,7 @@ import live2d.v3 as live2d
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 import resources
-
-def main_config():
-    config = ConfigParser()
-    config.read('config.ini')
-    if not config.has_section('Main'):
-        config.add_section('Main')
-        config.set('Main', 'screen_width', '0')
-        config.set('Main', 'screen_height', '0')
-
-    if not config.has_section('WindowFlags'):
-        config.add_section('WindowFlags')
-        config.set('WindowFlags', 'X11BypassWindowManagerHint', 'True')
-        config.set('WindowFlags', 'FramelessWindowHint', 'True')
-        config.set('WindowFlags', 'WindowMinimizeButtonHint', 'True')
-        config.set('WindowFlags', 'WindowMaximizeButtonHint', 'False')
-        config.set('WindowFlags', 'WindowCloseButtonHint', 'True')
-        config.set('WindowFlags', 'WindowTransparentForInput', 'False')
-        config.set('WindowFlags', 'WindowType_Mask', 'False')
-        config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
-        config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
-
-
-    if not config.has_section('Scale'):
-        config.add_section('Scale')
-        config.set('Scale', 'auto_scale', 'True')
-        config.set('Scale', 'models_scale', '1')
-
-    if not config.has_section('Model'):
-        config.add_section('Model')
-        config.set('Model', 'character_name', 'Neptune')
-        config.set('Model', 'selected_model', '0')
-        config.set('Model', 'x_param', '0')
-        config.set('Model', 'y_param', '0')
-        config.set('Model', 'w_resize', '0')
-        config.set('Model', 'h_resize', '0')
-        config.set('Model', 'w_correction', '0')
-        config.set('Model', 'h_correction', '0')
-
-    if not config.has_section('Animations'):
-        config.add_section('Animations')
-        config.set('Animations', 'idle_animation', 'True')
-        config.set('Animations', 'on_mouse_animation', 'True')
-        config.set('Animations', 'tap_body_animation', 'True')
-
-    if not config.has_section('Settings'):
-        config.add_section('Settings')
-        config.set('Settings', 'auto_blink', 'True')
-        config.set('Settings', 'auto_breath', 'True')
-        config.set('Settings', 'tracking_mouse', 'True')
-        config.set('Settings', 'sleep', 'True')
-
-    with open('config.ini', 'w') as cfg:
-        cfg:[str, int, tuple, object]
-        config.write(cfg)
-    return config
-
-def models_config(ms,cn,mx,my,wr,hr,wc,hc):
-    config = ConfigParser()
-    config.read('config.ini')
-    models_select = ms
-    character_name = cn
-    mx_param = mx
-    my_param = my
-    w_resize = wr
-    h_resize = hr
-    w_correction = wc
-    h_correction = hc
-    config.set('Model', 'selected_model', str(models_select))
-    config.set('Model', 'character_name', character_name)
-    config.set('Model', 'x_param', str(mx_param))
-    config.set('Model', 'y_param', str(my_param))
-    config.set('Model', 'w_resize', str(w_resize))
-    config.set('Model', 'h_resize', str(h_resize))
-    config.set('Model', 'w_correction', str(w_correction))
-    config.set('Model', 'h_correction', str(h_correction))
-    with open('config.ini', 'w') as cfg:
-        cfg: [str, int, tuple, object]
-        config.write(cfg)
-    #return
+from config_module import *
 
 def auto_scale(height):
     sc_height_size = height
@@ -190,8 +112,6 @@ def auto_scale(height):
     if sc_height_size == 8640:
         a_scale = 8
     return a_scale
-
-config_main = main_config()
 
 def callback():
     motion_end_log = False
@@ -395,6 +315,10 @@ class Win(QOpenGLWidget):
         self.goodByeTimer = QTimer()
         self.goodByeTimer.timeout.connect(self.hello)
 
+        # Quit timer
+        self.quitTimer = QTimer()
+        self.quitTimer.timeout.connect(self.quitFunction)
+
         # Transform Animations Resource
         self.t_anim_in = os.path.join(
             resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
@@ -415,9 +339,13 @@ class Win(QOpenGLWidget):
     def goodBye(self):
         self.goodByeTimer.start(3000)
         self.text = "GoodBye"
-        self.kaomoji = "(^3^)"
+        self.kaomoji = "(-_-)>"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
+
+    def quitFunction(self):
+        self.quitTimer.stop()
+        exit(0)
 
     def dialogClose(self):
         self.talk = False
@@ -444,24 +372,24 @@ class Win(QOpenGLWidget):
         self.talkImage = os.path.join(
             resources.RESOURCES_DIRECTORY, "images/talk.svg")
 
-        self.talkPixmap = QPixmap(self.talkImage).scaled(150, 100)
+        self.talkPixmap = QPixmap(self.talkImage).scaled(160, 110)
         self.talkImageLabel.setPixmap(self.talkPixmap)
 
         self.frameLayout.addWidget(self.talkImageLabel)
 
-        self.talkSubWidget.move(6, 0)
+        self.talkSubWidget.move(5, 0)
 
-        font = QFont("Segoe Print", 10)
+        font = QFont("Segoe Print", 8)
         font.setBold(True)
         self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
         self.talkTextLabel.setFont(font)
         self.talkTextLabel.setStyleSheet("color: gray")
         self.talkTextLabel.setWordWrap(True)
-        # self.talkTextLabel.setMinimumSize(QSize(5, 5))
+        self.talkTextLabel.setMinimumSize(QSize(0, 0))
         self.talkTextLabel.setMaximumSize(QSize(300, 300))
 
         self.talkFormLayout.setWidget(1, QFormLayout.LabelRole, self.talkTextLabel)
-        self.verticalSpacer = QSpacerItem(150, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.verticalSpacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.talkFormLayout.setItem(0, QFormLayout.LabelRole, self.verticalSpacer)
 
     def transform_initialize(self):
@@ -566,7 +494,7 @@ class Win(QOpenGLWidget):
                 self.condition = "Sad"
                 self.model.SetExpression("Sad")
                 self.text = "I'm Sad"
-                self.kaomoji = "('_')"
+                self.kaomoji = "(-_;)"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.tired_v and self.sleep_switch == True:
@@ -1443,11 +1371,20 @@ class Win(QOpenGLWidget):
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             print(self.character_name + ":", "GoodBye (^3^)")
-            exit(0)
+            self.quitTimer.start(3000)
+            self.text = "GoodBye! See you again!"
+            self.kaomoji = "(^3^)"
+            print(self.character_name + ": " + self.text + self.kaomoji)
+            self.textUpdate()
+
         else:
             self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy",5000)
+            self.text = "I'm Sooo Happy!"
+            self.kaomoji = ":(^~^):"
+            print(self.character_name + ": " + self.text + self.kaomoji)
+            self.textUpdate()
 
     def closeEvent(self, event):
         self.model.SetExpression("Cry")
@@ -1464,6 +1401,10 @@ class Win(QOpenGLWidget):
             self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy", 5000)
+            self.text = "I'm Sooo Happy!"
+            self.kaomoji = ":(^~^):"
+            print(self.character_name + ": " + self.text + self.kaomoji)
+            self.textUpdate()
             event.ignore()
 
 class SettingsWindow(QWidget):
@@ -1504,7 +1445,7 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        quitButton = QPushButton("&Quit")
+        quitButton = QPushButton("&Force Quit")
         quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
         bottomLayout = QHBoxLayout()

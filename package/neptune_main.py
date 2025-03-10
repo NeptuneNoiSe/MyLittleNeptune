@@ -203,7 +203,11 @@ class Win(QOpenGLWidget):
         self.twmX = 0
         self.twmY = 0
         self.twsc = 0
+        self.talkX = 160
+        self.talkY = 110
+        self.talkFontScale = 8
         self.talk = True
+        self.talkUpd = True
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -291,34 +295,6 @@ class Win(QOpenGLWidget):
         self.sleep_switch = self.config.getboolean('Settings', 'sleep')
         self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
 
-        # Init idle timer
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.idle_timer)
-        self.timer.start(int(6000 / self.time_scale))
-
-        # Mouse tracking timer
-        self.mouse_t = QTimer()
-        self.mouse_t.timeout.connect(self.mouse_tracking)
-        if not self.mouse_move:
-            self.tracking_mouse = False
-            self.mouse_t.start(10000)
-
-        # Input release timer
-        self.mouse_input_timer = QTimer()
-        self.mouse_input_timer.timeout.connect(self.transparent_input)
-
-        # Dialog close timer
-        self.dialogCloseTimer = QTimer()
-        self.dialogCloseTimer.timeout.connect(self.dialogClose)
-
-        # GoodBye timer
-        self.goodByeTimer = QTimer()
-        self.goodByeTimer.timeout.connect(self.hello)
-
-        # Quit timer
-        self.quitTimer = QTimer()
-        self.quitTimer.timeout.connect(self.quitFunction)
-
         # Transform Animations Resource
         self.t_anim_in = os.path.join(
             resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
@@ -335,6 +311,7 @@ class Win(QOpenGLWidget):
         self.model.SetExpression("Smile", fadeout=10000)
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
+        self.talkUpd = True
 
     def goodBye(self):
         self.goodByeTimer.start(3000)
@@ -342,6 +319,7 @@ class Win(QOpenGLWidget):
         self.kaomoji = "(-_-)>"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
+        self.talkUpd = False
 
     def quitFunction(self):
         self.quitTimer.stop()
@@ -361,10 +339,20 @@ class Win(QOpenGLWidget):
         QApplication.processEvents()
         self.talk_function()
 
+    def talkWidgetUpdate(self):
+        self.talk = True
+        self.talkWidget.close()
+        self.talkWidgetInit()
+        self.text = "The settings are applied"
+        self.kaomoji = "(@~@)"
+        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
+        self.talk_function()
+
     def talk_function(self):
         # Talk Widget
         if not self.talk:
             self.talkWidget.show()
+            self.talk = True
 
         self.dialogCloseTimer.start(10000)
         self.talkWidget.move(0, 0)
@@ -372,17 +360,16 @@ class Win(QOpenGLWidget):
         self.talkImage = os.path.join(
             resources.RESOURCES_DIRECTORY, "images/talk.svg")
 
-        self.talkPixmap = QPixmap(self.talkImage).scaled(160, 110)
+        self.talkPixmap = QPixmap(self.talkImage).scaled(float(self.talkX * self.a_scale * self.models_scale), float(self.talkY * self.a_scale * self.models_scale))
         self.talkImageLabel.setPixmap(self.talkPixmap)
 
         self.frameLayout.addWidget(self.talkImageLabel)
 
         self.talkSubWidget.move(5, 0)
-
-        font = QFont("Segoe Print", 8)
-        font.setBold(True)
+        self.talkFont = QFont("Segoe Print", float(self.talkFontScale * self.a_scale * self.models_scale))
+        self.talkFont.setBold(True)
         self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talkTextLabel.setFont(font)
+        self.talkTextLabel.setFont(self.talkFont)
         self.talkTextLabel.setStyleSheet("color: gray")
         self.talkTextLabel.setWordWrap(True)
         self.talkTextLabel.setMinimumSize(QSize(0, 0))
@@ -528,6 +515,35 @@ class Win(QOpenGLWidget):
         except AttributeError:
             pass
 
+    def timersInit(self) -> None:
+        # Idle timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.idle_timer)
+        self.timer.start(int(6000 / self.time_scale))
+
+        # Mouse tracking timer
+        self.mouse_t = QTimer()
+        self.mouse_t.timeout.connect(self.mouse_tracking)
+        if not self.mouse_move:
+            self.tracking_mouse = False
+            self.mouse_t.start(10000)
+
+        # Input release timer
+        self.mouse_input_timer = QTimer()
+        self.mouse_input_timer.timeout.connect(self.transparent_input)
+
+        # Dialog close timer
+        self.dialogCloseTimer = QTimer()
+        self.dialogCloseTimer.timeout.connect(self.dialogClose)
+
+        # GoodBye timer
+        self.goodByeTimer = QTimer()
+        self.goodByeTimer.timeout.connect(self.hello)
+
+        # Quit timer
+        self.quitTimer = QTimer()
+        self.quitTimer.timeout.connect(self.quitFunction)
+
     def talkWidgetInit(self) -> None:
         self.talkWidget = QWidget(self)
         self.talkGridLayout = QGridLayout(self.talkWidget)
@@ -632,6 +648,7 @@ class Win(QOpenGLWidget):
 
         # fps
         self.startTimer(int(1000 / 60))
+        self.timersInit()
         self.talkWidgetInit()
         self.talk_function()
 
@@ -1000,7 +1017,8 @@ class Win(QOpenGLWidget):
         # live2d Update
         live2d.clearBuffer()
         self.model.Update()
-        #self.textShow = text_module(self.character_name, self.text)
+        if self.talkUpd:
+            self.talkWidgetUpdate()
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -1180,6 +1198,7 @@ class Win(QOpenGLWidget):
     def on_action_neptune(self):
         self.goodness_form = False
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Neptune"
@@ -1190,6 +1209,7 @@ class Win(QOpenGLWidget):
     def on_action_purple_heart(self):
         self.goodness_form = True
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Purple Heart"
@@ -1200,6 +1220,7 @@ class Win(QOpenGLWidget):
     def on_action_noire(self):
         self.goodness_form = False
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Noire"
@@ -1210,6 +1231,7 @@ class Win(QOpenGLWidget):
     def on_action_black_heart(self):
         self.goodness_form = True
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Black Heart"
@@ -1220,6 +1242,7 @@ class Win(QOpenGLWidget):
     def on_action_blanc(self):
         self.goodness_form = False
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Blanc"
@@ -1230,6 +1253,7 @@ class Win(QOpenGLWidget):
     def on_action_white_heart(self):
         self.goodness_form = True
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "White Heart"
@@ -1240,6 +1264,7 @@ class Win(QOpenGLWidget):
     def on_action_vert(self):
         self.goodness_form = False
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Vert"
@@ -1250,6 +1275,7 @@ class Win(QOpenGLWidget):
     def on_action_green_heart(self):
         self.goodness_form = True
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Green Heart"
@@ -1260,6 +1286,7 @@ class Win(QOpenGLWidget):
     def on_action_nepgear(self):
         self.goodness_form = False
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "NepGear"
@@ -1270,6 +1297,7 @@ class Win(QOpenGLWidget):
     def on_action_purple_sister(self):
         self.goodness_form = True
         self.can_transform = True
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Purple Sister"
@@ -1280,6 +1308,7 @@ class Win(QOpenGLWidget):
     def on_action_uni(self):
         self.goodness_form = False
         self.can_transform = False
+        self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Uni"

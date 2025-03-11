@@ -4,6 +4,7 @@
 # ptvsd.enable_attach(address=('127.0.0.1', 10010), redirect_output=True)
 # ptvsd.wait_for_attach()
 
+import math
 import os
 import time
 
@@ -28,8 +29,8 @@ def main():
     pygame.mixer.init()
     live2d.init()
 
-    display = (500, 700)
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL, vsync=1)
+    display = (500, 600)
+    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     pygame.display.set_caption("pygame window")
 
     if live2d.LIVE2D_VERSION == 3:
@@ -39,7 +40,13 @@ def main():
 
     if live2d.LIVE2D_VERSION == 3:
         model.LoadModelJson(
-            os.path.join(resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json")
+            # os.path.join(resources.RESOURCES_DIRECTORY, "v3/liveroid/liveroiD_A-Y01/liveroiD_A-Y01.model3.json")
+            # os.path.join(resources.RESOURCES_DIRECTORY, "v3/Mao/Mao.model3.json")
+            os.path.join(resources.RESOURCES_DIRECTORY, "v3/llny/llny.model3.json")
+            # os.path.join(resources.RESOURCES_DIRECTORY, "v3/nn/nn.model3.json")
+            # os.path.join(resources.RESOURCES_DIRECTORY, "v3/magic/magic.model3.json")
+            # os.path.join(resources.RESOURCES_DIRECTORY, "v3/Haru/Haru.model3.json")
+            # os.path.join(resources.RESOURCES_DIRECTORY, "v3/Hiyori/Hiyori.model3.json")
         )
     else:
         model.LoadModelJson(
@@ -55,12 +62,12 @@ def main():
     scale: float = 1.0
 
     # 关闭自动眨眼
-    model.SetAutoBlinkEnable(True)
+    model.SetAutoBlinkEnable(False)
     # 关闭自动呼吸
     model.SetAutoBreathEnable(False)
 
     wavHandler = WavHandler()
-    lipSyncN = 2.5
+    lipSyncN = 3
 
     audioPlayed = False
 
@@ -112,6 +119,11 @@ def main():
     sc = None
     model.StartRandomMotion("TapBody", 300, sc, fc)
 
+    radius_per_frame = math.pi * 10 / 1000 * 0.5
+    deg_max = 5
+    progress = 0
+    deg = math.sin(progress) * deg_max 
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -123,7 +135,7 @@ def main():
                 # log.Info(f"Clicked Part: {currentTopClickedPartId}")
                 # model.Touch(x, y, onFinishMotionHandler=lambda : print("motion finished"), onStartMotionHandler=lambda group, no: print(f"started motion: {group} {no}"))
                 # model.StartRandomMotion(group="TapBody", onFinishMotionHandler=lambda : print("motion finished"), onStartMotionHandler=lambda group, no: print(f"started motion: {group} {no}"))
-                model.SetRandomExpression()
+                # model.SetRandomExpression()
                 model.StartRandomMotion(priority=3)
 
             if event.type == pygame.KEYDOWN:
@@ -139,10 +151,10 @@ def main():
                     dy -= 0.1
 
                 elif event.key == pygame.K_i:
-                    scale += 0.01
+                    scale += 0.1
 
                 elif event.key == pygame.K_u:
-                    scale -= 0.01
+                    scale -= 0.1
                 
                 elif event.key == pygame.K_r:
                     model.StopAllMotions()
@@ -154,12 +166,14 @@ def main():
             if event.type == pygame.MOUSEMOTION:
                 # 实现拖拽
                 model.Drag(*pygame.mouse.get_pos())
-                # 测试性能？
                 currentTopClickedPartId = getHitFeedback(*pygame.mouse.get_pos())
-                # pass
 
         if not running:
             break
+
+        progress += radius_per_frame
+        deg = math.sin(progress) * deg_max
+        model.Rotate(deg)
 
         model.Update()
 
@@ -178,7 +192,7 @@ def main():
 
         if wavHandler.Update():
             # 利用 wav 响度更新 嘴部张合
-            model.AddParameterValue(
+            model.SetParameterValue(
                 StandardParams.ParamMouthOpenY, wavHandler.GetRms() * lipSyncN
             )
 

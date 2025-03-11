@@ -1,8 +1,11 @@
+# 测试 v3 SetParameterValue 是否正确
+# 测试 v3 SetParameterValue 是否能在 Update 和 Draw 之外的地方调用后起作用
+
 import os
 import pygame
-# import live2d.v3 as live2d
-import live2d.v2 as live2d
+import live2d.v3 as live2d
 import resources
+from live2d.v3.params import StandardParams
 
 
 def main():
@@ -17,16 +20,20 @@ def main():
 
     model = live2d.LAppModel()
 
-    if live2d.LIVE2D_VERSION == 3:
-        model.LoadModelJson(
-            os.path.join(resources.RESOURCES_DIRECTORY, "v3/Haru/Haru.model3.json")
-        )
-    else:
-        model.LoadModelJson(
-            os.path.join(resources.RESOURCES_DIRECTORY, "v2/kasumi2/kasumi2.model.json")
-        )
+    model.LoadModelJson(
+        os.path.join(resources.RESOURCES_DIRECTORY, "v3/Haru/Haru.model3.json")
+    )
 
     model.Resize(*display)
+
+    model.SetAutoBlinkEnable(False) # 防止影响测试
+
+    # 左眼闭上
+    model.SetParameterValue(StandardParams.ParamEyeLOpen, 0)
+    # 右眼睁开
+    model.SetParameterValue(StandardParams.ParamEyeROpen, 1)
+    # 张嘴
+    model.SetParameterValue(StandardParams.ParamMouthOpenY, 1)
 
     running = True
     while True:

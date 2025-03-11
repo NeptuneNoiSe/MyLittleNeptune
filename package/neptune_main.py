@@ -204,8 +204,8 @@ class Win(QOpenGLWidget):
         self.twmY = 0
         self.twsc = 0
         self.talkX = 160
-        self.talkY = 110
-        self.talkFontScale = 8
+        self.talkY = 130
+        self.talkFontSize = 10
         self.talk = True
         self.talkUpd = True
         self.model: live2d.LAppModel | None = None
@@ -348,37 +348,6 @@ class Win(QOpenGLWidget):
         self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
         self.talk_function()
 
-    def talk_function(self):
-        # Talk Widget
-        if not self.talk:
-            self.talkWidget.show()
-            self.talk = True
-
-        self.dialogCloseTimer.start(10000)
-        self.talkWidget.move(0, 0)
-
-        self.talkImage = os.path.join(
-            resources.RESOURCES_DIRECTORY, "images/talk.svg")
-
-        self.talkPixmap = QPixmap(self.talkImage).scaled(float(self.talkX * self.a_scale * self.models_scale), float(self.talkY * self.a_scale * self.models_scale))
-        self.talkImageLabel.setPixmap(self.talkPixmap)
-
-        self.frameLayout.addWidget(self.talkImageLabel)
-
-        self.talkSubWidget.move(5, 0)
-        self.talkFont = QFont("Segoe Print", float(self.talkFontScale * self.a_scale * self.models_scale))
-        self.talkFont.setBold(True)
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talkTextLabel.setFont(self.talkFont)
-        self.talkTextLabel.setStyleSheet("color: gray")
-        self.talkTextLabel.setWordWrap(True)
-        self.talkTextLabel.setMinimumSize(QSize(0, 0))
-        self.talkTextLabel.setMaximumSize(QSize(300, 300))
-
-        self.talkFormLayout.setWidget(1, QFormLayout.LabelRole, self.talkTextLabel)
-        self.verticalSpacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
-        self.talkFormLayout.setItem(0, QFormLayout.LabelRole, self.verticalSpacer)
-
     def transform_initialize(self):
         self.input_lock = True
         if not self.goodness_form:
@@ -419,6 +388,7 @@ class Win(QOpenGLWidget):
         self.transformLabel.move(int(self.trm_mx * self.models_scale), int(self.trm_my * self.models_scale))
         self.transformLabel.show()
         self.transform = False
+        self.talkUpd = True
 
     def transform_to_goodness_form(self):
         # Transform to Goodness Form
@@ -555,13 +525,41 @@ class Win(QOpenGLWidget):
         self.talkTextLabel = QLabel()
         self.talkGridLayout.addWidget(self.talkFrame, 1, 0, 1, 1)
 
+    def talk_function(self):
+        # Talk Widget
+        if not self.talk:
+            self.talkWidget.show()
+            self.talk = True
+
+        self.dialogCloseTimer.start(10000)
+        self.talkWidget.move(0, 0)
+
+        self.talkImage = os.path.join(
+            resources.RESOURCES_DIRECTORY, "images/talk.svg")
+
+        self.talkPixmap = QPixmap(self.talkImage).scaled(float(self.talkX * self.a_scale * self.models_scale), float(self.talkY * self.a_scale * self.models_scale))
+        self.talkImageLabel.setPixmap(self.talkPixmap)
+
+        self.frameLayout.addWidget(self.talkImageLabel)
+
+        self.talkSubWidget.move(8 * self.a_scale * self.models_scale, -20 * self.a_scale * self.models_scale)
+        self.talkFont = QFont("Segoe Print", float(self.talkFontSize * self.a_scale * self.models_scale))
+        self.talkFont.setBold(True)
+        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
+        self.talkTextLabel.setFont(self.talkFont)
+        self.talkTextLabel.setStyleSheet("color: gray")
+        self.talkTextLabel.setWordWrap(True)
+        self.talkTextLabel.setFixedWidth(float((self.talkX - 25) * self.a_scale * self.models_scale))
+        self.talkTextLabel.setFixedHeight(float((self.talkY -5) * self.a_scale * self.models_scale))
+
+        self.talkFormLayout.setWidget(0, QFormLayout.LabelRole, self.talkTextLabel)
+        # self.verticalSpacer = QSpacerItem(float(self.talkX * self.a_scale * self.models_scale), 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        # self.talkFormLayout.setItem(0, QFormLayout.LabelRole, self.verticalSpacer)
+
     def initializeGL(self) -> None:
-        self.makeCurrent()
-        if live2d.LIVE2D_VERSION == 3:
-            live2d.glewInit()
-
+        # self.makeCurrent()
+        live2d.glewInit()
         self.model = live2d.LAppModel()
-
         if live2d.LIVE2D_VERSION == 3:
             self.text = "Hello!"
             self.kaomoji = "(^~^)/"
@@ -840,7 +838,7 @@ class Win(QOpenGLWidget):
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()
         if self.clickInLA and not self.input_lock:
-            self.move(int(self.x() + x - self.clickX), int(self.y() + y - self.clickY))
+            self.move(int(self.x() + x - self.clickX - 10), int(self.y() + y - self.clickY - 10))
 
     def setSettings(self, flags: Qt.WindowType) -> None:
         #print(f"setSettings flags: {flags}")

@@ -402,6 +402,8 @@ class Win(QOpenGLWidget):
             self.on_action_green_heart()
         if self.character_name == "NepGear":
             self.on_action_purple_sister()
+        if self.character_name == "Uni":
+            self.on_action_black_sister()
 
     def transform_to_regular_form(self):
         # Transform to Regular Form
@@ -415,6 +417,8 @@ class Win(QOpenGLWidget):
             self.on_action_vert()
         if self.character_name == "Purple Sister":
             self.on_action_nepgear()
+        if self.character_name == "Black Sister":
+            self.on_action_uni()
 
     def mouse_tracking(self):
         self.tracking_mouse = False
@@ -635,10 +639,17 @@ class Win(QOpenGLWidget):
 
             elif self.models_switch == 10:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
+
+            elif self.models_switch == 11:
+                self.goodness_form = True
+                self.can_transform = True
+                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -950,8 +961,8 @@ class Win(QOpenGLWidget):
             self.character_name = "Purple Sister"
             self.models_switch = 9
             self.t_count = 1
-            self.mx_param = 700
-            self.my_param = 700
+            self.mx_param = 650
+            self.my_param = 650
             self.w_correction = -70
             self.h_correction = 0
 
@@ -961,6 +972,15 @@ class Win(QOpenGLWidget):
             self.t_count = 1
             self.mx_param = 600
             self.my_param = 600
+            self.w_correction = -70
+            self.h_correction = 0
+
+        if self.character_name == "Black Sister":
+            self.character_name = "Black Sister"
+            self.models_switch = 11
+            self.t_count = 1
+            self.mx_param = 650
+            self.my_param = 650
             self.w_correction = -70
             self.h_correction = 0
         # Update Size and Position
@@ -1008,6 +1028,9 @@ class Win(QOpenGLWidget):
         if self.character_name == "Uni":
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
+        if self.character_name == "Black Sister":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
@@ -1095,12 +1118,16 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), '&Purple Sister')
         if not self.input_lock:
             action_purple_sister.triggered.connect(self.on_action_purple_sister)
-
         # Uni
         action_uni = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/uni.ico")), '&Uni')
         if not self.input_lock:
             action_uni.triggered.connect(self.on_action_uni)
+        # Black Sister
+        action_black_sister = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), '&Black Sister')
+        if not self.input_lock:
+            action_black_sister.triggered.connect(self.on_action_black_sister)
 
         context_menu.addMenu(submenu_character)
 
@@ -1305,12 +1332,23 @@ class Win(QOpenGLWidget):
 
     def on_action_uni(self):
         self.goodness_form = False
-        self.can_transform = False
+        self.can_transform = True
         self.talkUpd = False
         if not self.transform:
             self.goodBye()
         self.character_name = "Uni"
         self.models_switch = 10
+        if self.transform:
+            self.model_update()
+
+    def on_action_black_sister(self):
+        self.goodness_form = True
+        self.can_transform = True
+        self.talkUpd = False
+        if not self.transform:
+            self.goodBye()
+        self.character_name = "Black Sister"
+        self.models_switch = 11
         if self.transform:
             self.model_update()
 

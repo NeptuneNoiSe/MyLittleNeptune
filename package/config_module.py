@@ -82,4 +82,98 @@ def models_config(ms, cn, mx, my, wr, hr, wc, hc):
         config.write(cfg)
     # return
 
+def auto_scale(height):
+    sc_height_size = height
+    if sc_height_size == 120:
+        a_scale = 0.111
+    if sc_height_size == 160:
+        a_scale = 0.148
+    if sc_height_size == 192:
+        a_scale = 0.178
+    if sc_height_size == 240:
+        a_scale = 0.222
+    if sc_height_size == 272:
+        a_scale = 0.252
+    if sc_height_size == 320:
+        a_scale = 0.296
+    if sc_height_size == 360:
+        a_scale = 0.333
+    if sc_height_size == 384:
+        a_scale = 0.355
+    if sc_height_size == 480:
+        a_scale = 0.444
+    if sc_height_size == 540:
+        a_scale = 0.5
+    if sc_height_size == 576:
+        a_scale = 0.533
+    if sc_height_size == 600:
+        a_scale = 0.555
+    if sc_height_size == 640:
+        a_scale = 0.592
+    if sc_height_size == 720:
+        a_scale = 0.666
+    if sc_height_size == 768:
+        a_scale = 0.711
+    if sc_height_size == 800:
+        a_scale = 0.741
+    if sc_height_size == 810:
+        a_scale = 0.75
+    if sc_height_size == 864:
+        a_scale = 0.8
+    if sc_height_size == 900:
+        a_scale = 0.833
+    if sc_height_size == 960:
+        a_scale = 0.888
+    if sc_height_size == 1024:
+        a_scale = 0.948
+    if sc_height_size == 1050:
+        a_scale = 0.972
+    if sc_height_size == 1080:
+        a_scale = 1
+    if sc_height_size == 1152:
+        a_scale = 1.066
+    if sc_height_size == 1200:
+        a_scale = 1.111
+    if sc_height_size == 1280:
+        a_scale = 1.185
+    if sc_height_size == 1350:
+        a_scale = 1.25
+    if sc_height_size == 1440:
+        a_scale = 1.333
+    if sc_height_size == 1536:
+        a_scale = 1.422
+    if sc_height_size == 1600:
+        a_scale = 1.481
+    if sc_height_size == 1620:
+        a_scale = 1.5
+    if sc_height_size == 1800:
+        a_scale = 1.666
+    if sc_height_size == 2048:
+        a_scale = 1.896
+    if sc_height_size == 2160:
+        a_scale = 2
+    if sc_height_size == 2400:
+        a_scale = 2.222
+    if sc_height_size == 2560:
+        a_scale = 2.370
+    if sc_height_size == 2880:
+        a_scale = 2.666
+    if sc_height_size == 3072:
+        a_scale = 2.844
+    if sc_height_size == 3200:
+        a_scale = 2.963
+    if sc_height_size == 3240:
+        a_scale = 3
+    if sc_height_size == 3384:
+        a_scale = 3.133
+    if sc_height_size == 4096:
+        a_scale = 3.793
+    if sc_height_size == 4320:
+        a_scale = 4
+    if sc_height_size == 4800:
+        a_scale = 4.444
+    if sc_height_size == 8640:
+        a_scale = 8
+    return a_scale
+
 config_main = main_config()

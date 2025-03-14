@@ -18,13 +18,14 @@ import live2d.v3 as live2d
 # import live2d.v2 as live2d
 import resources
 from config_module import *
+from text_widget import TextWidget
 
 def callback():
     motion_end_log = False
     if motion_end_log:
         print("motion end")
 
-class Win(QOpenGLWidget):
+class Win(QOpenGLWidget, TextWidget):
     def __init__(self) -> None:
         super().__init__()
         self.textShow = None
@@ -108,7 +109,6 @@ class Win(QOpenGLWidget):
         self.twsc = 0
         self.talkX = 160
         self.talkY = 130
-        self.InitialCheck = True #TODO: Reinitial model check(must to be deleted on the future)
         self.talkFontSize = 10
         self.talk = True
         self.talkUpd = True
@@ -208,50 +208,9 @@ class Win(QOpenGLWidget):
         self.transformMovie = QMovie(self.t_anim_in)
         self.transformLabel.setMovie(self.transformMovie)
 
-    def hello(self):
-        self.goodByeTimer.stop()
-        self.model_update()
-        self.text = "Hello!"
-        self.kaomoji = "(^~^)/"
-        self.model.SetExpression("Smile", fadeout=10000)
-        print(self.character_name + ": " + self.text + self.kaomoji)
-        self.textUpdate()
-        self.talkUpd = True
-
-    def goodBye(self):
-        self.goodByeTimer.start(3000)
-        self.text = "GoodBye"
-        self.kaomoji = "(-_-)>"
-        print(self.character_name + ": " + self.text + self.kaomoji)
-        self.textUpdate()
-        self.talkUpd = False
-
     def quitFunction(self):
         self.quitTimer.stop()
         exit(0)
-
-    def dialogClose(self):
-        self.talk = False
-        self.talkWidget.close()
-        self.dialogCloseTimer.stop()
-        self.talkTextLabel.repaint()
-        QApplication.processEvents()
-
-    def textUpdate(self):
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talkTextLabel.repaint()
-        self.talkFrame.repaint()
-        QApplication.processEvents()
-        self.talk_function()
-
-    def talkWidgetUpdate(self):
-        self.talk = True
-        self.talkWidget.close()
-        self.talkWidgetInit()
-        self.text = "The settings are applied"
-        self.kaomoji = "(@~@)"
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talk_function()
 
     def transform_initialize(self):
         self.input_lock = True
@@ -427,71 +386,9 @@ class Win(QOpenGLWidget):
         self.talkDelayTimer = QTimer()
         self.talkDelayTimer.timeout.connect(self.takingTalk)
 
-        #TODO: Reinitial model update timer(must to be deleted on the future)
-        self.reInitialModelTimer = QTimer()
-        self.reInitialModelTimer.timeout.connect(self.reInitialModel)
-
-    def takingTalk(self):
-        self.placeThis = True
-        self.talkDelayTimer.stop()
-        self.text = "Hey, where are you taking me?"
-        self.kaomoji = "(>-<)?"
-        print(self.character_name + ": " + self.text + self.kaomoji)
-        self.textUpdate()
-
-    def reInitialModel(self):
-        self.reInitialModelTimer.stop()
-        self.model_update()
-        self.text = "Hello!"
-        self.kaomoji = "(^~^)/"
-        self.talk = False
-        self.talk_function()
-
-    def talkWidgetInit(self) -> None:
-        self.talkWidget = QWidget(self)
-        self.talkGridLayout = QGridLayout(self.talkWidget)
-        self.talkFrame = QFrame(self.talkWidget)
-        self.frameLayout = QVBoxLayout(self.talkFrame)
-        self.talkImageLabel = QLabel()
-        self.talkSubWidget = QWidget(self.talkImageLabel)
-        self.talkFormLayout = QFormLayout(self.talkSubWidget)
-        self.talkTextLabel = QLabel()
-        self.talkGridLayout.addWidget(self.talkFrame, 1, 0, 1, 1)
-
-    def talk_function(self):
-        # Talk Widget
-        if not self.talk:
-            self.talkWidget.show()
-            self.talk = True
-
-        self.dialogCloseTimer.start(10000)
-        self.talkWidget.move(0, 0)
-
-        self.talkImage = os.path.join(
-            resources.RESOURCES_DIRECTORY, "images/talk.svg")
-
-        self.talkPixmap = QPixmap(self.talkImage).scaled(float(self.talkX * self.a_scale * self.models_scale), float(self.talkY * self.a_scale * self.models_scale))
-        self.talkImageLabel.setPixmap(self.talkPixmap)
-
-        self.frameLayout.addWidget(self.talkImageLabel)
-
-        self.talkSubWidget.move(8 * self.a_scale * self.models_scale, -20 * self.a_scale * self.models_scale)
-        self.talkFont = QFont("Segoe Print", float(self.talkFontSize * self.a_scale * self.models_scale))
-        self.talkFont.setBold(True)
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talkTextLabel.setFont(self.talkFont)
-        self.talkTextLabel.setStyleSheet("color: gray")
-        self.talkTextLabel.setWordWrap(True)
-        self.talkTextLabel.setFixedWidth(float((self.talkX - 25) * self.a_scale * self.models_scale))
-        self.talkTextLabel.setFixedHeight(float((self.talkY -5) * self.a_scale * self.models_scale))
-
-        self.talkFormLayout.setWidget(0, QFormLayout.LabelRole, self.talkTextLabel)
-        # self.verticalSpacer = QSpacerItem(float(self.talkX * self.a_scale * self.models_scale), 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
-        # self.talkFormLayout.setItem(0, QFormLayout.LabelRole, self.verticalSpacer)
-
     def initializeGL(self) -> None:
         self.makeCurrent()
-        live2d.glewInit()
+        live2d.glInit()
         self.model = live2d.LAppModel()
         if live2d.LIVE2D_VERSION == 3:
             self.text = "Hello!"
@@ -588,10 +485,7 @@ class Win(QOpenGLWidget):
         self.startTimer(int(1000 / 60))
         self.timersInit()
         self.talkWidgetInit()
-        #TODO: Reinitial model on starup(must to be deleted on the future)
-        # self.talkWidget.close()
-        # self.talk_function()
-        self.resize(1,1)
+        self.talk_function()
 
     def resizeGL(self, w: int, h: int) -> None:
         # 使模型的参数按窗口大小进行更新
@@ -646,10 +540,6 @@ class Win(QOpenGLWidget):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
-        #TODO: Reinitial model on starup(must to be deleted on the future)
-        if self.InitialCheck:
-            self.reInitialModelTimer.start(1500)
-            self.InitialCheck = False
 
         auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
         self.model.SetAutoBlinkEnable(auto_blink_param)
@@ -774,18 +664,54 @@ class Win(QOpenGLWidget):
                     if not self.sleep and self.input_lock == False:
                         self.model.ResetExpression()
                         self.talkDelayTimer.stop()
+                        expression = self.model.SetRandomExpression(fadeout=3500)
                         if self.placeThis:
                             self.placeThis = False
                             self.text = "Okay I'll stay here"
                             self.kaomoji = "(^~^)"
                         else:
-                            #TODO: Add text reactions to user actions depending on the facial expression
-                            # self.text = "HeHe"
-                            # self.kaomoji = "(^~^)"
-                            pass
+                            if expression == "Normal":
+                                self.text = "So What"
+                                self.kaomoji = "(-_-)"
+                            elif expression == "Happy":
+                                self.text = "i'm Happy"
+                                self.kaomoji = "(^_^)"
+                            elif expression == "Angry":
+                                self.text = "Don't touch me like that"
+                                self.kaomoji = "(=_=)"
+                            elif expression == "Sad":
+                                self.text = "i'm Sad"
+                                self.kaomoji = "(-_;)"
+                            elif expression == "Smile":
+                                self.text = "He He"
+                                self.kaomoji = "(^~^)"
+                            elif expression == "Tired":
+                                self.text = "i'm Tired"
+                                self.kaomoji = "(~o~)"
+                            elif expression == "ClosedEyes":
+                                self.text = "Hmm"
+                                self.kaomoji = "(-_-)"
+                            elif expression == "Cry":
+                                self.text = "Whaah!"
+                                self.kaomoji = "(T_T)"
+                            elif expression == "Fear":
+                                self.text = "Ugh"
+                                self.kaomoji = "(:_:)"
+                            elif expression == "Star":
+                                self.text = "i'm Sooo Happy"
+                                self.kaomoji = ";(^~^);"
+                            elif expression == "Surprised":
+                                self.text = "What?"
+                                self.kaomoji = "(0_0)?"
+                            elif expression == "Funny" and self.goodness_form == False:
+                                self.text = "Yo!!!"
+                                self.kaomoji = "(>_<)"
+                            elif expression == "Funny" and self.goodness_form == True:
+                                self.text = "I'm Godness"
+                                self.kaomoji = "(@_@)"
                         print(self.character_name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-                        self.model.SetRandomExpression(fadeout=3500)
+
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
                     self.model.ResetExpression()

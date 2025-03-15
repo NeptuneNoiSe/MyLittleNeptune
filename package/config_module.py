@@ -1,8 +1,4 @@
-import os
-import argparse
-import sys
 from configparser import ConfigParser
-import resources
 
 def main_config():
     config = ConfigParser()
@@ -58,7 +54,7 @@ def main_config():
         config.write(cfg)
     return config
 
-def models_config(ms, cn, mx, my, wr, hr, wc, hc):
+def models_config(ms, cn, mx, my, wr, hr, wc, hc, twmx, twmy):
     config = ConfigParser()
     config.read('config.ini')
     models_select = ms
@@ -69,6 +65,8 @@ def models_config(ms, cn, mx, my, wr, hr, wc, hc):
     h_resize = hr
     w_correction = wc
     h_correction = hc
+    twm_x = twmx
+    twm_y = twmy
     config.set('Model', 'selected_model', str(models_select))
     config.set('Model', 'character_name', character_name)
     config.set('Model', 'x_param', str(mx_param))
@@ -77,6 +75,8 @@ def models_config(ms, cn, mx, my, wr, hr, wc, hc):
     config.set('Model', 'h_resize', str(h_resize))
     config.set('Model', 'w_correction', str(w_correction))
     config.set('Model', 'h_correction', str(h_correction))
+    config.set('Model', 'twmX', str(twm_x))
+    config.set('Model', 'twmY', str(twm_y))
     with open('config.ini', 'w') as cfg:
         cfg: [str, int, tuple, object]
         config.write(cfg)

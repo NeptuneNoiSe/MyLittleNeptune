@@ -18,17 +18,16 @@ import live2d.v3 as live2d
 # import live2d.v2 as live2d
 import resources
 from config_module import *
-from text_widget import TextWidget
+from talk_widget import TalkWidgetMain
 
 def callback():
     motion_end_log = False
     if motion_end_log:
         print("motion end")
 
-class Win(QOpenGLWidget, TextWidget):
+class Win(QOpenGLWidget, TalkWidgetMain):
     def __init__(self) -> None:
         super().__init__()
-        self.textShow = None
         self.hintFlags: list[Qt.WindowType] = [
             Qt.WindowType.MSWindowsFixedSizeDialogHint,
             Qt.WindowType.X11BypassWindowManagerHint,
@@ -47,7 +46,6 @@ class Win(QOpenGLWidget, TextWidget):
             Qt.WindowType.WindowTransparentForInput,
             Qt.WindowType.WindowType_Mask
         ]
-
         self.config = config_main
         # LOGS:
         # l2d-py Main Log:
@@ -113,6 +111,7 @@ class Win(QOpenGLWidget, TextWidget):
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
+        self.expression = None
         self.model: live2d.LAppModel | None = None
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -145,10 +144,14 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
             self.h_res = int(self.my_param * self.a_scale * self.models_scale)
+            self.twmX = int(85 * self.a_scale * self.models_scale)
+            self.twmY = int(-15 * self.a_scale * self.models_scale)
             self.config.set('Model', 'w_resize', str(self.w_res))
             self.config.set('Model', 'h_resize', str(self.h_res))
             self.config.set('Model', 'w_correction', '-70')
             self.config.set('Model', 'h_correction', '0')
+            self.config.set('Model', 'twmX', str(self.twmX))
+            self.config.set('Model', 'twmY', str(self.twmY))
             with open('config.ini', 'w') as cfg:
                 cfg: [str, int, tuple, object]
                 self.config.write(cfg)
@@ -158,6 +161,8 @@ class Win(QOpenGLWidget, TextWidget):
         self.h_resize = self.config.getint('Model', 'h_resize')
         self.w_correction = self.config.getfloat('Model', 'w_correction')
         self.h_correction = self.config.getfloat('Model', 'h_correction')
+        self.twmX = self.config.getfloat('Model', 'twmX')
+        self.twmY = self.config.getfloat('Model', 'twmY')
 
         # Model Resize
         self.resize(int(self.w_resize), int(self.h_resize))
@@ -319,14 +324,14 @@ class Win(QOpenGLWidget, TextWidget):
                 self.condition = "Sad"
                 self.model.SetExpression("Sad")
                 self.text = "I'm Sad"
-                self.kaomoji = "(-_;)"
+                self.kaomoji = "(´•ω•̥`)"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.tired_v and self.sleep_switch == True:
                 self.condition = "Tired"
                 self.model.SetExpression("Tired")
                 self.text = "I'm Tired"
-                self.kaomoji = "(~o~)"
+                self.kaomoji = "(๑•﹏•)"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.sleep_v and self.sleep_switch == True:
@@ -337,7 +342,7 @@ class Win(QOpenGLWidget, TextWidget):
                 self.idle_anim = False
                 self.sleep = True
                 self.text = "I'm Sleep"
-                self.kaomoji = "(~_~)zZz"
+                self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.wake_up_v and self.sleep_switch == True:
@@ -564,8 +569,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.transformLabel.close()
             self.input_lock = False
             if self.transform_text:
-                self.text = "I'm Transformed"
-                self.kaomoji = "(*~*)"
+                if self.goodness_form:
+                    self.text = "I'm Transformed"
+                    self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+                else:
+                    self.text = "I'm back to my normal form."
+                    self.kaomoji = "(> ͜ʖ <)"
                 self.textUpdate()
                 self.transform_text = False
 
@@ -655,7 +664,6 @@ class Win(QOpenGLWidget, TextWidget):
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
-                # self.model.Touch(x, y)
                 self.clickInLA = False
                 self.tap_body_anim = True
                 if self.tap_body_switch:
@@ -664,59 +672,59 @@ class Win(QOpenGLWidget, TextWidget):
                     if not self.sleep and self.input_lock == False:
                         self.model.ResetExpression()
                         self.talkDelayTimer.stop()
-                        expression = self.model.SetRandomExpression(fadeout=3500)
+                        self.expression = self.model.SetRandomExpression(fadeout=3500)
                         if self.placeThis:
                             self.placeThis = False
                             self.text = "Okay I'll stay here"
                             self.kaomoji = "(^~^)"
                         else:
-                            if expression == "Normal":
+                            if self.expression == "Normal":
                                 self.text = "So What"
-                                self.kaomoji = "(-_-)"
-                            elif expression == "Happy":
+                                self.kaomoji = "(o_o)"
+                            elif self.expression == "Happy":
                                 self.text = "i'm Happy"
                                 self.kaomoji = "(^_^)"
-                            elif expression == "Angry":
+                            elif self.expression == "Angry":
                                 self.text = "Don't touch me like that"
-                                self.kaomoji = "(=_=)"
-                            elif expression == "Sad":
+                                self.kaomoji = "(⇀‸↼‶)"
+                            elif self.expression == "Sad":
                                 self.text = "i'm Sad"
-                                self.kaomoji = "(-_;)"
-                            elif expression == "Smile":
+                                self.kaomoji = "(´•ω•̥`)"
+                            elif self.expression == "Smile":
                                 self.text = "He He"
                                 self.kaomoji = "(^~^)"
-                            elif expression == "Tired":
+                            elif self.expression == "Tired":
                                 self.text = "i'm Tired"
-                                self.kaomoji = "(~o~)"
-                            elif expression == "ClosedEyes":
+                                self.kaomoji = "(๑•﹏•)"
+                            elif self.expression == "ClosedEyes":
                                 self.text = "Hmm"
                                 self.kaomoji = "(-_-)"
-                            elif expression == "Cry":
+                            elif self.expression == "Cry":
                                 self.text = "Whaah!"
-                                self.kaomoji = "(T_T)"
-                            elif expression == "Fear":
+                                self.kaomoji = "(o;TωT)o"
+                            elif self.expression == "Fear":
                                 self.text = "Ugh"
-                                self.kaomoji = "(:_:)"
-                            elif expression == "Star":
+                                self.kaomoji = "(｡ŏ_ŏ)"
+                            elif self.expression == "Star":
                                 self.text = "i'm Sooo Happy"
-                                self.kaomoji = ";(^~^);"
-                            elif expression == "Surprised":
+                                self.kaomoji = "(✩ω✩)"
+                            elif self.expression == "Surprised":
                                 self.text = "What?"
                                 self.kaomoji = "(0_0)?"
-                            elif expression == "Funny" and self.goodness_form == False:
+                            elif self.expression == "Funny" and self.goodness_form == False:
                                 self.text = "Yo!!!"
                                 self.kaomoji = "(>_<)"
-                            elif expression == "Funny" and self.goodness_form == True:
+                            elif self.expression == "Funny" and self.goodness_form == True:
                                 self.text = "I'm Godness"
-                                self.kaomoji = "(@_@)"
+                                self.kaomoji = "(◕‿◕)"
                         print(self.character_name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-
+                        self.expression = None
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
                     self.model.ResetExpression()
                     self.text = "You woke me up"
-                    self.kaomoji = "(б~б)"
+                    self.kaomoji = "(⊙_⊙)✿"
                     print(self.character_name + ": " + self.text + self.kaomoji)
                     self.textUpdate()
                     self.model.SetExpression("Fear", fadeout=10000)
@@ -766,7 +774,11 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
-
+            self.twmX = int(85 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
         if self.character_name == "Purple Heart":
             self.character_name = "Purple Heart"
             self.models_switch = 1
@@ -774,7 +786,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -15
+            self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Noire":
             self.character_name = "Noire"
@@ -783,7 +800,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -15
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Black Heart":
             self.character_name = "Black Heart"
@@ -792,7 +814,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -25
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Blanc":
             self.character_name = "Blanc"
@@ -802,6 +829,11 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(85 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "White Heart":
             self.character_name = "White Heart"
@@ -810,7 +842,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -10
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Vert":
             self.character_name = "Vert"
@@ -819,7 +856,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -20
+            self.h_correction = 0
+            self.twmX = int(145 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Green Heart":
             self.character_name = "Green Heart"
@@ -828,7 +870,12 @@ class Win(QOpenGLWidget, TextWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -40
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "NepGear":
             self.character_name = "NepGear"
@@ -838,6 +885,11 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Purple Sister":
             self.character_name = "Purple Sister"
@@ -847,6 +899,11 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = 650
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Uni":
             self.character_name = "Uni"
@@ -856,6 +913,11 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Black Sister":
             self.character_name = "Black Sister"
@@ -865,6 +927,11 @@ class Win(QOpenGLWidget, TextWidget):
             self.my_param = 650
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
         # Update Size and Position
         self.resize(1, 1)
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
@@ -916,7 +983,7 @@ class Win(QOpenGLWidget, TextWidget):
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
+                      self.h_resize, self.w_correction, self.h_correction, self.twmX, self.twmY)
         # live2d Update
         live2d.clearBuffer()
         self.model.Update()
@@ -1090,14 +1157,18 @@ class Win(QOpenGLWidget, TextWidget):
         if self.can_transform:
             self.transform_initialize()
             self.t_count = 1
-            self.text = "I'm Transform"
-            self.kaomoji = "(*_~)"
+            if self.goodness_form:
+                self.text = "I'm going back to my normal form"
+                self.kaomoji = "(/￣ー￣)/"
+            else:
+                self.text = "I'm Transform"
+                self.kaomoji = "(/￣ー￣)/~~☆"
             settings.close()
             self.textUpdate()
         if not self.can_transform:
             self.model.SetExpression("Sad", fadeout=10000)
             self.text = "I'm Can't Transform"
-            self.kaomoji = "(T_T)"
+            self.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
             print(self.character_name + ": " + self.text + self.kaomoji)
             self.textUpdate()
 
@@ -1238,7 +1309,7 @@ class Win(QOpenGLWidget, TextWidget):
     def on_action_idle_true(self):
         # QMessageBox.information(self, "Message", f"Idle Animation: Enable")
         self.text = "You have enabled the Idle Animation"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.config.set('Animations', 'idle_animation', 'True')
@@ -1251,7 +1322,7 @@ class Win(QOpenGLWidget, TextWidget):
     def on_action_idle_false(self):
         # QMessageBox.information(self, "Message", f"Idle Animation: Disable")
         self.text = "You have disabled the Idle Animation"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.config.set('Animations', 'idle_animation', 'False')
@@ -1264,7 +1335,7 @@ class Win(QOpenGLWidget, TextWidget):
     def on_action_on_mouse_true(self):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
         self.text = "You have enabled the OnMouse Animation"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.config.set('Animations', 'on_mouse_animation', 'True')
@@ -1277,7 +1348,7 @@ class Win(QOpenGLWidget, TextWidget):
     def on_action_on_mouse_false(self):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
         self.text = "You have disabled the OnMouse Animation"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.config.set('Animations', 'on_mouse_animation', 'False')
@@ -1290,7 +1361,7 @@ class Win(QOpenGLWidget, TextWidget):
     def on_action_tap_body_true(self):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
         self.text = "You have enabled the TapBody Animation"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.config.set('Animations', 'tap_body_animation', 'True')
@@ -1303,7 +1374,7 @@ class Win(QOpenGLWidget, TextWidget):
     def on_action_tap_body_false(self):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
         self.text = "You have disabled the TapBody Animation"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.config.set('Animations', 'tap_body_animation', 'False')
@@ -1315,7 +1386,7 @@ class Win(QOpenGLWidget, TextWidget):
 
     def on_action_stop_all_motions(self):
         self.text = "You stop all motions"
-        self.kaomoji = "(@_@)"
+        self.kaomoji = "(⌐■_■)"
         print(self.character_name + ": " + self.text + self.kaomoji)
         self.textUpdate()
         self.model.StopAllMotions()

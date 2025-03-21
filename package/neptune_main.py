@@ -18,110 +18,16 @@ import live2d.v3 as live2d
 # import live2d.v2 as live2d
 import resources
 from config_module import *
-
-def auto_scale(height):
-    sc_height_size = height
-    if sc_height_size == 120:
-        a_scale = 0.111
-    if sc_height_size == 160:
-        a_scale = 0.148
-    if sc_height_size == 192:
-        a_scale = 0.178
-    if sc_height_size == 240:
-        a_scale = 0.222
-    if sc_height_size == 272:
-        a_scale = 0.252
-    if sc_height_size == 320:
-        a_scale = 0.296
-    if sc_height_size == 360:
-        a_scale = 0.333
-    if sc_height_size == 384:
-        a_scale = 0.355
-    if sc_height_size == 480:
-        a_scale = 0.444
-    if sc_height_size == 540:
-        a_scale = 0.5
-    if sc_height_size == 576:
-        a_scale = 0.533
-    if sc_height_size == 600:
-        a_scale = 0.555
-    if sc_height_size == 640:
-        a_scale = 0.592
-    if sc_height_size == 720:
-        a_scale = 0.666
-    if sc_height_size == 768:
-        a_scale = 0.711
-    if sc_height_size == 800:
-        a_scale = 0.741
-    if sc_height_size == 810:
-        a_scale = 0.75
-    if sc_height_size == 864:
-        a_scale = 0.8
-    if sc_height_size == 900:
-        a_scale = 0.833
-    if sc_height_size == 960:
-        a_scale = 0.888
-    if sc_height_size == 1024:
-        a_scale = 0.948
-    if sc_height_size == 1050:
-        a_scale = 0.972
-    if sc_height_size == 1080:
-        a_scale = 1
-    if sc_height_size == 1152:
-        a_scale = 1.066
-    if sc_height_size == 1200:
-        a_scale = 1.111
-    if sc_height_size == 1280:
-        a_scale = 1.185
-    if sc_height_size == 1350:
-        a_scale = 1.25
-    if sc_height_size == 1440:
-        a_scale = 1.333
-    if sc_height_size == 1536:
-        a_scale = 1.422
-    if sc_height_size == 1600:
-        a_scale = 1.481
-    if sc_height_size == 1620:
-        a_scale = 1.5
-    if sc_height_size == 1800:
-        a_scale = 1.666
-    if sc_height_size == 2048:
-        a_scale = 1.896
-    if sc_height_size == 2160:
-        a_scale = 2
-    if sc_height_size == 2400:
-        a_scale = 2.222
-    if sc_height_size == 2560:
-        a_scale = 2.370
-    if sc_height_size == 2880:
-        a_scale = 2.666
-    if sc_height_size == 3072:
-        a_scale = 2.844
-    if sc_height_size == 3200:
-        a_scale = 2.963
-    if sc_height_size == 3240:
-        a_scale = 3
-    if sc_height_size == 3384:
-        a_scale = 3.133
-    if sc_height_size == 4096:
-        a_scale = 3.793
-    if sc_height_size == 4320:
-        a_scale = 4
-    if sc_height_size == 4800:
-        a_scale = 4.444
-    if sc_height_size == 8640:
-        a_scale = 8
-    return a_scale
+from talk_widget import TalkWidgetMain
 
 def callback():
     motion_end_log = False
     if motion_end_log:
         print("motion end")
 
-class Win(QOpenGLWidget):
+class Win(QOpenGLWidget, TalkWidgetMain):
     def __init__(self) -> None:
         super().__init__()
-        self.textShow = None
         self.hintFlags: list[Qt.WindowType] = [
             Qt.WindowType.MSWindowsFixedSizeDialogHint,
             Qt.WindowType.X11BypassWindowManagerHint,
@@ -140,7 +46,6 @@ class Win(QOpenGLWidget):
             Qt.WindowType.WindowTransparentForInput,
             Qt.WindowType.WindowType_Mask
         ]
-
         self.config = config_main
         # LOGS:
         # l2d-py Main Log:
@@ -176,8 +81,6 @@ class Win(QOpenGLWidget):
         self.isInLA = False
         self.clickInLA = False
         self.click = False
-        self.a = 0
-        self.t = 0
         self.test = False
         self.read = False
         self.clickX = -1
@@ -194,7 +97,6 @@ class Win(QOpenGLWidget):
         self.transform_lock = 0
         self.input_lock = False
         self.can_transform = False
-        self.change_trigger = False
         self.transform_text = True
         self.trm_mx = -50
         self.trm_my = 5
@@ -206,13 +108,19 @@ class Win(QOpenGLWidget):
         self.talkX = 160
         self.talkY = 130
         self.talkFontSize = 10
+        self.screenSide = "Right"
         self.talk = True
         self.talkUpd = True
+        self.placeThis = False
+        self.expression = None
         self.model: live2d.LAppModel | None = None
+        self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
         self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
+        self.vSize = QScreen.availableVirtualGeometry(QApplication.primaryScreen())
+
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
         self.config.set('Main', 'screen_height',str(self.sc_height_size))
@@ -240,10 +148,14 @@ class Win(QOpenGLWidget):
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
             self.h_res = int(self.my_param * self.a_scale * self.models_scale)
+            self.twmX = int(85 * self.a_scale * self.models_scale)
+            self.twmY = int(-15 * self.a_scale * self.models_scale)
             self.config.set('Model', 'w_resize', str(self.w_res))
             self.config.set('Model', 'h_resize', str(self.h_res))
             self.config.set('Model', 'w_correction', '-70')
             self.config.set('Model', 'h_correction', '0')
+            self.config.set('Model', 'twmX', str(self.twmX))
+            self.config.set('Model', 'twmY', str(self.twmY))
             with open('config.ini', 'w') as cfg:
                 cfg: [str, int, tuple, object]
                 self.config.write(cfg)
@@ -253,6 +165,8 @@ class Win(QOpenGLWidget):
         self.h_resize = self.config.getint('Model', 'h_resize')
         self.w_correction = self.config.getfloat('Model', 'w_correction')
         self.h_correction = self.config.getfloat('Model', 'h_correction')
+        self.twmX = self.config.getfloat('Model', 'twmX')
+        self.twmY = self.config.getfloat('Model', 'twmY')
 
         # Model Resize
         self.resize(int(self.w_resize), int(self.h_resize))
@@ -302,51 +216,6 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
         self.transformMovie = QMovie(self.t_anim_in)
         self.transformLabel.setMovie(self.transformMovie)
-
-    def hello(self):
-        self.goodByeTimer.stop()
-        self.model_update()
-        self.text = "Hello!"
-        self.kaomoji = "(^~^)/"
-        self.model.SetExpression("Smile", fadeout=10000)
-        print(self.character_name + ": " + self.text + self.kaomoji)
-        self.textUpdate()
-        self.talkUpd = True
-
-    def goodBye(self):
-        self.goodByeTimer.start(3000)
-        self.text = "GoodBye"
-        self.kaomoji = "(-_-)>"
-        print(self.character_name + ": " + self.text + self.kaomoji)
-        self.textUpdate()
-        self.talkUpd = False
-
-    def quitFunction(self):
-        self.quitTimer.stop()
-        exit(0)
-
-    def dialogClose(self):
-        self.talk = False
-        self.talkWidget.close()
-        self.dialogCloseTimer.stop()
-        self.talkTextLabel.repaint()
-        QApplication.processEvents()
-
-    def textUpdate(self):
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talkTextLabel.repaint()
-        self.talkFrame.repaint()
-        QApplication.processEvents()
-        self.talk_function()
-
-    def talkWidgetUpdate(self):
-        self.talk = True
-        self.talkWidget.close()
-        self.talkWidgetInit()
-        self.text = "The settings are applied"
-        self.kaomoji = "(@~@)"
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talk_function()
 
     def transform_initialize(self):
         self.input_lock = True
@@ -402,6 +271,8 @@ class Win(QOpenGLWidget):
             self.on_action_green_heart()
         if self.character_name == "NepGear":
             self.on_action_purple_sister()
+        if self.character_name == "Uni":
+            self.on_action_black_sister()
 
     def transform_to_regular_form(self):
         # Transform to Regular Form
@@ -415,6 +286,8 @@ class Win(QOpenGLWidget):
             self.on_action_vert()
         if self.character_name == "Purple Sister":
             self.on_action_nepgear()
+        if self.character_name == "Black Sister":
+            self.on_action_uni()
 
     def mouse_tracking(self):
         self.tracking_mouse = False
@@ -451,14 +324,14 @@ class Win(QOpenGLWidget):
                 self.condition = "Sad"
                 self.model.SetExpression("Sad")
                 self.text = "I'm Sad"
-                self.kaomoji = "(-_;)"
+                self.kaomoji = "(´•ω•̥`)"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.tired_v and self.sleep_switch == True:
                 self.condition = "Tired"
                 self.model.SetExpression("Tired")
                 self.text = "I'm Tired"
-                self.kaomoji = "(~o~)"
+                self.kaomoji = "(๑•﹏•)"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.sleep_v and self.sleep_switch == True:
@@ -469,7 +342,7 @@ class Win(QOpenGLWidget):
                 self.idle_anim = False
                 self.sleep = True
                 self.text = "I'm Sleep"
-                self.kaomoji = "(~_~)zZz"
+                self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.textUpdate()
             if self.t_count == self.wake_up_v and self.sleep_switch == True:
@@ -514,51 +387,13 @@ class Win(QOpenGLWidget):
         self.quitTimer = QTimer()
         self.quitTimer.timeout.connect(self.quitFunction)
 
-    def talkWidgetInit(self) -> None:
-        self.talkWidget = QWidget(self)
-        self.talkGridLayout = QGridLayout(self.talkWidget)
-        self.talkFrame = QFrame(self.talkWidget)
-        self.frameLayout = QVBoxLayout(self.talkFrame)
-        self.talkImageLabel = QLabel()
-        self.talkSubWidget = QWidget(self.talkImageLabel)
-        self.talkFormLayout = QFormLayout(self.talkSubWidget)
-        self.talkTextLabel = QLabel()
-        self.talkGridLayout.addWidget(self.talkFrame, 1, 0, 1, 1)
-
-    def talk_function(self):
-        # Talk Widget
-        if not self.talk:
-            self.talkWidget.show()
-            self.talk = True
-
-        self.dialogCloseTimer.start(10000)
-        self.talkWidget.move(0, 0)
-
-        self.talkImage = os.path.join(
-            resources.RESOURCES_DIRECTORY, "images/talk.svg")
-
-        self.talkPixmap = QPixmap(self.talkImage).scaled(float(self.talkX * self.a_scale * self.models_scale), float(self.talkY * self.a_scale * self.models_scale))
-        self.talkImageLabel.setPixmap(self.talkPixmap)
-
-        self.frameLayout.addWidget(self.talkImageLabel)
-
-        self.talkSubWidget.move(8 * self.a_scale * self.models_scale, -20 * self.a_scale * self.models_scale)
-        self.talkFont = QFont("Segoe Print", float(self.talkFontSize * self.a_scale * self.models_scale))
-        self.talkFont.setBold(True)
-        self.talkTextLabel.setText(self.character_name + ": " + self.text + "\n" + self.kaomoji)
-        self.talkTextLabel.setFont(self.talkFont)
-        self.talkTextLabel.setStyleSheet("color: gray")
-        self.talkTextLabel.setWordWrap(True)
-        self.talkTextLabel.setFixedWidth(float((self.talkX - 25) * self.a_scale * self.models_scale))
-        self.talkTextLabel.setFixedHeight(float((self.talkY -5) * self.a_scale * self.models_scale))
-
-        self.talkFormLayout.setWidget(0, QFormLayout.LabelRole, self.talkTextLabel)
-        # self.verticalSpacer = QSpacerItem(float(self.talkX * self.a_scale * self.models_scale), 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
-        # self.talkFormLayout.setItem(0, QFormLayout.LabelRole, self.verticalSpacer)
+        # Talk Delay timer
+        self.talkDelayTimer = QTimer()
+        self.talkDelayTimer.timeout.connect(self.takingTalk)
 
     def initializeGL(self) -> None:
-        # self.makeCurrent()
-        live2d.glewInit()
+        self.makeCurrent()
+        live2d.glInit()
         self.model = live2d.LAppModel()
         if live2d.LIVE2D_VERSION == 3:
             self.text = "Hello!"
@@ -635,10 +470,17 @@ class Win(QOpenGLWidget):
 
             elif self.models_switch == 10:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
+
+            elif self.models_switch == 11:
+                self.goodness_form = True
+                self.can_transform = True
+                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -703,6 +545,7 @@ class Win(QOpenGLWidget):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
+
         auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
         self.model.SetAutoBlinkEnable(auto_blink_param)
         auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
@@ -726,8 +569,12 @@ class Win(QOpenGLWidget):
             self.transformLabel.close()
             self.input_lock = False
             if self.transform_text:
-                self.text = "I'm Transformed"
-                self.kaomoji = "(*~*)"
+                if self.goodness_form:
+                    self.text = "I'm Transformed"
+                    self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+                else:
+                    self.text = "I'm back to my normal form."
+                    self.kaomoji = "(> ͜ʖ <)"
                 self.textUpdate()
                 self.transform_text = False
 
@@ -736,6 +583,8 @@ class Win(QOpenGLWidget):
             self.transform_text = True
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
+
+        self.changeTalkWidgetSide()
 
         # Mouse Triggers
         count = 0
@@ -760,7 +609,7 @@ class Win(QOpenGLWidget):
 
         # Tracking the mouse position
         if self.tracking_mouse:
-            self.model.Drag(local_x, local_y)
+            self.model.Drag(QCursor.pos().x(), QCursor.pos().y())
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -799,12 +648,15 @@ class Win(QOpenGLWidget):
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
-                if not self.sleep and self.input_lock == False:  # False
+                if not self.sleep and self.input_lock == False:
+                    self.talkDelayTimer.start(1500)
                     if self.character_name == "Purple Sister":
+                        self.model.SetExpression("Smile")
+                    if self.character_name == "Black Sister":
                         self.model.SetExpression("Smile")
                     else:
                         self.model.SetExpression("Funny")
-                if self.sleep and self.input_lock == False:  # True
+                if self.sleep and self.input_lock == False:
                     self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
                     print("Left Button Pressed")
@@ -814,7 +666,6 @@ class Win(QOpenGLWidget):
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
-                # self.model.Touch(x, y)
                 self.clickInLA = False
                 self.tap_body_anim = True
                 if self.tap_body_switch:
@@ -822,10 +673,62 @@ class Win(QOpenGLWidget):
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
                         self.model.ResetExpression()
-                        self.model.SetRandomExpression(fadeout=3500)
+                        self.talkDelayTimer.stop()
+                        self.expression = self.model.SetRandomExpression(fadeout=3500)
+                        if self.placeThis:
+                            self.placeThis = False
+                            self.text = "Okay I'll stay here"
+                            self.kaomoji = "(^~^)"
+                        else:
+                            if self.expression == "Normal":
+                                self.text = "So What"
+                                self.kaomoji = "(o_o)"
+                            elif self.expression == "Happy":
+                                self.text = "i'm Happy"
+                                self.kaomoji = "(^_^)"
+                            elif self.expression == "Angry":
+                                self.text = "Don't touch me like that"
+                                self.kaomoji = "(⇀‸↼‶)"
+                            elif self.expression == "Sad":
+                                self.text = "i'm Sad"
+                                self.kaomoji = "(´•ω•̥`)"
+                            elif self.expression == "Smile":
+                                self.text = "He He"
+                                self.kaomoji = "(^~^)"
+                            elif self.expression == "Tired":
+                                self.text = "i'm Tired"
+                                self.kaomoji = "(๑•﹏•)"
+                            elif self.expression == "ClosedEyes":
+                                self.text = "Hmm"
+                                self.kaomoji = "(-_-)"
+                            elif self.expression == "Cry":
+                                self.text = "Whaah!"
+                                self.kaomoji = "(o;TωT)o"
+                            elif self.expression == "Fear":
+                                self.text = "Ugh"
+                                self.kaomoji = "(｡ŏ_ŏ)"
+                            elif self.expression == "Star":
+                                self.text = "i'm Sooo Happy"
+                                self.kaomoji = "(✩ω✩)"
+                            elif self.expression == "Surprised":
+                                self.text = "What?"
+                                self.kaomoji = "(0_0)?"
+                            elif self.expression == "Funny" and self.goodness_form == False:
+                                self.text = "Yo!!!"
+                                self.kaomoji = "(>_<)"
+                            elif self.expression == "Funny" and self.goodness_form == True:
+                                self.text = "I'm Godness"
+                                self.kaomoji = "(◕‿◕)"
+                        print(self.character_name + ": " + self.text + self.kaomoji)
+                        self.textUpdate()
+                        self.expression = None
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
                     self.model.ResetExpression()
+                    self.text = "You woke me up"
+                    self.kaomoji = "(⊙_⊙)✿"
+                    print(self.character_name + ": " + self.text + self.kaomoji)
+                    self.textUpdate()
                     self.model.SetExpression("Fear", fadeout=10000)
                     self.t_count = 1
                     self.sleep = False
@@ -841,7 +744,7 @@ class Win(QOpenGLWidget):
             self.move(int(self.x() + x - self.clickX - 10), int(self.y() + y - self.clickY - 10))
 
     def setSettings(self, flags: Qt.WindowType) -> None:
-        #print(f"setSettings flags: {flags}")
+        # print(f"setSettings flags: {flags}")
         self.setWindowFlags(flags)
 
         windowType = flags & Qt.WindowType.WindowType_Mask
@@ -873,7 +776,11 @@ class Win(QOpenGLWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
-
+            self.twmX = int(85 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
         if self.character_name == "Purple Heart":
             self.character_name = "Purple Heart"
             self.models_switch = 1
@@ -881,7 +788,12 @@ class Win(QOpenGLWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -15
+            self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Noire":
             self.character_name = "Noire"
@@ -890,7 +802,12 @@ class Win(QOpenGLWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -15
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Black Heart":
             self.character_name = "Black Heart"
@@ -899,7 +816,12 @@ class Win(QOpenGLWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -25
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Blanc":
             self.character_name = "Blanc"
@@ -909,6 +831,11 @@ class Win(QOpenGLWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(85 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "White Heart":
             self.character_name = "White Heart"
@@ -917,7 +844,12 @@ class Win(QOpenGLWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -10
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Vert":
             self.character_name = "Vert"
@@ -926,7 +858,12 @@ class Win(QOpenGLWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -20
+            self.h_correction = 0
+            self.twmX = int(145 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Green Heart":
             self.character_name = "Green Heart"
@@ -935,7 +872,12 @@ class Win(QOpenGLWidget):
             self.mx_param = 700
             self.my_param = 700
             self.w_correction = -70
-            self.h_correction = 0  # -40
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "NepGear":
             self.character_name = "NepGear"
@@ -945,15 +887,25 @@ class Win(QOpenGLWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Purple Sister":
             self.character_name = "Purple Sister"
             self.models_switch = 9
             self.t_count = 1
-            self.mx_param = 700
-            self.my_param = 700
+            self.mx_param = 650
+            self.my_param = 650
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
 
         if self.character_name == "Uni":
             self.character_name = "Uni"
@@ -963,6 +915,25 @@ class Win(QOpenGLWidget):
             self.my_param = 600
             self.w_correction = -70
             self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
+
+        if self.character_name == "Black Sister":
+            self.character_name = "Black Sister"
+            self.models_switch = 11
+            self.t_count = 1
+            self.mx_param = 650
+            self.my_param = 650
+            self.w_correction = -70
+            self.h_correction = 0
+            self.twmX = int(125 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
         # Update Size and Position
         self.resize(1, 1)
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
@@ -1008,15 +979,22 @@ class Win(QOpenGLWidget):
         if self.character_name == "Uni":
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
+        if self.character_name == "Black Sister":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
-                      self.h_resize, self.w_correction, self.h_correction)
+                      self.h_resize, self.w_correction, self.h_correction, self.twmX, self.twmY)
         # live2d Update
         live2d.clearBuffer()
         self.model.Update()
         if self.talkUpd:
             self.talkWidgetUpdate()
+
+    def quitFunction(self):
+        self.quitTimer.stop()
+        exit(0)
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -1095,12 +1073,16 @@ class Win(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), '&Purple Sister')
         if not self.input_lock:
             action_purple_sister.triggered.connect(self.on_action_purple_sister)
-
         # Uni
         action_uni = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/uni.ico")), '&Uni')
         if not self.input_lock:
             action_uni.triggered.connect(self.on_action_uni)
+        # Black Sister
+        action_black_sister = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), '&Black Sister')
+        if not self.input_lock:
+            action_black_sister.triggered.connect(self.on_action_black_sister)
 
         context_menu.addMenu(submenu_character)
 
@@ -1181,14 +1163,18 @@ class Win(QOpenGLWidget):
         if self.can_transform:
             self.transform_initialize()
             self.t_count = 1
-            self.text = "I'm Transform"
-            self.kaomoji = "(*_~)"
+            if self.goodness_form:
+                self.text = "I'm going back to my normal form"
+                self.kaomoji = "(/￣ー￣)/"
+            else:
+                self.text = "I'm Transform"
+                self.kaomoji = "(/￣ー￣)/~~☆"
             settings.close()
             self.textUpdate()
         if not self.can_transform:
             self.model.SetExpression("Sad", fadeout=10000)
             self.text = "I'm Can't Transform"
-            self.kaomoji = "(T_T)"
+            self.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
             print(self.character_name + ": " + self.text + self.kaomoji)
             self.textUpdate()
 
@@ -1305,7 +1291,7 @@ class Win(QOpenGLWidget):
 
     def on_action_uni(self):
         self.goodness_form = False
-        self.can_transform = False
+        self.can_transform = True
         self.talkUpd = False
         if not self.transform:
             self.goodBye()
@@ -1314,9 +1300,24 @@ class Win(QOpenGLWidget):
         if self.transform:
             self.model_update()
 
+    def on_action_black_sister(self):
+        self.goodness_form = True
+        self.can_transform = True
+        self.talkUpd = False
+        if not self.transform:
+            self.goodBye()
+        self.character_name = "Black Sister"
+        self.models_switch = 11
+        if self.transform:
+            self.model_update()
+
     # Animations Actions
     def on_action_idle_true(self):
-        QMessageBox.information(self, "Message", f"Idle Animation: Enable")
+        # QMessageBox.information(self, "Message", f"Idle Animation: Enable")
+        self.text = "You have enabled the Idle Animation"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.config.set('Animations', 'idle_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1325,7 +1326,11 @@ class Win(QOpenGLWidget):
         self.idle_anim = True
 
     def on_action_idle_false(self):
-        QMessageBox.information(self, "Message", f"Idle Animation: Disable")
+        # QMessageBox.information(self, "Message", f"Idle Animation: Disable")
+        self.text = "You have disabled the Idle Animation"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.config.set('Animations', 'idle_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1334,7 +1339,11 @@ class Win(QOpenGLWidget):
         self.idle_anim = False
 
     def on_action_on_mouse_true(self):
-        QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
+        # QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
+        self.text = "You have enabled the OnMouse Animation"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.config.set('Animations', 'on_mouse_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1343,7 +1352,11 @@ class Win(QOpenGLWidget):
         self.on_mouse_anim = True
 
     def on_action_on_mouse_false(self):
-        QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
+        # QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
+        self.text = "You have disabled the OnMouse Animation"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.config.set('Animations', 'on_mouse_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1352,7 +1365,11 @@ class Win(QOpenGLWidget):
         self.on_mouse_anim = False
 
     def on_action_tap_body_true(self):
-        QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
+        # QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
+        self.text = "You have enabled the TapBody Animation"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.config.set('Animations', 'tap_body_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1361,7 +1378,11 @@ class Win(QOpenGLWidget):
         self.tap_body_anim = True
 
     def on_action_tap_body_false(self):
-        QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
+        # QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
+        self.text = "You have disabled the TapBody Animation"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.config.set('Animations', 'tap_body_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1370,6 +1391,10 @@ class Win(QOpenGLWidget):
         self.tap_body_anim = False
 
     def on_action_stop_all_motions(self):
+        self.text = "You stop all motions"
+        self.kaomoji = "(⌐■_■)"
+        print(self.character_name + ": " + self.text + self.kaomoji)
+        self.textUpdate()
         self.model.StopAllMotions()
 
     # Settings Actions
@@ -1463,7 +1488,6 @@ class SettingsWindow(QWidget):
         # Windows Flags Control
         self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
         self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
-        self.windowStaysOnBottomCheckBox.setChecked(self.getWindowFlag_WindowStaysOnBottomHint)
 
         # Settings Control
         self.autoScaleCheckBox.setChecked(self.auto_scale)
@@ -1524,25 +1548,10 @@ class SettingsWindow(QWidget):
                 flags = flags | Qt.WindowType.WindowStaysOnTopHint
                 self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
                 self.windowStaysOnTopCheckBox.setChecked(True)
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
-                self.windowStaysOnBottomCheckBox.setChecked(False)
             else:
                 self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
                 self.windowStaysOnTopCheckBox.setChecked(False)
                 self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
-                self.windowStaysOnBottomCheckBox.setChecked(True)
-
-            if self.windowStaysOnBottomCheckBox.isChecked():
-                flags = flags | Qt.WindowType.WindowStaysOnBottomHint
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
-                self.windowStaysOnBottomCheckBox.setChecked(True)
-                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
-                self.windowStaysOnTopCheckBox.setChecked(False)
-            else:
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
-                self.windowStaysOnBottomCheckBox.setChecked(False)
-                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
-                self.windowStaysOnTopCheckBox.setChecked(True)
 
             if self.autoScaleCheckBox.isChecked():
                 self.config.set('Scale', 'auto_scale', 'True')
@@ -1611,17 +1620,15 @@ class SettingsWindow(QWidget):
             ]
 
             for i, (checkBox, _) in enumerate(self.hintFlagWidgets):
-                layout.addWidget(checkBox, i%3, int(i/3))
+                layout.addWidget(checkBox, i%2, int(i/2))
 
             self.typeFlagWidgets[0][0].setChecked(True)
         else:
             self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
             self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
-            self.windowStaysOnBottomCheckBox = self.createCheckBox("Window stays on bottom")
 
             layout.addWidget(self.framelessWindowCheckBox, 0, 0)
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
-            layout.addWidget(self.windowStaysOnBottomCheckBox, 2, 0)
         self.hintsGroupBox.setLayout(layout)
 
     def createScaleGroupBox(self) -> None:

@@ -482,6 +482,13 @@ class Win(QOpenGLWidget, TalkWidgetMain):
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
 
+            elif self.models_switch == 12:
+                self.goodness_form = False
+                self.can_transform = False
+                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
+
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
@@ -934,6 +941,20 @@ class Win(QOpenGLWidget, TalkWidgetMain):
                 self.twmY = int(-10 * self.a_scale * self.models_scale)
             else:
                 self.twmY = int(0 * self.a_scale * self.models_scale)
+
+        if self.character_name == "Rom":
+            self.character_name = "Rom"
+            self.models_switch = 12
+            self.t_count = 1
+            self.mx_param = 600
+            self.my_param = 600
+            self.w_correction = -70
+            self.h_correction = 0
+            self.twmX = int(100 * self.a_scale * self.models_scale)
+            if self.a_scale <= 2:
+                self.twmY = int(-10 * self.a_scale * self.models_scale)
+            else:
+                self.twmY = int(0 * self.a_scale * self.models_scale)
         # Update Size and Position
         self.resize(1, 1)
         self.w_resize = int(self.mx_param * self.a_scale * self.models_scale)
@@ -982,6 +1003,9 @@ class Win(QOpenGLWidget, TalkWidgetMain):
         if self.character_name == "Black Sister":
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
+        if self.character_name == "Rom":
+            self.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
         self.resizeGL(int(self.w_resize), int(self.h_resize))
         # Save Config
         models_config(self.models_switch, self.character_name, self.mx_param, self.my_param, self.w_resize,
@@ -1083,6 +1107,11 @@ class Win(QOpenGLWidget, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), '&Black Sister')
         if not self.input_lock:
             action_black_sister.triggered.connect(self.on_action_black_sister)
+        # Rom
+        action_rom = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/rom.ico")), '&Rom')
+        if not self.input_lock:
+            action_rom.triggered.connect(self.on_action_rom)
 
         context_menu.addMenu(submenu_character)
 
@@ -1308,6 +1337,17 @@ class Win(QOpenGLWidget, TalkWidgetMain):
             self.goodBye()
         self.character_name = "Black Sister"
         self.models_switch = 11
+        if self.transform:
+            self.model_update()
+
+    def on_action_rom(self):
+        self.goodness_form = False
+        self.can_transform = False
+        self.talkUpd = False
+        if not self.transform:
+            self.goodBye()
+        self.character_name = "Rom"
+        self.models_switch = 12
         if self.transform:
             self.model_update()
 

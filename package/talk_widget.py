@@ -16,8 +16,34 @@ class TalkWidgetMain:
         win.talkTextLabel = QLabel()
         win.talkGridLayout.addWidget(win.talkFrame, 1, 0, 1, 1)
 
+    def changeTalkWidgetSide(win):
+        vSizeX = win.vSize.width()
+        sSizeX = win.SrcSize.width()
+
+        screens = win.app.screens()
+        center = (win.posX + win.x()) - sSizeX / 2
+        if center >= 0:
+            win.screenSide = "Right"
+        elif center <= 0:
+            win.screenSide = "Left"
+
     def talk_function(win):
-        # Talk Widget
+        if win.a_scale >=1:
+            varX = 10 * win.a_scale
+            varY = 20 * win.a_scale
+        elif win.a_scale >= 2:
+            varX = 20 * win.a_scale
+            varY = 60 * win.a_scale
+        elif win.a_scale >= 3:
+            varX = 40 * win.a_scale
+            varY = 70 * win.a_scale
+        elif win.a_scale >= 4:
+            varX = 50 * win.a_scale
+            varY = 80 * win.a_scale
+        else:
+            varX = 5 * win.a_scale
+            varY = 20
+
         if not win.talk:
             win.talkWidget.show()
             win.talk = True
@@ -25,8 +51,15 @@ class TalkWidgetMain:
         win.dialogCloseTimer.start(10000)
         win.talkWidget.move(win.twmX, win.twmY)
 
-        win.talkImage = os.path.join(
-            resources.RESOURCES_DIRECTORY, "images/talk.svg")
+        if win.screenSide == "Right":
+            win.talkImage = os.path.join(
+                resources.RESOURCES_DIRECTORY, "images/talk.svg")
+            win.talkWidget.move(win.twmX, win.twmY)
+        elif win.screenSide == "Left":
+            win.talkImage = os.path.join(
+                resources.RESOURCES_DIRECTORY, "images/talk_mirrored.svg")
+            win.talkWidget.move(win.twmX + (250 * win.a_scale * win.models_scale), win.twmY+10)
+            varX = 0
 
         win.talkPixmap = QPixmap(win.talkImage).scaled(QSize((win.talkX + 15) * win.a_scale * win.models_scale,
                                                              (win.talkY + 5) * win.a_scale * win.models_scale),
@@ -34,22 +67,6 @@ class TalkWidgetMain:
         win.talkImageLabel.setPixmap(win.talkPixmap)
 
         win.frameLayout.addWidget(win.talkImageLabel)
-
-        if win.a_scale >=1:
-            varX = 10 * win.a_scale
-            varY = 20 * win.a_scale
-        elif win.a_scale >= 2:
-            varX = 20 * win.a_scale
-            varY = 50 * win.a_scale
-        elif win.a_scale >= 3:
-            varX = 40 * win.a_scale
-            varY = 60 * win.a_scale
-        elif win.a_scale >= 4:
-            varX = 50 * win.a_scale
-            varY = 70 * win.a_scale
-        else:
-            varX = 5 * win.a_scale
-            varY = 20
 
         win.textSubWidget.move(varX * win.a_scale * win.models_scale,
                                - varY * win.a_scale * win.models_scale)
@@ -89,6 +106,7 @@ class TalkWidgetMain:
 
     def talkWidgetUpdate(win):
         win.talk = True
+        win.screenSide = "Right"
         win.talkWidget.close()
         win.talkWidgetInit()
         win.text = "The settings are applied"

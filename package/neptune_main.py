@@ -108,15 +108,19 @@ class Win(QOpenGLWidget, TalkWidgetMain):
         self.talkX = 160
         self.talkY = 130
         self.talkFontSize = 10
+        self.screenSide = "Right"
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
         self.expression = None
         self.model: live2d.LAppModel | None = None
+        self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
         self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
+        self.vSize = QScreen.availableVirtualGeometry(QApplication.primaryScreen())
+
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
         self.config.set('Main', 'screen_height',str(self.sc_height_size))
@@ -212,10 +216,6 @@ class Win(QOpenGLWidget, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
         self.transformMovie = QMovie(self.t_anim_in)
         self.transformLabel.setMovie(self.transformMovie)
-
-    def quitFunction(self):
-        self.quitTimer.stop()
-        exit(0)
 
     def transform_initialize(self):
         self.input_lock = True
@@ -584,6 +584,8 @@ class Win(QOpenGLWidget, TalkWidgetMain):
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
+        self.changeTalkWidgetSide()
+
         # Mouse Triggers
         count = 0
         while True:
@@ -607,7 +609,7 @@ class Win(QOpenGLWidget, TalkWidgetMain):
 
         # Tracking the mouse position
         if self.tracking_mouse:
-            self.model.Drag(local_x, local_y)
+            self.model.Drag(QCursor.pos().x(), QCursor.pos().y())
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -989,6 +991,10 @@ class Win(QOpenGLWidget, TalkWidgetMain):
         self.model.Update()
         if self.talkUpd:
             self.talkWidgetUpdate()
+
+    def quitFunction(self):
+        self.quitTimer.stop()
+        exit(0)
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -1482,7 +1488,6 @@ class SettingsWindow(QWidget):
         # Windows Flags Control
         self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
         self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
-        self.windowStaysOnBottomCheckBox.setChecked(self.getWindowFlag_WindowStaysOnBottomHint)
 
         # Settings Control
         self.autoScaleCheckBox.setChecked(self.auto_scale)
@@ -1543,25 +1548,10 @@ class SettingsWindow(QWidget):
                 flags = flags | Qt.WindowType.WindowStaysOnTopHint
                 self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
                 self.windowStaysOnTopCheckBox.setChecked(True)
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
-                self.windowStaysOnBottomCheckBox.setChecked(False)
             else:
                 self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
                 self.windowStaysOnTopCheckBox.setChecked(False)
                 self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
-                self.windowStaysOnBottomCheckBox.setChecked(True)
-
-            if self.windowStaysOnBottomCheckBox.isChecked():
-                flags = flags | Qt.WindowType.WindowStaysOnBottomHint
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
-                self.windowStaysOnBottomCheckBox.setChecked(True)
-                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
-                self.windowStaysOnTopCheckBox.setChecked(False)
-            else:
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
-                self.windowStaysOnBottomCheckBox.setChecked(False)
-                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
-                self.windowStaysOnTopCheckBox.setChecked(True)
 
             if self.autoScaleCheckBox.isChecked():
                 self.config.set('Scale', 'auto_scale', 'True')
@@ -1630,17 +1620,15 @@ class SettingsWindow(QWidget):
             ]
 
             for i, (checkBox, _) in enumerate(self.hintFlagWidgets):
-                layout.addWidget(checkBox, i%3, int(i/3))
+                layout.addWidget(checkBox, i%2, int(i/2))
 
             self.typeFlagWidgets[0][0].setChecked(True)
         else:
             self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
             self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
-            self.windowStaysOnBottomCheckBox = self.createCheckBox("Window stays on bottom")
 
             layout.addWidget(self.framelessWindowCheckBox, 0, 0)
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
-            layout.addWidget(self.windowStaysOnBottomCheckBox, 2, 0)
         self.hintsGroupBox.setLayout(layout)
 
     def createScaleGroupBox(self) -> None:

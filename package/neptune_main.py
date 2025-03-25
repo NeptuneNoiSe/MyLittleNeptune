@@ -16,12 +16,11 @@ import live2d.v3 as live2d
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 import resources
-from config_module import *
-from package.widgets.talk_widget import TalkWidgetMain
-
-from models import Models
-from on_actions import OnActions
-from functions import Functions
+from widgets.talk_widget import TalkWidgetMain
+from additional.config_module import *
+from additional.models import Models
+from additional.on_actions import OnActions
+from additional.functions import Functions
 
 def callback():
     motion_end_log = False
@@ -191,6 +190,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Animation Vars
         self.condition = "Idle"
         self.sleep = False
+        self.wake_up = False
         self.t_count = 1
         self.sad_v = 60
         self.tired_v = 80
@@ -561,10 +561,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
                     self.model.ResetExpression()
-                    self.text = "You woke me up"
-                    self.kaomoji = "(⊙_⊙)✿"
-                    print(self.character_name + ": " + self.text + self.kaomoji)
-                    self.textUpdate()
+                    if not self.wake_up:
+                        self.text = "You woke me up"
+                        self.kaomoji = "(⊙_⊙)✿"
+                        print(self.character_name + ": " + self.text + self.kaomoji)
+                        self.textUpdate()
                     self.model.SetExpression("Fear", fadeout=10000)
                     self.t_count = 1
                     self.sleep = False

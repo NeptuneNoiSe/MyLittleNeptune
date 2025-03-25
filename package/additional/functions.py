@@ -1,7 +1,8 @@
 from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, QTimer
-import resources
-from config_module import *
+
+from package import resources
+from package.additional.config_module import *
 
 class Functions:
     def mouse_tracking(win):
@@ -56,6 +57,7 @@ class Functions:
                     win.tracking_mouse = False
                 win.idle_anim = False
                 win.sleep = True
+                win.wake_up = False
                 win.text = "I'm Sleep"
                 win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
                 print(win.character_name + ": " + win.text + win.kaomoji)
@@ -66,6 +68,7 @@ class Functions:
                 win.model.SetExpression("Serious", fadeout=10000)
                 win.t_count = 0
                 win.idle_anim = True
+                win.wake_up = True
                 win.text = "I'm WakeUp"
                 win.kaomoji = "(O_~)/"
                 print(win.character_name + ":", "I'm WakeUp (O_~)/")

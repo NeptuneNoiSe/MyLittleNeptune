@@ -6,8 +6,8 @@ import live2d.v3 as live2d
 # from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
-import resources
-from config_module import *
+from package import resources
+from package.additional.config_module import *
 
 class Models:
     def transform_initialize(win):

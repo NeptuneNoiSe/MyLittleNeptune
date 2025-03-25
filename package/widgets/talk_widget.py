@@ -1,8 +1,10 @@
 import os
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap, QFont
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridLayout, QFrame, QFormLayout
-import resources
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridLayout, QFrame, QFormLayout, \
+    QGraphicsOpacityEffect
+
+from package import resources
 
 class TalkWidgetMain:
     def talkWidgetInit(win) -> None:
@@ -48,7 +50,7 @@ class TalkWidgetMain:
             win.talkWidget.show()
             win.talk = True
 
-        win.dialogCloseTimer.start(10000)
+        win.dialogCloseTimer.start(5000)
         win.talkWidget.move(win.twmX, win.twmY)
 
         if win.screenSide == "Right":
@@ -65,6 +67,11 @@ class TalkWidgetMain:
                                                              (win.talkY + 5) * win.a_scale * win.models_scale),
                                                        Qt.KeepAspectRatio, Qt.SmoothTransformation)
         win.talkImageLabel.setPixmap(win.talkPixmap)
+
+        win.talkImageLabelOpacity = QGraphicsOpacityEffect()
+        win.talkImageLabelOpacity.setOpacity(0.9)
+
+        win.talkImageLabel.setGraphicsEffect(win.talkImageLabelOpacity)
 
         win.frameLayout.addWidget(win.talkImageLabel)
 

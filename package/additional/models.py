@@ -82,6 +82,31 @@ class Models:
         if win.character_name == "Black Sister":
             win.on_action_uni()
 
+    def transformMovieTriggers(win):
+        if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() - 3 and win.transform == True:
+            win.transformLabel.movie().setScaledSize(QSize(int(1), int(1)))
+            win.transformMovie.stop()
+            win.transformLabel.close()
+            win.transform_complete()
+
+        if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() - 3 and win.transform == False:
+            win.transformMovie.stop()
+            win.transformLabel.close()
+            win.input_lock = False
+            if win.transform_text:
+                if win.goodness_form:
+                    win.text = "I'm Transformed"
+                    win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+                else:
+                    win.text = "I'm back to my normal form."
+                    win.kaomoji = "(> ͜ʖ <)"
+                win.textUpdate()
+                win.transform_text = False
+
+        if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() / 2 and win.transform == True:
+            win.dialogClose()
+            win.transform_text = True
+
     def model_update(win):
         # Update Params
         if win.character_name == "Neptune":

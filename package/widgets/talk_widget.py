@@ -22,7 +22,6 @@ class TalkWidgetMain:
         vSizeX = win.vSize.width()
         sSizeX = win.SrcSize.width()
 
-        screens = win.app.screens()
         center = (win.posX + win.x()) - sSizeX / 2
         if center >= 0:
             win.screenSide = "Right"
@@ -50,16 +49,96 @@ class TalkWidgetMain:
             win.talkWidget.show()
             win.talk = True
 
-        win.dialogCloseTimer.start(5000)
+        win.dialogCloseTimer.start(7000)
         win.talkWidget.move(win.twmX, win.twmY)
 
         if win.screenSide == "Right":
-            win.talkImage = os.path.join(
-                resources.RESOURCES_DIRECTORY, "images/talk.svg")
+            if win.character_name == "Neptune":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/neptune_talk.svg")
+            elif win.character_name == "Purple Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/purple_heart_talk.svg")
+            elif win.character_name == "Noire":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/noire_talk.svg")
+            elif win.character_name == "Black Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/black_heart_talk.svg")
+            elif win.character_name == "Blanc":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/blanc_talk.svg")
+            elif win.character_name == "White Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/white_heart_talk.svg")
+            elif win.character_name == "Vert":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/vert_talk.svg")
+            elif win.character_name == "Green Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/green_heart_talk.svg")
+            elif win.character_name == "NepGear":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/nepgear_talk.svg")
+            elif win.character_name == "Purple Sister":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/purple_sister_talk.svg")
+            elif win.character_name == "Uni":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/uni_talk.svg")
+            elif win.character_name == "Black Sister":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/black_sister_talk.svg")
+            elif win.character_name == "Rom":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/rom_talk.svg")
+            else:
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/talk.svg")
             win.talkWidget.move(win.twmX, win.twmY)
         elif win.screenSide == "Left":
-            win.talkImage = os.path.join(
-                resources.RESOURCES_DIRECTORY, "images/talk_mirrored.svg")
+            if win.character_name == "Neptune":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/neptune_talk_mirrored.svg")
+            elif win.character_name == "Purple Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/purple_heart_talk_mirrored.svg")
+            elif win.character_name == "Noire":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/noire_talk_mirrored.svg")
+            elif win.character_name == "Black Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/black_heart_talk_mirrored.svg")
+            elif win.character_name == "Blanc":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/blanc_talk_mirrored.svg")
+            elif win.character_name == "White Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/white_heart_talk_mirrored.svg")
+            elif win.character_name == "Vert":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/vert_talk_mirrored.svg")
+            elif win.character_name == "Green Heart":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/green_heart_talk_mirrored.svg")
+            elif win.character_name == "NepGear":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/nepgear_talk_mirrored.svg")
+            elif win.character_name == "Purple Sister":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/purple_sister_talk_mirrored.svg")
+            elif win.character_name == "Uni":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/uni_talk_mirrored.svg")
+            elif win.character_name == "Black Sister":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/black_sister_talk_mirrored.svg")
+            elif win.character_name == "Rom":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/rom_talk_mirrored.svg")
+            else:
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/talk_mirrored.svg")
             win.talkWidget.move(win.twmX + (250 * win.a_scale * win.models_scale), win.twmY+10)
             varX = 0
 
@@ -104,6 +183,8 @@ class TalkWidgetMain:
         win.dialogCloseTimer.stop()
         win.talkTextLabel.repaint()
         QApplication.processEvents()
+        if win.condition == "Sleep":
+            win.sleep_func()
 
     def textUpdate(win):
         win.talkTextLabel.repaint()

@@ -13,22 +13,28 @@ class OnActions:
     # Context Menu Actions
     def on_action_transform(win):
         if win.can_transform:
-            win.transform_initialize()
-            win.t_count = 1
-            if win.goodness_form:
-                win.text = "I'm going back to my normal form"
-                win.kaomoji = "(/￣ー￣)/"
+            if win.condition == "Sleep":
+                pass
             else:
-                win.text = "I'm Transform"
-                win.kaomoji = "(/￣ー￣)/~~☆"
-            win.settings_close()
-            win.textUpdate()
+                win.transform_initialize()
+                win.t_count = 1
+                if win.goodness_form:
+                    win.text = "I'm going back to my normal form"
+                    win.kaomoji = "(/￣ー￣)/"
+                else:
+                    win.text = "I'm Transform"
+                    win.kaomoji = "(/￣ー￣)/~~☆"
+                win.settings_close()
+                win.textUpdate()
         if not win.can_transform:
-            win.model.SetExpression("Sad", fadeout=10000)
-            win.text = "I'm Can't Transform"
-            win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
-            print(win.character_name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            if win.condition == "Sleep":
+                pass
+            else:
+                win.model.SetExpression("Sad", fadeout=10000)
+                win.text = "I'm Can't Transform"
+                win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
+                print(win.character_name + ": " + win.text + win.kaomoji)
+                win.textUpdate()
 
     # Characters Actions
     def on_action_neptune(win):
@@ -177,10 +183,14 @@ class OnActions:
     # Animations Actions
     def on_action_idle_true(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Enable")
-        win.text = "You have enabled the Idle Animation"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You have enabled the Idle Animation"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.config.set('Animations', 'idle_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -190,10 +200,14 @@ class OnActions:
 
     def on_action_idle_false(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Disable")
-        win.text = "You have disabled the Idle Animation"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You have disabled the Idle Animation"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.config.set('Animations', 'idle_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -203,10 +217,14 @@ class OnActions:
 
     def on_action_on_mouse_true(win):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
-        win.text = "You have enabled the OnMouse Animation"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You have enabled the OnMouse Animation"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.config.set('Animations', 'on_mouse_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -216,10 +234,14 @@ class OnActions:
 
     def on_action_on_mouse_false(win):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
-        win.text = "You have disabled the OnMouse Animation"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You have disabled the OnMouse Animation"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.config.set('Animations', 'on_mouse_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -229,10 +251,14 @@ class OnActions:
 
     def on_action_tap_body_true(win):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
-        win.text = "You have enabled the TapBody Animation"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You have enabled the TapBody Animation"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.config.set('Animations', 'tap_body_animation', 'True')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -242,10 +268,14 @@ class OnActions:
 
     def on_action_tap_body_false(win):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
-        win.text = "You have disabled the TapBody Animation"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You have disabled the TapBody Animation"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.config.set('Animations', 'tap_body_animation', 'False')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -254,10 +284,14 @@ class OnActions:
         win.tap_body_anim = False
 
     def on_action_stop_all_motions(win):
-        win.text = "You stop all motions"
-        win.kaomoji = "(⌐■_■)"
-        print(win.character_name + ": " + win.text + win.kaomoji)
-        win.textUpdate()
+        if win.condition == "Sleep":
+            pass
+        else:
+            win.text = "You stop all motions"
+            win.kaomoji = "(⌐■_■)"
+            print(win.character_name + ": " + win.text + win.kaomoji)
+            win.textUpdate()
+
         win.model.StopAllMotions()
 
     # Settings Actions

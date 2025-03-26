@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="talk" data-name="talk" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1280 1096">
+<svg id="neptune_talk" data-name="neptune_talk" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1280 1096">
   <defs>
     <style>
       .st0 {
-        fill: #fff;
+        fill: #F8F8FF;
       }
       .st1 {
-        fill: #373737;
+        fill: #9686DD;
       }
     </style>
   </defs>

@@ -371,3 +371,89 @@ class Models:
         win.model.Update()
         if win.talkUpd:
             win.talkWidgetUpdate()
+
+    def setSleepParams(win):
+        win.model.SetParameterValue("ParamAngleX", 15, 100)
+        win.model.SetParameterValue("ParamAngleY", -20, 100)
+        win.model.SetParameterValue("ParamAngleZ", 20, 100)
+        win.model.SetParameterValue("ParamBodyAngleX", 10, 100)
+        win.model.SetParameterValue("ParamBodyAngleZ", 10, 100)
+        if win.character_name == "Neptune":
+            win.model.SetParameterValue("ParamAngleX", 25, 100)
+            win.model.SetParameterValue("ParamAngleY", -25, 100)
+            win.model.SetParameterValue("Param27", 10, 100)
+            win.model.SetParameterValue("Param32", 3, 1)
+            win.model.SetParameterValue("Param28", 8, 1)
+        elif win.character_name == "Purple Heart":
+            win.model.SetParameterValue("ParamAngleZ", 0, 100)
+        elif win.character_name == "Noire":
+            win.model.SetParameterValue("Param4", 30, 100)
+            win.model.SetParameterValue("Param54", 1, 100)
+            win.model.SetParameterValue("Param57", 30, 100)
+            win.model.SetParameterValue("Param56", 30, 100)
+        elif win.character_name == "Black Heart":
+            pass
+        elif win.character_name == "Blanc":
+            win.model.SetParameterValue("ParamBodyAngleZ", 5, 100)
+            win.model.SetParameterValue("Param6", 30, 100)
+            win.model.SetParameterValue("Param7", -30, 100)
+            win.model.SetParameterValue("Param14", -300, 100)
+            win.model.SetParameterValue("Param8", 30, 100)
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param11", -30, 100)
+        elif win.character_name == "White Heart":
+            win.model.SetParameterValue("Param12", -30, 100)
+            win.model.SetParameterValue("Param11", 30, 100)
+            win.model.SetParameterValue("Param13", -30, 100)
+            win.model.SetParameterValue("Param14", 30, 100)
+            win.model.SetParameterValue("Param29", 30, 100)
+            win.model.SetParameterValue("Param41", -30, 100)
+        elif win.character_name == "Vert":
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 30, 100)
+            win.model.SetParameterValue("Param3", 30, 100)
+            win.model.SetParameterValue("Param4", 30, 100)
+            win.model.SetParameterValue("Param5", 30, 100)
+            win.model.SetParameterValue("Param6", 30, 100)
+        elif win.character_name == "Green Heart":
+            pass
+        elif win.character_name == "NepGear":
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 30, 100)
+            win.model.SetParameterValue("Param3", 30, 100)
+            win.model.SetParameterValue("Param4", -30, 100)
+            win.model.SetParameterValue("Param5", -30, 100)
+            win.model.SetParameterValue("Param24", 0.600, 100)
+            win.model.SetParameterValue("Param25", 0, 100)
+            win.model.SetParameterValue("Param12", 0, 100)
+            win.model.SetParameterValue("Param18", 1, 100)
+        elif win.character_name == "Purple Sister":
+            win.model.SetParameterValue("ParamBodyAngleZ", -10, 100)
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 1, 100)
+            win.model.SetParameterValue("Param3", 1, 100)
+            win.model.SetParameterValue("Param4", -30, 100)
+        elif win.character_name == "Uni":
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param4", -30, 100)
+            win.model.SetParameterValue("Param55", 0.55, 1)
+        elif win.character_name == "Black Sister":
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 0.2, 100)
+            win.model.SetParameterValue("Param3", 1, 100)
+            win.model.SetParameterValue("Param55", 1, 100)
+            win.model.SetParameterValue("Param38", 5, 100)
+            win.model.SetParameterValue("Param39", 10, 100)
+            win.model.SetParameterValue("Param40", 10, 100)
+            win.model.SetParameterValue("Param41", 10, 100)
+        elif win.character_name == "Rom":
+            win.model.SetParameterValue("Param55", 0.2, 1)
+        elif win.character_name == "White Sister Rom":
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 30, 100)
+            win.model.SetParameterValue("Param3", 20, 1)
+            win.model.SetParameterValue("Param4", -30, 100)
+            win.model.SetParameterValue("Param5", 30, 100)
+            win.model.SetParameterValue("Param6", 30, 100)
+            win.model.SetParameterValue("Param40", 10, 100)
+            win.model.SetParameterValue("Param41", 10, 100)

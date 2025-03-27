@@ -73,6 +73,7 @@ class Functions:
         win.sleepMove = False
         win.sleep = True
         win.model.SetExpression("ClosedEyes")
+        win.setSleepParams()
         win.model.Rotate(-90)
         if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
             win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)
@@ -84,6 +85,7 @@ class Functions:
             win.sleepSide = "Left"
 
     def wake_up_func(win):
+        win.model.ResetParameters()
         win.model.Rotate(0)
         if win.sleepMove and win.sleepSide == "Right":
             win.move(win.x() + win.w_resize / 3.5, win.y() - win.h_resize / 4)

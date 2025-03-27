@@ -403,7 +403,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
-        if self.idle_anim:
+        if self.idle_anim and self.idle_switch == True:
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=idle_callback)
             if self.t_count <= self.sleep_v:
                 self.idle_anim = True

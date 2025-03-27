@@ -66,6 +66,8 @@ class Models:
             win.on_action_purple_sister()
         if win.character_name == "Uni":
             win.on_action_black_sister()
+        if win.character_name == "Rom":
+            win.on_action_white_sister_rom()
 
     def transform_to_regular_form(win):
         # Transform to Regular Form
@@ -81,6 +83,8 @@ class Models:
             win.on_action_nepgear()
         if win.character_name == "Black Sister":
             win.on_action_uni()
+        if win.character_name == "White Sister Rom":
+            win.on_action_rom()
 
     def transformMovieTriggers(win):
         if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() - 3 and win.transform == True:
@@ -122,6 +126,7 @@ class Models:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
                 win.twmY = int(0 * win.a_scale * win.models_scale)
+
         if win.character_name == "Purple Heart":
             win.character_name = "Purple Heart"
             win.models_switch = 1
@@ -289,6 +294,20 @@ class Models:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
                 win.twmY = int(0 * win.a_scale * win.models_scale)
+
+        if win.character_name == "White Sister Rom":
+            win.character_name = "White Sister Rom"
+            win.models_switch = 13
+            win.t_count = 1
+            win.mx_param = 650
+            win.my_param = 650
+            win.w_correction = -70
+            win.h_correction = 0
+            win.twmX = int(125 * win.a_scale * win.models_scale)
+            if win.a_scale <= 2:
+                win.twmY = int(-10 * win.a_scale * win.models_scale)
+            else:
+                win.twmY = int(0 * win.a_scale * win.models_scale)
         # Update Size and Position
         win.resize(1, 1)
         win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
@@ -340,6 +359,9 @@ class Models:
         if win.character_name == "Rom":
             win.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
+        if win.character_name == "White Sister Rom":
+            win.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
         win.resizeGL(int(win.w_resize), int(win.h_resize))
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,

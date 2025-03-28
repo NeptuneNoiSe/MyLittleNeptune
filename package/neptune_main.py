@@ -12,8 +12,8 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLay
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
+from live2d.v3 import StandardParams
 # from live2d.utils.lipsync import WavHandler
-# from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 import resources
 from widgets.talk_widget import TalkWidgetMain
@@ -81,6 +81,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Tracking the mouse position
         self.tracking_mouse = True
 
+        # Sleep Animation Time Scale
+        self.time_scale = 1
+
         # Init Vars
         self.w_correction = 0
         self.h_correction = 0
@@ -119,6 +122,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.talkY = 130
         self.talkFontSize = 10
         self.screenSide = "Right"
+        self.modelRotate = 0
+        self.sleepMoveY = 0
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
@@ -204,9 +209,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.tired_v = 80
         self.sleep_v = 100
         self.wake_up_v = 160
-
-        # Tired Animation Time Scale
-        self.time_scale = 1
 
         # Init Animation
         self.idle_anim = True
@@ -474,10 +476,13 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.show()
                 self.mouse_input_timer.start(5000)
             if self.isInL2DArea(x, y):
+                #for i in range(self.model.GetParameterCount()):
+                #    param: Parameter = self.model.GetParameter(i)
+                #    print(param.id, param.type, param.value, param.max, param.min, param.default)
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 if not self.sleep and self.input_lock == False:
-                    self.talkDelayTimer.start(1500)
+                    self.talkDelayTimer.start(500)
                     if self.character_name == "Purple Sister":
                         self.model.SetExpression("Smile")
                     if self.character_name == "Black Sister":
@@ -485,7 +490,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                     else:
                         self.model.SetExpression("Funny")
                 if self.sleep and self.input_lock == False:
-                    self.model.SetExpression("Surprised")
+                    pass
+                    #self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
                     print("Left Button Pressed")
 
@@ -561,8 +567,10 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
                     self.model.ResetExpression()
+                    #self.model.SetExpression("Surprised")
                     self.wake_up_func()
                     if not self.wake_up and self.sleep == True:
+                        win.sleep = False
                         self.text = "You woke me up"
                         self.kaomoji = "(⊙_⊙)✿"
                         print(self.character_name + ": " + self.text + self.kaomoji)

@@ -16,7 +16,7 @@ def main_config():
         config.set('WindowFlags', 'WindowMaximizeButtonHint', 'False')
         config.set('WindowFlags', 'WindowCloseButtonHint', 'True')
         config.set('WindowFlags', 'WindowTransparentForInput', 'False')
-        config.set('WindowFlags', 'WindowType_Mask', 'False')
+        config.set('WindowFlags', 'WindowType_Mask', 'True')
         config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
         config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
 

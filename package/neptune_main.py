@@ -127,6 +127,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
+        self.sleepMove = False
         self.expression = None
         self.model: live2d.LAppModel | None = None
         self.app = QApplication.instance()
@@ -490,7 +491,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                     else:
                         self.model.SetExpression("Funny")
                 if self.sleep and self.input_lock == False:
-                    pass
+                    self.sleepInputTimer.start(500)
                     #self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
                     print("Left Button Pressed")
@@ -502,7 +503,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             if self.isInLA:
                 self.clickInLA = False
                 self.tap_body_anim = True
-                if self.tap_body_switch:
+                if self.tap_body_switch and self.sleepMove == False:
                     self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=tap_body_callback)
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
@@ -566,21 +567,23 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.expression = None
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
-                    self.model.ResetExpression()
                     #self.model.SetExpression("Surprised")
-                    self.wake_up_func()
-                    if not self.wake_up and self.sleep == True:
-                        win.sleep = False
+                    self.sleepInputTimer.stop()
+                    if not self.wake_up and self.sleepMove == False:
+                        self.model.ResetExpression()
+                        self.wake_up_func()
+                        self.sleep = False
                         self.text = "You woke me up"
                         self.kaomoji = "(⊙_⊙)✿"
                         print(self.character_name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-                    self.model.SetExpression("Fear", fadeout=10000)
-                    self.t_count = 1
-                    self.sleep = False
-                if not self.tap_body_switch:
+                        self.model.SetExpression("Fear", fadeout=10000)
+                        self.t_count = 1
+                        self.sleep = False
+                if not self.tap_body_switch and self.sleepMove == False:
                     self.model.ResetExpression()
                     self.t_count = 1
+                self.sleepMove = False
                 if self.mouse_click_log:
                     print("Left Button Released")
 
@@ -613,7 +616,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.auto_scale_init = True
 
     def settings_close(self):
-        settings.close()
+        settings.hide()
 
     def settings_show(self):
         settings.show()
@@ -806,6 +809,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
+        self.setWindowFlags(Qt.WindowType.WindowMinimizeButtonHint)
         self.config = config_main
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
@@ -840,12 +844,16 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        quitButton = QPushButton("&Force Quit")
+        quitButton = QPushButton("&App Quit")
         quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
-        bottomLayout = QHBoxLayout()
+        applyButton = QPushButton("&Apply")
+        applyButton.clicked.connect(self.mainWindow.settings_close)
+
+        bottomLayout = QVBoxLayout()
         bottomLayout.addStretch()
         bottomLayout.addWidget(quitButton)
+        bottomLayout.addWidget(applyButton)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)

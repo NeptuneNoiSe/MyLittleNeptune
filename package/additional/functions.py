@@ -79,7 +79,7 @@ class Functions:
         win.cloudPixmap = QPixmap(win.cloud).scaled(QSize(win.w_resize, win.h_resize),
                                                     Qt.KeepAspectRatio, Qt.SmoothTransformation)
         win.sleepLabel.setPixmap(win.cloudPixmap)
-        win.sleepLabel.move(0, win.sleepMoveY)
+        win.sleepLabel.move(0, win.sleepMoveY * win.a_scale * win.models_scale)
         win.sleepLabel.show()
         if win.tracking_mouse_switch:
             win.tracking_mouse = False
@@ -140,6 +140,14 @@ class Functions:
         # Talk Delay timer
         win.talkDelayTimer = QTimer()
         win.talkDelayTimer.timeout.connect(win.takingTalk)
+
+        # Sleep Move timer
+        win.sleepInputTimer = QTimer()
+        win.sleepInputTimer.timeout.connect(win.takingSleep)
+
+    def takingSleep(win):
+        win.sleepMove = True
+        win.sleepInputTimer.stop()
 
     def quitFunction(win):
         win.quitTimer.stop()

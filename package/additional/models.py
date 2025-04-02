@@ -3,8 +3,8 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QMovie
 
 import live2d.v3 as live2d
+from live2d.v3 import Parameter
 # from live2d.utils.lipsync import WavHandler
-# from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 from package import resources
 from package.additional.config_module import *
@@ -13,8 +13,11 @@ class Models:
     def transform_initialize(win):
         win.input_lock = True
         if not win.goodness_form:
+            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE)
             if win.character_name == "Neptune":
                 win.model.SetExpression("Star")
+            elif win.character_name == "Vert":
+                win.model.SetExpression("Smile")
             elif win.character_name == "NepGear":
                 win.model.SetExpression("Star")
             else:
@@ -487,3 +490,8 @@ class Models:
             win.model.SetParameterValue("Param6", 30, 100)
             win.model.SetParameterValue("Param40", 10, 100)
             win.model.SetParameterValue("Param41", 10, 100)
+
+    def getModelParams(win):
+        for i in range(win.model.GetParameterCount()):
+            param: Parameter = win.model.GetParameter(i)
+            print(param.id, param.type, param.value, param.max, param.min, param.default)

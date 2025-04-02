@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLay
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
-from live2d.v3 import StandardParams
+# from live2d.v3 import StandardParams
 # from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 import resources
@@ -440,7 +440,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Tracking the mouse position
         if self.tracking_mouse:
-            self.model.Drag(QCursor.pos().x(), QCursor.pos().y())
+            self.model.Drag(local_x, local_y)
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -477,9 +477,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.show()
                 self.mouse_input_timer.start(5000)
             if self.isInL2DArea(x, y):
-                #for i in range(self.model.GetParameterCount()):
-                #    param: Parameter = self.model.GetParameter(i)
-                #    print(param.id, param.type, param.value, param.max, param.min, param.default)
+                # Get Model Params
+                # self.getModelParams()
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 if not self.sleep and self.input_lock == False:
@@ -492,7 +491,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.model.SetExpression("Funny")
                 if self.sleep and self.input_lock == False:
                     self.sleepInputTimer.start(500)
-                    #self.model.SetExpression("Surprised")
+                    # self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
                     print("Left Button Pressed")
 
@@ -567,7 +566,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.expression = None
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
-                    #self.model.SetExpression("Surprised")
+                    # self.model.SetExpression("Surprised")
                     self.sleepInputTimer.stop()
                     if not self.wake_up and self.sleepMove == False:
                         self.model.ResetExpression()

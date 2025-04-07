@@ -118,6 +118,23 @@
                   {
 					"File": "motions/mtn_05.motion3.json"
 				}
+                ],
+			"Unique": [
+				{
+					"File": "motions/unq_mtn_01.motion3.json"
+				},
+				{
+					"File": "motions/unq_mtn_02.motion3.json"
+				},
+				{
+					"File": "motions/unq_mtn_03.motion3.json"
+				},
+				{
+					"File": "motions/unq_mtn_04.motion3.json"
+				},
+				{
+					"File": "motions/unq_mtn_05.motion3.json"
+				}
                 ]
 		},
 		"Groups": [

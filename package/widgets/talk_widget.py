@@ -29,21 +29,38 @@ class TalkWidgetMain:
             win.screenSide = "Left"
 
     def talk_function(win):
-        if win.a_scale >=1:
-            varX = 10 * win.a_scale
-            varY = 20 * win.a_scale
-        elif win.a_scale >= 2:
-            varX = 20 * win.a_scale
-            varY = 60 * win.a_scale
-        elif win.a_scale >= 3:
-            varX = 40 * win.a_scale
-            varY = 70 * win.a_scale
-        elif win.a_scale >= 4:
-            varX = 50 * win.a_scale
-            varY = 80 * win.a_scale
+        if win.screenSide == "Right":
+            if win.a_scale >= 1:
+                varX = 10 * win.a_scale
+                varY = 20 * win.a_scale
+            elif win.a_scale >= 2:
+                varX = 20 * win.a_scale
+                varY = 60 * win.a_scale
+            elif win.a_scale >= 3:
+                varX = 40 * win.a_scale
+                varY = 70 * win.a_scale
+            elif win.a_scale >= 4:
+                varX = 50 * win.a_scale
+                varY = 80 * win.a_scale
+            else:
+                varX = 5 * win.a_scale
+                varY = 20
         else:
-            varX = 5 * win.a_scale
-            varY = 20
+            if win.a_scale >= 1:
+                varX = (10 * win.a_scale) + 2.5
+                varY = (20 * win.a_scale) + 2.5
+            elif win.a_scale >= 2:
+                varX = (20 * win.a_scale) + 2.5
+                varY = (60 * win.a_scale) + 2.5
+            elif win.a_scale >= 3:
+                varX = (40 * win.a_scale) + 2.5
+                varY = (70 * win.a_scale) + 2.5
+            elif win.a_scale >= 4:
+                varX = (50 * win.a_scale) + 2.5
+                varY = (80 * win.a_scale) + 2.5
+            else:
+                varX = (5 * win.a_scale) + 2.5
+                varY = 20 + 2.5
 
         if not win.talk:
             win.talkWidget.show()
@@ -92,6 +109,9 @@ class TalkWidgetMain:
             elif win.character_name == "Rom":
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/rom_talk.svg")
+            elif win.character_name == "White Sister Rom":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/white_sister_rom_talk.svg")
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/talk.svg")
@@ -136,6 +156,9 @@ class TalkWidgetMain:
             elif win.character_name == "Rom":
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/rom_talk_mirrored.svg")
+            elif win.character_name == "White Sister Rom":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/white_sister_rom_talk_mirrored.svg")
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/talk_mirrored.svg")
@@ -153,7 +176,6 @@ class TalkWidgetMain:
         win.talkImageLabel.setGraphicsEffect(win.talkImageLabelOpacity)
 
         win.frameLayout.addWidget(win.talkImageLabel)
-
         win.textSubWidget.move(varX * win.a_scale * win.models_scale,
                                - varY * win.a_scale * win.models_scale)
         win.talkFont = QFont("Segoe Print", win.talkFontSize * win.a_scale * win.models_scale)
@@ -219,4 +241,6 @@ class TalkWidgetMain:
         win.kaomoji = "(-_-)>"
         print(win.character_name + ": " + win.text + win.kaomoji)
         win.textUpdate()
+        if win.condition == "Sleep":
+            win.wake_up_func()
         win.talkUpd = False

@@ -1,8 +1,12 @@
+import os
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, QTimer
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
+from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QPixmap
 
 from package import resources
 from package.additional.config_module import *
+import resources
 
 class Functions:
     def mouse_tracking(win):
@@ -14,7 +18,7 @@ class Functions:
         if win.mouse_tracking_log:
             print("Mouse is steady", win.tracking_mouse, win.posX, win.posY)
 
-        win.model.Drag(win.posX, win.posY)
+        # win.model.Drag(win.posX - win.x(), win.posY - win.y())
 
     def transparent_input(win):
         win.setWindowFlags(win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput)
@@ -60,12 +64,23 @@ class Functions:
             win.t_count = 0
             win.idle_anim = True
             win.wake_up = True
+            win.sleep = False
             win.text = "I'm WakeUp"
             win.kaomoji = "(O_~)/"
             print(win.character_name + ":", "I'm WakeUp (O_~)/")
             win.textUpdate()
 
     def sleep_func(win):
+        win.setSleepParams()
+        win.model.Rotate(win.modelRotate)
+        win.sleepLabel = QLabel(win)
+        win.cloud = os.path.join(
+            resources.RESOURCES_DIRECTORY, "images/cloud.webp")
+        win.cloudPixmap = QPixmap(win.cloud).scaled(QSize(win.w_resize, win.h_resize),
+                                                    Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        win.sleepLabel.setPixmap(win.cloudPixmap)
+        win.sleepLabel.move(0, win.sleepMoveY * win.a_scale * win.models_scale)
+        win.sleepLabel.show()
         if win.tracking_mouse_switch:
             win.tracking_mouse = False
         win.idle_anim = False
@@ -73,7 +88,6 @@ class Functions:
         win.sleepMove = False
         win.sleep = True
         win.model.SetExpression("ClosedEyes")
-        win.model.Rotate(-90)
         if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
             win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)
             win.sleepMove = True
@@ -84,13 +98,15 @@ class Functions:
             win.sleepSide = "Left"
 
     def wake_up_func(win):
+        win.sleepLabel.close()
+        win.model.ResetParameters()
         win.model.Rotate(0)
         if win.sleepMove and win.sleepSide == "Right":
             win.move(win.x() + win.w_resize / 3.5, win.y() - win.h_resize / 4)
         elif win.sleepMove and win.sleepSide == "Left":
             win.move(win.x() - win.w_resize / 4, win.y() - win.h_resize / 4)
         win.sleepMove = False
-        win.sleepSide == None
+        win.sleepSide = None
 
     def timers_init(win) -> None:
         # Idle timer
@@ -124,6 +140,14 @@ class Functions:
         # Talk Delay timer
         win.talkDelayTimer = QTimer()
         win.talkDelayTimer.timeout.connect(win.takingTalk)
+
+        # Sleep Move timer
+        win.sleepInputTimer = QTimer()
+        win.sleepInputTimer.timeout.connect(win.takingSleep)
+
+    def takingSleep(win):
+        win.sleepMove = True
+        win.sleepInputTimer.stop()
 
     def quitFunction(win):
         win.quitTimer.stop()

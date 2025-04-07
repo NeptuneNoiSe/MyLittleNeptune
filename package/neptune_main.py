@@ -12,8 +12,8 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLay
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
-# from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
+# from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 import resources
 from widgets.talk_widget import TalkWidgetMain
@@ -81,6 +81,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Tracking the mouse position
         self.tracking_mouse = True
 
+        # Sleep Animation Time Scale
+        self.time_scale = 1
+
         # Init Vars
         self.w_correction = 0
         self.h_correction = 0
@@ -119,9 +122,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.talkY = 130
         self.talkFontSize = 10
         self.screenSide = "Right"
+        self.modelRotate = 0
+        self.sleepMoveY = 0
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
+        self.sleepMove = False
         self.expression = None
         self.model: live2d.LAppModel | None = None
         self.app = QApplication.instance()
@@ -204,9 +210,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.tired_v = 80
         self.sleep_v = 100
         self.wake_up_v = 160
-
-        # Tired Animation Time Scale
-        self.time_scale = 1
 
         # Init Animation
         self.idle_anim = True
@@ -321,10 +324,17 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
             elif self.models_switch == 12:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
+
+            elif self.models_switch == 13:
+                self.goodness_form = True
+                self.can_transform = True
+                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -396,7 +406,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
-        if self.idle_anim:
+        if self.idle_anim and self.idle_switch == True:
             self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=idle_callback)
             if self.t_count <= self.sleep_v:
                 self.idle_anim = True
@@ -430,7 +440,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Tracking the mouse position
         if self.tracking_mouse:
-            self.model.Drag(QCursor.pos().x(), QCursor.pos().y())
+            self.model.Drag(local_x, local_y)
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -467,10 +477,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.show()
                 self.mouse_input_timer.start(5000)
             if self.isInL2DArea(x, y):
+                # Get Model Params
+                # self.getModelParams()
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 if not self.sleep and self.input_lock == False:
-                    self.talkDelayTimer.start(1500)
+                    self.talkDelayTimer.start(500)
                     if self.character_name == "Purple Sister":
                         self.model.SetExpression("Smile")
                     if self.character_name == "Black Sister":
@@ -478,7 +490,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                     else:
                         self.model.SetExpression("Funny")
                 if self.sleep and self.input_lock == False:
-                    self.model.SetExpression("Surprised")
+                    self.sleepInputTimer.start(500)
+                    # self.model.SetExpression("Surprised")
                 if self.mouse_click_log:
                     print("Left Button Pressed")
 
@@ -489,7 +502,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             if self.isInLA:
                 self.clickInLA = False
                 self.tap_body_anim = True
-                if self.tap_body_switch:
+                if self.tap_body_switch and self.sleepMove == False:
                     self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=tap_body_callback)
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
@@ -553,19 +566,23 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.expression = None
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
-                    self.model.ResetExpression()
-                    self.wake_up_func()
-                    if not self.wake_up and self.sleep == True:
+                    # self.model.SetExpression("Surprised")
+                    self.sleepInputTimer.stop()
+                    if not self.wake_up and self.sleepMove == False:
+                        self.model.ResetExpression()
+                        self.wake_up_func()
+                        self.sleep = False
                         self.text = "You woke me up"
                         self.kaomoji = "(⊙_⊙)✿"
                         print(self.character_name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-                    self.model.SetExpression("Fear", fadeout=10000)
-                    self.t_count = 1
-                    self.sleep = False
-                if not self.tap_body_switch:
+                        self.model.SetExpression("Fear", fadeout=10000)
+                        self.t_count = 1
+                        self.sleep = False
+                if not self.tap_body_switch and self.sleepMove == False:
                     self.model.ResetExpression()
                     self.t_count = 1
+                self.sleepMove = False
                 if self.mouse_click_log:
                     print("Left Button Released")
 
@@ -598,7 +615,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.auto_scale_init = True
 
     def settings_close(self):
-        settings.close()
+        settings.hide()
 
     def settings_show(self):
         settings.show()
@@ -695,6 +712,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "icons/rom.ico")), '&Rom')
         if not self.input_lock:
             action_rom.triggered.connect(self.on_action_rom)
+        # White Sister Rom
+        action_white_sister_rom = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), '&White Sister Rom')
+        if not self.input_lock:
+            action_white_sister_rom.triggered.connect(self.on_action_white_sister_rom)
 
         context_menu.addMenu(submenu_character)
 
@@ -763,6 +785,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def closeEvent(self, event):
         self.model.SetExpression("Cry")
         settings.close()
+        if self.condition == "Sleep":
+            self.wake_up_func()
         answer = QMessageBox.question(self,
                                       'Quit',
                                       self.character_name + ": " + "Do you really want to leave? T_T",
@@ -784,6 +808,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
+        self.setWindowFlags(Qt.WindowType.WindowMinimizeButtonHint)
         self.config = config_main
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
@@ -818,12 +843,16 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        quitButton = QPushButton("&Force Quit")
+        quitButton = QPushButton("&App Quit")
         quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
-        bottomLayout = QHBoxLayout()
+        applyButton = QPushButton("&Apply")
+        applyButton.clicked.connect(self.mainWindow.settings_close)
+
+        bottomLayout = QVBoxLayout()
         bottomLayout.addStretch()
         bottomLayout.addWidget(quitButton)
+        bottomLayout.addWidget(applyButton)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)

@@ -1,11 +1,11 @@
 {
 	"Version": 3,
 	"FileReferences": {
-		"Moc": "Uni.moc3",
+		"Moc": "WhiteSisterRom.moc3",
 		"Textures": [
 			"textures/texture_00.png"
 		],
-		"Physics": "Uni.physics3.json",
+		"Physics": "WhiteSisterRom.physics3.json",
 		"Expressions": [
 			{
 				"Name": "Normal",
@@ -40,12 +40,12 @@
 				"File": "expressions/Cry.json"
 			},
 			{
-				"Name": "Surprised",
-				"File": "expressions/Surprised.json"
+				"Name": "Fear",
+				"File": "expressions/Fear.json"
 			},
 			{
-				"Name": "Funny",
-				"File": "expressions/Funny.json"
+				"Name": "Surprised",
+				"File": "expressions/Surprised.json"
 			}
 		],
 		"Motions": {
@@ -113,14 +113,6 @@
 				},
                   {
 					"File": "motions/mtn_05.motion3.json"
-				}
-                ],
-			"Unique": [
-				{
-					"File": "motions/unq_mtn_01.motion3.json"
-				},
-				{
-					"File": "motions/unq_mtn_02.motion3.json"
 				}
                 ]
 		},

@@ -171,12 +171,23 @@ class OnActions:
 
     def on_action_rom(win):
         win.goodness_form = False
-        win.can_transform = False
+        win.can_transform = True
         win.talkUpd = False
         if not win.transform:
             win.goodBye()
         win.character_name = "Rom"
         win.models_switch = 12
+        if win.transform:
+            win.model_update()
+
+    def on_action_white_sister_rom(win):
+        win.goodness_form = True
+        win.can_transform = True
+        win.talkUpd = False
+        if not win.transform:
+            win.goodBye()
+        win.character_name = "White Sister Rom"
+        win.models_switch = 13
         if win.transform:
             win.model_update()
 
@@ -313,6 +324,8 @@ class OnActions:
 
     def on_action_quit(win):
         win.model.SetExpression("Cry")
+        if win.condition == "Sleep":
+            win.wake_up_func()
         answer = QMessageBox.question(win,
                                       'Quit',
                                       win.character_name + ": " + "Do you really want to leave? T_T",

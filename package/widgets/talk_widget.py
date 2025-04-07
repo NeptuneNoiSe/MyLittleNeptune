@@ -112,6 +112,9 @@ class TalkWidgetMain:
             elif win.character_name == "White Sister Rom":
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/white_sister_rom_talk.svg")
+            elif win.character_name == "Ram":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/ram_talk.svg")
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/talk.svg")
@@ -159,6 +162,9 @@ class TalkWidgetMain:
             elif win.character_name == "White Sister Rom":
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/white_sister_rom_talk_mirrored.svg")
+            elif win.character_name == "Ram":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/ram_talk_mirrored.svg")
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/talk_mirrored.svg")

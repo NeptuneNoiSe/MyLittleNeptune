@@ -18,22 +18,10 @@ import live2d.v3 as live2d
 import resources
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
+from additional.callbacks import *
 from additional.models import Models
 from additional.on_actions import OnActions
 from additional.functions import Functions
-
-def idle_callback():
-    motion_end_log = False
-    if motion_end_log:
-        print("Idle motion end")
-def on_mouse_callback():
-    motion_end_log = False
-    if motion_end_log:
-        print("On Mouse motion end")
-def tap_body_callback():
-    motion_end_log = False
-    if motion_end_log:
-        print("Tap Body motion end")
 
 class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
@@ -335,6 +323,13 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 print(self.character_name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
+
+            elif self.models_switch == 14:
+                self.goodness_form = False
+                self.can_transform = False
+                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -717,6 +712,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), '&White Sister Rom')
         if not self.input_lock:
             action_white_sister_rom.triggered.connect(self.on_action_white_sister_rom)
+        # Ram
+        action_ram = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/ram.ico")), '&Ram')
+        if not self.input_lock:
+            action_ram.triggered.connect(self.on_action_ram)
 
         context_menu.addMenu(submenu_character)
 

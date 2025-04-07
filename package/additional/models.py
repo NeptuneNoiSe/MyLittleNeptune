@@ -8,12 +8,13 @@ from live2d.v3 import Parameter
 # import live2d.v2 as live2d
 from package import resources
 from package.additional.config_module import *
+from package.additional.callbacks import *
 
 class Models:
     def transform_initialize(win):
         win.input_lock = True
         if not win.goodness_form:
-            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE)
+            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE, onFinishMotionHandler=unique_callback)
             if win.character_name == "Neptune":
                 win.model.SetExpression("Star")
             elif win.character_name == "Vert":
@@ -311,6 +312,20 @@ class Models:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
                 win.twmY = int(0 * win.a_scale * win.models_scale)
+
+        if win.character_name == "Ram":
+            win.character_name = "Ram"
+            win.models_switch = 14
+            win.t_count = 1
+            win.mx_param = 600
+            win.my_param = 600
+            win.w_correction = -70
+            win.h_correction = 0
+            win.twmX = int(100 * win.a_scale * win.models_scale)
+            if win.a_scale <= 2:
+                win.twmY = int(-10 * win.a_scale * win.models_scale)
+            else:
+                win.twmY = int(0 * win.a_scale * win.models_scale)
         # Update Size and Position
         win.resize(1, 1)
         win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
@@ -365,6 +380,9 @@ class Models:
         if win.character_name == "White Sister Rom":
             win.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
+        if win.character_name == "Ram":
+            win.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
         win.resizeGL(int(win.w_resize), int(win.h_resize))
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
@@ -490,6 +508,18 @@ class Models:
             win.model.SetParameterValue("Param6", 30, 100)
             win.model.SetParameterValue("Param40", 10, 100)
             win.model.SetParameterValue("Param41", 10, 100)
+        elif win.character_name == "Ram":
+            win.sleepMoveY = 25
+            win.modelRotate = -85
+            win.model.SetParameterValue("ParamAngleZ", 20, 100)
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 30, 100)
+            win.model.SetParameterValue("Param3", 30, 100)
+            win.model.SetParameterValue("Param4", -30, 100)
+            win.model.SetParameterValue("Param5", -30, 100)
+            win.model.SetParameterValue("Param6", -30, 100)
+            win.model.SetParameterValue("Param47", 10, 100)
+            win.model.SetParameterValue("Param46", 10, 100)
 
     def getModelParams(win):
         for i in range(win.model.GetParameterCount()):

@@ -6,8 +6,8 @@
     <br>
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.12-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.2.1-green" alt="PySide6 Version" style="margin: 0 10px;">
-    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.4.5-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.4-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.4.6-orange" alt="live2d-py Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.4.1-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -74,8 +74,11 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
     <img src="./docs/model_preview/black_sister.svg" alt="black_sister" width="330px" height="330px">
 </div>
 <div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/rom.svg" alt="uni" width="320px" height="320px">
+    <img src="./docs/model_preview/rom.svg" alt="rom" width="320px" height="320px">
     <img src="./docs/model_preview/white_sister_rom.svg" alt="white_sister_rom" width="330px" height="330px">
+</div>
+<div align="center" style="padding-top: 50px">
+    <img src="./docs/model_preview/ram.svg" alt="ram" width="320px" height="320px">
 </div>
 
 ## Important to read:

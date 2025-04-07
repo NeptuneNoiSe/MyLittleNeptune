@@ -191,6 +191,17 @@ class OnActions:
         if win.transform:
             win.model_update()
 
+    def on_action_ram(win):
+        win.goodness_form = False
+        win.can_transform = False
+        win.talkUpd = False
+        if not win.transform:
+            win.goodBye()
+        win.character_name = "Ram"
+        win.models_switch = 14
+        if win.transform:
+            win.model_update()
+
     # Animations Actions
     def on_action_idle_true(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Enable")

@@ -40,20 +40,20 @@ class Functions:
         if win.t_count == win.sad_v:
             win.condition = "Sad"
             win.model.SetExpression("Sad")
-            win.text = "I'm Sad"
+            win.text = win.lang['sad']
             win.kaomoji = "(´•ω•̥`)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.tired_v and win.sleep_switch == True:
             win.condition = "Tired"
             win.model.SetExpression("Tired")
-            win.text = "I'm Tired"
+            win.text = win.lang['tired']
             win.kaomoji = "(๑•﹏•)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
             win.condition = "Sleep"
-            win.text = "I'm going to sleep"
+            win.text = win.lang['sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -66,7 +66,7 @@ class Functions:
             win.idle_anim = True
             win.wake_up = True
             win.sleep = False
-            win.text = "I'm WakeUp"
+            win.text = win.lang['wake_up']
             win.kaomoji = "(O_~)/"
             print(win.character_name + ":", "I'm WakeUp (O_~)/")
             win.textUpdate()

@@ -103,10 +103,10 @@ class Models:
             win.input_lock = False
             if win.transform_text:
                 if win.goodness_form:
-                    win.text = "I'm Transformed"
+                    win.text = win.lang['transformed_godness']
                     win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
                 else:
-                    win.text = "I'm back to my normal form."
+                    win.text = win.lang['transformed_normal']
                     win.kaomoji = "(> ͜ʖ <)"
                 win.textUpdate()
                 win.transform_text = False

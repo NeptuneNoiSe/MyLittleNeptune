@@ -200,7 +200,7 @@ class TalkWidgetMain:
     def takingTalk(win):
         win.placeThis = True
         win.talkDelayTimer.stop()
-        win.text = "Hey, where are you taking me?"
+        win.text = win.lang['taking']
         win.kaomoji = "ε=┌( >_<)┘?"
         print(win.character_name + ": " + win.text + win.kaomoji)
         win.textUpdate()
@@ -225,7 +225,7 @@ class TalkWidgetMain:
         win.screenSide = "Right"
         win.talkWidget.close()
         win.talkWidgetInit()
-        win.text = "The settings are applied"
+        win.text = win.lang['settings_applied']
         win.kaomoji = "(⌐■_■)"
         win.talkTextLabel.setText(win.character_name + ": " + win.text + "\n" + win.kaomoji)
         win.talk_function()
@@ -234,7 +234,7 @@ class TalkWidgetMain:
         win.goodByeTimer.stop()
         win.dialogClose()
         win.model_update()
-        win.text = "Hello!"
+        win.text = win.lang['hello']
         win.kaomoji = "(^~^)/"
         win.model.SetExpression("Smile", fadeout=10000)
         print(win.character_name + ": " + win.text + win.kaomoji)
@@ -243,7 +243,7 @@ class TalkWidgetMain:
 
     def goodBye(win):
         win.goodByeTimer.start(3000)
-        win.text = "GoodBye"
+        win.text = win.lang['goodbye']
         win.kaomoji = "(-_-)>"
         print(win.character_name + ": " + win.text + win.kaomoji)
         win.textUpdate()

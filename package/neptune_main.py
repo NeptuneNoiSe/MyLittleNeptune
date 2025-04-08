@@ -16,6 +16,7 @@ import live2d.v3 as live2d
 # from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 import resources
+import json
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
 from additional.callbacks import *
@@ -223,12 +224,25 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.transformMovie = QMovie(self.t_anim_in)
         self.transformLabel.setMovie(self.transformMovie)
 
+        self.en = os.path.join(
+            resources.RESOURCES_DIRECTORY, "lang/en.json")
+        self.ru = os.path.join(
+            resources.RESOURCES_DIRECTORY, "lang/ru.json")
+
+    def lang_set(self):
+        if self.language == "English":
+            with open(self.en, 'r',encoding='utf-8') as file:
+                self.lang = json.load(file)
+        elif self.language == "Russian":
+            with open(self.ru, 'r',encoding='utf-8') as file:
+                self.lang = json.load(file)
+
     def initializeGL(self) -> None:
         self.makeCurrent()
         live2d.glInit()
         self.model = live2d.LAppModel()
         if live2d.LIVE2D_VERSION == 3:
-            self.text = "Hello!"
+            self.text = self.lang['hello']
             self.kaomoji = "(^~^)/"
             if self.models_switch == 0:
                 self.goodness_form = False
@@ -344,6 +358,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.timers_init()
         self.talkWidgetInit()
         self.talk_function()
+        self.lang_set()
 
     def resizeGL(self, w: int, h: int) -> None:
         # 使模型的参数按窗口大小进行更新
@@ -516,55 +531,55 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.expression = self.model.SetRandomExpression(fadeout=7000)
                         if self.placeThis:
                             self.placeThis = False
-                            self.text = "Okay I'll stay here"
+                            self.text = self.lang['stay']
                             self.kaomoji = "(^~^)"
                         else:
                             if self.expression == "Normal":
-                                self.text = "So What"
+                                self.text = self.lang['normal']
                                 self.kaomoji = "(o_o)"
                             elif self.expression == "Happy":
-                                self.text = "i'm Happy"
+                                self.text = self.lang['happy']
                                 self.kaomoji = "(^_^)"
                             elif self.expression == "Angry":
-                                self.text = "Don't touch me like that"
+                                self.text = self.lang['angry']
                                 self.kaomoji = "(⇀‸↼‶)"
                             elif self.expression == "Sad":
-                                self.text = "i'm Sad"
+                                self.text = self.lang['sad']
                                 self.kaomoji = "(´•ω•̥`)"
                             elif self.expression == "Smile":
-                                self.text = "He He"
+                                self.text = self.lang['smile']
                                 self.kaomoji = "(^~^)"
                             elif self.expression == "Tired":
-                                self.text = "i'm Tired"
+                                self.text = self.lang['tired']
                                 self.kaomoji = "(๑•﹏•)"
                             elif self.expression == "ClosedEyes":
-                                self.text = "Hmm"
+                                self.text = self.lang['closed_eyes']
                                 self.kaomoji = "(-_-)"
                             elif self.expression == "Cry":
-                                self.text = "Whaah!"
+                                self.text = self.lang['cry']
                                 self.kaomoji = "(o;TωT)o"
                             elif self.expression == "Fear":
                                 if self.character_name == "White Heart":
-                                    self.text = "Argh!!!"
+                                    self.text = self.lang['fear_wh']
                                     self.kaomoji = "(0﹏\‶)"
                                 else:
-                                    self.text = "Ugh"
+                                    self.text = self.lang['fear']
                                     self.kaomoji = "(｡ŏ_ŏ)"
                             elif self.expression == "Star":
-                                self.text = "i'm Sooo Happy"
+                                self.text = self.lang['star']
                                 self.kaomoji = "(✩ω✩)"
                             elif self.expression == "Surprised":
-                                self.text = "What?"
+                                self.text = self.lang['surprised']
                                 self.kaomoji = "(0_0)?"
                             elif self.expression == "Funny" and self.goodness_form == False:
                                 if self.character_name == "Blanc":
-                                    self.text = "Argh!!!"
+                                    self.text = self.lang['funny_bl']
                                     self.kaomoji = "(‶/﹏0)"
                                 else:
-                                    self.text = "Yo!!!"
+                                    self.text = self.lang['funny']
                                     self.kaomoji = "(>_<)"
                             elif self.expression == "Funny" and self.goodness_form == True:
-                                self.text = "I am a Goddess!"
+                                self.text = self.lang['funny_god']
                                 self.kaomoji = "(◕‿◕)"
                         print(self.character_name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
@@ -577,7 +592,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.model.ResetExpression()
                         self.wake_up_func()
                         self.sleep = False
-                        self.text = "You woke me up"
+                        self.text = self.lang['woke']
                         self.kaomoji = "(⊙_⊙)✿"
                         print(self.character_name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
@@ -618,6 +633,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.model_update()
 
         self.auto_scale_init = True
+
+        self.lang_set()
 
     def settings_close(self):
         settings.close()
@@ -797,19 +814,21 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         settings.close()
         if self.condition == "Sleep":
             self.wake_up_func()
+        self.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(self,
                                       'Quit',
-                                      self.character_name + ": " + "Do you really want to leave? T_T",
+                                      self.character_name + ": " + self.lang['quit'] + " " + self.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             event.accept()
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.kaomoji = "(^3^)"
+            print(self.character_name + ":", self.lang['goodbye'] + self.kaomoji)
         else:
             self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy", 5000)
-            self.text = "I'm Sooo Happy!"
+            self.text = self.lang['star']
             self.kaomoji = ":(^~^):"
             print(self.character_name + ": " + self.text + self.kaomoji)
             self.textUpdate()
@@ -962,6 +981,7 @@ class SettingsWindow(QWidget):
 
             language = self.langComboBox.currentText()
             self.config.set('Main', 'language', str(language))
+            self.mainWindow.language = language
 
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]

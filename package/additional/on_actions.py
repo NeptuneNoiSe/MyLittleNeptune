@@ -19,10 +19,10 @@ class OnActions:
                 win.transform_initialize()
                 win.t_count = 1
                 if win.goodness_form:
-                    win.text = "I'm going back to my normal form"
+                    win.text = win.lang['transform_to_normal']
                     win.kaomoji = "(/￣ー￣)/"
                 else:
-                    win.text = "I'm Transform"
+                    win.text = win.lang['transform_to_godness']
                     win.kaomoji = "(/￣ー￣)/~~☆"
                 win.settings_close()
                 win.textUpdate()
@@ -31,7 +31,7 @@ class OnActions:
                 pass
             else:
                 win.model.SetExpression("Sad", fadeout=10000)
-                win.text = "I'm Can't Transform"
+                win.text = win.lang['transform_not']
                 win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
                 print(win.character_name + ": " + win.text + win.kaomoji)
                 win.textUpdate()
@@ -208,7 +208,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You have enabled the Idle Animation"
+            win.text = win.lang['idle_enabled']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -225,7 +225,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You have disabled the Idle Animation"
+            win.text = win.lang['idle_disabled']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -242,7 +242,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You have enabled the OnMouse Animation"
+            win.text = win.lang['on_mouse_enabled']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -259,7 +259,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You have disabled the OnMouse Animation"
+            win.text = win.lang['on_mouse_disabled']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -276,7 +276,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You have enabled the TapBody Animation"
+            win.text = win.lang['tap_body_enabled']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -293,7 +293,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You have disabled the TapBody Animation"
+            win.text = win.lang['tap_body_disabled']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -309,7 +309,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = "You stop all motions"
+            win.text = win.lang['stop_motions']
             win.kaomoji = "(⌐■_■)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -327,7 +327,7 @@ class OnActions:
                                                   "\nDeveloper: Neptune NoiSe"
                                                   "\n(https://github.com/NeptuneNoiSe)\n"
                                                   "\nThe application is based on:"
-                                                  "\nPython 3.12"
+                                                  "\nPython 3.13.2"
                                                   "\nPySide6"
                                                   "\nlive2d-py by Arkueid (https://github.com/Arkueid/live2d-py)"
                                                   "\nCompile Heart / Idea Factory Live2D Models\n\n"
@@ -337,15 +337,15 @@ class OnActions:
         win.model.SetExpression("Cry")
         if win.condition == "Sleep":
             win.wake_up_func()
+        win.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(win,
                                       'Quit',
-                                      win.character_name + ": " + "Do you really want to leave? T_T",
+                                      win.character_name + ": " + win.lang['quit'] + " " + win.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
-            print(win.character_name + ":", "GoodBye (^3^)")
             win.quitTimer.start(3000)
-            win.text = "GoodBye! See you again!"
+            win.text = win.lang['quit_alt']
             win.kaomoji = "(^3^)"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -354,7 +354,7 @@ class OnActions:
             win.t_count = 1
             win.model.ResetExpression()
             win.model.SetExpression("Happy", 5000)
-            win.text = "I'm Sooo Happy!"
+            win.text = win.lang['star']
             win.kaomoji = ":(^~^):"
             print(win.character_name + ": " + win.text + win.kaomoji)
             win.textUpdate()

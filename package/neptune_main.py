@@ -8,7 +8,7 @@ from PySide6.QtCore import QTimerEvent, Qt, QSize, Slot
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
-    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox
+    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -57,6 +57,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Timer Diagnostic Log:
         self.timer_log = False
 
+        # Language:
+        self.language = self.config.get('Main', 'language')
+
         # Models Switch:
         self.models_switch = self.config.getint('Model', 'selected_model')
 
@@ -84,6 +87,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.click = False
         self.test = False
         self.read = False
+        self.set_icon = False
         self.clickX = -1
         self.clickY = -1
         self.posX = -1
@@ -394,6 +398,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
+
+        if not self.set_icon:
+            self.setWindowTitle("My Little Neptune")
+            self.setWindowIcon(QIcon(os.path.join(
+                resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+
         auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
         self.model.SetAutoBlinkEnable(auto_blink_param)
         auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
@@ -610,7 +620,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.auto_scale_init = True
 
     def settings_close(self):
-        settings.hide()
+        settings.close()
 
     def settings_show(self):
         settings.show()
@@ -808,7 +818,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.WindowMinimizeButtonHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.config = config_main
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
@@ -818,6 +828,7 @@ class SettingsWindow(QWidget):
         self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags', 'WindowTransparentForInput')
         self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
 
+        self.language = self.config.get('Main', 'language')
         self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
         self.models_scale = self.config.getfloat('Scale', 'models_scale')
         self.auto_blink = self.config.getboolean('Settings', 'auto_blink')
@@ -846,13 +857,9 @@ class SettingsWindow(QWidget):
         quitButton = QPushButton("&App Quit")
         quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
-        applyButton = QPushButton("&Apply")
-        applyButton.clicked.connect(self.mainWindow.settings_close)
-
-        bottomLayout = QVBoxLayout()
+        bottomLayout = QHBoxLayout()
         bottomLayout.addStretch()
         bottomLayout.addWidget(quitButton)
-        bottomLayout.addWidget(applyButton)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)
@@ -953,6 +960,9 @@ class SettingsWindow(QWidget):
                 self.sleepCheckBox.setChecked(False)
                 self.mainWindow.sleep_switch = False
 
+            language = self.langComboBox.currentText()
+            self.config.set('Main', 'language', str(language))
+
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
             self.config.write(cfg)
@@ -977,9 +987,16 @@ class SettingsWindow(QWidget):
         else:
             self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
             self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
+            self.langText = QLabel("Language:")
+            self.langComboBox = QComboBox()
+            self.langComboBox.addItems(["English", "Russian"])
+            self.langComboBox.setCurrentText(self.language)
 
             layout.addWidget(self.framelessWindowCheckBox, 0, 0)
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
+            layout.addWidget(self.langText, 3, 0)
+            layout.addWidget(self.langComboBox, 4, 0)
+            self.langComboBox.currentTextChanged.connect(self.updateMainWindow)
         self.hintsGroupBox.setLayout(layout)
 
     def createScaleGroupBox(self) -> None:

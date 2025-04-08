@@ -29,6 +29,7 @@ class Functions:
         # Timer Diagnostic Log
         if win.timer_log:
             print(win.t_count, "-", win.condition, "Condition")
+        win.set_icon = True
         win.t_count += 1
         if win.t_count <= win.sad_v:
             win.condition = "Idle"

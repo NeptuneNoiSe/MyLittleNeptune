@@ -648,19 +648,19 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Window Submenu
         submenu_window = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window.svg")), '&Window')
+            resources.RESOURCES_DIRECTORY, "icons/window.svg")), self.lang['a_window'])
         action_minimize = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), '&Minimize')
+            resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), self.lang['a_minimize'])
         action_minimize.triggered.connect(self.on_action_minimize)
         action_normal = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), '&Normal')
+            resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), self.lang['a_normal'])
         action_normal.triggered.connect(self.on_action_normal)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
         # Transform Action
         transform_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/transform.svg")), '&Transform', self)
+            resources.RESOURCES_DIRECTORY, "icons/transform.svg")), self.lang['a_transform'], self)
         if not self.input_lock:
             transform_action.triggered.connect(self.on_action_transform)
         context_menu.addAction(transform_action)
@@ -668,7 +668,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Character Submenu
         submenu_character = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Characters')
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), self.lang['a_characters'])
         # Neptune
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), '&Neptune')
@@ -749,10 +749,10 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Animations Submenu
         submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/animation.svg")), '&Animations')
+            resources.RESOURCES_DIRECTORY, "icons/animation.svg")), self.lang['a_animations'])
 
         # Idle Animation CheckBox
-        action_checked_idle = submenu_animations.addAction('Idle Animation')
+        action_checked_idle = submenu_animations.addAction(self.lang['a_idle'])
         action_checked_idle.setCheckable(True)
         action_checked_idle.setChecked(self.idle_switch)
         if action_checked_idle.isChecked():
@@ -761,7 +761,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             action_checked_idle.triggered.connect(self.on_action_idle_true)
 
         # OnMouse Animation CheckBox
-        action_checked_on_mouse = submenu_animations.addAction('OnMouse Animation')
+        action_checked_on_mouse = submenu_animations.addAction(self.lang['a_on_mouse'])
         action_checked_on_mouse.setCheckable(True)
         action_checked_on_mouse.setChecked(self.on_mouse_switch)
         if action_checked_on_mouse.isChecked():
@@ -770,7 +770,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_true)
 
         # Tap Body Animation CheckBox
-        action_checked_tap_body = submenu_animations.addAction('Tap Body Animation')
+        action_checked_tap_body = submenu_animations.addAction(self.lang['a_tap_body'])
         action_checked_tap_body.setCheckable(True)
         action_checked_tap_body.setChecked(self.tap_body_switch)
         if action_checked_tap_body.isChecked():
@@ -781,7 +781,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Stop All Motions
         submenu_animations.addSeparator()
         action_stop_all_motions = submenu_animations.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/stop.svg")), '&Stop All Motions')
+            resources.RESOURCES_DIRECTORY, "icons/stop.svg")), self.lang['a_stop_motions'])
         action_stop_all_motions.triggered.connect(self.on_action_stop_all_motions)
 
         context_menu.addMenu(submenu_animations)
@@ -789,7 +789,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Settings Action
         settings_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), '&Settings', self)
+            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), self.lang['a_settings'], self)
         if not self.input_lock:
             settings_action.triggered.connect(self.on_action_settings)
         context_menu.addAction(settings_action)
@@ -797,13 +797,13 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # About Action
         about_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/about.svg")), '&About', self)
+            resources.RESOURCES_DIRECTORY, "icons/about.svg")), self.lang['a_about'], self)
         about_action.triggered.connect(self.on_action_about)
         context_menu.addAction(about_action)
 
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Quit', self)
+            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), self.lang['a_quit'], self)
         exit_action.triggered.connect(self.on_action_quit)
         context_menu.addAction(exit_action)
 
@@ -816,7 +816,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.wake_up_func()
         self.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(self,
-                                      'Quit',
+                                      self.lang['a_quit_alt'],
                                       self.character_name + ": " + self.lang['quit'] + " " + self.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)

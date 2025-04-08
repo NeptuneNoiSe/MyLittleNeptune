@@ -18,7 +18,7 @@ class Functions:
         if win.mouse_tracking_log:
             print("Mouse is steady", win.tracking_mouse, win.posX, win.posY)
 
-        # win.model.Drag(win.posX - win.x(), win.posY - win.y())
+        win.model.Drag(win.posX, win.posY)
 
     def transparent_input(win):
         win.setWindowFlags(win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput)

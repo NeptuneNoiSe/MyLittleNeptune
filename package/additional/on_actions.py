@@ -321,17 +321,7 @@ class OnActions:
         win.settings_show()
 
     def on_action_about(win):
-        QMessageBox.information(win, "About Me", "My Little Neptune\n"
-                                                  "\nThe assistant application on your desktop,"
-                                                  "\nwhich pleases you with its appearance every day:)\n"
-                                                  "\nDeveloper: Neptune NoiSe"
-                                                  "\n(https://github.com/NeptuneNoiSe)\n"
-                                                  "\nThe application is based on:"
-                                                  "\nPython 3.13.2"
-                                                  "\nPySide6"
-                                                  "\nlive2d-py by Arkueid (https://github.com/Arkueid/live2d-py)"
-                                                  "\nCompile Heart / Idea Factory Live2D Models\n\n"
-                                                  "\n© 2025")
+        QMessageBox.information(win, win.lang['a_about_alt'], win.lang['about_text'])
 
     def on_action_quit(win):
         win.model.SetExpression("Cry")
@@ -339,7 +329,7 @@ class OnActions:
             win.wake_up_func()
         win.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(win,
-                                      'Quit',
+                                      win.lang['a_quit_alt'],
                                       win.character_name + ": " + win.lang['quit'] + " " + win.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)

@@ -2,13 +2,36 @@ import os
 from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
 from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QMovie
 
 from package import resources
 from package.additional.config_module import *
 import resources
+import json
 
 class Functions:
+    def loadResource(win):
+        # Transform Animations Resource
+        win.t_anim_in = os.path.join(
+            resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
+        win.t_anim_out = os.path.join(
+            resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
+        win.transformMovie = QMovie(win.t_anim_in)
+        win.transformLabel.setMovie(win.transformMovie)
+
+        win.en = os.path.join(
+            resources.RESOURCES_DIRECTORY, "lang/en.json")
+        win.ru = os.path.join(
+            resources.RESOURCES_DIRECTORY, "lang/ru.json")
+
+    def setLanguage(win):
+        if win.language == "English":
+            with open(win.en, 'r', encoding='utf-8') as file:
+                win.lang = json.load(file)
+        elif win.language == "Russian":
+            with open(win.ru, 'r', encoding='utf-8') as file:
+                win.lang = json.load(file)
+
     def mouse_tracking(win):
         win.tracking_mouse = False
         if win.posX <= 0 or win.posY <= 0:
@@ -29,12 +52,13 @@ class Functions:
         # Timer Diagnostic Log
         if win.timer_log:
             print(win.t_count, "-", win.condition, "Condition")
-        win.set_icon = True
         win.t_count += 1
         if win.t_count <= win.sad_v:
             win.condition = "Idle"
         if win.t_count <= win.sleep_v and win.idle_switch == True:
             win.idle_anim = True
+        if win.t_count >= 5:
+            win.set_icon = True
         if win.t_count >= 10 and win.sleep_switch == False:
             win.t_count = 1
         if win.t_count == win.sad_v:

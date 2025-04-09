@@ -47,9 +47,22 @@
   "a_tap_body": "Tap Body Animation",
   "a_stop_motions": "&Stop All Motions",
   "a_settings": "&Settings",
+  "settings": "Settings",
   "a_about": "&About",
   "a_about_alt": "About",
   "a_quit": "&Quit",
   "a_quit_alt": "Quit",
-  "about_text": "My Little Neptune\nThe assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe: (https://github.com/NeptuneNoiSe)\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid: (https://github.com/Arkueid/live2d-py)\nCompile Heart / Idea Factory Live2D Models\n© 2025"
+  "about_text": "My Little Neptune\nThe assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe: (https://github.com/NeptuneNoiSe)\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid: (https://github.com/Arkueid/live2d-py)\nCompile Heart / Idea Factory Live2D Models\n© 2025",
+  "s_window_title": "Window",
+  "s_frameless_window": "Frameless window",
+  "s_stays_on_top": "Window stays on top",
+  "s_language": "Language:",
+  "s_scale_title": "Scale",
+  "s_auto_scale": "AutoScale",
+  "s_scale_multiplier": "Scale multiplier:",
+  "s_other_title": "Other",
+  "s_auto_blink": "Auto Blink",
+  "s_auto_breath": "Auto Breath",
+  "s_tracking_mouse": "Tracking Mouse Position",
+  "s_sleep": "Sleep"
 }

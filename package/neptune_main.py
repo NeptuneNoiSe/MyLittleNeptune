@@ -4,8 +4,8 @@ import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, QSize, Slot
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie
+from PySide6.QtCore import QTimerEvent, Qt, Slot
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
@@ -16,7 +16,6 @@ import live2d.v3 as live2d
 # from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 import resources
-import json
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
 from additional.callbacks import *
@@ -89,6 +88,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.test = False
         self.read = False
         self.set_icon = False
+        self.settings_update_state = False
         self.clickX = -1
         self.clickY = -1
         self.posX = -1
@@ -216,26 +216,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.sleep_switch = self.config.getboolean('Settings', 'sleep')
         self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
 
-        # Transform Animations Resource
-        self.t_anim_in = os.path.join(
-            resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
-        self.t_anim_out = os.path.join(
-            resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
-        self.transformMovie = QMovie(self.t_anim_in)
-        self.transformLabel.setMovie(self.transformMovie)
-
-        self.en = os.path.join(
-            resources.RESOURCES_DIRECTORY, "lang/en.json")
-        self.ru = os.path.join(
-            resources.RESOURCES_DIRECTORY, "lang/ru.json")
-
-    def lang_set(self):
-        if self.language == "English":
-            with open(self.en, 'r',encoding='utf-8') as file:
-                self.lang = json.load(file)
-        elif self.language == "Russian":
-            with open(self.ru, 'r',encoding='utf-8') as file:
-                self.lang = json.load(file)
+        self.loadResource()
 
     def initializeGL(self) -> None:
         self.makeCurrent()
@@ -358,7 +339,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.timers_init()
         self.talkWidgetInit()
         self.talk_function()
-        self.lang_set()
+        self.setLanguage()
 
     def resizeGL(self, w: int, h: int) -> None:
         # 使模型的参数按窗口大小进行更新
@@ -413,7 +394,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
-
+        if self.settings_update_state:
+            settings.updateSettings()
         if not self.set_icon:
             self.setWindowTitle("My Little Neptune")
             self.setWindowIcon(QIcon(os.path.join(
@@ -634,13 +616,15 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         self.auto_scale_init = True
 
-        self.lang_set()
-
-    def settings_close(self):
-        settings.close()
+        self.setLanguage()
 
     def settings_show(self):
         settings.show()
+        self.settings_update_state = True
+
+    def settings_close(self):
+        settings.close()
+        self.settings_update_state = False
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -873,12 +857,12 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        quitButton = QPushButton("&App Quit")
-        quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+        self.quitButton = QPushButton("&Quit")
+        self.quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
         bottomLayout = QHBoxLayout()
         bottomLayout.addStretch()
-        bottomLayout.addWidget(quitButton)
+        bottomLayout.addWidget(self.quitButton)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)
@@ -892,6 +876,26 @@ class SettingsWindow(QWidget):
         self.mainWindow.setWindowIcon(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
         self.updateMainWindow()
+
+    def updateSettings(self):
+        # Settings Main
+        self.setWindowTitle(self.mainWindow.lang['settings'])
+        self.quitButton.setText(self.mainWindow.lang['a_quit'])
+        # Window Box
+        self.hintsGroupBox.setTitle(self.mainWindow.lang['s_window_title'])
+        self.framelessWindowCheckBox.setText(self.mainWindow.lang['s_frameless_window'])
+        self.windowStaysOnTopCheckBox.setText(self.mainWindow.lang['s_stays_on_top'])
+        self.langText.setText(self.mainWindow.lang['s_language'])
+        # Scale Box
+        self.scaleGroupBox.setTitle(self.mainWindow.lang['s_scale_title'])
+        self.autoScaleCheckBox.setText(self.mainWindow.lang['s_auto_scale'])
+        self.text.setText(self.mainWindow.lang['s_scale_multiplier'])
+        # Other Box
+        self.otherGroupBox.setTitle(self.mainWindow.lang['s_other_title'])
+        self.autoBlinkCheckBox.setText(self.mainWindow.lang['s_auto_blink'])
+        self.autoBreathCheckBox.setText(self.mainWindow.lang['s_auto_breath'])
+        self.trackingMouseCheckBox.setText(self.mainWindow.lang['s_tracking_mouse'])
+        self.sleepCheckBox.setText(self.mainWindow.lang['s_sleep'])
 
     @Slot()
     def updateMainWindow(self) -> None:

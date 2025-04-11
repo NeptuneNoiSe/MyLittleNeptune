@@ -148,6 +148,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Character Name
         self.character_name = self.config.get('Model', 'character_name')
+        self.name = self.character_name
 
         # Neptune Model parameters
         if self.models_switch == 0:
@@ -228,105 +229,120 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             if self.models_switch == 0:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_neptune']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
 
             elif self.models_switch == 1:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_purple_heart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
 
             elif self.models_switch == 2:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_noire']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
 
             elif self.models_switch == 3:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_black_heart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
 
             elif self.models_switch == 4:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_blanc']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
             elif self.models_switch == 5:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_white_heart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
             elif self.models_switch == 6:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_vert']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
 
             elif self.models_switch == 7:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_green_heart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
 
             elif self.models_switch == 8:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_nepgear']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
 
             elif self.models_switch == 9:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_purple_sister']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
 
             elif self.models_switch == 10:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_uni']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
 
             elif self.models_switch == 11:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_black_sister']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
 
             elif self.models_switch == 12:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_rom']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
 
             elif self.models_switch == 13:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_white_sister_rom']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
 
             elif self.models_switch == 14:
                 self.goodness_form = False
                 self.can_transform = False
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['n_ram']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
 
@@ -563,7 +579,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                             elif self.expression == "Funny" and self.goodness_form == True:
                                 self.text = self.lang['funny_god']
                                 self.kaomoji = "(◕‿◕)"
-                        print(self.character_name + ": " + self.text + self.kaomoji)
+                        print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
                         self.expression = None
                         self.t_count = 1
@@ -576,7 +592,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.sleep = False
                         self.text = self.lang['woke']
                         self.kaomoji = "(⊙_⊙)✿"
-                        print(self.character_name + ": " + self.text + self.kaomoji)
+                        print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
                         self.model.SetExpression("Fear", fadeout=10000)
                         self.t_count = 1
@@ -617,6 +633,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.auto_scale_init = True
 
         self.setLanguage()
+        self.name_update()
 
     def settings_show(self):
         settings.show()
@@ -801,20 +818,20 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(self,
                                       self.lang['a_quit_alt'],
-                                      self.character_name + ": " + self.lang['quit'] + " " + self.kaomoji,
+                                      self.name + ": " + self.lang['quit'] + " " + self.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             event.accept()
             self.kaomoji = "(^3^)"
-            print(self.character_name + ":", self.lang['goodbye'] + self.kaomoji)
+            print(self.name + ":", self.lang['goodbye'] + self.kaomoji)
         else:
             self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy", 5000)
             self.text = self.lang['star']
             self.kaomoji = ":(^~^):"
-            print(self.character_name + ": " + self.text + self.kaomoji)
+            print(self.name + ": " + self.text + self.kaomoji)
             self.textUpdate()
             event.ignore()
 

@@ -66,20 +66,20 @@ class Functions:
             win.model.SetExpression("Sad")
             win.text = win.lang['sad']
             win.kaomoji = "(´•ω•̥`)"
-            print(win.character_name + ": " + win.text + win.kaomoji)
+            print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.tired_v and win.sleep_switch == True:
             win.condition = "Tired"
             win.model.SetExpression("Tired")
             win.text = win.lang['tired']
             win.kaomoji = "(๑•﹏•)"
-            print(win.character_name + ": " + win.text + win.kaomoji)
+            print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
             win.condition = "Sleep"
             win.text = win.lang['sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
-            print(win.character_name + ": " + win.text + win.kaomoji)
+            print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
             win.wake_up_func()
@@ -92,7 +92,7 @@ class Functions:
             win.sleep = False
             win.text = win.lang['wake_up']
             win.kaomoji = "(O_~)/"
-            print(win.character_name + ":", "I'm WakeUp (O_~)/")
+            print(win.name + ":", "I'm WakeUp (O_~)/")
             win.textUpdate()
 
     def sleep_func(win):

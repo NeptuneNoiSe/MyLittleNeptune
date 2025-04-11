@@ -186,7 +186,7 @@ class TalkWidgetMain:
                                - varY * win.a_scale * win.models_scale)
         win.talkFont = QFont("Segoe Print", win.talkFontSize * win.a_scale * win.models_scale)
         win.talkFont.setBold(True)
-        win.talkTextLabel.setText(win.character_name + ": " + win.text + "\n" + win.kaomoji)
+        win.talkTextLabel.setText(win.name + ": " + win.text + "\n" + win.kaomoji)
         win.talkTextLabel.setFont(win.talkFont)
         win.talkTextLabel.setStyleSheet("color: gray")
         win.talkTextLabel.setWordWrap(True)
@@ -202,7 +202,7 @@ class TalkWidgetMain:
         win.talkDelayTimer.stop()
         win.text = win.lang['taking']
         win.kaomoji = "ε=┌( >_<)┘?"
-        print(win.character_name + ": " + win.text + win.kaomoji)
+        print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
 
     def dialogClose(win):
@@ -227,7 +227,7 @@ class TalkWidgetMain:
         win.talkWidgetInit()
         win.text = win.lang['settings_applied']
         win.kaomoji = "(⌐■_■)"
-        win.talkTextLabel.setText(win.character_name + ": " + win.text + "\n" + win.kaomoji)
+        win.talkTextLabel.setText(win.name + ": " + win.text + "\n" + win.kaomoji)
         win.talk_function()
 
     def hello(win):
@@ -237,7 +237,7 @@ class TalkWidgetMain:
         win.text = win.lang['hello']
         win.kaomoji = "(^~^)/"
         win.model.SetExpression("Smile", fadeout=10000)
-        print(win.character_name + ": " + win.text + win.kaomoji)
+        print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
         win.talkUpd = True
 
@@ -245,7 +245,7 @@ class TalkWidgetMain:
         win.goodByeTimer.start(3000)
         win.text = win.lang['goodbye']
         win.kaomoji = "(-_-)>"
-        print(win.character_name + ": " + win.text + win.kaomoji)
+        print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
         if win.condition == "Sleep":
             win.wake_up_func()

@@ -103,10 +103,10 @@ class Models:
             win.input_lock = False
             if win.transform_text:
                 if win.goodness_form:
-                    win.text = win.lang['transformed_godness']
+                    win.text = win.lang['Talk']['TransformedGodness']
                     win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
                 else:
-                    win.text = win.lang['transformed_normal']
+                    win.text = win.lang['Talk']['TransformedNormal']
                     win.kaomoji = "(> ͜ʖ <)"
                 win.textUpdate()
                 win.transform_text = False
@@ -118,55 +118,55 @@ class Models:
     def name_update(win):
         # Update Params
         if win.character_name == "Neptune":
-            win.name = win.lang['n_neptune']
+            win.name = win.lang['Names']['Neptune']
 
         if win.character_name == "Purple Heart":
-            win.name = win.lang['n_purple_heart']
+            win.name = win.lang['Names']['PurpleHeart']
 
         if win.character_name == "Noire":
-            win.name = win.lang['n_noire']
+            win.name = win.lang['Names']['Noire']
 
         if win.character_name == "Black Heart":
-            win.name = win.lang['n_black_heart']
+            win.name = win.lang['Names']['BlackHeart']
 
         if win.character_name == "Blanc":
-            win.name = win.lang['n_blanc']
+            win.name = win.lang['Names']['Blanc']
 
         if win.character_name == "White Heart":
-            win.name = win.lang['n_white_heart']
+            win.name = win.lang['Names']['WhiteHeart']
 
         if win.character_name == "Vert":
-            win.name = win.lang['n_vert']
+            win.name = win.lang['Names']['Vert']
 
         if win.character_name == "Green Heart":
-            win.name = win.lang['n_green_heart']
+            win.name = win.lang['Names']['GreenHeart']
 
         if win.character_name == "NepGear":
-            win.name = win.lang['n_nepgear']
+            win.name = win.lang['Names']['NepGear']
 
         if win.character_name == "Purple Sister":
-            win.name = win.lang['n_purple_sister']
+            win.name = win.lang['Names']['PurpleSister']
 
         if win.character_name == "Uni":
-            win.name = win.lang['n_uni']
+            win.name = win.lang['Names']['Uni']
 
         if win.character_name == "Black Sister":
-            win.name = win.lang['n_black_sister']
+            win.name = win.lang['Names']['BlackSister']
 
         if win.character_name == "Rom":
-            win.name = win.lang['n_rom']
+            win.name = win.lang['Names']['Rom']
 
         if win.character_name == "White Sister Rom":
-            win.name = win.lang['n_white_sister_rom']
+            win.name = win.lang['Names']['WhiteSisterRom']
 
         if win.character_name == "Ram":
-            win.name = win.lang['n_ram']
+            win.name = win.lang['Names']['Ram']
 
     def model_update(win):
         # Update Params
         if win.character_name == "Neptune":
             win.character_name = "Neptune"
-            win.name = win.lang['n_neptune']
+            win.name = win.lang['Names']['Neptune']
             win.models_switch = 0
             win.t_count = 1
             win.mx_param = 600
@@ -181,7 +181,7 @@ class Models:
 
         if win.character_name == "Purple Heart":
             win.character_name = "Purple Heart"
-            win.name = win.lang['n_purple_heart']
+            win.name = win.lang['Names']['PurpleHeart']
             win.models_switch = 1
             win.t_count = 1
             win.mx_param = 700
@@ -196,7 +196,7 @@ class Models:
 
         if win.character_name == "Noire":
             win.character_name = "Noire"
-            win.name = win.lang['n_noire']
+            win.name = win.lang['Names']['Noire']
             win.models_switch = 2
             win.t_count = 1
             win.mx_param = 700
@@ -211,7 +211,7 @@ class Models:
 
         if win.character_name == "Black Heart":
             win.character_name = "Black Heart"
-            win.name = win.lang['n_black_heart']
+            win.name = win.lang['Names']['BlackHeart']
             win.models_switch = 3
             win.t_count = 1
             win.mx_param = 700
@@ -226,7 +226,7 @@ class Models:
 
         if win.character_name == "Blanc":
             win.character_name = "Blanc"
-            win.name = win.lang['n_blanc']
+            win.name = win.lang['Names']['Blanc']
             win.models_switch = 4
             win.t_count = 1
             win.mx_param = 600
@@ -241,7 +241,7 @@ class Models:
 
         if win.character_name == "White Heart":
             win.character_name = "White Heart"
-            win.name = win.lang['n_white_heart']
+            win.name = win.lang['Names']['WhiteHeart']
             win.models_switch = 5
             win.t_count = 1
             win.mx_param = 700
@@ -256,7 +256,7 @@ class Models:
 
         if win.character_name == "Vert":
             win.character_name = "Vert"
-            win.name = win.lang['n_vert']
+            win.name = win.lang['Names']['Vert']
             win.models_switch = 6
             win.t_count = 1
             win.mx_param = 700
@@ -271,7 +271,7 @@ class Models:
 
         if win.character_name == "Green Heart":
             win.character_name = "Green Heart"
-            win.name = win.lang['n_green_heart']
+            win.name = win.lang['Names']['GreenHeart']
             win.models_switch = 7
             win.t_count = 1
             win.mx_param = 700
@@ -286,7 +286,7 @@ class Models:
 
         if win.character_name == "NepGear":
             win.character_name = "NepGear"
-            win.name = win.lang['n_nepgear']
+            win.name = win.lang['Names']['NepGear']
             win.models_switch = 8
             win.t_count = 1
             win.mx_param = 600
@@ -301,7 +301,7 @@ class Models:
 
         if win.character_name == "Purple Sister":
             win.character_name = "Purple Sister"
-            win.name = win.lang['n_purple_sister']
+            win.name = win.lang['Names']['PurpleSister']
             win.models_switch = 9
             win.t_count = 1
             win.mx_param = 650
@@ -316,7 +316,7 @@ class Models:
 
         if win.character_name == "Uni":
             win.character_name = "Uni"
-            win.name = win.lang['n_uni']
+            win.name = win.lang['Names']['Uni']
             win.models_switch = 10
             win.t_count = 1
             win.mx_param = 600
@@ -331,7 +331,7 @@ class Models:
 
         if win.character_name == "Black Sister":
             win.character_name = "Black Sister"
-            win.name = win.lang['n_black_sister']
+            win.name = win.lang['Names']['BlackSister']
             win.models_switch = 11
             win.t_count = 1
             win.mx_param = 650
@@ -346,7 +346,7 @@ class Models:
 
         if win.character_name == "Rom":
             win.character_name = "Rom"
-            win.name = win.lang['n_rom']
+            win.name = win.lang['Names']['Rom']
             win.models_switch = 12
             win.t_count = 1
             win.mx_param = 600
@@ -361,7 +361,7 @@ class Models:
 
         if win.character_name == "White Sister Rom":
             win.character_name = "White Sister Rom"
-            win.name = win.lang['n_white_sister_rom']
+            win.name = win.lang['Names']['WhiteSisterRom']
             win.models_switch = 13
             win.t_count = 1
             win.mx_param = 650
@@ -376,7 +376,7 @@ class Models:
 
         if win.character_name == "Ram":
             win.character_name = "Ram"
-            win.name = win.lang['n_ram']
+            win.name = win.lang['Names']['Ram']
             win.models_switch = 14
             win.t_count = 1
             win.mx_param = 600

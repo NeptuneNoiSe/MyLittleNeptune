@@ -19,10 +19,10 @@ class OnActions:
                 win.transform_initialize()
                 win.t_count = 1
                 if win.goodness_form:
-                    win.text = win.lang['transform_to_normal']
+                    win.text = win.lang['Talk']['TransformToNormal']
                     win.kaomoji = "(/￣ー￣)/"
                 else:
-                    win.text = win.lang['transform_to_godness']
+                    win.text = win.lang['Talk']['TransformToGodness']
                     win.kaomoji = "(/￣ー￣)/~~☆"
                 win.settings_close()
                 win.textUpdate()
@@ -31,7 +31,7 @@ class OnActions:
                 pass
             else:
                 win.model.SetExpression("Sad", fadeout=10000)
-                win.text = win.lang['transform_not']
+                win.text = win.lang['Talk']['TransformNot']
                 win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
                 print(win.name + ": " + win.text + win.kaomoji)
                 win.textUpdate()
@@ -44,7 +44,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Neptune"
-        win.name = win.lang['n_neptune']
+        win.name = win.lang['Names']['Neptune']
         win.models_switch = 0
         if win.transform:
             win.model_update()
@@ -56,7 +56,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Purple Heart"
-        win.name = win.lang['n_purple_heart']
+        win.name = win.lang['Names']['PurpleHeart']
         win.models_switch = 1
         if win.transform:
             win.model_update()
@@ -68,7 +68,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Noire"
-        win.name = win.lang['n_noire']
+        win.name = win.lang['Names']['Noire']
         win.models_switch = 2
         if win.transform:
             win.model_update()
@@ -80,7 +80,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Black Heart"
-        win.name = win.lang['n_black_heart']
+        win.name = win.lang['Names']['BlackHeart']
         win.models_switch = 3
         if win.transform:
             win.model_update()
@@ -92,7 +92,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Blanc"
-        win.name = win.lang['n_blanc']
+        win.name = win.lang['Names']['Blanc']
         win.models_switch = 4
         if win.transform:
             win.model_update()
@@ -104,7 +104,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "White Heart"
-        win.name = win.lang['n_white_heart']
+        win.name = win.lang['Names']['WhiteHeart']
         win.models_switch = 5
         if win.transform:
             win.model_update()
@@ -116,7 +116,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Vert"
-        win.name = win.lang['n_vert']
+        win.name = win.lang['Names']['Vert']
         win.models_switch = 6
         if win.transform:
             win.model_update()
@@ -128,7 +128,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Green Heart"
-        win.name = win.lang['n_green_heart']
+        win.name = win.lang['Names']['GreenHeart']
         win.models_switch = 7
         if win.transform:
             win.model_update()
@@ -140,7 +140,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "NepGear"
-        win.name = win.lang['n_nepgear']
+        win.name = win.lang['Names']['NepGear']
         win.models_switch = 8
         if win.transform:
             win.model_update()
@@ -152,7 +152,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Purple Sister"
-        win.name = win.lang['n_purple_sister']
+        win.name = win.lang['Names']['PurpleSister']
         win.models_switch = 9
         if win.transform:
             win.model_update()
@@ -164,7 +164,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Uni"
-        win.name = win.lang['n_uni']
+        win.name = win.lang['Names']['Uni']
         win.models_switch = 10
         if win.transform:
             win.model_update()
@@ -176,7 +176,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Black Sister"
-        win.name = win.lang['n_black_sister']
+        win.name = win.lang['Names']['BlackSister']
         win.models_switch = 11
         if win.transform:
             win.model_update()
@@ -188,7 +188,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Rom"
-        win.name = win.lang['n_rom']
+        win.name = win.lang['Names']['Rom']
         win.models_switch = 12
         if win.transform:
             win.model_update()
@@ -200,7 +200,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "White Sister Rom"
-        win.name = win.lang['n_white_sister_rom']
+        win.name = win.lang['Names']['WhiteSisterRom']
         win.models_switch = 13
         if win.transform:
             win.model_update()
@@ -212,7 +212,7 @@ class OnActions:
         if not win.transform:
             win.goodBye()
         win.character_name = "Ram"
-        win.name = win.lang['n_ram']
+        win.name = win.lang['Names']['Ram']
         win.models_switch = 14
         if win.transform:
             win.model_update()
@@ -223,7 +223,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['idle_enabled']
+            win.text = win.lang['MiscellaneousTalk']['IdleEnabled']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -240,7 +240,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['idle_disabled']
+            win.text = win.lang['MiscellaneousTalk']['IdleDisabled']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -257,7 +257,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['on_mouse_enabled']
+            win.text = win.lang['MiscellaneousTalk']['OnMouseEnabled']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -274,7 +274,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['on_mouse_disabled']
+            win.text = win.lang['MiscellaneousTalk']['OnMouseDisabled']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -291,7 +291,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['tap_body_enabled']
+            win.text = win.lang['MiscellaneousTalk']['TapBodyEnabled']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -308,7 +308,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['tap_body_disabled']
+            win.text = win.lang['MiscellaneousTalk']['TapBodyDisabled']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -324,7 +324,7 @@ class OnActions:
         if win.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['stop_motions']
+            win.text = win.lang['MiscellaneousTalk']['StopMotions']
             win.kaomoji = "(⌐■_■)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -336,7 +336,7 @@ class OnActions:
         win.settings_show()
 
     def on_action_about(win):
-        QMessageBox.information(win, win.lang['a_about_alt'], win.lang['about_text'])
+        QMessageBox.information(win, win.lang['Actions']['AboutAlt'], win.lang['Actions']['AboutText'])
 
     def on_action_quit(win):
         win.model.SetExpression("Cry")
@@ -344,13 +344,13 @@ class OnActions:
             win.wake_up_func()
         win.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(win,
-                                      win.lang['a_quit_alt'],
-                                      win.name + ": " + win.lang['quit'] + " " + win.kaomoji,
+                                      win.lang['Actions']['Quit'],
+                                      win.name + ": " + win.lang['Talk']['Quit'] + " " + win.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             win.quitTimer.start(3000)
-            win.text = win.lang['quit_alt']
+            win.text = win.lang['Talk']['QuitAlt']
             win.kaomoji = "(^3^)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -359,7 +359,7 @@ class OnActions:
             win.t_count = 1
             win.model.ResetExpression()
             win.model.SetExpression("Happy", 5000)
-            win.text = win.lang['star']
+            win.text = win.lang['Talk']['Star']
             win.kaomoji = ":(^~^):"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()

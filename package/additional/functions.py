@@ -28,7 +28,7 @@ class Functions:
         if win.language == "English":
             with open(win.en, 'r', encoding='utf-8') as file:
                 win.lang = json.load(file)
-        elif win.language == "Russian":
+        elif win.language == "Русский":
             with open(win.ru, 'r', encoding='utf-8') as file:
                 win.lang = json.load(file)
 
@@ -64,20 +64,20 @@ class Functions:
         if win.t_count == win.sad_v:
             win.condition = "Sad"
             win.model.SetExpression("Sad")
-            win.text = win.lang['sad']
+            win.text = win.lang['Talk']['Sad']
             win.kaomoji = "(´•ω•̥`)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.tired_v and win.sleep_switch == True:
             win.condition = "Tired"
             win.model.SetExpression("Tired")
-            win.text = win.lang['tired']
+            win.text = win.lang['Talk']['Tired']
             win.kaomoji = "(๑•﹏•)"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
             win.condition = "Sleep"
-            win.text = win.lang['sleep']
+            win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
@@ -90,7 +90,7 @@ class Functions:
             win.idle_anim = True
             win.wake_up = True
             win.sleep = False
-            win.text = win.lang['wake_up']
+            win.text = win.lang['Talk']['WakeUp']
             win.kaomoji = "(O_~)/"
             print(win.name + ":", "I'm WakeUp (O_~)/")
             win.textUpdate()

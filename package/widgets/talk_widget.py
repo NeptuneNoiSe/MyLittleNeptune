@@ -67,7 +67,7 @@ class TalkWidgetMain:
             win.talk = True
 
         win.dialogCloseTimer.start(7000)
-        win.talkWidget.move(win.twmX, win.twmY)
+        win.talkWidget.move(win.twmXR, win.twmY)
 
         if win.screenSide == "Right":
             if win.character_name == "Neptune":
@@ -112,10 +112,13 @@ class TalkWidgetMain:
             elif win.character_name == "White Sister Rom":
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/white_sister_rom_talk.svg")
+            elif win.character_name == "Ram":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk/ram_talk.svg")
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/talk.svg")
-            win.talkWidget.move(win.twmX, win.twmY)
+            win.talkWidget.move(win.twmXR, win.twmY)
         elif win.screenSide == "Left":
             if win.character_name == "Neptune":
                 win.talkImage = os.path.join(
@@ -159,10 +162,13 @@ class TalkWidgetMain:
             elif win.character_name == "White Sister Rom":
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/white_sister_rom_talk_mirrored.svg")
+            elif win.character_name == "Ram":
+                win.talkImage = os.path.join(
+                    resources.RESOURCES_DIRECTORY, "images/talk_mirrored/ram_talk_mirrored.svg")
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/talk_mirrored.svg")
-            win.talkWidget.move(win.twmX + (250 * win.a_scale * win.models_scale), win.twmY+10)
+            win.talkWidget.move(win.twmXR + win.twmXL, win.twmY+10)
             varX = 0
 
         win.talkPixmap = QPixmap(win.talkImage).scaled(QSize((win.talkX + 15) * win.a_scale * win.models_scale,
@@ -180,7 +186,7 @@ class TalkWidgetMain:
                                - varY * win.a_scale * win.models_scale)
         win.talkFont = QFont("Segoe Print", win.talkFontSize * win.a_scale * win.models_scale)
         win.talkFont.setBold(True)
-        win.talkTextLabel.setText(win.character_name + ": " + win.text + "\n" + win.kaomoji)
+        win.talkTextLabel.setText(win.name + ": " + win.text + "\n" + win.kaomoji)
         win.talkTextLabel.setFont(win.talkFont)
         win.talkTextLabel.setStyleSheet("color: gray")
         win.talkTextLabel.setWordWrap(True)
@@ -194,9 +200,9 @@ class TalkWidgetMain:
     def takingTalk(win):
         win.placeThis = True
         win.talkDelayTimer.stop()
-        win.text = "Hey, where are you taking me?"
+        win.text = win.lang['Talk']['Taking']
         win.kaomoji = "ε=┌( >_<)┘?"
-        print(win.character_name + ": " + win.text + win.kaomoji)
+        print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
 
     def dialogClose(win):
@@ -219,27 +225,27 @@ class TalkWidgetMain:
         win.screenSide = "Right"
         win.talkWidget.close()
         win.talkWidgetInit()
-        win.text = "The settings are applied"
+        win.text = win.lang['MiscellaneousTalk']['SettingsApplied']
         win.kaomoji = "(⌐■_■)"
-        win.talkTextLabel.setText(win.character_name + ": " + win.text + "\n" + win.kaomoji)
+        win.talkTextLabel.setText(win.name + ": " + win.text + "\n" + win.kaomoji)
         win.talk_function()
 
     def hello(win):
         win.goodByeTimer.stop()
         win.dialogClose()
         win.model_update()
-        win.text = "Hello!"
+        win.text = win.lang['Talk']['Hello']
         win.kaomoji = "(^~^)/"
         win.model.SetExpression("Smile", fadeout=10000)
-        print(win.character_name + ": " + win.text + win.kaomoji)
+        print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
         win.talkUpd = True
 
     def goodBye(win):
         win.goodByeTimer.start(3000)
-        win.text = "GoodBye"
+        win.text = win.lang['Talk']['Goodbye']
         win.kaomoji = "(-_-)>"
-        print(win.character_name + ": " + win.text + win.kaomoji)
+        print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
         if win.condition == "Sleep":
             win.wake_up_func()

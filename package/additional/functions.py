@@ -2,13 +2,36 @@ import os
 from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
 from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QMovie
 
 from package import resources
 from package.additional.config_module import *
 import resources
+import json
 
 class Functions:
+    def loadResource(win):
+        # Transform Animations Resource
+        win.t_anim_in = os.path.join(
+            resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
+        win.t_anim_out = os.path.join(
+            resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
+        win.transformMovie = QMovie(win.t_anim_in)
+        win.transformLabel.setMovie(win.transformMovie)
+
+        win.en = os.path.join(
+            resources.RESOURCES_DIRECTORY, "lang/en.json")
+        win.ru = os.path.join(
+            resources.RESOURCES_DIRECTORY, "lang/ru.json")
+
+    def setLanguage(win):
+        if win.language == "English":
+            with open(win.en, 'r', encoding='utf-8') as file:
+                win.lang = json.load(file)
+        elif win.language == "Russian":
+            with open(win.ru, 'r', encoding='utf-8') as file:
+                win.lang = json.load(file)
+
     def mouse_tracking(win):
         win.tracking_mouse = False
         if win.posX <= 0 or win.posY <= 0:
@@ -18,7 +41,7 @@ class Functions:
         if win.mouse_tracking_log:
             print("Mouse is steady", win.tracking_mouse, win.posX, win.posY)
 
-        # win.model.Drag(win.posX - win.x(), win.posY - win.y())
+        win.model.Drag(win.posX, win.posY)
 
     def transparent_input(win):
         win.setWindowFlags(win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput)
@@ -34,27 +57,29 @@ class Functions:
             win.condition = "Idle"
         if win.t_count <= win.sleep_v and win.idle_switch == True:
             win.idle_anim = True
+        if win.t_count >= 5:
+            win.set_icon = True
         if win.t_count >= 10 and win.sleep_switch == False:
             win.t_count = 1
         if win.t_count == win.sad_v:
             win.condition = "Sad"
             win.model.SetExpression("Sad")
-            win.text = "I'm Sad"
+            win.text = win.lang['Talk']['Sad']
             win.kaomoji = "(´•ω•̥`)"
-            print(win.character_name + ": " + win.text + win.kaomoji)
+            print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.tired_v and win.sleep_switch == True:
             win.condition = "Tired"
             win.model.SetExpression("Tired")
-            win.text = "I'm Tired"
+            win.text = win.lang['Talk']['Tired']
             win.kaomoji = "(๑•﹏•)"
-            print(win.character_name + ": " + win.text + win.kaomoji)
+            print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
             win.condition = "Sleep"
-            win.text = "I'm going to sleep"
+            win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
-            print(win.character_name + ": " + win.text + win.kaomoji)
+            print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
             win.wake_up_func()
@@ -65,9 +90,9 @@ class Functions:
             win.idle_anim = True
             win.wake_up = True
             win.sleep = False
-            win.text = "I'm WakeUp"
+            win.text = win.lang['Talk']['WakeUp']
             win.kaomoji = "(O_~)/"
-            print(win.character_name + ":", "I'm WakeUp (O_~)/")
+            print(win.name + ":", "I'm WakeUp (O_~)/")
             win.textUpdate()
 
     def sleep_func(win):

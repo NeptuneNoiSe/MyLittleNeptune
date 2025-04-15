@@ -5,6 +5,7 @@ def main_config():
     config.read('config.ini')
     if not config.has_section('Main'):
         config.add_section('Main')
+        config.set('Main', 'language', 'English')
         config.set('Main', 'screen_width', '0')
         config.set('Main', 'screen_height', '0')
 
@@ -16,7 +17,7 @@ def main_config():
         config.set('WindowFlags', 'WindowMaximizeButtonHint', 'False')
         config.set('WindowFlags', 'WindowCloseButtonHint', 'True')
         config.set('WindowFlags', 'WindowTransparentForInput', 'False')
-        config.set('WindowFlags', 'WindowType_Mask', 'True')
+        config.set('WindowFlags', 'WindowType_Mask', 'False')
         config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
         config.set('WindowFlags', 'WindowStaysOnBottomHint', 'False')
 
@@ -54,7 +55,7 @@ def main_config():
         config.write(cfg)
     return config
 
-def models_config(ms, cn, mx, my, wr, hr, wc, hc, twmx, twmy):
+def models_config(ms, cn, mx, my, wr, hr, wc, hc, twmxr, twmxl, twmy):
     config = ConfigParser()
     config.read('config.ini')
     models_select = ms
@@ -65,7 +66,8 @@ def models_config(ms, cn, mx, my, wr, hr, wc, hc, twmx, twmy):
     h_resize = hr
     w_correction = wc
     h_correction = hc
-    twm_x = twmx
+    twm_xr = twmxr
+    twm_xl = twmxl
     twm_y = twmy
     config.set('Model', 'selected_model', str(models_select))
     config.set('Model', 'character_name', character_name)
@@ -75,7 +77,8 @@ def models_config(ms, cn, mx, my, wr, hr, wc, hc, twmx, twmy):
     config.set('Model', 'h_resize', str(h_resize))
     config.set('Model', 'w_correction', str(w_correction))
     config.set('Model', 'h_correction', str(h_correction))
-    config.set('Model', 'twmX', str(twm_x))
+    config.set('Model', 'twmXR', str(twm_xr))
+    config.set('Model', 'twmXL', str(twm_xl))
     config.set('Model', 'twmY', str(twm_y))
     with open('config.ini', 'w') as cfg:
         cfg: [str, int, tuple, object]

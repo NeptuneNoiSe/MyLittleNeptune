@@ -130,8 +130,10 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.idea
 env/
 venv/
+.idea/
 ENV/
 env.bak/
 venv.bak/
@@ -169,3 +171,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# App Config
+config.ini
+
+# Model ScreenShot
+screenshot.png

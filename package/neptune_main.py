@@ -4,11 +4,11 @@ import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, QSize, Slot
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QMovie
+from PySide6.QtCore import QTimerEvent, Qt, Slot
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
-    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox
+    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -18,22 +18,10 @@ import live2d.v3 as live2d
 import resources
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
+from additional.callbacks import *
 from additional.models import Models
 from additional.on_actions import OnActions
 from additional.functions import Functions
-
-def idle_callback():
-    motion_end_log = False
-    if motion_end_log:
-        print("Idle motion end")
-def on_mouse_callback():
-    motion_end_log = False
-    if motion_end_log:
-        print("On Mouse motion end")
-def tap_body_callback():
-    motion_end_log = False
-    if motion_end_log:
-        print("Tap Body motion end")
 
 class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
@@ -69,6 +57,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Timer Diagnostic Log:
         self.timer_log = False
 
+        # Language:
+        self.language = self.config.get('Main', 'language')
+
         # Models Switch:
         self.models_switch = self.config.getint('Model', 'selected_model')
 
@@ -96,6 +87,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.click = False
         self.test = False
         self.read = False
+        self.set_icon = False
+        self.settings_update_state = False
         self.clickX = -1
         self.clickY = -1
         self.posX = -1
@@ -115,11 +108,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.trm_my = 5
         self.trm_cmx = 100
         self.trm_cmy = 5
-        self.twmX = 0
+        self.twmXR = 0
+        self.twmXL = 0
         self.twmY = 0
         self.twsc = 0
-        self.talkX = 160
-        self.talkY = 130
+        self.talkX = 180
+        self.talkY = 150
         self.talkFontSize = 10
         self.screenSide = "Right"
         self.modelRotate = 0
@@ -155,6 +149,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Character Name
         self.character_name = self.config.get('Model', 'character_name')
+        self.name = self.character_name
 
         # Neptune Model parameters
         if self.models_switch == 0:
@@ -164,13 +159,15 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
             self.h_res = int(self.my_param * self.a_scale * self.models_scale)
-            self.twmX = int(85 * self.a_scale * self.models_scale)
+            self.twmXR = int(60 * self.a_scale * self.models_scale)
+            self.twmXL = int(280 * self.a_scale * self.models_scale)
             self.twmY = int(-15 * self.a_scale * self.models_scale)
             self.config.set('Model', 'w_resize', str(self.w_res))
             self.config.set('Model', 'h_resize', str(self.h_res))
             self.config.set('Model', 'w_correction', '-70')
             self.config.set('Model', 'h_correction', '0')
-            self.config.set('Model', 'twmX', str(self.twmX))
+            self.config.set('Model', 'twmXR', str(self.twmXR))
+            self.config.set('Model', 'twmXL', str(self.twmXL))
             self.config.set('Model', 'twmY', str(self.twmY))
             with open('config.ini', 'w') as cfg:
                 cfg: [str, int, tuple, object]
@@ -181,10 +178,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.h_resize = self.config.getint('Model', 'h_resize')
         self.w_correction = self.config.getfloat('Model', 'w_correction')
         self.h_correction = self.config.getfloat('Model', 'h_correction')
-        self.twmX = self.config.getfloat('Model', 'twmX')
-        self.twmY = self.config.getfloat('Model', 'twmY')
 
-        # Model Resize
         self.resize(int(self.w_resize), int(self.h_resize))
 
         # Center on Axis X
@@ -193,6 +187,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
         # Move window
         self.move(int(self.frmX), int(self.frmY))
+
+        # Widget Move Params
+        self.twmXR = self.config.getfloat('Model', 'twmXR')
+        self.twmXL = self.config.getfloat('Model', 'twmXL')
+        self.twmY = self.config.getfloat('Model', 'twmY')
 
         # Windows flags
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -223,118 +222,134 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.sleep_switch = self.config.getboolean('Settings', 'sleep')
         self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
 
-        # Transform Animations Resource
-        self.t_anim_in = os.path.join(
-            resources.RESOURCES_DIRECTORY, "animations/transform_in.webp")
-        self.t_anim_out = os.path.join(
-            resources.RESOURCES_DIRECTORY, "animations/transform_out.webp")
-        self.transformMovie = QMovie(self.t_anim_in)
-        self.transformLabel.setMovie(self.transformMovie)
+        self.loadResource()
 
     def initializeGL(self) -> None:
         self.makeCurrent()
         live2d.glInit()
         self.model = live2d.LAppModel()
         if live2d.LIVE2D_VERSION == 3:
-            self.text = "Hello!"
+            self.text = self.lang['Talk']['Hello']
             self.kaomoji = "(^~^)/"
             if self.models_switch == 0:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['Neptune']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
 
             elif self.models_switch == 1:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['PurpleHeart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
 
             elif self.models_switch == 2:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['Noire']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
 
             elif self.models_switch == 3:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['BlackHeart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
 
             elif self.models_switch == 4:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['Blanc']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
 
             elif self.models_switch == 5:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['WhiteHeart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
 
             elif self.models_switch == 6:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['Vert']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
 
             elif self.models_switch == 7:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['GreenHeart']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
 
             elif self.models_switch == 8:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['NepGear']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
 
             elif self.models_switch == 9:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['PurpleSister']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
 
             elif self.models_switch == 10:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['Uni']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
 
             elif self.models_switch == 11:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['BlackSister']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
 
             elif self.models_switch == 12:
                 self.goodness_form = False
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['Rom']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
 
             elif self.models_switch == 13:
                 self.goodness_form = True
                 self.can_transform = True
-                print(self.character_name + ": " + self.text + self.kaomoji)
+                self.name = self.lang['Names']['WhiteSisterRom']
+                print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
+
+            elif self.models_switch == 14:
+                self.goodness_form = False
+                self.can_transform = False
+                self.name = self.lang['Names']['Ram']
+                print(self.name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -345,6 +360,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.timers_init()
         self.talkWidgetInit()
         self.talk_function()
+        self.setLanguage()
 
     def resizeGL(self, w: int, h: int) -> None:
         # 使模型的参数按窗口大小进行更新
@@ -399,6 +415,13 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
+        if self.settings_update_state:
+            settings.updateSettings()
+        if not self.set_icon:
+            self.setWindowTitle("My Little Neptune")
+            self.setWindowIcon(QIcon(os.path.join(
+                resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+
         auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
         self.model.SetAutoBlinkEnable(auto_blink_param)
         auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
@@ -511,57 +534,57 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.expression = self.model.SetRandomExpression(fadeout=7000)
                         if self.placeThis:
                             self.placeThis = False
-                            self.text = "Okay I'll stay here"
+                            self.text = self.lang['Talk']['Stay']
                             self.kaomoji = "(^~^)"
                         else:
                             if self.expression == "Normal":
-                                self.text = "So What"
+                                self.text = self.lang['Talk']['Normal']
                                 self.kaomoji = "(o_o)"
                             elif self.expression == "Happy":
-                                self.text = "i'm Happy"
+                                self.text = self.lang['Talk']['Happy']
                                 self.kaomoji = "(^_^)"
                             elif self.expression == "Angry":
-                                self.text = "Don't touch me like that"
+                                self.text = self.lang['Talk']['Angry']
                                 self.kaomoji = "(⇀‸↼‶)"
                             elif self.expression == "Sad":
-                                self.text = "i'm Sad"
+                                self.text = self.lang['Talk']['Sad']
                                 self.kaomoji = "(´•ω•̥`)"
                             elif self.expression == "Smile":
-                                self.text = "He He"
+                                self.text = self.lang['Talk']['Smile']
                                 self.kaomoji = "(^~^)"
                             elif self.expression == "Tired":
-                                self.text = "i'm Tired"
+                                self.text = self.lang['Talk']['Tired']
                                 self.kaomoji = "(๑•﹏•)"
                             elif self.expression == "ClosedEyes":
-                                self.text = "Hmm"
+                                self.text = self.lang['Talk']['ClosedEyes']
                                 self.kaomoji = "(-_-)"
                             elif self.expression == "Cry":
-                                self.text = "Whaah!"
+                                self.text = self.lang['Talk']['Cry']
                                 self.kaomoji = "(o;TωT)o"
                             elif self.expression == "Fear":
                                 if self.character_name == "White Heart":
-                                    self.text = "Argh!!!"
+                                    self.text = self.lang['Talk']['FearWH']
                                     self.kaomoji = "(0﹏\‶)"
                                 else:
-                                    self.text = "Ugh"
+                                    self.text = self.lang['Talk']['Fear']
                                     self.kaomoji = "(｡ŏ_ŏ)"
                             elif self.expression == "Star":
-                                self.text = "i'm Sooo Happy"
+                                self.text = self.lang['Talk']['Star']
                                 self.kaomoji = "(✩ω✩)"
                             elif self.expression == "Surprised":
-                                self.text = "What?"
+                                self.text = self.lang['Talk']['Surprised']
                                 self.kaomoji = "(0_0)?"
                             elif self.expression == "Funny" and self.goodness_form == False:
                                 if self.character_name == "Blanc":
-                                    self.text = "Argh!!!"
+                                    self.text = self.lang['Talk']['FunnyBl']
                                     self.kaomoji = "(‶/﹏0)"
                                 else:
-                                    self.text = "Yo!!!"
+                                    self.text = self.lang['Talk']['Funny']
                                     self.kaomoji = "(>_<)"
                             elif self.expression == "Funny" and self.goodness_form == True:
-                                self.text = "I am a Goddess!"
+                                self.text = self.lang['Talk']['FunnyGod']
                                 self.kaomoji = "(◕‿◕)"
-                        print(self.character_name + ": " + self.text + self.kaomoji)
+                        print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
                         self.expression = None
                         self.t_count = 1
@@ -572,9 +595,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.model.ResetExpression()
                         self.wake_up_func()
                         self.sleep = False
-                        self.text = "You woke me up"
+                        self.text = self.lang['Talk']['Woke']
                         self.kaomoji = "(⊙_⊙)✿"
-                        print(self.character_name + ": " + self.text + self.kaomoji)
+                        print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
                         self.model.SetExpression("Fear", fadeout=10000)
                         self.t_count = 1
@@ -614,11 +637,16 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         self.auto_scale_init = True
 
-    def settings_close(self):
-        settings.hide()
+        self.setLanguage()
+        self.name_update()
 
     def settings_show(self):
         settings.show()
+        self.settings_update_state = True
+
+    def settings_close(self):
+        settings.close()
+        self.settings_update_state = False
 
     # Context Menu
     def contextMenuEvent(self, e):
@@ -626,19 +654,19 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Window Submenu
         submenu_window = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window.svg")), '&Window')
+            resources.RESOURCES_DIRECTORY, "icons/window.svg")), self.lang['Actions']['Window'])
         action_minimize = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), '&Minimize')
+            resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), self.lang['Actions']['Minimize'])
         action_minimize.triggered.connect(self.on_action_minimize)
         action_normal = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), '&Normal')
+            resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), self.lang['Actions']['Normal'])
         action_normal.triggered.connect(self.on_action_normal)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
         # Transform Action
         transform_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/transform.svg")), '&Transform', self)
+            resources.RESOURCES_DIRECTORY, "icons/transform.svg")), self.lang['Actions']['Transform'], self)
         if not self.input_lock:
             transform_action.triggered.connect(self.on_action_transform)
         context_menu.addAction(transform_action)
@@ -646,86 +674,91 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Character Submenu
         submenu_character = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), '&Characters')
+            resources.RESOURCES_DIRECTORY, "icons/character.svg")), self.lang['Actions']['Characters'])
         # Neptune
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), '&Neptune')
+            resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), self.lang['NamesActions']['Neptune'])
         if not self.input_lock:
             action_neptune.triggered.connect(self.on_action_neptune)
         # Purple Heart
         action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), '&Purple Heart')
+            resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), self.lang['NamesActions']['PurpleHeart'])
         if not self.input_lock:
             action_purple_heart.triggered.connect(self.on_action_purple_heart)
         # Noire
         action_noire = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/noire.ico")), '&Noire')
+            resources.RESOURCES_DIRECTORY, "icons/noire.ico")), self.lang['NamesActions']['Noire'])
         if not self.input_lock:
             action_noire.triggered.connect(self.on_action_noire)
         # Black Heart
         action_black_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), '&Black Heart')
+            resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), self.lang['NamesActions']['BlackHeart'])
         if not self.input_lock:
             action_black_heart.triggered.connect(self.on_action_black_heart)
         # Blanc
         action_blanc = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), '&Blanc')
+            resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), self.lang['NamesActions']['Blanc'])
         if not self.input_lock:
             action_blanc.triggered.connect(self.on_action_blanc)
         # White Heart
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), '&White Heart')
+            resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), self.lang['NamesActions']['WhiteHeart'])
         if not self.input_lock:
             action_white_heart.triggered.connect(self.on_action_white_heart)
         # Vert
         action_vert = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/vert.ico")), '&Vert')
+            resources.RESOURCES_DIRECTORY, "icons/vert.ico")), self.lang['NamesActions']['Vert'])
         if not self.input_lock:
             action_vert.triggered.connect(self.on_action_vert)
         # Green Heart
         action_green_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), '&Green Heart')
+            resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), self.lang['NamesActions']['GreenHeart'])
         if not self.input_lock:
             action_green_heart.triggered.connect(self.on_action_green_heart)
         # NepGear
         action_nepgear = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), '&NepGear')
+            resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), self.lang['NamesActions']['NepGear'])
         if not self.input_lock:
             action_nepgear.triggered.connect(self.on_action_nepgear)
         # Purple Sister
         action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), '&Purple Sister')
+            resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), self.lang['NamesActions']['PurpleSister'])
         if not self.input_lock:
             action_purple_sister.triggered.connect(self.on_action_purple_sister)
         # Uni
         action_uni = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/uni.ico")), '&Uni')
+            resources.RESOURCES_DIRECTORY, "icons/uni.ico")), self.lang['NamesActions']['Uni'])
         if not self.input_lock:
             action_uni.triggered.connect(self.on_action_uni)
         # Black Sister
         action_black_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), '&Black Sister')
+            resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), self.lang['NamesActions']['BlackSister'])
         if not self.input_lock:
             action_black_sister.triggered.connect(self.on_action_black_sister)
         # Rom
         action_rom = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/rom.ico")), '&Rom')
+            resources.RESOURCES_DIRECTORY, "icons/rom.ico")), self.lang['NamesActions']['Rom'])
         if not self.input_lock:
             action_rom.triggered.connect(self.on_action_rom)
         # White Sister Rom
         action_white_sister_rom = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), '&White Sister Rom')
+            resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), self.lang['NamesActions']['WhiteSisterRom'])
         if not self.input_lock:
             action_white_sister_rom.triggered.connect(self.on_action_white_sister_rom)
+        # Ram
+        action_ram = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/ram.ico")), self.lang['NamesActions']['Ram'])
+        if not self.input_lock:
+            action_ram.triggered.connect(self.on_action_ram)
 
         context_menu.addMenu(submenu_character)
 
         # Animations Submenu
         submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/animation.svg")), '&Animations')
+            resources.RESOURCES_DIRECTORY, "icons/animation.svg")), self.lang['Actions']['Animations'])
 
         # Idle Animation CheckBox
-        action_checked_idle = submenu_animations.addAction('Idle Animation')
+        action_checked_idle = submenu_animations.addAction(self.lang['Actions']['Idle'])
         action_checked_idle.setCheckable(True)
         action_checked_idle.setChecked(self.idle_switch)
         if action_checked_idle.isChecked():
@@ -734,7 +767,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             action_checked_idle.triggered.connect(self.on_action_idle_true)
 
         # OnMouse Animation CheckBox
-        action_checked_on_mouse = submenu_animations.addAction('OnMouse Animation')
+        action_checked_on_mouse = submenu_animations.addAction(self.lang['Actions']['OnMouse'])
         action_checked_on_mouse.setCheckable(True)
         action_checked_on_mouse.setChecked(self.on_mouse_switch)
         if action_checked_on_mouse.isChecked():
@@ -743,7 +776,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_true)
 
         # Tap Body Animation CheckBox
-        action_checked_tap_body = submenu_animations.addAction('Tap Body Animation')
+        action_checked_tap_body = submenu_animations.addAction(self.lang['Actions']['TapBody'])
         action_checked_tap_body.setCheckable(True)
         action_checked_tap_body.setChecked(self.tap_body_switch)
         if action_checked_tap_body.isChecked():
@@ -754,7 +787,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Stop All Motions
         submenu_animations.addSeparator()
         action_stop_all_motions = submenu_animations.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/stop.svg")), '&Stop All Motions')
+            resources.RESOURCES_DIRECTORY, "icons/stop.svg")), self.lang['Actions']['StopMotions'])
         action_stop_all_motions.triggered.connect(self.on_action_stop_all_motions)
 
         context_menu.addMenu(submenu_animations)
@@ -762,7 +795,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # Settings Action
         settings_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), '&Settings', self)
+            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), self.lang['Actions']['Settings'], self)
         if not self.input_lock:
             settings_action.triggered.connect(self.on_action_settings)
         context_menu.addAction(settings_action)
@@ -770,13 +803,13 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         # About Action
         about_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/about.svg")), '&About', self)
+            resources.RESOURCES_DIRECTORY, "icons/about.svg")), self.lang['Actions']['About'], self)
         about_action.triggered.connect(self.on_action_about)
         context_menu.addAction(about_action)
 
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), '&Quit', self)
+            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), self.lang['Actions']['Quit'], self)
         exit_action.triggered.connect(self.on_action_quit)
         context_menu.addAction(exit_action)
 
@@ -787,28 +820,30 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         settings.close()
         if self.condition == "Sleep":
             self.wake_up_func()
+        self.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(self,
-                                      'Quit',
-                                      self.character_name + ": " + "Do you really want to leave? T_T",
+                                      self.lang['Actions']['Quit'],
+                                      self.name + ": " + self.lang['Talk']['Quit'] + " " + self.kaomoji,
                                       QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             event.accept()
-            print(self.character_name + ":", "GoodBye (^3^)")
+            self.kaomoji = "(^3^)"
+            print(self.name + ":", self.lang['Talk']['Goodbye'] + self.kaomoji)
         else:
             self.t_count = 1
             self.model.ResetExpression()
             self.model.SetExpression("Happy", 5000)
-            self.text = "I'm Sooo Happy!"
+            self.text = self.lang['Talk']['Star']
             self.kaomoji = ":(^~^):"
-            print(self.character_name + ": " + self.text + self.kaomoji)
+            print(self.name + ": " + self.text + self.kaomoji)
             self.textUpdate()
             event.ignore()
 
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.WindowMinimizeButtonHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.config = config_main
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
@@ -818,6 +853,7 @@ class SettingsWindow(QWidget):
         self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags', 'WindowTransparentForInput')
         self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
 
+        self.language = self.config.get('Main', 'language')
         self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
         self.models_scale = self.config.getfloat('Scale', 'models_scale')
         self.auto_blink = self.config.getboolean('Settings', 'auto_blink')
@@ -827,6 +863,8 @@ class SettingsWindow(QWidget):
 
         self.pythonic_reg = pythonic_window_registration
         self.mainWindow = Win()
+        self.language_set = None
+        self.language_get = None
 
         self.createHintsGroupBox()
         self.createScaleGroupBox()
@@ -843,16 +881,12 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        quitButton = QPushButton("&App Quit")
-        quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+        self.quitButton = QPushButton("&Quit")
+        self.quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
-        applyButton = QPushButton("&Apply")
-        applyButton.clicked.connect(self.mainWindow.settings_close)
-
-        bottomLayout = QVBoxLayout()
+        bottomLayout = QHBoxLayout()
         bottomLayout.addStretch()
-        bottomLayout.addWidget(quitButton)
-        bottomLayout.addWidget(applyButton)
+        bottomLayout.addWidget(self.quitButton)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)
@@ -866,6 +900,26 @@ class SettingsWindow(QWidget):
         self.mainWindow.setWindowIcon(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
         self.updateMainWindow()
+
+    def updateSettings(self):
+        # Settings Main
+        self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
+        self.quitButton.setText(self.mainWindow.lang['Settings']['Quit'])
+        # Window Box
+        self.hintsGroupBox.setTitle(self.mainWindow.lang['Settings']['WindowTitle'])
+        self.framelessWindowCheckBox.setText(self.mainWindow.lang['Settings']['FramelessWindow'])
+        self.windowStaysOnTopCheckBox.setText(self.mainWindow.lang['Settings']['StaysOnTop'])
+        self.langText.setText(self.mainWindow.lang['Settings']['Language'])
+        # Scale Box
+        self.scaleGroupBox.setTitle(self.mainWindow.lang['Settings']['ScaleTitle'])
+        self.autoScaleCheckBox.setText(self.mainWindow.lang['Settings']['AutoScale'])
+        self.sc_mult_text.setText(self.mainWindow.lang['Settings']['ScaleMultiplier'])
+        # Other Box
+        self.otherGroupBox.setTitle(self.mainWindow.lang['Settings']['OtherTitle'])
+        self.autoBlinkCheckBox.setText(self.mainWindow.lang['Settings']['AutoBlink'])
+        self.autoBreathCheckBox.setText(self.mainWindow.lang['Settings']['AutoBreath'])
+        self.trackingMouseCheckBox.setText(self.mainWindow.lang['Settings']['TrackingMouse'])
+        self.sleepCheckBox.setText(self.mainWindow.lang['Settings']['Sleep'])
 
     @Slot()
     def updateMainWindow(self) -> None:
@@ -953,6 +1007,11 @@ class SettingsWindow(QWidget):
                 self.sleepCheckBox.setChecked(False)
                 self.mainWindow.sleep_switch = False
 
+            self.language_org = self.langComboBox.currentText()
+            self.getLanguageName()
+            self.config.set('Main', 'language', str(self.language_get))
+            self.mainWindow.language = self.language_get
+
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
             self.config.write(cfg)
@@ -977,9 +1036,17 @@ class SettingsWindow(QWidget):
         else:
             self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
             self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
+            self.langText = QLabel("Language:")
+            self.langComboBox = QComboBox()
+            self.langComboBox.addItems(["English", "Русский"])
+            self.setLanguageName()
+            self.langComboBox.setCurrentText(self.language_set)
 
             layout.addWidget(self.framelessWindowCheckBox, 0, 0)
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
+            layout.addWidget(self.langText, 3, 0)
+            layout.addWidget(self.langComboBox, 4, 0)
+            self.langComboBox.currentTextChanged.connect(self.updateMainWindow)
         self.hintsGroupBox.setLayout(layout)
 
     def createScaleGroupBox(self) -> None:
@@ -987,7 +1054,7 @@ class SettingsWindow(QWidget):
         layout = QGridLayout()
         self.modelFlagWidgets = QCheckBox()
         self.modelScaleBox = QDoubleSpinBox()
-        self.text = QLabel("Scale multiplier:")
+        self.sc_mult_text = QLabel("Scale multiplier:")
         self.modelScaleBox.setMinimum(0.1)
         self.modelScaleBox.setMaximum(10)
         self.modelScaleBox.setSingleStep(0.5)
@@ -998,7 +1065,7 @@ class SettingsWindow(QWidget):
         self.autoScaleCheckBox = self.createCheckBox("AutoScale")
 
         layout.addWidget(self.autoScaleCheckBox)
-        layout.addWidget(self.text)
+        layout.addWidget(self.sc_mult_text)
         layout.addWidget(self.modelScaleBox)
 
         self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
@@ -1037,6 +1104,18 @@ class SettingsWindow(QWidget):
         checkBox = QCheckBox(text)
         checkBox.clicked.connect(self.updateMainWindow) # type: ignore[attr-defined]
         return checkBox
+
+    def getLanguageName(self):
+        if self.language_org == "Русский":
+            self.language_get = "Russian"
+        else:
+            self.language_get = "English"
+
+    def setLanguageName(self):
+        if self.language == "Russian":
+            self.language_set = "Русский"
+        else:
+            self.language_set = "English"
 
 if __name__ == "__main__":
     import sys

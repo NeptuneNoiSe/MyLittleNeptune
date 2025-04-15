@@ -8,12 +8,13 @@ from live2d.v3 import Parameter
 # import live2d.v2 as live2d
 from package import resources
 from package.additional.config_module import *
+from package.additional.callbacks import *
 
 class Models:
     def transform_initialize(win):
         win.input_lock = True
         if not win.goodness_form:
-            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE)
+            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE, onFinishMotionHandler=unique_callback)
             if win.character_name == "Neptune":
                 win.model.SetExpression("Star")
             elif win.character_name == "Vert":
@@ -102,10 +103,10 @@ class Models:
             win.input_lock = False
             if win.transform_text:
                 if win.goodness_form:
-                    win.text = "I'm Transformed"
+                    win.text = win.lang['Talk']['TransformedGodness']
                     win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
                 else:
-                    win.text = "I'm back to my normal form."
+                    win.text = win.lang['Talk']['TransformedNormal']
                     win.kaomoji = "(> ͜ʖ <)"
                 win.textUpdate()
                 win.transform_text = False
@@ -114,17 +115,66 @@ class Models:
             win.dialogClose()
             win.transform_text = True
 
+    def name_update(win):
+        # Update Params
+        if win.character_name == "Neptune":
+            win.name = win.lang['Names']['Neptune']
+
+        if win.character_name == "Purple Heart":
+            win.name = win.lang['Names']['PurpleHeart']
+
+        if win.character_name == "Noire":
+            win.name = win.lang['Names']['Noire']
+
+        if win.character_name == "Black Heart":
+            win.name = win.lang['Names']['BlackHeart']
+
+        if win.character_name == "Blanc":
+            win.name = win.lang['Names']['Blanc']
+
+        if win.character_name == "White Heart":
+            win.name = win.lang['Names']['WhiteHeart']
+
+        if win.character_name == "Vert":
+            win.name = win.lang['Names']['Vert']
+
+        if win.character_name == "Green Heart":
+            win.name = win.lang['Names']['GreenHeart']
+
+        if win.character_name == "NepGear":
+            win.name = win.lang['Names']['NepGear']
+
+        if win.character_name == "Purple Sister":
+            win.name = win.lang['Names']['PurpleSister']
+
+        if win.character_name == "Uni":
+            win.name = win.lang['Names']['Uni']
+
+        if win.character_name == "Black Sister":
+            win.name = win.lang['Names']['BlackSister']
+
+        if win.character_name == "Rom":
+            win.name = win.lang['Names']['Rom']
+
+        if win.character_name == "White Sister Rom":
+            win.name = win.lang['Names']['WhiteSisterRom']
+
+        if win.character_name == "Ram":
+            win.name = win.lang['Names']['Ram']
+
     def model_update(win):
         # Update Params
         if win.character_name == "Neptune":
             win.character_name = "Neptune"
+            win.name = win.lang['Names']['Neptune']
             win.models_switch = 0
             win.t_count = 1
             win.mx_param = 600
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(85 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -132,13 +182,15 @@ class Models:
 
         if win.character_name == "Purple Heart":
             win.character_name = "Purple Heart"
+            win.name = win.lang['Names']['PurpleHeart']
             win.models_switch = 1
             win.t_count = 1
             win.mx_param = 700
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(75 * win.a_scale * win.models_scale)
+            win.twmXL = int(330 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -146,13 +198,15 @@ class Models:
 
         if win.character_name == "Noire":
             win.character_name = "Noire"
+            win.name = win.lang['Names']['Noire']
             win.models_switch = 2
             win.t_count = 1
             win.mx_param = 700
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(300 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -160,13 +214,15 @@ class Models:
 
         if win.character_name == "Black Heart":
             win.character_name = "Black Heart"
+            win.name = win.lang['Names']['BlackHeart']
             win.models_switch = 3
             win.t_count = 1
             win.mx_param = 700
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(320 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -174,13 +230,15 @@ class Models:
 
         if win.character_name == "Blanc":
             win.character_name = "Blanc"
+            win.name = win.lang['Names']['Blanc']
             win.models_switch = 4
             win.t_count = 1
             win.mx_param = 600
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(85 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(260 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -188,13 +246,15 @@ class Models:
 
         if win.character_name == "White Heart":
             win.character_name = "White Heart"
+            win.name = win.lang['Names']['WhiteHeart']
             win.models_switch = 5
             win.t_count = 1
             win.mx_param = 700
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(290 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -202,13 +262,15 @@ class Models:
 
         if win.character_name == "Vert":
             win.character_name = "Vert"
+            win.name = win.lang['Names']['Vert']
             win.models_switch = 6
             win.t_count = 1
             win.mx_param = 700
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(145 * win.a_scale * win.models_scale)
+            win.twmXR = int(120 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -216,13 +278,15 @@ class Models:
 
         if win.character_name == "Green Heart":
             win.character_name = "Green Heart"
+            win.name = win.lang['Names']['GreenHeart']
             win.models_switch = 7
             win.t_count = 1
             win.mx_param = 700
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -230,13 +294,15 @@ class Models:
 
         if win.character_name == "NepGear":
             win.character_name = "NepGear"
+            win.name = win.lang['Names']['NepGear']
             win.models_switch = 8
             win.t_count = 1
             win.mx_param = 600
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(260 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -244,13 +310,15 @@ class Models:
 
         if win.character_name == "Purple Sister":
             win.character_name = "Purple Sister"
+            win.name = win.lang['Names']['PurpleSister']
             win.models_switch = 9
             win.t_count = 1
             win.mx_param = 650
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(75 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -258,13 +326,15 @@ class Models:
 
         if win.character_name == "Uni":
             win.character_name = "Uni"
+            win.name = win.lang['Names']['Uni']
             win.models_switch = 10
             win.t_count = 1
             win.mx_param = 600
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(270 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -272,13 +342,15 @@ class Models:
 
         if win.character_name == "Black Sister":
             win.character_name = "Black Sister"
+            win.name = win.lang['Names']['BlackSister']
             win.models_switch = 11
             win.t_count = 1
             win.mx_param = 650
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -286,13 +358,15 @@ class Models:
 
         if win.character_name == "Rom":
             win.character_name = "Rom"
+            win.name = win.lang['Names']['Rom']
             win.models_switch = 12
             win.t_count = 1
             win.mx_param = 600
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -300,13 +374,31 @@ class Models:
 
         if win.character_name == "White Sister Rom":
             win.character_name = "White Sister Rom"
+            win.name = win.lang['Names']['WhiteSisterRom']
             win.models_switch = 13
             win.t_count = 1
             win.mx_param = 650
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(150 * win.a_scale * win.models_scale)
+            win.twmXR = int(120 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
+            if win.a_scale <= 2:
+                win.twmY = int(-10 * win.a_scale * win.models_scale)
+            else:
+                win.twmY = int(0 * win.a_scale * win.models_scale)
+
+        if win.character_name == "Ram":
+            win.character_name = "Ram"
+            win.name = win.lang['Names']['Ram']
+            win.models_switch = 14
+            win.t_count = 1
+            win.mx_param = 600
+            win.my_param = 600
+            win.w_correction = -70
+            win.h_correction = 0
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -365,10 +457,13 @@ class Models:
         if win.character_name == "White Sister Rom":
             win.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
+        if win.character_name == "Ram":
+            win.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
         win.resizeGL(int(win.w_resize), int(win.h_resize))
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
-                      win.h_resize, win.w_correction, win.h_correction, win.twmX, win.twmY)
+                      win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
         # live2d Update
         live2d.clearBuffer()
         win.model.Update()
@@ -490,6 +585,18 @@ class Models:
             win.model.SetParameterValue("Param6", 30, 100)
             win.model.SetParameterValue("Param40", 10, 100)
             win.model.SetParameterValue("Param41", 10, 100)
+        elif win.character_name == "Ram":
+            win.sleepMoveY = 25
+            win.modelRotate = -85
+            win.model.SetParameterValue("ParamAngleZ", 20, 100)
+            win.model.SetParameterValue("Param", 30, 100)
+            win.model.SetParameterValue("Param2", 30, 100)
+            win.model.SetParameterValue("Param3", 30, 100)
+            win.model.SetParameterValue("Param4", -30, 100)
+            win.model.SetParameterValue("Param5", -30, 100)
+            win.model.SetParameterValue("Param6", -30, 100)
+            win.model.SetParameterValue("Param47", 10, 100)
+            win.model.SetParameterValue("Param46", 10, 100)
 
     def getModelParams(win):
         for i in range(win.model.GetParameterCount()):

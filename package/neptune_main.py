@@ -108,11 +108,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.trm_my = 5
         self.trm_cmx = 100
         self.trm_cmy = 5
-        self.twmX = 0
+        self.twmXR = 0
+        self.twmXL = 0
         self.twmY = 0
         self.twsc = 0
-        self.talkX = 160
-        self.talkY = 130
+        self.talkX = 180
+        self.talkY = 150
         self.talkFontSize = 10
         self.screenSide = "Right"
         self.modelRotate = 0
@@ -158,13 +159,15 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
             self.h_res = int(self.my_param * self.a_scale * self.models_scale)
-            self.twmX = int(85 * self.a_scale * self.models_scale)
+            self.twmXR = int(60 * self.a_scale * self.models_scale)
+            self.twmXL = int(280 * self.a_scale * self.models_scale)
             self.twmY = int(-15 * self.a_scale * self.models_scale)
             self.config.set('Model', 'w_resize', str(self.w_res))
             self.config.set('Model', 'h_resize', str(self.h_res))
             self.config.set('Model', 'w_correction', '-70')
             self.config.set('Model', 'h_correction', '0')
-            self.config.set('Model', 'twmX', str(self.twmX))
+            self.config.set('Model', 'twmXR', str(self.twmXR))
+            self.config.set('Model', 'twmXL', str(self.twmXL))
             self.config.set('Model', 'twmY', str(self.twmY))
             with open('config.ini', 'w') as cfg:
                 cfg: [str, int, tuple, object]
@@ -175,10 +178,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.h_resize = self.config.getint('Model', 'h_resize')
         self.w_correction = self.config.getfloat('Model', 'w_correction')
         self.h_correction = self.config.getfloat('Model', 'h_correction')
-        self.twmX = self.config.getfloat('Model', 'twmX')
-        self.twmY = self.config.getfloat('Model', 'twmY')
 
-        # Model Resize
         self.resize(int(self.w_resize), int(self.h_resize))
 
         # Center on Axis X
@@ -187,6 +187,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
         # Move window
         self.move(int(self.frmX), int(self.frmY))
+
+        # Widget Move Params
+        self.twmXR = self.config.getfloat('Model', 'twmXR')
+        self.twmXL = self.config.getfloat('Model', 'twmXL')
+        self.twmY = self.config.getfloat('Model', 'twmY')
 
         # Windows flags
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
@@ -858,6 +863,8 @@ class SettingsWindow(QWidget):
 
         self.pythonic_reg = pythonic_window_registration
         self.mainWindow = Win()
+        self.language_set = None
+        self.language_get = None
 
         self.createHintsGroupBox()
         self.createScaleGroupBox()
@@ -906,7 +913,7 @@ class SettingsWindow(QWidget):
         # Scale Box
         self.scaleGroupBox.setTitle(self.mainWindow.lang['Settings']['ScaleTitle'])
         self.autoScaleCheckBox.setText(self.mainWindow.lang['Settings']['AutoScale'])
-        self.text.setText(self.mainWindow.lang['Settings']['ScaleMultiplier'])
+        self.sc_mult_text.setText(self.mainWindow.lang['Settings']['ScaleMultiplier'])
         # Other Box
         self.otherGroupBox.setTitle(self.mainWindow.lang['Settings']['OtherTitle'])
         self.autoBlinkCheckBox.setText(self.mainWindow.lang['Settings']['AutoBlink'])
@@ -1000,9 +1007,10 @@ class SettingsWindow(QWidget):
                 self.sleepCheckBox.setChecked(False)
                 self.mainWindow.sleep_switch = False
 
-            language = self.langComboBox.currentText()
-            self.config.set('Main', 'language', str(language))
-            self.mainWindow.language = language
+            self.language_org = self.langComboBox.currentText()
+            self.getLanguageName()
+            self.config.set('Main', 'language', str(self.language_get))
+            self.mainWindow.language = self.language_get
 
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
@@ -1031,7 +1039,8 @@ class SettingsWindow(QWidget):
             self.langText = QLabel("Language:")
             self.langComboBox = QComboBox()
             self.langComboBox.addItems(["English", "Русский"])
-            self.langComboBox.setCurrentText(self.language)
+            self.setLanguageName()
+            self.langComboBox.setCurrentText(self.language_set)
 
             layout.addWidget(self.framelessWindowCheckBox, 0, 0)
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
@@ -1045,7 +1054,7 @@ class SettingsWindow(QWidget):
         layout = QGridLayout()
         self.modelFlagWidgets = QCheckBox()
         self.modelScaleBox = QDoubleSpinBox()
-        self.text = QLabel("Scale multiplier:")
+        self.sc_mult_text = QLabel("Scale multiplier:")
         self.modelScaleBox.setMinimum(0.1)
         self.modelScaleBox.setMaximum(10)
         self.modelScaleBox.setSingleStep(0.5)
@@ -1056,7 +1065,7 @@ class SettingsWindow(QWidget):
         self.autoScaleCheckBox = self.createCheckBox("AutoScale")
 
         layout.addWidget(self.autoScaleCheckBox)
-        layout.addWidget(self.text)
+        layout.addWidget(self.sc_mult_text)
         layout.addWidget(self.modelScaleBox)
 
         self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
@@ -1095,6 +1104,18 @@ class SettingsWindow(QWidget):
         checkBox = QCheckBox(text)
         checkBox.clicked.connect(self.updateMainWindow) # type: ignore[attr-defined]
         return checkBox
+
+    def getLanguageName(self):
+        if self.language_org == "Русский":
+            self.language_get = "Russian"
+        else:
+            self.language_get = "English"
+
+    def setLanguageName(self):
+        if self.language == "Russian":
+            self.language_set = "Русский"
+        else:
+            self.language_set = "English"
 
 if __name__ == "__main__":
     import sys

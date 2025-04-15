@@ -67,7 +67,7 @@ class TalkWidgetMain:
             win.talk = True
 
         win.dialogCloseTimer.start(7000)
-        win.talkWidget.move(win.twmX, win.twmY)
+        win.talkWidget.move(win.twmXR, win.twmY)
 
         if win.screenSide == "Right":
             if win.character_name == "Neptune":
@@ -118,7 +118,7 @@ class TalkWidgetMain:
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk/talk.svg")
-            win.talkWidget.move(win.twmX, win.twmY)
+            win.talkWidget.move(win.twmXR, win.twmY)
         elif win.screenSide == "Left":
             if win.character_name == "Neptune":
                 win.talkImage = os.path.join(
@@ -168,7 +168,7 @@ class TalkWidgetMain:
             else:
                 win.talkImage = os.path.join(
                     resources.RESOURCES_DIRECTORY, "images/talk_mirrored/talk_mirrored.svg")
-            win.talkWidget.move(win.twmX + (250 * win.a_scale * win.models_scale), win.twmY+10)
+            win.talkWidget.move(win.twmXR + win.twmXL, win.twmY+10)
             varX = 0
 
         win.talkPixmap = QPixmap(win.talkImage).scaled(QSize((win.talkX + 15) * win.a_scale * win.models_scale,

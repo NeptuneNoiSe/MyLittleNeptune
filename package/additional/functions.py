@@ -28,7 +28,7 @@ class Functions:
         if win.language == "English":
             with open(win.en, 'r', encoding='utf-8') as file:
                 win.lang = json.load(file)
-        elif win.language == "Русский":
+        elif win.language == "Russian":
             with open(win.ru, 'r', encoding='utf-8') as file:
                 win.lang = json.load(file)
 

@@ -173,7 +173,8 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(85 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -188,7 +189,8 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(75 * win.a_scale * win.models_scale)
+            win.twmXL = int(330 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -203,7 +205,8 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(300 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -218,7 +221,8 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(320 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -233,7 +237,8 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(85 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(260 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -248,7 +253,8 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(290 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -263,7 +269,8 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(145 * win.a_scale * win.models_scale)
+            win.twmXR = int(120 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -278,7 +285,8 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -293,7 +301,8 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(260 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -308,7 +317,8 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(75 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -323,7 +333,8 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(270 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -338,7 +349,8 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(125 * win.a_scale * win.models_scale)
+            win.twmXR = int(100 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -353,7 +365,8 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -368,7 +381,8 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(150 * win.a_scale * win.models_scale)
+            win.twmXR = int(120 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -383,7 +397,8 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmX = int(100 * win.a_scale * win.models_scale)
+            win.twmXR = int(60 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
             if win.a_scale <= 2:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
@@ -448,7 +463,7 @@ class Models:
         win.resizeGL(int(win.w_resize), int(win.h_resize))
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
-                      win.h_resize, win.w_correction, win.h_correction, win.twmX, win.twmY)
+                      win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
         # live2d Update
         live2d.clearBuffer()
         win.model.Update()

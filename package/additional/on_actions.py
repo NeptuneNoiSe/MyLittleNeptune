@@ -207,13 +207,25 @@ class OnActions:
 
     def on_action_ram(win):
         win.goodness_form = False
-        win.can_transform = False
+        win.can_transform = True
         win.talkUpd = False
         if not win.transform:
             win.goodBye()
         win.character_name = "Ram"
         win.name = win.lang['Names']['Ram']
         win.models_switch = 14
+        if win.transform:
+            win.model_update()
+
+    def on_action_white_sister_ram(win):
+        win.goodness_form = True
+        win.can_transform = True
+        win.talkUpd = False
+        if not win.transform:
+            win.goodBye()
+        win.character_name = "White Sister Ram"
+        win.name = win.lang['Names']['WhiteSisterRam']
+        win.models_switch = 15
         if win.transform:
             win.model_update()
 

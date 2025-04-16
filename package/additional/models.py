@@ -72,6 +72,8 @@ class Models:
             win.on_action_black_sister()
         if win.character_name == "Rom":
             win.on_action_white_sister_rom()
+        if win.character_name == "Ram":
+            win.on_action_white_sister_ram()
 
     def transform_to_regular_form(win):
         # Transform to Regular Form
@@ -89,6 +91,8 @@ class Models:
             win.on_action_uni()
         if win.character_name == "White Sister Rom":
             win.on_action_rom()
+        if win.character_name == "White Sister Ram":
+            win.on_action_ram()
 
     def transformMovieTriggers(win):
         if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() - 3 and win.transform == True:
@@ -161,6 +165,9 @@ class Models:
 
         if win.character_name == "Ram":
             win.name = win.lang['Names']['Ram']
+
+        if win.character_name == "White Sister Ram":
+            win.name = win.lang['Names']['WhiteSisterRam']
 
     def model_update(win):
         # Update Params
@@ -403,6 +410,22 @@ class Models:
                 win.twmY = int(-10 * win.a_scale * win.models_scale)
             else:
                 win.twmY = int(0 * win.a_scale * win.models_scale)
+
+        if win.character_name == "White Sister Ram":
+            win.character_name = "White Sister Ram"
+            win.name = win.lang['Names']['WhiteSisterRam']
+            win.models_switch = 15
+            win.t_count = 1
+            win.mx_param = 650
+            win.my_param = 650
+            win.w_correction = -70
+            win.h_correction = 0
+            win.twmXR = int(80 * win.a_scale * win.models_scale)
+            win.twmXL = int(280 * win.a_scale * win.models_scale)
+            if win.a_scale <= 2:
+                win.twmY = int(-10 * win.a_scale * win.models_scale)
+            else:
+                win.twmY = int(0 * win.a_scale * win.models_scale)
         # Update Size and Position
         win.resize(1, 1)
         win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
@@ -460,6 +483,9 @@ class Models:
         if win.character_name == "Ram":
             win.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
+        if win.character_name == "White Sister Ram":
+            win.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
         win.resizeGL(int(win.w_resize), int(win.h_resize))
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
@@ -597,6 +623,15 @@ class Models:
             win.model.SetParameterValue("Param6", -30, 100)
             win.model.SetParameterValue("Param47", 10, 100)
             win.model.SetParameterValue("Param46", 10, 100)
+        elif win.character_name == "White Sister Ram":
+            win.sleepMoveY = 15
+            win.model.SetParameterValue("Param", -30, 100)
+            win.model.SetParameterValue("Param2", -30, 100)
+            win.model.SetParameterValue("Param3", -20, 1)
+            win.model.SetParameterValue("Param4", 30, 100)
+            win.model.SetParameterValue("Param5", 30, 100)
+            win.model.SetParameterValue("Param6", 30, 100)
+
 
     def getModelParams(win):
         for i in range(win.model.GetParameterCount()):

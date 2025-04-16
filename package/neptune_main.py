@@ -345,11 +345,19 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
             elif self.models_switch == 14:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 self.name = self.lang['Names']['Ram']
                 print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
+
+            elif self.models_switch == 15:
+                self.goodness_form = True
+                self.can_transform = True
+                self.name = self.lang['Names']['WhiteSisterRam']
+                print(self.name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
 
         else:
             self.model.LoadModelJson(os.path.join(
@@ -750,6 +758,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "icons/ram.ico")), self.lang['NamesActions']['Ram'])
         if not self.input_lock:
             action_ram.triggered.connect(self.on_action_ram)
+        # White Sister Ram
+        action_white_sister_ram = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
+        if not self.input_lock:
+            action_white_sister_ram.triggered.connect(self.on_action_white_sister_ram)
 
         context_menu.addMenu(submenu_character)
 

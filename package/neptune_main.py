@@ -4,8 +4,8 @@ import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, Slot
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
+from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
@@ -118,6 +118,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.screenSide = "Right"
         self.modelRotate = 0
         self.sleepMoveY = 0
+        self.model_move = False
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
@@ -856,7 +857,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.config = config_main
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
@@ -894,12 +895,28 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
+        self.nepMainImage = os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")
+        self.nepLogoImage = os.path.join(
+            resources.RESOURCES_DIRECTORY, "images/nep_logo.svg")
+
+        self.nepImageLabel = QLabel()
+        self.nepImageLabel.setPixmap(QPixmap(self.nepMainImage).scaled(QSize(75, 75),
+                                                                       Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.nepImageLabel.setAlignment(Qt.AlignCenter)
+
         self.quitButton = QPushButton("&Quit")
         self.quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
-        bottomLayout = QHBoxLayout()
-        bottomLayout.addStretch()
+        self.resetPosButton = QPushButton("&Reset Position")
+        self.resetPosButton.clicked.connect(self.reset_position)
+
+        bottomLayout = QVBoxLayout()
+        #bottomLayout.addStretch()
+        bottomLayout.addWidget(self.nepImageLabel)
+        bottomLayout.addWidget(self.resetPosButton)
         bottomLayout.addWidget(self.quitButton)
+        bottomLayout.setAlignment(Qt.AlignCenter)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)
@@ -914,9 +931,19 @@ class SettingsWindow(QWidget):
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
         self.updateMainWindow()
 
+    def reset_position(self):
+        self.mainWindow.model_move = True
+        self.updateMainWindow()
+
+    def modelMoveOn(self):
+        self.mainWindow.model_move = True
+    def modelMoveOff(self):
+        self.mainWindow.model_move = False
+
     def updateSettings(self):
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
+        self.resetPosButton.setText(self.mainWindow.lang['Settings']['ResetPosition'])
         self.quitButton.setText(self.mainWindow.lang['Settings']['Quit'])
         # Window Box
         self.hintsGroupBox.setTitle(self.mainWindow.lang['Settings']['WindowTitle'])
@@ -974,6 +1001,7 @@ class SettingsWindow(QWidget):
             if self.autoScaleCheckBox.isChecked():
                 self.config.set('Scale', 'auto_scale', 'True')
                 self.autoScaleCheckBox.setChecked(True)
+                self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
                 self.modelScaleBox.setReadOnly(True)
                 self.mainWindow.auto_scale = True
                 self.mainWindow.models_scale = 1
@@ -983,6 +1011,7 @@ class SettingsWindow(QWidget):
                 self.config.set('Scale', 'auto_scale', 'False')
                 self.autoScaleCheckBox.setChecked(False)
                 self.modelScaleBox.setReadOnly(False)
+                self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
                 self.mainWindow.auto_scale = False
                 scale_value = self.modelScaleBox.value()
                 self.mainWindow.models_scale = scale_value
@@ -1083,6 +1112,11 @@ class SettingsWindow(QWidget):
 
         self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
         self.modelScaleBox.valueChanged.connect(self.updateMainWindow)
+        #if self.mainWindow.settings_state:
+        #    self.modelScaleBox.valueChanged.connect(self.modelMoveOn)
+        #else:
+        #    self.modelScaleBox.valueChanged.connect(self.modelMoveOff)
+            # self.mainWindow.model_move = False
 
         self.scaleGroupBox.setLayout(layout)
 

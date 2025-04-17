@@ -431,9 +431,14 @@ class Models:
         win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
         win.h_resize = int(win.my_param * win.a_scale * win.models_scale)
         win.resize(int(win.w_resize), int(win.h_resize))
-        win.frmX = (win.SrcSize.width() - win.width()) - win.w_correction
-        win.frmY = (win.SrcSize.height() - win.height()) - win.h_correction
-        win.move(int(win.frmX), int(win.frmY))
+
+        if win.model_move:
+            win.frmX = (win.SrcSize.width() - win.width()) - win.w_correction
+            win.frmY = (win.SrcSize.height() - win.height()) - win.h_correction
+            win.move(int(win.frmX), int(win.frmY))
+            win.model_move = False
+        else:
+            pass
 
         # ReInitialize Model
         win.model: live2d.LAppModel | None = None

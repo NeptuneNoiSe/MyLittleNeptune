@@ -95,6 +95,7 @@
   },
   "Settings": {
     "Settings": "Settings",
+    "ResetPosition": "Reset Position",
     "Quit": "&Quit",
     "WindowTitle": "Window",
     "FramelessWindow": "Frameless window",

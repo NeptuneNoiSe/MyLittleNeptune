@@ -12,6 +12,7 @@ class OnActions:
 
     # Context Menu Actions
     def on_action_transform(win):
+        win.model_move = False
         if win.can_transform:
             if win.condition == "Sleep":
                 pass
@@ -42,6 +43,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Neptune"
         win.name = win.lang['Names']['Neptune']
@@ -54,6 +56,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Purple Heart"
         win.name = win.lang['Names']['PurpleHeart']
@@ -66,6 +69,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Noire"
         win.name = win.lang['Names']['Noire']
@@ -78,6 +82,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Black Heart"
         win.name = win.lang['Names']['BlackHeart']
@@ -90,6 +95,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Blanc"
         win.name = win.lang['Names']['Blanc']
@@ -102,6 +108,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "White Heart"
         win.name = win.lang['Names']['WhiteHeart']
@@ -114,6 +121,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Vert"
         win.name = win.lang['Names']['Vert']
@@ -126,6 +134,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Green Heart"
         win.name = win.lang['Names']['GreenHeart']
@@ -138,6 +147,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "NepGear"
         win.name = win.lang['Names']['NepGear']
@@ -150,6 +160,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Purple Sister"
         win.name = win.lang['Names']['PurpleSister']
@@ -162,6 +173,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Uni"
         win.name = win.lang['Names']['Uni']
@@ -174,6 +186,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Black Sister"
         win.name = win.lang['Names']['BlackSister']
@@ -186,6 +199,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Rom"
         win.name = win.lang['Names']['Rom']
@@ -198,6 +212,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "White Sister Rom"
         win.name = win.lang['Names']['WhiteSisterRom']
@@ -210,6 +225,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Ram"
         win.name = win.lang['Names']['Ram']
@@ -222,6 +238,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "White Sister Ram"
         win.name = win.lang['Names']['WhiteSisterRam']

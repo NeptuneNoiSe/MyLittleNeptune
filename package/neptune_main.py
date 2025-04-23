@@ -110,6 +110,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.trm_cmy = 5
         self.twmXR = 0
         self.twmXL = 0
+        self.posXR = 0
+        self.posXL = 0
         self.twmY = 0
         self.twsc = 0
         self.talkX = 180
@@ -160,9 +162,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
             self.h_res = int(self.my_param * self.a_scale * self.models_scale)
-            self.twmXR = int(60 * self.a_scale * self.models_scale)
-            self.twmXL = int(280 * self.a_scale * self.models_scale)
             self.twmY = int(-15 * self.a_scale * self.models_scale)
+            self.posXR = 64
+            self.posXL = (self.mx_param / 2) - self.posXR / 2
+            self.twmXR = int(self.posXR * self.a_scale * self.models_scale)
+            self.twmXL = int(self.posXL * self.a_scale * self.models_scale)
             self.config.set('Model', 'w_resize', str(self.w_res))
             self.config.set('Model', 'h_resize', str(self.h_res))
             self.config.set('Model', 'w_correction', '-70')

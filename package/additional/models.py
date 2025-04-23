@@ -180,12 +180,7 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(60 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 64
 
         if win.character_name == "Purple Heart":
             win.character_name = "Purple Heart"
@@ -196,12 +191,7 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(75 * win.a_scale * win.models_scale)
-            win.twmXL = int(330 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 85
 
         if win.character_name == "Noire":
             win.character_name = "Noire"
@@ -212,12 +202,7 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(100 * win.a_scale * win.models_scale)
-            win.twmXL = int(300 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 100
 
         if win.character_name == "Black Heart":
             win.character_name = "Black Heart"
@@ -228,12 +213,7 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(100 * win.a_scale * win.models_scale)
-            win.twmXL = int(320 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 100
 
         if win.character_name == "Blanc":
             win.character_name = "Blanc"
@@ -244,12 +224,7 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(60 * win.a_scale * win.models_scale)
-            win.twmXL = int(260 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 60
 
         if win.character_name == "White Heart":
             win.character_name = "White Heart"
@@ -260,12 +235,7 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(100 * win.a_scale * win.models_scale)
-            win.twmXL = int(290 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 90
 
         if win.character_name == "Vert":
             win.character_name = "Vert"
@@ -276,12 +246,7 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(120 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 120
 
         if win.character_name == "Green Heart":
             win.character_name = "Green Heart"
@@ -292,12 +257,7 @@ class Models:
             win.my_param = 700
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(100 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 90
 
         if win.character_name == "NepGear":
             win.character_name = "NepGear"
@@ -308,12 +268,7 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(60 * win.a_scale * win.models_scale)
-            win.twmXL = int(260 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 55
 
         if win.character_name == "Purple Sister":
             win.character_name = "Purple Sister"
@@ -324,12 +279,7 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(75 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 65
 
         if win.character_name == "Uni":
             win.character_name = "Uni"
@@ -340,12 +290,7 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(60 * win.a_scale * win.models_scale)
-            win.twmXL = int(270 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 60
 
         if win.character_name == "Black Sister":
             win.character_name = "Black Sister"
@@ -356,12 +301,7 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(100 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 110
 
         if win.character_name == "Rom":
             win.character_name = "Rom"
@@ -372,12 +312,7 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(60 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 70
 
         if win.character_name == "White Sister Rom":
             win.character_name = "White Sister Rom"
@@ -388,12 +323,7 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(120 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 130
 
         if win.character_name == "Ram":
             win.character_name = "Ram"
@@ -404,12 +334,7 @@ class Models:
             win.my_param = 600
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(60 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 60
 
         if win.character_name == "White Sister Ram":
             win.character_name = "White Sister Ram"
@@ -420,12 +345,17 @@ class Models:
             win.my_param = 650
             win.w_correction = -70
             win.h_correction = 0
-            win.twmXR = int(80 * win.a_scale * win.models_scale)
-            win.twmXL = int(280 * win.a_scale * win.models_scale)
-            if win.a_scale <= 2:
-                win.twmY = int(-10 * win.a_scale * win.models_scale)
-            else:
-                win.twmY = int(0 * win.a_scale * win.models_scale)
+            win.posXR = 75
+
+        # Update Text Widget Position
+        win.posXL = (win.mx_param / 2) - win.posXR / 2
+        win.twmXR = int(win.posXR * win.a_scale * win.models_scale)
+        win.twmXL = int(win.posXL * win.a_scale * win.models_scale)
+        if win.a_scale <= 2:
+            win.twmY = int(-10 * win.a_scale * win.models_scale)
+        else:
+            win.twmY = int(0 * win.a_scale * win.models_scale)
+
         # Update Size and Position
         win.resize(1, 1)
         win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)

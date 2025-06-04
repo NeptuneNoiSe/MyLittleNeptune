@@ -1,8 +1,8 @@
 import os
 import argparse
+import time
+
 import OpenGL.GL as gl
-import numpy as np
-from PIL import Image
 from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
@@ -126,13 +126,22 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.placeThis = False
         self.sleepMove = False
         self.expression = None
-        self.model: live2d.LAppModel | None = None
+        # From Live2d LAppModel to Model
+        self.model: live2d.Model | None = None
         self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
         self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
         self.vSize = QScreen.availableVirtualGeometry(QApplication.primaryScreen())
+        #live2d Model New Vars
+        self.last_update_time = 0
+        self.offsetX = 0.0
+        self.offsetY = 0.0
+        self.scale = 1.0
+        self.degrees = 0.0
+        self.lastExpressionId = ""
+        self.activeExpressions = []
 
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
@@ -228,11 +237,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
 
         self.loadResource()
+        self.lastUpdateTime = time.time()
 
     def initializeGL(self) -> None:
         self.makeCurrent()
         live2d.glInit()
-        self.model = live2d.LAppModel()
+        self.model = live2d.Model()
         if live2d.LIVE2D_VERSION == 3:
             self.text = self.lang['Talk']['Hello']
             self.kaomoji = "(^~^)/"
@@ -375,55 +385,62 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.talk_function()
         self.setLanguage()
 
+        self.model.CreateRenderer(2)
+        self.last_update_time = time.time()
+
     def resizeGL(self, w: int, h: int) -> None:
-        # 使模型的参数按窗口大小进行更新
         if self.model:
             self.model.Resize(w, h)
 
     def paintGL(self) -> None:
-        live2d.clearBuffer()
+        if self.model:
+            live2d.clearBuffer()
+            self.model.Draw()
 
-        self.model.Update()
+        if not self.model:
+            return
 
-        self.model.Draw()
+        try:
+            ct = time.time()
+            delta_secs = max(0.0001, ct - self.last_update_time)
+            self.last_update_time = ct
+
+            # Main Params load
+            self.model.LoadParameters()
+
+            # Safe Animation Update
+            motion_updated = False
+            if not self.model.IsMotionFinished():
+                try:
+                    motion_updated = self.model.UpdateMotion(delta_secs)
+                except Exception as e:
+                    #print(f"Motion update failed: {e}")
+                    motion_updated = False
+
+            # Save Params
+            self.model.SaveParameters()
+
+            # Secondary Updates
+            if not motion_updated:
+                self.model.UpdateBlink(delta_secs)
+
+            self.model.UpdateExpression(delta_secs)
+            self.model.UpdateDrag(delta_secs)
+            self.model.UpdateBreath(delta_secs)
+            self.model.UpdatePhysics(delta_secs)
+            self.model.UpdatePose(delta_secs)
+
+        except Exception as e:
+            print(f"Model update crashed: {e}")
+            # Try Reload Model
+            #self.model.ResetPhysics()
+            self.model.ResetExpressions()
+        finally:
+            self.update()
 
         if not self.read:
             self.savePng('screenshot.png')
             self.read = True
-
-    def savePng(self, fName):
-        data = gl.glReadPixels(0, 0, self.width(), self.height(), gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)
-        data = np.frombuffer(data, dtype=np.uint8).reshape(self.height(), self.width(), 4)
-        data = np.flipud(data)
-        new_data = np.zeros_like(data)
-        for rid, row in enumerate(data):
-            for cid, col in enumerate(row):
-                color = None
-                new_data[rid][cid] = col
-                if cid > 0 and data[rid][cid - 1][3] == 0 and col[3] != 0:
-                    color = new_data[rid][cid - 1]
-                elif cid > 0 and data[rid][cid - 1][3] != 0 and col[3] == 0:
-                    color = new_data[rid][cid]
-                if color is not None:
-                    color[0] = 0 # 255
-                    color[1] = 0
-                    color[2] = 0
-                    color[3] = 0 # 255
-                color = None
-                if rid > 0:
-                    if data[rid - 1][cid][3] == 0 and col[3] != 0:
-                        color = new_data[rid - 1][cid]
-                    elif data[rid - 1][cid][3] != 0 and col[3] == 0:
-                        color = new_data[rid][cid]
-                elif col[3] != 0:
-                    color = new_data[rid][cid]
-                if color is not None:
-                    color[0] = 0 #255
-                    color[1] = 0
-                    color[2] = 0
-                    color[3] = 0 # 255
-        img = Image.fromarray(new_data, 'RGBA')
-        img.save(fName)
 
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
@@ -436,14 +453,14 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
         auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
-        self.model.SetAutoBlinkEnable(auto_blink_param)
+        #self.model.SetAutoBlinkEnable(auto_blink_param)
         auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
-        self.model.SetAutoBreathEnable(auto_breath_param)
+        #self.model.SetAutoBreathEnable(auto_breath_param)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
         if self.idle_anim and self.idle_switch == True:
-            self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=idle_callback)
+            self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onStart=idle_start_callback, onFinish=idle_finish_callback)
             if self.t_count <= self.sleep_v:
                 self.idle_anim = True
             else:
@@ -487,7 +504,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.on_mouse_anim = False
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
-                self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=on_mouse_callback)
+                self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL,onStart=on_mouse_start_callback, onFinish=on_mouse_finish_callback)
                 self.on_mouse_anim = True
 
             if self.l2d_area_log:
@@ -539,55 +556,56 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.clickInLA = False
                 self.tap_body_anim = True
                 if self.tap_body_switch and self.sleepMove == False:
-                    self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=tap_body_callback)
+                    self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onStart=tap_body_start_callback, onFinish=tap_body_finish_callback)
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
-                        self.model.ResetExpression()
+                        self.model.ResetExpressions()
                         self.talkDelayTimer.stop()
-                        self.expression = self.model.SetRandomExpression(fadeout=7000)
+                        #self.expression = self.model.SetRandomExpression(fadeout=7000)
+                        self.add_random_expression()
                         if self.placeThis:
                             self.placeThis = False
                             self.text = self.lang['Talk']['Stay']
                             self.kaomoji = "(^~^)"
                         else:
-                            if self.expression == "Normal":
+                            if self.lastExpressionId == "Normal":
                                 self.text = self.lang['Talk']['Normal']
                                 self.kaomoji = "(o_o)"
-                            elif self.expression == "Happy":
+                            elif self.lastExpressionId == "Happy":
                                 self.text = self.lang['Talk']['Happy']
                                 self.kaomoji = "(^_^)"
-                            elif self.expression == "Angry":
+                            elif self.lastExpressionId == "Angry":
                                 self.text = self.lang['Talk']['Angry']
                                 self.kaomoji = "(⇀‸↼‶)"
-                            elif self.expression == "Sad":
+                            elif self.lastExpressionId == "Sad":
                                 self.text = self.lang['Talk']['Sad']
                                 self.kaomoji = "(´•ω•̥`)"
-                            elif self.expression == "Smile":
+                            elif self.lastExpressionId == "Smile":
                                 self.text = self.lang['Talk']['Smile']
                                 self.kaomoji = "(^~^)"
-                            elif self.expression == "Tired":
+                            elif self.lastExpressionId == "Tired":
                                 self.text = self.lang['Talk']['Tired']
                                 self.kaomoji = "(๑•﹏•)"
-                            elif self.expression == "ClosedEyes":
+                            elif self.lastExpressionId == "ClosedEyes":
                                 self.text = self.lang['Talk']['ClosedEyes']
                                 self.kaomoji = "(-_-)"
-                            elif self.expression == "Cry":
+                            elif self.lastExpressionId == "Cry":
                                 self.text = self.lang['Talk']['Cry']
                                 self.kaomoji = "(o;TωT)o"
-                            elif self.expression == "Fear":
+                            elif self.lastExpressionId == "Fear":
                                 if self.character_name == "White Heart":
                                     self.text = self.lang['Talk']['FearWH']
                                     self.kaomoji = "(0﹏\‶)"
                                 else:
                                     self.text = self.lang['Talk']['Fear']
                                     self.kaomoji = "(｡ŏ_ŏ)"
-                            elif self.expression == "Star":
+                            elif self.lastExpressionId == "Star":
                                 self.text = self.lang['Talk']['Star']
                                 self.kaomoji = "(✩ω✩)"
-                            elif self.expression == "Surprised":
+                            elif self.lastExpressionId == "Surprised":
                                 self.text = self.lang['Talk']['Surprised']
                                 self.kaomoji = "(0_0)?"
-                            elif self.expression == "Funny" and self.goodness_form == False:
+                            elif self.lastExpressionId == "Funny" and self.goodness_form == False:
                                 if self.character_name == "Blanc":
                                     self.text = self.lang['Talk']['FunnyBl']
                                     self.kaomoji = "(‶/﹏0)"
@@ -612,7 +630,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.kaomoji = "(⊙_⊙)✿"
                         print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-                        self.model.SetExpression("Fear", fadeout=10000)
+                        self.model.SetExpression("Fear")
+                        self.fadeoutTimer.start(10000)
                         self.t_count = 1
                         self.sleep = False
                 if not self.tap_body_switch and self.sleepMove == False:

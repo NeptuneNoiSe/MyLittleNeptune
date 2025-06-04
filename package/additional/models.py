@@ -14,7 +14,7 @@ class Models:
     def transform_initialize(win):
         win.input_lock = True
         if not win.goodness_form:
-            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE, onFinishMotionHandler=unique_callback)
+            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE, onStart=unique_start_callback,onFinish=unique_finish_callback)
             if win.character_name == "Neptune":
                 win.model.SetExpression("Star")
             elif win.character_name == "Vert":
@@ -43,8 +43,9 @@ class Models:
         if win.goodness_form and win.transform_lock == 0:
             win.transform_to_regular_form()
             win.transform_lock = 1
-        win.model.ResetExpression()
-        win.model.SetExpression("Funny", fadeout=10000)
+        win.model.ResetExpressions()
+        win.model.SetExpression("Funny")
+        win.fadeoutTimer.start(7000)
         win.transformMovie = QMovie(win.t_anim_out)
         win.transformLabel.setMovie(win.transformMovie)
         win.transformLabel.movie().setScaledSize(QSize(int(win.w_resize + win.trm_cmx * win.models_scale),
@@ -371,8 +372,8 @@ class Models:
             pass
 
         # ReInitialize Model
-        win.model: live2d.LAppModel | None = None
-        win.model = live2d.LAppModel()
+        win.model: live2d.Model | None = None
+        win.model = live2d.Model()
         if win.character_name == "Neptune":
             win.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
@@ -425,9 +426,11 @@ class Models:
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
                       win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
-        # live2d Update
+        # live2d Initial Params
         live2d.clearBuffer()
-        win.model.Update()
+        win.model.CreateRenderer(2)  # maskBufferCount=2
+        # win.last_update_time = time.time()
+        # win.model.Update(0.1)
         try:
             win.sleepLabel.close()
         except AttributeError:
@@ -440,133 +443,132 @@ class Models:
         # Main Model Params
         win.modelRotate = -90
         win.sleepMoveY = 0
-        win.model.SetParameterValue("ParamAngleX", 15, 100)
-        win.model.SetParameterValue("ParamAngleY", -20, 100)
-        win.model.SetParameterValue("ParamAngleZ", -20, 100)
-        win.model.SetParameterValue("ParamBodyAngleX", 10, 100)
-        win.model.SetParameterValue("ParamBodyAngleZ", 30, 100)
+        win.model.SetParameterValueById("ParamAngleX", 15, 100)
+        win.model.SetParameterValueById("ParamAngleY", -20, 100)
+        win.model.SetParameterValueById("ParamAngleZ", -20, 100)
+        win.model.SetParameterValueById("ParamBodyAngleX", 10, 100)
+        win.model.SetParameterValueById("ParamBodyAngleZ", 30, 100)
         # Unic Params for characters
         if win.character_name == "Neptune":
             win.sleepMoveY = 25
-            win.model.SetParameterValue("ParamAngleY", -25, 100)
-            win.model.SetParameterValue("ParamAngleZ", -10, 100)
+            win.model.SetParameterValueById("ParamAngleY", -25, 100)
+            win.model.SetParameterValueById("ParamAngleZ", -10, 100)
             #win.model.SetParameterValue("Param27", 10, 100)
             #win.model.SetParameterValue("Param32", 3, 1)
-            win.model.SetParameterValue("Param28", 9, 1)
+            win.model.SetParameterValueById("Param28", 9, 1)
         elif win.character_name == "Purple Heart":
             win.sleepMoveY = 0
         elif win.character_name == "Noire":
             win.sleepMoveY = 25
-            win.model.SetParameterValue("Param4", 30, 100)
-            win.model.SetParameterValue("Param54", 1, 100)
-            win.model.SetParameterValue("Param57", 30, 100)
-            win.model.SetParameterValue("Param56", 30, 100)
+            win.model.SetParameterValueById("Param4", 30, 100)
+            win.model.SetParameterValueById("Param54", 1, 100)
+            win.model.SetParameterValueById("Param57", 30, 100)
+            win.model.SetParameterValueById("Param56", 30, 100)
         elif win.character_name == "Black Heart":
             win.sleepMoveY = 20
         elif win.character_name == "Blanc":
-            win.model.SetParameterValue("ParamAngleZ",30 , 100)
-            win.model.SetParameterValue("ParamBodyAngleZ", 0, 100)
-            win.model.SetParameterValue("Param6", 30, 100)
-            win.model.SetParameterValue("Param7", -30, 100)
-            win.model.SetParameterValue("Param14", -300, 100)
-            win.model.SetParameterValue("Param8", 30, 100)
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param11", -30, 100)
+            win.model.SetParameterValueById("ParamAngleZ",30 , 100)
+            win.model.SetParameterValueById("ParamBodyAngleZ", 0, 100)
+            win.model.SetParameterValueById("Param6", 30, 100)
+            win.model.SetParameterValueById("Param7", -30, 100)
+            win.model.SetParameterValueById("Param14", -300, 100)
+            win.model.SetParameterValueById("Param8", 30, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param11", -30, 100)
         elif win.character_name == "White Heart":
             win.modelRotate = -95
             win.sleepMoveY = 25
-            win.model.SetParameterValue("Param12", -30, 100)
-            win.model.SetParameterValue("Param11", 30, 100)
-            win.model.SetParameterValue("Param13", -30, 100)
-            win.model.SetParameterValue("Param14", 30, 100)
-            win.model.SetParameterValue("Param29", 30, 100)
-            win.model.SetParameterValue("Param41", -30, 100)
+            win.model.SetParameterValueById("Param12", -30, 100)
+            win.model.SetParameterValueById("Param11", 30, 100)
+            win.model.SetParameterValueById("Param13", -30, 100)
+            win.model.SetParameterValueById("Param14", 30, 100)
+            win.model.SetParameterValueById("Param29", 30, 100)
+            win.model.SetParameterValueById("Param41", -30, 100)
         elif win.character_name == "Vert":
             win.sleepMoveY = 25
-            win.model.SetParameterValue("ParamAngleZ", 20, 100)
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param2", 30, 100)
-            win.model.SetParameterValue("Param3", 30, 100)
-            win.model.SetParameterValue("Param4", 30, 100)
-            win.model.SetParameterValue("Param5", 30, 100)
-            win.model.SetParameterValue("Param6", 30, 100)
+            win.model.SetParameterValueById("ParamAngleZ", 20, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param2", 30, 100)
+            win.model.SetParameterValueById("Param3", 30, 100)
+            win.model.SetParameterValueById("Param4", 30, 100)
+            win.model.SetParameterValueById("Param5", 30, 100)
+            win.model.SetParameterValueById("Param6", 30, 100)
         elif win.character_name == "Green Heart":
             win.sleepMoveY = 0
-            win.model.SetParameterValue("ParamAngleZ", 20, 100)
+            win.model.SetParameterValueById("ParamAngleZ", 20, 100)
         elif win.character_name == "NepGear":
             win.sleepMoveY = 25
-            win.model.SetParameterValue("ParamAngleZ", -30, 100)
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param2", 30, 100)
-            win.model.SetParameterValue("Param3", 30, 100)
-            win.model.SetParameterValue("Param4", -30, 100)
-            win.model.SetParameterValue("Param5", -30, 100)
-            win.model.SetParameterValue("Param24", 0.600, 100)
-            win.model.SetParameterValue("Param25", 0, 100)
-            win.model.SetParameterValue("Param12", 0, 100)
-            win.model.SetParameterValue("Param18", 1, 100)
+            win.model.SetParameterValueById("ParamAngleZ", -30, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param2", 30, 100)
+            win.model.SetParameterValueById("Param3", 30, 100)
+            win.model.SetParameterValueById("Param4", -30, 100)
+            win.model.SetParameterValueById("Param5", -30, 100)
+            win.model.SetParameterValueById("Param24", 0.600, 100)
+            win.model.SetParameterValueById("Param25", 0, 100)
+            win.model.SetParameterValueById("Param12", 0, 100)
+            win.model.SetParameterValueById("Param18", 1, 100)
         elif win.character_name == "Purple Sister":
             win.modelRotate = -95
             win.sleepMoveY = 15
-            win.model.SetParameterValue("ParamAngleZ", 10, 100)
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param2", 1, 100)
-            win.model.SetParameterValue("Param3", 1, 100)
-            win.model.SetParameterValue("Param4", -30, 100)
+            win.model.SetParameterValueById("ParamAngleZ", 10, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param2", 1, 100)
+            win.model.SetParameterValueById("Param3", 1, 100)
+            win.model.SetParameterValueById("Param4", -30, 100)
         elif win.character_name == "Uni":
             win.sleepMoveY = 15
             win.modelRotate = -85
-            win.model.SetParameterValue("ParamAngleZ", 20, 100)
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param4", -30, 100)
-            win.model.SetParameterValue("Param55", 0.55, 1)
+            win.model.SetParameterValueById("ParamAngleZ", 20, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param4", -30, 100)
+            win.model.SetParameterValueById("Param55", 0.55, 1)
         elif win.character_name == "Black Sister":
             win.sleepMoveY = 30
             win.modelRotate = -85
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param2", 0.2, 100)
-            win.model.SetParameterValue("Param3", 1, 100)
-            win.model.SetParameterValue("Param55", 1, 100)
-            win.model.SetParameterValue("Param38", 5, 100)
-            win.model.SetParameterValue("Param39", 10, 100)
-            win.model.SetParameterValue("Param40", 10, 100)
-            win.model.SetParameterValue("Param41", 10, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param2", 0.2, 100)
+            win.model.SetParameterValueById("Param3", 1, 100)
+            win.model.SetParameterValueById("Param55", 1, 100)
+            win.model.SetParameterValueById("Param38", 5, 100)
+            win.model.SetParameterValueById("Param39", 10, 100)
+            win.model.SetParameterValueById("Param40", 10, 100)
+            win.model.SetParameterValueById("Param41", 10, 100)
         elif win.character_name == "Rom":
             win.sleepMoveY = 25
             win.modelRotate = -85
-            win.model.SetParameterValue("ParamAngleZ", 20, 100)
-            win.model.SetParameterValue("Param55", 0.2, 1)
+            win.model.SetParameterValueById("ParamAngleZ", 20, 100)
+            win.model.SetParameterValueById("Param55", 0.2, 1)
         elif win.character_name == "White Sister Rom":
             win.sleepMoveY = 65
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param2", 30, 100)
-            win.model.SetParameterValue("Param3", 20, 1)
-            win.model.SetParameterValue("Param4", -30, 100)
-            win.model.SetParameterValue("Param5", 30, 100)
-            win.model.SetParameterValue("Param6", 30, 100)
-            win.model.SetParameterValue("Param40", 10, 100)
-            win.model.SetParameterValue("Param41", 10, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param2", 30, 100)
+            win.model.SetParameterValueById("Param3", 20, 1)
+            win.model.SetParameterValueById("Param4", -30, 100)
+            win.model.SetParameterValueById("Param5", 30, 100)
+            win.model.SetParameterValueById("Param6", 30, 100)
+            win.model.SetParameterValueById("Param40", 10, 100)
+            win.model.SetParameterValueById("Param41", 10, 100)
         elif win.character_name == "Ram":
             win.sleepMoveY = 25
             win.modelRotate = -85
-            win.model.SetParameterValue("ParamAngleZ", 20, 100)
-            win.model.SetParameterValue("Param", 30, 100)
-            win.model.SetParameterValue("Param2", 30, 100)
-            win.model.SetParameterValue("Param3", 30, 100)
-            win.model.SetParameterValue("Param4", -30, 100)
-            win.model.SetParameterValue("Param5", -30, 100)
-            win.model.SetParameterValue("Param6", -30, 100)
-            win.model.SetParameterValue("Param47", 10, 100)
-            win.model.SetParameterValue("Param46", 10, 100)
+            win.model.SetParameterValueById("ParamAngleZ", 20, 100)
+            win.model.SetParameterValueById("Param", 30, 100)
+            win.model.SetParameterValueById("Param2", 30, 100)
+            win.model.SetParameterValueById("Param3", 30, 100)
+            win.model.SetParameterValueById("Param4", -30, 100)
+            win.model.SetParameterValueById("Param5", -30, 100)
+            win.model.SetParameterValueById("Param6", -30, 100)
+            win.model.SetParameterValueById("Param47", 10, 100)
+            win.model.SetParameterValueById("Param46", 10, 100)
         elif win.character_name == "White Sister Ram":
             win.sleepMoveY = 15
-            win.model.SetParameterValue("Param", -30, 100)
-            win.model.SetParameterValue("Param2", -30, 100)
-            win.model.SetParameterValue("Param3", -20, 1)
-            win.model.SetParameterValue("Param4", 30, 100)
-            win.model.SetParameterValue("Param5", 30, 100)
-            win.model.SetParameterValue("Param6", 30, 100)
-
+            win.model.SetParameterValueById("Param", -30, 100)
+            win.model.SetParameterValueById("Param2", -30, 100)
+            win.model.SetParameterValueById("Param3", -20, 1)
+            win.model.SetParameterValueById("Param4", 30, 100)
+            win.model.SetParameterValueById("Param5", 30, 100)
+            win.model.SetParameterValueById("Param6", 30, 100)
 
     def getModelParams(win):
         for i in range(win.model.GetParameterCount()):

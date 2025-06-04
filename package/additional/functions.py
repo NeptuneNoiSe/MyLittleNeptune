@@ -6,6 +6,10 @@ from PySide6.QtGui import QPixmap, QMovie
 
 from package import resources
 from package.additional.config_module import *
+import OpenGL.GL as gl
+import numpy as np
+import random
+from PIL import Image
 import resources
 import json
 
@@ -31,6 +35,53 @@ class Functions:
         elif win.language == "Russian":
             with open(win.ru, 'r', encoding='utf-8') as file:
                 win.lang = json.load(file)
+
+    def savePng(win, fName):
+        data = gl.glReadPixels(0, 0, win.width(), win.height(), gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)
+        data = np.frombuffer(data, dtype=np.uint8).reshape(win.height(), win.width(), 4)
+        data = np.flipud(data)
+        new_data = np.zeros_like(data)
+        for rid, row in enumerate(data):
+            for cid, col in enumerate(row):
+                color = None
+                new_data[rid][cid] = col
+                if cid > 0 and data[rid][cid - 1][3] == 0 and col[3] != 0:
+                    color = new_data[rid][cid - 1]
+                elif cid > 0 and data[rid][cid - 1][3] != 0 and col[3] == 0:
+                    color = new_data[rid][cid]
+                if color is not None:
+                    color[0] = 0 # 255
+                    color[1] = 0
+                    color[2] = 0
+                    color[3] = 0 # 255
+                color = None
+                if rid > 0:
+                    if data[rid - 1][cid][3] == 0 and col[3] != 0:
+                        color = new_data[rid - 1][cid]
+                    elif data[rid - 1][cid][3] != 0 and col[3] == 0:
+                        color = new_data[rid][cid]
+                elif col[3] != 0:
+                    color = new_data[rid][cid]
+                if color is not None:
+                    color[0] = 0 #255
+                    color[1] = 0
+                    color[2] = 0
+                    color[3] = 0 # 255
+        img = Image.fromarray(new_data, 'RGBA')
+        img.save(fName)
+
+    def add_random_expression(win, drop_last=False):
+        if drop_last:
+            win.model.RemoveExpression(win.lastExpressionId)
+
+        expressions = win.model.GetExpressions()
+        expId = random.choice(expressions)
+        win.model.AddExpression(expId)
+
+        win.lastExpressionId = expId
+        win.activeExpressions.append(expId)
+        win.fadeoutTimer.start(7000)
+        return expId
 
     def mouse_tracking(win):
         win.tracking_mouse = False
@@ -83,9 +134,10 @@ class Functions:
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
             win.wake_up_func()
-            win.model.ResetExpression()
-            win.model.SetExpression("Star", fadeout=10000)
-            win.model.SetExpression("Serious", fadeout=10000)
+            win.model.ResetExpressions()
+            win.model.SetExpression("Star")
+            win.model.SetExpression("Serious")
+            win.fadeoutTimer.start(10000)
             win.t_count = 0
             win.idle_anim = True
             win.wake_up = True
@@ -124,7 +176,7 @@ class Functions:
 
     def wake_up_func(win):
         win.sleepLabel.close()
-        win.model.ResetParameters()
+        # win.model.ResetParameters()
         win.model.Rotate(0)
         if win.sleepMove and win.sleepSide == "Right":
             win.move(win.x() + win.w_resize / 3.5, win.y() - win.h_resize / 4)
@@ -170,9 +222,17 @@ class Functions:
         win.sleepInputTimer = QTimer()
         win.sleepInputTimer.timeout.connect(win.takingSleep)
 
+        # Fadeout timer
+        win.fadeoutTimer = QTimer()
+        win.fadeoutTimer.timeout.connect(win.resetExp)
+
     def takingSleep(win):
         win.sleepMove = True
         win.sleepInputTimer.stop()
+
+    def resetExp(win):
+        win.model.ResetExpressions()
+        win.fadeoutTimer.stop()
 
     def quitFunction(win):
         win.quitTimer.stop()

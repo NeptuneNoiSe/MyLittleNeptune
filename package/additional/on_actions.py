@@ -31,7 +31,8 @@ class OnActions:
             if win.condition == "Sleep":
                 pass
             else:
-                win.model.SetExpression("Sad", fadeout=10000)
+                win.model.SetExpression("Sad")
+                win.fadeoutTimer.start(10000)
                 win.text = win.lang['Talk']['TransformNot']
                 win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
                 print(win.name + ": " + win.text + win.kaomoji)
@@ -387,7 +388,8 @@ class OnActions:
         else:
             win.t_count = 1
             win.model.ResetExpression()
-            win.model.SetExpression("Happy", 5000)
+            win.model.SetExpression("Happy")
+            win.fadeoutTimer.start(5000)
             win.text = win.lang['Talk']['Star']
             win.kaomoji = ":(^~^):"
             print(win.name + ": " + win.text + win.kaomoji)

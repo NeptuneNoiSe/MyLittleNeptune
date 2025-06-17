@@ -8,13 +8,15 @@ from live2d.v3 import Parameter
 # import live2d.v2 as live2d
 from package import resources
 from package.additional.config_module import *
-from package.additional.callbacks import *
 
 class Models:
     def transform_initialize(win):
         win.input_lock = True
         if not win.goodness_form:
-            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE, onStart=unique_start_callback,onFinish=unique_finish_callback)
+            win.model.StartMotion("Unique", 0, live2d.MotionPriority.FORCE,
+                                         onStart=lambda group, no: win._handle_motion_start(group, no),
+                                         onFinish=lambda group, no: win._handle_motion_finish(group, no)
+                                         )
             if win.character_name == "Neptune":
                 win.model.SetExpression("Star")
             elif win.character_name == "Vert":

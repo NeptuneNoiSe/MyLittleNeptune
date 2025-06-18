@@ -21,6 +21,7 @@ from additional.config_module import *
 from additional.models import Models
 from additional.on_actions import OnActions
 from additional.functions import Functions
+from additional.animations import AnimationsManager
 
 class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
@@ -56,7 +57,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Timer Diagnostic Log:
         self.timer_log = False
         # Callbacks Log:
-        self.callbacks_log = False
+        self.callbacks_log = True
 
         # Language:
         self.language = self.config.get('Main', 'language')
@@ -74,7 +75,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.tracking_mouse = True
 
         # Sleep Animation Time Scale
-        self.time_scale = 1
+        self.time_scale = 19
 
         # Init Vars
         self.w_correction = 0
@@ -143,18 +144,10 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.degrees = 0.0
         self.lastExpressionId = ""
         self.activeExpressions = []
-        self.blink_enabled = True
-        self._is_idle_playing = False
-        self._last_idle_time = 0  # last animation time
-        self._next_idle_delay = 5.0  # random delay (5-15 sec)
-        self.blinkProgress = 0.0
-        self.nextBlinkInterval = 0.0
-        self.lastBlinkTime = 0.0
-        self.isBlinking = True
 
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
-        self.config.set('Main', 'screen_height',str(self.sc_height_size))
+        self.config.set('Main', 'screen_height', str(self.sc_height_size))
         if self.models_switch == 0:
             self.config.set('Model', 'x_param', '600')
             self.config.set('Model', 'y_param', '600')
@@ -247,6 +240,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         self.loadResource()
         self.lastUpdateTime = time.time()
+
+    def anim_init(self):
+        self.animations = AnimationsManager(self.model)
 
     def initializeGL(self) -> None:
         self.makeCurrent()
@@ -387,8 +383,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
+        self.external_anim_init()
         # fps
         self.startTimer(int(1000 / 60))
+        self.animations = AnimationsManager(self.model)
+        self.animations.set_logging(self.callbacks_log)
         self.timers_init()
         self.talkWidgetInit()
         self.talk_function()
@@ -397,6 +396,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.last_update_time = time.time()
         self.model.SetExpression("Smile")
         self.fadeoutTimer.start(7000)
+        #self.animations.autoBlink()
 
     def resizeGL(self, w: int, h: int) -> None:
         if self.model:
@@ -434,12 +434,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             if not motion_updated:
                 self.model.UpdateBlink(delta_secs)
 
-            auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
-
-            if auto_breath_param:
-                self.model.UpdateBreath(delta_secs)
-            else:
-                pass
+            self.model.UpdateBreath(delta_secs) if self.config.getboolean('Settings', 'auto_breath') else None
 
             self.model.UpdateExpression(delta_secs)
             self.model.UpdateDrag(delta_secs)
@@ -468,11 +463,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.setWindowIcon(QIcon(os.path.join(
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
-        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
-        if auto_blink_param:
-            self.autoBlink()
-        else:
-            pass
+        self.animations.autoBlink(self.last_update_time) if self.config.getboolean('Settings', 'auto_blink') else None
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
@@ -481,16 +472,10 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.idle_anim = True
         else:
             self.idle_anim = False
-            self._reset_idle_state()  # Reset with Sleep
 
         if self.idle_switch and self.idle_anim:
             current_time = time.time()
-
-            # If the animation is not playing and enough time has passed
-            if not self._is_idle_playing and current_time - self._last_idle_time > self._next_idle_delay:
-                self._play_idle_animation()
-
-            # If the animation is playing, we check the completion (via callback)
+            self.animations.update_idle(current_time)
 
         self.transformMovieTriggers()
 
@@ -530,10 +515,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.on_mouse_anim = False
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
-                self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL,
-                                         onStart=lambda group, no: self._handle_motion_start(group, no),
-                                         onFinish=lambda group, no: self._handle_motion_finish(group, no)
-                                         )
+                self.animations.play_animation(
+                    model=self.model,
+                    anim_type='RandomMotion',
+                    group_or_id="OnMouse",
+                    priority=live2d.MotionPriority.NORMAL
+                )
                 self.on_mouse_anim = True
 
             if self.l2d_area_log:
@@ -547,7 +534,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
     def isInL2DArea(self, click_x, click_y):
         h = self.height()
-        alpha = gl.glReadPixels(click_x * self.systemScale, (h - click_y) * self.systemScale, 1, 1, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)[3]
+        alpha = gl.glReadPixels(click_x * self.systemScale, (h - click_y) * self.systemScale, 1, 1, gl.GL_RGBA,
+                                gl.GL_UNSIGNED_BYTE)[3]
         return alpha > 0
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -582,13 +570,16 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
+                hit_part_ids = self.model.HitPart(x, y, True)
+                hit_parts = {part for part in hit_part_ids if part} if hit_part_ids else set()
+                print("hit parts:", hit_parts)
                 self.clickInLA = False
                 self.tap_body_anim = True
                 if (not self.sleep
-                    and not self.tap_body_switch
-                    and not self.sleepMove
-                    and not self.input_lock
-                    and self.placeThis
+                        and not self.tap_body_switch
+                        and not self.sleepMove
+                        and not self.input_lock
+                        and self.placeThis
                 ):
                     self.placeThis = False
                     self.reset_expression = False
@@ -602,10 +593,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                     self.textUpdate()
                     self.t_count = 1
                 if self.tap_body_switch and self.sleepMove == False:
-                    self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE,
-                                         onStart=lambda group, no: self._handle_motion_start(group, no),
-                                         onFinish=lambda group, no: self._handle_motion_finish(group, no)
-                                         )
+                    self.animations.handle_hit(hit_part_ids)
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
                         self.model.ResetExpressions()
@@ -682,9 +670,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.t_count = 1
                         self.sleep = False
                 if (not self.sleep
-                    and not self.tap_body_switch
-                    and not self.sleepMove
-                    and self.reset_expression
+                        and not self.tap_body_switch
+                        and not self.sleepMove
+                        and self.reset_expression
                 ):
                     self.model.ResetExpression()
                     self.t_count = 1
@@ -709,7 +697,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         for hintFlag in self.hintFlags:
             if flags & hintFlag:
                 text += f"\n| Qt.{hintFlag.name}"
-
 
         if self.auto_scale and self.auto_scale_init:
             self.a_scale = auto_scale(self.sc_height_size)
@@ -922,12 +909,14 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         else:
             self.t_count = 1
             self.model.ResetExpression()
-            self.model.SetExpression("Happy", 5000)
+            self.model.SetExpression("Happy")
+            self.fadeoutTimer.start(5000)
             self.text = self.lang['Talk']['Star']
             self.kaomoji = ":(^~^):"
             print(self.name + ": " + self.text + self.kaomoji)
             self.textUpdate()
             event.ignore()
+
 
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
@@ -939,7 +928,8 @@ class SettingsWindow(QWidget):
         self.getWindowFlag_WindowCloseButtonHint = self.config.getboolean('WindowFlags', 'WindowCloseButtonHint')
         self.getWindowFlag_WindowStaysOnTopHint = self.config.getboolean('WindowFlags', 'WindowStaysOnTopHint')
         self.getWindowFlag_WindowStaysOnBottomHint = self.config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
-        self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags', 'WindowTransparentForInput')
+        self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags',
+                                                                              'WindowTransparentForInput')
         self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
 
         self.language = self.config.get('Main', 'language')
@@ -981,7 +971,8 @@ class SettingsWindow(QWidget):
         self.nepImageLabel.setAlignment(Qt.AlignCenter)
 
         self.quitButton = QPushButton("&Quit")
-        self.quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+        self.quitButton.clicked.connect(
+            qApp.quit)  # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
         self.resetPosButton = QPushButton("&Reset Position")
         self.resetPosButton.clicked.connect(self.reset_position)
@@ -1012,6 +1003,7 @@ class SettingsWindow(QWidget):
 
     def modelMoveOn(self):
         self.mainWindow.model_move = True
+
     def modelMoveOff(self):
         self.mainWindow.model_move = False
 
@@ -1147,7 +1139,7 @@ class SettingsWindow(QWidget):
             ]
 
             for i, (checkBox, _) in enumerate(self.hintFlagWidgets):
-                layout.addWidget(checkBox, i%2, int(i/2))
+                layout.addWidget(checkBox, i % 2, int(i / 2))
 
             self.typeFlagWidgets[0][0].setChecked(True)
         else:
@@ -1191,7 +1183,7 @@ class SettingsWindow(QWidget):
         #    self.modelScaleBox.valueChanged.connect(self.modelMoveOn)
         #else:
         #    self.modelScaleBox.valueChanged.connect(self.modelMoveOff)
-            # self.mainWindow.model_move = False
+        # self.mainWindow.model_move = False
 
         self.scaleGroupBox.setLayout(layout)
 
@@ -1224,7 +1216,7 @@ class SettingsWindow(QWidget):
 
     def createCheckBox(self, text: str) -> QCheckBox:
         checkBox = QCheckBox(text)
-        checkBox.clicked.connect(self.updateMainWindow) # type: ignore[attr-defined]
+        checkBox.clicked.connect(self.updateMainWindow)  # type: ignore[attr-defined]
         return checkBox
 
     def getLanguageName(self):

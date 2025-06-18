@@ -31,6 +31,58 @@ class Functions:
         win.ru = os.path.join(
             resources.RESOURCES_DIRECTORY, "lang/ru.json")
 
+    def external_anim_init(win):
+        # Load Extra Motions
+        drag_down_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/drag_down.motion3.json")
+        side_touch_head_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                            "v3/external_motions/side_touch_head.motion3.json")
+        touch_body_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_body.motion3.json")
+        touch_body2_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                        "v3/external_motions/touch_body2.motion3.json")
+        touch_bra_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_bra.motion3.json")
+        touch_bra2_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_bra2.motion3.json")
+        touch_head_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_head.motion3.json")
+        touch_head2_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                        "v3/external_motions/touch_head2.motion3.json")
+        touch_hl_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                     "v3/external_motions/touch_hl.motion3.json")
+        touch_hl1_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_hl1.motion3.json")
+        touch_hl2_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_hl2.motion3.json")
+        touch_hr_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                     "v3/external_motions/touch_hr.motion3.json")
+        touch_hr1_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_hr1.motion3.json")
+        touch_hr2_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_hr2.motion3.json")
+        touch_leg_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_leg.motion3.json")
+        touch_leg2_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_leg2.motion3.json")
+
+        win.model.LoadExtraMotion("Extra", 0, drag_down_path)
+        win.model.LoadExtraMotion("Extra", 1, side_touch_head_path)
+        win.model.LoadExtraMotion("Extra", 2, touch_body_path)
+        win.model.LoadExtraMotion("Extra", 3, touch_body2_path)
+        win.model.LoadExtraMotion("Extra", 4, touch_bra_path)
+        win.model.LoadExtraMotion("Extra", 5, touch_bra2_path)
+        win.model.LoadExtraMotion("Extra", 6, touch_head_path)
+        win.model.LoadExtraMotion("Extra", 7, touch_head2_path)
+        win.model.LoadExtraMotion("Extra", 8, touch_hl_path)
+        win.model.LoadExtraMotion("Extra", 9, touch_hl1_path)
+        win.model.LoadExtraMotion("Extra", 10, touch_hl2_path)
+        win.model.LoadExtraMotion("Extra", 11, touch_hr_path)
+        win.model.LoadExtraMotion("Extra", 12, touch_hr1_path)
+        win.model.LoadExtraMotion("Extra", 13, touch_hr2_path)
+        win.model.LoadExtraMotion("Extra", 14, touch_leg_path)
+        win.model.LoadExtraMotion("Extra", 15, touch_leg2_path)
+
     def setLanguage(win):
         if win.language == "English":
             with open(win.en, 'r', encoding='utf-8') as file:
@@ -38,103 +90,6 @@ class Functions:
         elif win.language == "Russian":
             with open(win.ru, 'r', encoding='utf-8') as file:
                 win.lang = json.load(file)
-
-    def _play_idle_animation(win):
-        """Running animations with timer updates"""
-        win.model.StartRandomMotion("Id"
-                                    "le",live2d.MotionPriority.IDLE,
-                                    onStart=lambda g, n: win._handle_idle_start(g, n),
-                                    onFinish=lambda g, n: win._handle_idle_finish(g, n)
-        )
-        win._is_idle_playing = True
-        win._last_idle_time = time.time()
-        win._next_idle_delay = random.uniform(5.0, 15.0)  # Pause 5-15 sec
-
-    def _handle_idle_start(win, group, no):
-        """Callback Animation Start"""
-        win._is_idle_playing = True
-        # print(f"Idle started: {group}-{no}")
-
-    def _handle_idle_finish(win, group, no):
-        """Callback Animation Finish"""
-        win._is_idle_playing = False
-        win.model.ResetExpressions()
-        # print(f"Idle finished: {group}-{no}")
-
-    def _reset_idle_state(win):
-        """Reset with Sleep"""
-        win._is_idle_playing = False
-        win._last_idle_time = 0
-
-    def _handle_motion_start(win, group, no):
-        """Callback with Animation Start"""
-        if win.callbacks_log:
-            print(f"Animation {group} {no} start - blink off")
-        win.setBlinkEnabled(False)  # Using our previously created method
-
-    def _handle_motion_finish(win, group, no):
-        """Callback with Animation Finish"""
-        win.model.ResetExpressions()
-        if win.callbacks_log:
-            print(f"Animation {group} {no} finish - blink on")
-        win.setBlinkEnabled(True)
-        # Additionally: reset the eyes to the open state
-        win.model.SetParameterValueById("ParamEyeLOpen", 1.0)
-        win.model.SetParameterValueById("ParamEyeROpen", 1.0)
-        win.model.SetParameterValueById("ParamMouthOpenY", 0)
-
-    def autoBlink(win) -> None:
-        if not win.blink_enabled:  # If Blink disabled
-            # Force open eyes (in case of interrupted blinking)
-            #self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
-            #self.model.SetParameterValueById("ParamEyeROpen", 1.0)
-            win.isBlinking = False
-            return
-        current_time = time.time()
-        delta_time = current_time - win.last_update_time
-
-        # Generating a new blink only if the eyes are fully open
-        if not win.isBlinking and win.blinkProgress == 0.0:
-            if current_time - win.lastBlinkTime > win.nextBlinkInterval / 1000.0:
-                # Two randomization modes:
-                if random.random() < 0.7:  # 70% chance - regular Blink mode
-                    win.isBlinking = True
-                    win.nextBlinkInterval = random.randint(2000, 5000)  # 2-5 секунд
-                else:  # 30% chance - long pause mode (The character is "lost in thought")
-                    win.nextBlinkInterval = random.randint(6000, 10000)  # 6-10 секунд
-                win.lastBlinkTime = current_time
-
-        # Blink animation (unchanged)
-        if win.isBlinking:
-            win.blinkProgress += delta_time * 4.0
-            if win.blinkProgress >= 1.0:
-                win.isBlinking = False
-                win.blinkProgress = 0.0
-            else:
-                if win.blinkProgress < 0.4:
-                    eye_open = 1.0 - math.sin(win.blinkProgress * math.pi * 1.25)
-                else:
-                    eye_open = math.sin((win.blinkProgress - 0.4) * math.pi * 0.833)
-
-                # Adding micro-randomness for the right/left eye
-                win.model.SetParameterValueById("ParamEyeLOpen", eye_open * random.uniform(0.98, 1.0))
-                win.model.SetParameterValueById("ParamEyeROpen", eye_open * random.uniform(0.98, 1.0))
-
-    def setBlinkEnabled(win, enabled: bool):
-        """Blink Switch"""
-        win.blink_enabled = enabled
-
-        if enabled:
-            if win.callbacks_log:
-                print("Автоморгание включено")
-        else:
-            if win.callbacks_log:
-                print("Автоморгание отключено")
-            # Reset Blink Params
-            win.isBlinking = False
-            win.blinkProgress = 0.0
-            # self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
-            # self.model.SetParameterValueById("ParamEyeROpen", 1.0)
 
     def savePng(win, fName):
         data = gl.glReadPixels(0, 0, win.width(), win.height(), gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)
@@ -227,12 +182,14 @@ class Functions:
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
+            win.animations.set_sleep_state(True)
             win.condition = "Sleep"
             win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
+            win.animations.set_sleep_state(False)
             win.wake_up_func()
             win.model.ResetExpressions()
             win.model.SetExpression("Star")
@@ -242,7 +199,6 @@ class Functions:
             win.idle_anim = True
             win.wake_up = True
             win.sleep = False
-            win.setBlinkEnabled(True)
             win.text = win.lang['Talk']['WakeUp']
             win.kaomoji = "(O_~)/"
             print(win.name + ":", "I'm WakeUp (O_~)/")
@@ -265,7 +221,6 @@ class Functions:
         win.wake_up = False
         win.sleepMove = False
         win.sleep = True
-        win.setBlinkEnabled(False)
         win.model.SetExpression("ClosedEyes")
         if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
             win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)

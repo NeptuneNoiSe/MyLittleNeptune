@@ -57,7 +57,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Timer Diagnostic Log:
         self.timer_log = False
         # Callbacks Log:
-        self.callbacks_log = True
+        self.callbacks_log = False
 
         # Language:
         self.language = self.config.get('Main', 'language')
@@ -75,7 +75,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.tracking_mouse = True
 
         # Sleep Animation Time Scale
-        self.time_scale = 19
+        self.time_scale = 1
 
         # Init Vars
         self.w_correction = 0
@@ -130,6 +130,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.reset_expression = True
         # Transition From Live2d LAppModel to Model
         self.model: live2d.Model | None = None
+        self.anim_manager = None
         self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -241,8 +242,15 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.loadResource()
         self.lastUpdateTime = time.time()
 
-    def anim_init(self):
-        self.animations = AnimationsManager(self.model)
+    def initializeAnimations(self):
+        self.external_anim_init()
+        self.anim_manager = AnimationsManager(self.model)
+        self.change_character(self.character_name)
+        self.anim_manager.set_logging(self.callbacks_log)
+
+    def change_character(self, name: str):
+        """Set character name in Animation Manager """
+        self.anim_manager.character_name = name
 
     def initializeGL(self) -> None:
         self.makeCurrent()
@@ -383,11 +391,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
-        self.external_anim_init()
-        # fps
-        self.startTimer(int(1000 / 60))
-        self.animations = AnimationsManager(self.model)
-        self.animations.set_logging(self.callbacks_log)
+        self.startTimer(int(1000 / 60)) # FPS Set
+        self.initializeAnimations()
         self.timers_init()
         self.talkWidgetInit()
         self.talk_function()
@@ -396,7 +401,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.last_update_time = time.time()
         self.model.SetExpression("Smile")
         self.fadeoutTimer.start(7000)
-        #self.animations.autoBlink()
 
     def resizeGL(self, w: int, h: int) -> None:
         if self.model:
@@ -463,7 +467,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.setWindowIcon(QIcon(os.path.join(
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
-        self.animations.autoBlink(self.last_update_time) if self.config.getboolean('Settings', 'auto_blink') else None
+        self.anim_manager.autoBlink(self.last_update_time) if self.config.getboolean('Settings', 'auto_blink') else None
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
@@ -475,7 +479,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         if self.idle_switch and self.idle_anim:
             current_time = time.time()
-            self.animations.update_idle(current_time)
+            self.anim_manager.update_idle(current_time)
 
         self.transformMovieTriggers()
 
@@ -515,7 +519,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.on_mouse_anim = False
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
-                self.animations.play_animation(
+                self.anim_manager.play_animation(
                     model=self.model,
                     anim_type='RandomMotion',
                     group_or_id="OnMouse",
@@ -570,9 +574,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             if self.isInLA:
-                hit_part_ids = self.model.HitPart(x, y, True)
-                hit_parts = {part for part in hit_part_ids if part} if hit_part_ids else set()
-                print("hit parts:", hit_parts)
                 self.clickInLA = False
                 self.tap_body_anim = True
                 if (not self.sleep
@@ -593,7 +594,10 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                     self.textUpdate()
                     self.t_count = 1
                 if self.tap_body_switch and self.sleepMove == False:
-                    self.animations.handle_hit(hit_part_ids)
+                    hit_part_ids = self.model.HitPart(x, y, True)
+                    hit_parts = {part for part in hit_part_ids if part} if hit_part_ids else set()
+                    self.anim_manager.handle_hit(hit_parts)
+                    # print("hit parts:", hit_parts)
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
                         self.model.ResetExpressions()

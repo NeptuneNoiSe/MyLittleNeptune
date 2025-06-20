@@ -378,7 +378,6 @@ class Models:
 
         # ReInitialize Model
         win.model: live2d.Model | None = None
-        win.animations = None
         win.model = live2d.Model()
         if win.character_name == "Neptune":
             win.model.LoadModelJson(os.path.join(
@@ -432,10 +431,11 @@ class Models:
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
                       win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
-        # live2d Initial Params
+
         live2d.clearBuffer()
         win.model.CreateRenderer(2)# maskBufferCount=2
-        win.anim_init()
+        win.initializeAnimations()
+
         try:
             win.sleepLabel.close()
         except AttributeError:

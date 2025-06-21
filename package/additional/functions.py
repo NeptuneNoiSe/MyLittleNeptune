@@ -41,10 +41,16 @@ class Functions:
                                        "v3/external_motions/touch_body.motion3.json")
         touch_body2_path = os.path.join(resources.RESOURCES_DIRECTORY,
                                         "v3/external_motions/touch_body2.motion3.json")
+        touch_body3_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                        "v3/external_motions/touch_body3.motion3.json")
         touch_bra_path = os.path.join(resources.RESOURCES_DIRECTORY,
                                       "v3/external_motions/touch_bra.motion3.json")
+        touch_bra1_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                      "v3/external_motions/touch_bra1.motion3.json")
         touch_bra2_path = os.path.join(resources.RESOURCES_DIRECTORY,
                                        "v3/external_motions/touch_bra2.motion3.json")
+        touch_bra3_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_bra3.motion3.json")
         touch_head_path = os.path.join(resources.RESOURCES_DIRECTORY,
                                        "v3/external_motions/touch_head.motion3.json")
         touch_head2_path = os.path.join(resources.RESOURCES_DIRECTORY,
@@ -63,25 +69,34 @@ class Functions:
                                       "v3/external_motions/touch_hr2.motion3.json")
         touch_leg_path = os.path.join(resources.RESOURCES_DIRECTORY,
                                       "v3/external_motions/touch_leg.motion3.json")
+        touch_leg1_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_leg1.motion3.json")
         touch_leg2_path = os.path.join(resources.RESOURCES_DIRECTORY,
-                                       "v3/external_motions/touch_leg2.motion3.json")
+                                      "v3/external_motions/touch_leg2.motion3.json")
+        touch_leg3_path = os.path.join(resources.RESOURCES_DIRECTORY,
+                                       "v3/external_motions/touch_leg3.motion3.json")
 
         win.model.LoadExtraMotion("Extra", 0, drag_down_path)
         win.model.LoadExtraMotion("Extra", 1, side_touch_head_path)
         win.model.LoadExtraMotion("Extra", 2, touch_body_path)
         win.model.LoadExtraMotion("Extra", 3, touch_body2_path)
-        win.model.LoadExtraMotion("Extra", 4, touch_bra_path)
-        win.model.LoadExtraMotion("Extra", 5, touch_bra2_path)
-        win.model.LoadExtraMotion("Extra", 6, touch_head_path)
-        win.model.LoadExtraMotion("Extra", 7, touch_head2_path)
-        win.model.LoadExtraMotion("Extra", 8, touch_hl_path)
-        win.model.LoadExtraMotion("Extra", 9, touch_hl1_path)
-        win.model.LoadExtraMotion("Extra", 10, touch_hl2_path)
-        win.model.LoadExtraMotion("Extra", 11, touch_hr_path)
-        win.model.LoadExtraMotion("Extra", 12, touch_hr1_path)
-        win.model.LoadExtraMotion("Extra", 13, touch_hr2_path)
-        win.model.LoadExtraMotion("Extra", 14, touch_leg_path)
-        win.model.LoadExtraMotion("Extra", 15, touch_leg2_path)
+        win.model.LoadExtraMotion("Extra", 4, touch_body3_path)
+        win.model.LoadExtraMotion("Extra", 5, touch_bra_path)
+        win.model.LoadExtraMotion("Extra", 6, touch_bra1_path)
+        win.model.LoadExtraMotion("Extra", 7, touch_bra2_path)
+        win.model.LoadExtraMotion("Extra", 8, touch_bra3_path)
+        win.model.LoadExtraMotion("Extra", 9, touch_head_path)
+        win.model.LoadExtraMotion("Extra", 10, touch_head2_path)
+        win.model.LoadExtraMotion("Extra", 11, touch_hl_path)
+        win.model.LoadExtraMotion("Extra", 12, touch_hl1_path)
+        win.model.LoadExtraMotion("Extra", 13, touch_hl2_path)
+        win.model.LoadExtraMotion("Extra", 14, touch_hr_path)
+        win.model.LoadExtraMotion("Extra", 15, touch_hr1_path)
+        win.model.LoadExtraMotion("Extra", 16, touch_hr2_path)
+        win.model.LoadExtraMotion("Extra", 17, touch_leg_path)
+        win.model.LoadExtraMotion("Extra", 18, touch_leg1_path)
+        win.model.LoadExtraMotion("Extra", 19, touch_leg2_path)
+        win.model.LoadExtraMotion("Extra", 20, touch_leg3_path)
 
     def setLanguage(win):
         if win.language == "English":
@@ -182,7 +197,7 @@ class Functions:
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
-            win.animations.set_sleep_state(True)
+            win.anim_manager.set_sleep_state(True)
             win.condition = "Sleep"
             win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"

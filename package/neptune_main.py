@@ -431,12 +431,19 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                     # print(f"Motion update failed: {e}")
                     motion_updated = False
 
-            # Save Params
-            self.model.SaveParameters()
+
+
+            auto_blink = self.config.getboolean('Settings', 'auto_blink')
+            self.anim_manager.set_blink_enabled(auto_blink)
+            self.anim_manager.update_blink(delta_secs) if auto_blink else None
 
             # Secondary Updates
-            if not motion_updated:
-                self.model.UpdateBlink(delta_secs)
+            #if not motion_updated:
+                #self.anim_manager.update_blink(delta_secs) if auto_blink else None
+                #self.model.UpdateBlink(delta_secs)
+
+            # Save Params
+            self.model.SaveParameters()
 
             self.model.UpdateBreath(delta_secs) if self.config.getboolean('Settings', 'auto_breath') else None
 
@@ -445,10 +452,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.model.UpdatePhysics(delta_secs)
             self.model.UpdatePose(delta_secs)
 
+
+
         except Exception as e:
             print(f"Model update crashed: {e}")
             # Try Reload Model
-            # self.model.ResetPhysics()
             self.model.ResetExpressions()
         finally:
             self.update()
@@ -467,7 +475,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.setWindowIcon(QIcon(os.path.join(
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
-        self.anim_manager.autoBlink(self.last_update_time) if self.config.getboolean('Settings', 'auto_blink') else None
+        # self.anim_manager.autoBlink(self.last_update_time) if self.config.getboolean('Settings', 'auto_blink') else None
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 

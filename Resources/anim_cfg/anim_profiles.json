@@ -17,25 +17,25 @@
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HANDS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10, 11, 12, 13],
+                "options": [11, 12, 13, 14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -81,13 +81,13 @@
             "LEFT HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "LEFT HAIR ALT": {
@@ -105,55 +105,55 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BRA": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEGS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [14,15],
+                "options": [17, 18, 19, 20],
                 "priority": 3
             },
             "default": {
@@ -184,43 +184,43 @@
             "LEFT HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HANDS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10, 11, 12, 13],
+                "options": [11, 12, 13, 14, 15, 16],
                 "priority": 3
             },
             "default": {
@@ -272,43 +272,43 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BRA": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEGS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [14,15],
+                "options": [17, 18, 19, 20],
                 "priority": 3
             },
             "default": {
@@ -379,73 +379,73 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BRA": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "BRA ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "BODY ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "RIGHT HAND ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT HAND ALT2": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND ALT2": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -508,73 +508,73 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEGS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [14,15],
+                "options": [17, 18, 19, 20],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -638,73 +638,73 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BRA": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "BODY ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -714,7 +714,7 @@
             }
         }
     },
-        "Green Heart": {
+    "Green Heart": {
         "hit_zones": {
             "HAIR": ["Part31"],
             "SIDE HAIR": ["Part55"],
@@ -771,49 +771,49 @@
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEGS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [14,15],
+                "options": [17, 18, 19, 20],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -823,7 +823,7 @@
             }
         }
     },
-        "NepGear": {
+    "NepGear": {
         "hit_zones": {
             "BUTTONS": ["Part16"],
             "HAIR": ["Part18"],
@@ -832,8 +832,7 @@
             "BODY": ["Part50"],
             "LEFT HAND": ["hidariude_orosi"],
             "RIGHT HAND": ["migiude_Normal"],
-            "RIGHT HAND ALT": ["migi_jyouwan_Normal"],
-            "LEGS": ["Part13"]
+            "RIGHT HAND ALT": ["migi_jyouwan_Normal"]
         },
         "animations": {
             "BUTTONS": {
@@ -845,37 +844,37 @@
             "HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BODY": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "default": {
@@ -885,12 +884,11 @@
             }
         }
     },
-        "Purple Sister": {
+    "Purple Sister": {
         "hit_zones": {
             "LEFT HAIR": ["ArtMesh150_Skinning"],
             "LEFT EYE": ["Part16"],
             "RIGHT EYE": ["Part15"]
-
         },
         "animations": {
             "LEFT HAIR": {
@@ -902,13 +900,13 @@
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "default": {
@@ -918,7 +916,7 @@
             }
         }
     },
-     "Uni": {
+    "Uni": {
         "hit_zones": {
             "LEFT HAIR": ["ArtMesh339_Skinning"],
             "RIGHT HAIR": ["ArtMesh338_Skinning"],
@@ -948,55 +946,55 @@
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "RIGHT HAND ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "default": {
@@ -1028,49 +1026,49 @@
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [14,15],
+                "options": [17, 18, 19, 20],
                 "priority": 3
             },
             "default": {
@@ -1106,73 +1104,73 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BRA": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "BODY ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "BODY ALT2": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "SKIRT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -1218,55 +1216,55 @@
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -1306,103 +1304,103 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "BRA": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [4, 5],
+                "options": [5, 6, 7, 8],
                 "priority": 3
             },
             "BODY ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "BODY ALT2": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "BODY ALT3": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "SKIRT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [2, 3],
+                "options": [2, 3, 4],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "RIGHT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [11, 12, 13],
+                "options": [14, 15, 16],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {
@@ -1443,61 +1441,61 @@
             "EYES": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "RIGHT EYE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "NOSE": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "CHEEKS": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "MOUTH": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "HEAD ALT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [6, 7],
+                "options": [9, 10],
                 "priority": 3
             },
             "LEFT HAND": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [8, 9, 10],
+                "options": [11, 12, 13],
                 "priority": 3
             },
             "LEFT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": [17, 18],
                 "priority": 3
             },
             "RIGHT LEG": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": [19, 20],
                 "priority": 3
             },
             "default": {

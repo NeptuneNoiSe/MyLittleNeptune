@@ -318,7 +318,7 @@
             }
         }
     },
-        "Blanc": {
+    "Blanc": {
         "hit_zones": {
             "HAT": ["Part5"],
             "SIDE HAIR": ["Part32"],
@@ -584,7 +584,7 @@
             }
         }
     },
-        "Vert": {
+    "Vert": {
         "hit_zones": {
             "HAIR": ["Part19"],
             "SIDE HAIR": ["Part49"],
@@ -626,13 +626,13 @@
             "LEFT HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 14,
+                "options": 1,
                 "priority": 3
             },
             "RIGHT HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": 15,
+                "options": 1,
                 "priority": 3
             },
             "EYES": {
@@ -1100,7 +1100,7 @@
             "HAT": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [1],
+                "options": 1,
                 "priority": 3
             },
             "EYES": {
@@ -1300,7 +1300,7 @@
             "HAIR": {
                 "anim_type": "Motion",
                 "group": "Extra",
-                "options": [1],
+                "options": 1,
                 "priority": 3
             },
             "EYES": {

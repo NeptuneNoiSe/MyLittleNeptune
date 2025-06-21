@@ -189,7 +189,7 @@ class Functions:
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
-            win.animations.set_sleep_state(False)
+            win.anim_manager.set_sleep_state(False)
             win.wake_up_func()
             win.model.ResetExpressions()
             win.model.SetExpression("Star")

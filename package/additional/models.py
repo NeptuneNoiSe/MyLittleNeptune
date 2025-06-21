@@ -13,7 +13,7 @@ class Models:
     def transform_initialize(win):
         win.input_lock = True
         if not win.goodness_form:
-            win.animations.play_animation(
+            win.anim_manager.play_animation(
                 model=win.model,
                 anim_type='Motion',
                 group_or_id="Unique",  # Группа (str)

@@ -2,9 +2,10 @@ import os
 from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
 from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QPixmap, QMovie
+from PySide6.QtGui import QPixmap, QMovie, QCursor
 
 from package import resources
+from package.additional.animations import AnimationsManager
 from package.additional.config_module import *
 import live2d.v3 as live2d
 import OpenGL.GL as gl
@@ -15,6 +16,46 @@ import math
 from PIL import Image
 import resources
 import json
+
+
+class MouseTracker:
+    def __init__(self, widget):
+        self.widget = widget
+        self.last_position = QCursor.pos()
+        self.idle_timer = QTimer()
+        self.idle_timer.setInterval(5000)  # 5 seconds of inactivity
+        self.idle_timer.setSingleShot(True)
+        self.mouse_move = False
+        self.tracking_mouse = False
+        self._sleep_mode = False  # Main sleep flag
+
+    def get_local_coords(self):
+        """Calculates the local coordinates relative to the widget"""
+        global_pos = QCursor.pos()
+        return self.widget.mapFromGlobal(global_pos)
+
+    def update_state(self):
+        """Updates the mouse tracking status"""
+        current_position = QCursor.pos()
+
+        if current_position != self.last_position:
+            self.last_position = current_position
+            self.mouse_move = True
+            self.idle_timer.start()  # Restarting the idle timer
+            return True
+        else:
+            self.mouse_move = False
+            return False
+
+    def should_track_mouse(self):
+        """Determines whether to track the mouse (depends only on sleep_mode)"""
+        return not self._sleep_mode  # If you are not in sleep mode, we track it.
+
+    def set_sleep_state(self, is_sleeping: bool):
+        """Sleep state Management"""
+        self._sleep_mode = is_sleeping
+        if is_sleeping:
+            self.idle_timer.stop()  # Stopping the idle timer
 
 class Functions:
     def loadResource(win):
@@ -140,6 +181,16 @@ class Functions:
         img = Image.fromarray(new_data, 'RGBA')
         img.save(fName)
 
+    def initializeAnimations(win):
+        win.external_anim_init()
+        win.anim_manager = AnimationsManager(win.model)
+        win.change_character(win.character_name)
+        win.anim_manager.set_logging(win.callbacks_log)
+
+    def change_character(win, name: str):
+        """Set character name in Animation Manager """
+        win.anim_manager.character_name = name
+
     def add_random_expression(win, drop_last=False):
         if drop_last:
             win.model.RemoveExpression(win.lastExpressionId)
@@ -153,14 +204,32 @@ class Functions:
         win.fadeoutTimer.start(7000)
         return expId
 
-    def mouse_tracking(win):
+    def update_mouse_tracking(win):
+        """The main tracking update method"""
+        if win.mouse_tracker.update_state():
+            if (win.model is not None
+                    and win.mouse_tracker.should_track_mouse()
+                    and win.tracking_mouse_switch
+            ):
+                local_pos = win.mouse_tracker.get_local_coords()
+                if win.mouse_tracking_log:
+                    print("Mouse moving")
+                win.model.Drag(local_pos.x(), local_pos.y())
+
+    def update_idle_counter(win):
+        """Update the idle counter"""
+        if not win.mouse_tracker.mouse_move:
+            pass
+
+    def handle_mouse_idle(win):
+        """Reset head Position"""
         win.tracking_mouse = False
         if win.posX <= 0 or win.posY <= 0:
-            win.posX = 0 + win.frmX * 0.15
-            win.posY = 0 + win.h_resize * 0.25
+            win.posX = 0 + win.frmX * 0.25
+            win.posY = 0 + win.h_resize * 0.5
 
         if win.mouse_tracking_log:
-            print("Mouse is steady", win.tracking_mouse, win.posX, win.posY)
+            print("Mouse is steady")
 
         win.model.Drag(win.posX, win.posY)
 
@@ -198,6 +267,7 @@ class Functions:
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
             win.anim_manager.set_sleep_state(True)
+            win.mouse_tracker.set_sleep_state(True)
             win.condition = "Sleep"
             win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
@@ -205,6 +275,7 @@ class Functions:
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
             win.anim_manager.set_sleep_state(False)
+            win.mouse_tracker.set_sleep_state(False)
             win.wake_up_func()
             win.model.ResetExpressions()
             win.model.SetExpression("Star")
@@ -264,11 +335,17 @@ class Functions:
         win.timer.start(int(6000 / win.time_scale))
 
         # Mouse tracking timer
-        win.mouse_t = QTimer()
-        win.mouse_t.timeout.connect(win.mouse_tracking)
-        if not win.mouse_move:
-            win.tracking_mouse = False
-            win.mouse_t.start(10000)
+        win.mouse_tracker.idle_timer.timeout.connect(win.handle_mouse_idle)
+
+        #Main tracking update timer
+        win.update_timer = QTimer()
+        win.update_timer.timeout.connect(win.update_mouse_tracking)
+        win.update_timer.start(10)  # Update every 10 ms
+
+        # Update idle counter timer
+        win.idle_counter_timer = QTimer()
+        win.idle_counter_timer.timeout.connect(win.update_idle_counter)
+        win.idle_counter_timer.start(10)  # Update every 10 ms
 
         # Input release timer
         win.mouse_input_timer = QTimer()

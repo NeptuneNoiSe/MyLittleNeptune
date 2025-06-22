@@ -4,7 +4,7 @@ import time
 
 import OpenGL.GL as gl
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
+from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize, QTimer
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
@@ -21,7 +21,7 @@ from additional.config_module import *
 from additional.models import Models
 from additional.on_actions import OnActions
 from additional.functions import Functions
-from additional.animations import AnimationsManager
+from additional.functions import MouseTracker
 
 class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
@@ -146,6 +146,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.lastExpressionId = ""
         self.activeExpressions = []
 
+        # Mouse Tracker Init
+        self.mouse_tracker = MouseTracker(self)
+
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
         self.config.set('Main', 'screen_height', str(self.sc_height_size))
@@ -241,16 +244,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         self.loadResource()
         self.lastUpdateTime = time.time()
-
-    def initializeAnimations(self):
-        self.external_anim_init()
-        self.anim_manager = AnimationsManager(self.model)
-        self.change_character(self.character_name)
-        self.anim_manager.set_logging(self.callbacks_log)
-
-    def change_character(self, name: str):
-        """Set character name in Animation Manager """
-        self.anim_manager.character_name = name
 
     def initializeGL(self) -> None:
         self.makeCurrent()
@@ -492,31 +485,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.transformMovieTriggers()
 
         self.changeTalkWidgetSide()
-
-        # Mouse Triggers
-        count = 0
-        while True:
-            saved_position = QCursor.pos().y()
-            if count > 20 * 20:
-                break
-            current_position = QCursor.pos().y()
-            if saved_position != current_position:
-                if self.tracking_mouse_switch:
-                    if self.mouse_tracking_log:
-                        print("Mouse is moving", self.tracking_mouse, local_x, local_y)
-                    if self.t_count >= self.sleep_v:
-                        self.tracking_mouse = False
-                        self.mouse_move = False
-                    else:
-                        self.tracking_mouse = True
-                        self.mouse_move = True
-            else:
-                self.mouse_move = False
-            count += 1
-
-        # Tracking the mouse position
-        if self.tracking_mouse:
-            self.model.Drag(local_x, local_y)
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True

@@ -1,6 +1,6 @@
 import os
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve, QPointF
 from PySide6.QtWidgets import QLabel
 from PySide6.QtGui import QPixmap, QMovie, QCursor
 
@@ -22,30 +22,87 @@ class MouseTracker:
     def __init__(self, widget):
         self.widget = widget
         self.last_position = QCursor.pos()
+        self.mouse_move = False
+        self.processing_time = 0
+        self._sleep_mode = False  # Main sleep flag
+
+        # Idle Timer
         self.idle_timer = QTimer()
         self.idle_timer.setInterval(5000)  # 5 seconds of inactivity
         self.idle_timer.setSingleShot(True)
-        self.mouse_move = False
-        self.tracking_mouse = False
-        self._sleep_mode = False  # Main sleep flag
+
+        # Reset Head Position Timer
+        self.animation = QPropertyAnimation()
+        self.animation.setDuration(2500)  # Animation Duration
+        self.animation.setEasingCurve(QEasingCurve.OutQuad)
+        self.is_animating = False
+
+        self.buffer_size = 10
+        self.position_buffer = []
+        self.smoothed_position = QPointF(0, 0)
+
+        # Buffer Init
+        for _ in range(self.buffer_size):
+            self.position_buffer.append(QPointF(0, 0))
 
     def get_local_coords(self):
         """Calculates the local coordinates relative to the widget"""
         global_pos = QCursor.pos()
         return self.widget.mapFromGlobal(global_pos)
 
+    def get_smoothed_coords(self):
+        """Returns smoothed coordinates using double buffering"""
+        start = time.perf_counter()
+        # Get the current "raw" coordinates
+        current_pos = self.widget.mapFromGlobal(QCursor.pos())
+
+        # Updating the ring buffer
+        self.position_buffer.pop(0)
+        self.position_buffer.append(current_pos)
+
+        # Calculate the avg value
+        avg_x = sum(p.x() for p in self.position_buffer) / self.buffer_size
+        avg_y = sum(p.y() for p in self.position_buffer) / self.buffer_size
+
+        # Double buffering to eliminate surges
+        self.smoothed_position = QPointF(
+            (self.smoothed_position.x() * 0.3 + avg_x * 0.7),
+            (self.smoothed_position.y() * 0.3 + avg_y * 0.7)
+        )
+
+        self.processing_time = (time.perf_counter() - start) * 1000
+        # print(f"Processing: {self.processing_time:.3f}ms")
+
+        return self.smoothed_position
+
     def update_state(self):
-        """Updates the mouse tracking status"""
+        """Updates the mouse state and returns True if there was movement"""
+        smooth_pos = self.get_smoothed_coords()
         current_position = QCursor.pos()
 
         if current_position != self.last_position:
             self.last_position = current_position
             self.mouse_move = True
-            self.idle_timer.start()  # Restarting the idle timer
+            self.idle_timer.start()
             return True
         else:
             self.mouse_move = False
             return False
+        return smooth_pos
+
+    def start_reset_animation(self, target_x, target_y, callback):
+        """Start reset position animation"""
+        if self.is_animating:
+            self.animation.stop()
+
+        self.is_animating = True
+        self.animation.setStartValue(QPointF(self.last_position.x(), self.last_position.y()))
+        self.animation.setEndValue(QPointF(target_x, target_y))
+        self.animation.valueChanged.connect(callback)
+        self.animation.finished.connect(lambda: setattr(self, 'is_animating', False))
+
+        if not self._sleep_mode:
+            self.animation.start()
 
     def should_track_mouse(self):
         """Determines whether to track the mouse (depends only on sleep_mode)"""
@@ -204,34 +261,37 @@ class Functions:
         win.fadeoutTimer.start(7000)
         return expId
 
-    def update_mouse_tracking(win):
-        """The main tracking update method"""
-        if win.mouse_tracker.update_state():
-            if (win.model is not None
-                    and win.mouse_tracker.should_track_mouse()
-                    and win.tracking_mouse_switch
-            ):
-                local_pos = win.mouse_tracker.get_local_coords()
-                if win.mouse_tracking_log:
-                    print("Mouse moving")
-                win.model.Drag(local_pos.x(), local_pos.y())
-
     def update_idle_counter(win):
         """Update the idle counter"""
         if not win.mouse_tracker.mouse_move:
             pass
 
+    def update_mouse_tracking(win):
+        """Main mouse tracking update method"""
+        if win.mouse_tracker.update_state():
+            if (win.model is not None
+                    and not win.mouse_tracker.is_animating
+                    and win.mouse_tracker.should_track_mouse()
+                    and win.tracking_mouse_switch):
+                smooth_pos = win.mouse_tracker.get_smoothed_coords()
+                if win.model:
+                    win.model.Drag(smooth_pos.x(), smooth_pos.y())
+
     def handle_mouse_idle(win):
-        """Reset head Position"""
-        win.tracking_mouse = False
-        if win.posX <= 0 or win.posY <= 0:
-            win.posX = 0 + win.frmX * 0.25
-            win.posY = 0 + win.h_resize * 0.5
+        """Mouse inactivity handler"""
+        if win.mouse_tracker.is_animating:
+            return
 
-        if win.mouse_tracking_log:
-            print("Mouse is steady")
+        target_x = 0 - win.frmX * -0.25
+        target_y = 0 - win.h_resize * -0.5
 
-        win.model.Drag(win.posX, win.posY)
+        def update_position(pos):
+            win.posX = pos.x()
+            win.posY = pos.y()
+            if hasattr(win, 'model') and win.model is not None:
+                win.model.Drag(win.posX, win.posY)
+
+        win.mouse_tracker.start_reset_animation(target_x, target_y, update_position)
 
     def transparent_input(win):
         win.setWindowFlags(win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput)

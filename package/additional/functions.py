@@ -111,7 +111,11 @@ class MouseTracker:
         """Sleep state Management"""
         self._sleep_mode = is_sleeping
         if is_sleeping:
+            print("sleep")
             self.idle_timer.stop()  # Stopping the idle timer
+        else:
+            self.idle_timer.start()
+            print("wake up")
 
 class Functions:
     def loadResource(win):
@@ -332,15 +336,19 @@ class Functions:
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
+            if win.tracking_mouse_switch:
+                win.handle_mouse_idle()
+                win.mouse_tracker.set_sleep_state(True)
+            # win.tracking_mouse = False
             win.condition = "Sleep"
             win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
-            win.wake_up_func()
+            win.model.ResetAllParameters()
+            # win.wake_up_func()
             win.anim_manager.set_sleep_state(False)
-            win.mouse_tracker.set_sleep_state(False)
             win.model.ResetExpressions()
             win.model.SetExpression("Star")
             win.model.SetExpression("Serious")
@@ -349,43 +357,49 @@ class Functions:
             win.idle_anim = True
             win.wake_up = True
             win.sleep = False
+            if win.tracking_mouse_switch:
+                win.tracking_mouse = True
+                win.mouse_tracker.set_sleep_state(False)
+                #win.mouse_tracker.mouse_move = True
             win.text = win.lang['Talk']['WakeUp']
             win.kaomoji = "(O_~)/"
             print(win.name + ":", "I'm WakeUp (O_~)/")
             win.textUpdate()
 
     def sleep_func(win):
-        win.setSleepParams()
-        win.model.Rotate(win.modelRotate)
-        win.sleepLabel = QLabel(win)
-        win.cloud = os.path.join(
-            resources.RESOURCES_DIRECTORY, "images/cloud.webp")
-        win.cloudPixmap = QPixmap(win.cloud).scaled(QSize(win.w_resize, win.h_resize),
-                                                    Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        win.sleepLabel.setPixmap(win.cloudPixmap)
-        win.sleepLabel.move(0, win.sleepMoveY * win.a_scale * win.models_scale)
-        win.sleepLabel.show()
+        # win.setSleepParams()
+        # Model is not rotate now
+        # win.model.Rotate(win.modelRotate)
+        # win.sleepLabel = QLabel(win)
+        # win.cloud = os.path.join(
+        #    resources.RESOURCES_DIRECTORY, "images/cloud.webp")
+        # win.cloudPixmap = QPixmap(win.cloud).scaled(QSize(win.w_resize, win.h_resize),
+        #                                            Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        # win.sleepLabel.setPixmap(win.cloudPixmap)
+        # win.sleepLabel.move(0, win.sleepMoveY * win.a_scale * win.models_scale)
+        # win.sleepLabel.show()
+        win.anim_manager.set_sleep_state(True)
         if win.tracking_mouse_switch:
             win.tracking_mouse = False
         win.idle_anim = False
         win.wake_up = False
-        win.sleepMove = False
+        # win.sleepMove = False
         win.sleep = True
-        win.anim_manager.set_sleep_state(True)
-        win.mouse_tracker.set_sleep_state(True)
+
         win.model.SetExpression("ClosedEyes")
-        if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
-            win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)
-            win.sleepMove = True
-            win.sleepSide = "Right"
-        elif win.x() <= 0 + win.width() or win.x() <= win.SrcSize.width() - win.vSize.width() + win.width():
-            win.move(win.x() + win.w_resize / 4, win.y() + win.h_resize / 4)
-            win.sleepMove = True
-            win.sleepSide = "Left"
+        # if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
+        #    win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)
+        #    win.sleepMove = True
+        #    win.sleepSide = "Right"
+        # elif win.x() <= 0 + win.width() or win.x() <= win.SrcSize.width() - win.vSize.width() + win.width():
+        #    win.move(win.x() + win.w_resize / 4, win.y() + win.h_resize / 4)
+        #    win.sleepMove = True
+        #    win.sleepSide = "Left"
 
     def wake_up_func(win):
+        pass
+        # Legacy Function ( may be removed )
         win.sleepLabel.close()
-        win.model.ResetAllParameters()
         win.model.Rotate(0)
         if win.sleepMove and win.sleepSide == "Right":
             win.move(win.x() + win.w_resize / 3.5, win.y() - win.h_resize / 4)
@@ -442,7 +456,8 @@ class Functions:
         win.fadeoutTimer.timeout.connect(win.resetExp)
 
     def takingSleep(win):
-        win.sleepMove = True
+        # win.sleepMove = True
+
         win.sleepInputTimer.stop()
 
     def resetExp(win):

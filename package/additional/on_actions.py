@@ -247,6 +247,19 @@ class OnActions:
         if win.transform:
             win.model_update()
 
+    def on_action_histoire(win):
+        win.goodness_form = False
+        win.can_transform = False
+        win.talkUpd = False
+        if not win.transform:
+            win.model_move = True
+            win.goodBye()
+        win.character_name = "Histoire"
+        win.name = win.lang['Names']['Histoire']
+        win.models_switch = 16
+        if win.transform:
+            win.model_update()
+
     # Animations Actions
     def on_action_idle_true(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Enable")

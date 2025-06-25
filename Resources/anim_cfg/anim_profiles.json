@@ -1504,5 +1504,171 @@
                 "priority": 3
             }
         }
+    },
+    "Histoire": {
+        "hit_zones": {
+            "HAT": ["Part85"],
+            "HAIR": ["Part76"],
+            "SIDE HAIR": ["Part92"],
+            "LEFT HAIR": ["ArtMesh289_Skinning2"],
+            "RIGHT HAIR": ["ArtMesh63_Skinning3"],
+            "LEFT HAIR ALT": ["ArtMesh335_Skinning"],
+            "RIGHT HAIR ALT": ["ArtMesh331_Skinning"],
+            "LEFT HAIR ALT2": ["ArtMesh336_Skinning"],
+            "RIGHT HAIR ALT2": ["ArtMesh332_Skinning2"],
+            "LEFT HAIR ALT3": ["ArtMesh337_Skinning"],
+            "RIGHT HAIR ALT3": ["ArtMesh333_Skinning"],
+            "RIGHT HAIR ALT4": ["ArtMesh334_Skinning2"],
+            "LEFT EYE": ["Part77"],
+            "RIGHT EYE": ["Part78"],
+            "CHEEKS": ["Part84"],
+            "MOUTH": ["Part83"],
+            "BODY ALT": ["Part74"],
+            "BODY ALT2": ["Part93"],
+            "LEFT HAND": ["Part91"],
+            "RIGHT HAND": ["Part88"],
+            "LEFT LEG": ["Part90"],
+            "RIGHT LEG": ["Part86"],
+            "BOOK": ["Part94"]
+        },
+        "animations": {
+            "HAT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "LEFT HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "LEFT HAIR ALT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR ALT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "LEFT HAIR ALT2": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR ALT2": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "LEFT HAIR ALT3": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR ALT3": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR ALT4": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "LEFT EYE": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "RIGHT EYE": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "CHEEKS": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "MOUTH": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "BODY ALT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [2, 3, 4],
+                "priority": 3
+            },
+            "BODY ALT2": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [2, 3, 4],
+                "priority": 3
+            },
+            "LEFT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [11, 12, 13],
+                "priority": 3
+            },
+            "RIGHT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [14, 15, 16],
+                "priority": 3
+            },
+            "LEFT LEG": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [17, 18],
+                "priority": 3
+            },
+            "RIGHT LEG": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [19, 20],
+                "priority": 3
+            },
+            "BOOK": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [17, 18, 19, 20],
+                "priority": 3
+            },
+            "default": {
+                "anim_type": "RandomMotion",
+                "group": "TapBody",
+                "priority": 3
+            }
+        }
     }
 }

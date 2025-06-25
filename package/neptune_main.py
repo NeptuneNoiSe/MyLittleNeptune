@@ -380,6 +380,14 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
 
+            elif self.models_switch == 16:
+                self.goodness_form = False
+                self.can_transform = False
+                self.name = self.lang['Names']['Histoire']
+                print(self.name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/Histoire/Histoire.model3.json"))
+
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
@@ -800,6 +808,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "icons/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
         if not self.input_lock:
             action_white_sister_ram.triggered.connect(self.on_action_white_sister_ram)
+        # Histoire
+        action_histoire = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/histoire.ico")), self.lang['NamesActions']['Histoire'])
+        if not self.input_lock:
+            action_histoire.triggered.connect(self.on_action_histoire)
 
         context_menu.addMenu(submenu_character)
 

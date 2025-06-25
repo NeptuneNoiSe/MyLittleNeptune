@@ -26,6 +26,8 @@ class Models:
                 win.model.SetExpression("Smile")
             elif win.character_name == "NepGear":
                 win.model.SetExpression("Star")
+            elif win.character_name == "Histoire":
+                win.model.SetExpression("Star")
             else:
                 win.model.SetExpression("Serious")
         if win.goodness_form:
@@ -174,6 +176,9 @@ class Models:
 
         if win.character_name == "White Sister Ram":
             win.name = win.lang['Names']['WhiteSisterRam']
+
+        if win.character_name == "Histoire":
+            win.name = win.lang['Names']['Histoire']
 
     def model_update(win):
         # Update Params
@@ -353,6 +358,17 @@ class Models:
             win.h_correction = 0
             win.posXR = 75
 
+        if win.character_name == "Histoire":
+            win.character_name = "Histoire"
+            win.name = win.lang['Names']['Histoire']
+            win.models_switch = 16
+            win.t_count = 1
+            win.mx_param = 500
+            win.my_param = 500
+            win.w_correction = 0
+            win.h_correction = 0
+            win.posXR = 15
+
         # Update Text Widget Position
         win.posXL = (win.mx_param / 2) - win.posXR / 2
         win.twmXR = int(win.posXR * win.a_scale * win.models_scale)
@@ -427,6 +443,9 @@ class Models:
         if win.character_name == "White Sister Ram":
             win.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
+        if win.character_name == "Histoire":
+            win.model.LoadModelJson(os.path.join(
+                resources.RESOURCES_DIRECTORY, "v3/Histoire/Histoire.model3.json"))
         win.resizeGL(int(win.w_resize), int(win.h_resize))
         # Save Config
         models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
@@ -443,7 +462,7 @@ class Models:
 
         if win.talkUpd:
             win.talkWidgetUpdate()
-
+    # Legacy Function( May be removed )
     def setSleepParams(win):
         # Main Model Params
         win.modelRotate = -90

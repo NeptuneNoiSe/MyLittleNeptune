@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.13-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.3-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.5.3.4-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.6-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.6.0.1-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -84,6 +84,9 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 <div align="center" style="padding-top: 50px">
     <img src="./docs/model_preview/ram.svg" alt="ram" width="320px" height="320px">
     <img src="./docs/model_preview/white_sister_ram.svg" alt="white_sister_ram" width="330px" height="330px">
+</div>
+<div align="center" style="padding-top: 50px">
+    <img src="./docs/model_preview/histoire.svg" alt="ram" width="300px" height="300px">
 </div>
 
 ## Important to read:

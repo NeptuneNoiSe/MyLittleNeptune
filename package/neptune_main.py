@@ -4,7 +4,7 @@ import time
 
 import OpenGL.GL as gl
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize, QTimer
+from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \

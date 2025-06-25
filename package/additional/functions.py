@@ -17,7 +17,6 @@ from PIL import Image
 import resources
 import json
 
-
 class MouseTracker:
     def __init__(self, widget):
         self.widget = widget
@@ -276,14 +275,21 @@ class Functions:
                 smooth_pos = win.mouse_tracker.get_smoothed_coords()
                 if win.model:
                     win.model.Drag(smooth_pos.x(), smooth_pos.y())
+                    if win.mouse_tracking_log:
+                        log_x = int(smooth_pos.x()) if smooth_pos.x().is_integer() else round(smooth_pos.x())
+                        log_y = int(smooth_pos.y()) if smooth_pos.y().is_integer() else round(smooth_pos.y())
+                        print(f"Mouse moving: X={log_x} Y={log_y}")
 
     def handle_mouse_idle(win):
         """Mouse inactivity handler"""
         if win.mouse_tracker.is_animating:
             return
 
+        if win.mouse_tracking_log:
+            print("Mouse is steady")
+
         target_x = 0 - win.frmX * -0.25
-        target_y = 0 - win.h_resize * -0.5
+        target_y = 0 - win.frmY * -0.5
 
         def update_position(pos):
             win.posX = pos.x()
@@ -326,17 +332,15 @@ class Functions:
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
-            win.anim_manager.set_sleep_state(True)
-            win.mouse_tracker.set_sleep_state(True)
             win.condition = "Sleep"
             win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
             print(win.name + ": " + win.text + win.kaomoji)
             win.textUpdate()
         if win.t_count == win.wake_up_v and win.sleep_switch == True:
+            win.wake_up_func()
             win.anim_manager.set_sleep_state(False)
             win.mouse_tracker.set_sleep_state(False)
-            win.wake_up_func()
             win.model.ResetExpressions()
             win.model.SetExpression("Star")
             win.model.SetExpression("Serious")
@@ -367,6 +371,8 @@ class Functions:
         win.wake_up = False
         win.sleepMove = False
         win.sleep = True
+        win.anim_manager.set_sleep_state(True)
+        win.mouse_tracker.set_sleep_state(True)
         win.model.SetExpression("ClosedEyes")
         if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
             win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)

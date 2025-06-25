@@ -31,70 +31,6 @@ class AnimationsManager:
             'override_blink': True  # A critical flag
         }
 
-    def update_blink(self, delta_time: float):
-        """Main Blink Logic"""
-        if not self._blink_state['enabled']:
-            self._reset_blink_state()
-            return
-
-        # Run new blink logic
-        if not self._blink_state['is_active']:
-            if time.time() - self._blink_state['last_blink'] > self._blink_state['next_delay']:
-                self._start_new_blink()
-
-        # Blink animation
-        if self._blink_state['is_active']:
-            self._update_blink_animation(delta_time)
-
-    def _update_blink_animation(self, delta_time):
-        """Update blink progress"""
-        state = self._blink_state
-        state['progress'] += delta_time * 4.0
-
-        if state['progress'] >= 1.0:
-            self._reset_blink_state()
-        else:
-            # Sinusoidal animation
-            if state['progress'] < 0.4:
-                eye_open = 1.0 - math.sin(state['progress'] * math.pi * 0.25)
-            else:
-                eye_open = math.sin((state['progress'] - 0.4) * math.pi * 0.833)
-
-            # We apply it with a small spread
-            self._set_eye_params(eye_open)
-
-    def _set_eye_params(self, base_value: float):
-        """Save apply eyes parameters"""
-        if self._blink_state['override_blink']:
-            self.model.SetParameterValueById("ParamEyeLOpen",
-                                             base_value * random.uniform(0.98, 1.0))
-            self.model.SetParameterValueById("ParamEyeROpen",
-                                             base_value * random.uniform(0.98, 1.0))
-
-    def _start_new_blink(self):
-        """Initialize new blink"""
-        self._blink_state.update({
-            'is_active': True,
-            'progress': 0.0,
-            'last_blink': time.time(),
-            'next_delay': self._random_blink_delay()
-        })
-
-    def _reset_blink_state(self):
-        """Full Reset State"""
-        self._blink_state.update({
-            'is_active': False,
-            'progress': 0.0
-        })
-        #if not self._blink_state['enabled']:
-        #    self._set_eye_params(1.0)  # Force eyes open
-
-    def set_blink_enabled(self, enabled: bool):
-        """Blink system switch"""
-        self._blink_state['enabled'] = enabled
-        if not enabled:
-            self._reset_blink_state()
-
     @property
     def character_name(self):
         return self._current_character
@@ -119,6 +55,75 @@ class AnimationsManager:
             for char in data.values():
                 char['hit_zones'] = {k: set(v) for k, v in char['hit_zones'].items()}
             return data
+
+    # AutoBlink Function
+    def update_blink(self, delta_time: float):
+        """Main Blink Logic"""
+        if not self._blink_state['enabled']:
+            self._reset_blink_state()
+            return
+
+        # Run new blink logic
+        if not self._blink_state['is_active']:
+            if time.time() - self._blink_state['last_blink'] > self._blink_state['next_delay']:
+                self._start_new_blink()
+
+        # Blink animation
+        if self._blink_state['is_active']:
+            self._update_blink_animation(delta_time)
+
+    def _update_blink_animation(self, delta_time):
+        """Update blink progress"""
+        state = self._blink_state
+        state['progress'] += delta_time * 0.5
+
+        if state['progress'] >= 1.0:
+            self._reset_blink_state()
+        else:
+            # Sinusoidal animation
+            if state['progress'] < 0.4:
+                eye_open = 1.0 - math.sin(state['progress'] * math.pi * 0.25)
+            else:
+                eye_open = math.sin((state['progress'] - 0.4) * math.pi * 0.833)
+
+            # We apply it with a small spread
+            self._set_eye_params(eye_open)
+
+    def _set_eye_params(self, base_value: float):
+        """Save apply eyes parameters"""
+        if self._blink_state['override_blink']:
+            self.model.SetParameterValueById("ParamEyeLOpen",
+                                             base_value * random.uniform(0.95, 1.0))
+            self.model.SetParameterValueById("ParamEyeROpen",
+                                             base_value * random.uniform(0.98, 1.0))
+
+    def _start_new_blink(self):
+        """Initialize new blink"""
+        self._blink_state.update({
+            'is_active': True,
+            'progress': 0.0,
+            'last_blink': time.time(),
+            'next_delay': self._random_blink_delay()
+        })
+
+    def _reset_blink_state(self):
+        """Full Reset State"""
+        self._blink_state.update({
+            'is_active': False,
+            'progress': 0.0
+        })
+        # if not self._blink_state['enabled']:
+        #    self._set_eye_params(1.0)  # Force eyes open
+
+    def set_blink_enabled(self, enabled: bool):
+        """Blink system switch"""
+        self._blink_state['enabled'] = enabled
+        if not enabled:
+            self._reset_blink_state()
+
+    def _random_blink_delay(self):
+        """Generate Random Interval"""
+        return random.uniform(2.0, 5.0) if random.random() < 0.7 else random.uniform(6.0, 10.0)
 
     def play_animation(self,model, anim_type: str, group_or_id, no=None, priority=None,
                        custom_start=None, custom_finish=None):
@@ -170,9 +175,10 @@ class AnimationsManager:
         self.model.ResetAllParameters()
         if group != "Idle":  # If the NON-idle animation has ended
             self._reset_idle_state()
+            self.set_blink_enabled(True)
         if self._log_callbacks:
             print(f"Animation {group} {no} finish - blink on")
-        self.set_blink_enabled(True)
+
         # Additionally: reset the eyes to the open state
         self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
         self.model.SetParameterValueById("ParamEyeROpen", 1.0)
@@ -181,10 +187,6 @@ class AnimationsManager:
     def _random_delay(self):
         """Generate Random Interval"""
         return random.uniform(5.0, 50.0) if random.random() < 0.7 else random.uniform(10.0, 100.0)
-
-    def _random_blink_delay(self):
-        """Generate Random Interval"""
-        return random.uniform(2.0, 5.0) if random.random() < 0.7 else random.uniform(6.0, 10.0)
 
     def update_idle(self, current_time: float) -> bool:
         """Update state idle-animation. Return True, if animation Start"""

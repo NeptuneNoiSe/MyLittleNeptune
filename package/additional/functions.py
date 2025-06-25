@@ -22,57 +22,83 @@ class MouseTracker:
         self.widget = widget
         self.last_position = QCursor.pos()
         self.mouse_move = False
-        self.processing_time = 0
-        self._sleep_mode = False  # Main sleep flag
+        self._sleep_mode = False
 
-        # Idle Timer
-        self.idle_timer = QTimer()
-        self.idle_timer.setInterval(5000)  # 5 seconds of inactivity
-        self.idle_timer.setSingleShot(True)
-
-        # Reset Head Position Timer
-        self.animation = QPropertyAnimation()
-        self.animation.setDuration(2500)  # Animation Duration
-        self.animation.setEasingCurve(QEasingCurve.OutQuad)
-        self.is_animating = False
-
-        self.buffer_size = 10
-        self.position_buffer = []
+        # Adaptive buffer
+        self.adaptive_buffer_size = self._calculate_optimal_buffer()
+        self.position_buffer = [QPointF(0, 0)] * self.adaptive_buffer_size
         self.smoothed_position = QPointF(0, 0)
 
-        # Buffer Init
-        for _ in range(self.buffer_size):
-            self.position_buffer.append(QPointF(0, 0))
+        # Dinamic coef buffer
+        self.smooth_factor = 0.3  # The basic coefficient
+        self.high_perf_threshold = 0.1  # The threshold for powerful PCs
+
+        self.idle_timer = QTimer()
+        self.idle_timer.setInterval(5000)
+        self.idle_timer.setSingleShot(True)
+
+        self.animation = QPropertyAnimation()
+        self.animation.setDuration(2500)
+        self.animation.setEasingCurve(QEasingCurve.OutQuad)
+        self.is_animating = False
 
     def get_local_coords(self):
         """Calculates the local coordinates relative to the widget"""
         global_pos = QCursor.pos()
         return self.widget.mapFromGlobal(global_pos)
 
-    def get_smoothed_coords(self):
-        """Returns smoothed coordinates using double buffering"""
+    def _calculate_optimal_buffer(self):
+        """Automatic buffer size selection based on performance"""
+        test_cycles = 10000
         start = time.perf_counter()
-        # Get the current "raw" coordinates
+
+        for _ in range(test_cycles):
+            QPointF(0, 0).x()
+
+        elapsed = (time.perf_counter() - start) * 1000  # ms
+
+        # The logic of choosing the size
+        if elapsed < 0.5:  # Power PCs
+            return 15
+        elif elapsed < 2.0:  # Medium PCs
+            return 10
+        else:  # Low PCs
+            return 5
+
+    def get_smoothed_coords(self):
         current_pos = self.widget.mapFromGlobal(QCursor.pos())
 
-        # Updating the ring buffer
+        # Update buffer
         self.position_buffer.pop(0)
         self.position_buffer.append(current_pos)
 
-        # Calculate the avg value
-        avg_x = sum(p.x() for p in self.position_buffer) / self.buffer_size
-        avg_y = sum(p.y() for p in self.position_buffer) / self.buffer_size
+        # Adaptive avg
+        avg_x = sum(p.x() for p in self.position_buffer) / self.adaptive_buffer_size
+        avg_y = sum(p.y() for p in self.position_buffer) / self.adaptive_buffer_size
 
-        # Double buffering to eliminate surges
+        # Dynamic smoothing
+        if self._is_high_performance():
+            # for Power PC - Agressive smooting
+            self.smooth_factor = max(0.1, self.smooth_factor - 0.02)
+        else:
+            self.smooth_factor = min(0.4, self.smooth_factor + 0.02)
+
         self.smoothed_position = QPointF(
-            (self.smoothed_position.x() * 0.3 + avg_x * 0.7),
-            (self.smoothed_position.y() * 0.3 + avg_y * 0.7)
+            self.smoothed_position.x() * (1 - self.smooth_factor) + avg_x * self.smooth_factor,
+            self.smoothed_position.y() * (1 - self.smooth_factor) + avg_y * self.smooth_factor
         )
 
-        self.processing_time = (time.perf_counter() - start) * 1000
-        # print(f"Processing: {self.processing_time:.3f}ms")
-
         return self.smoothed_position
+
+    def _is_high_performance(self):
+        """Determines high performance in terms of processing time"""
+        test_cycles = 1000
+        start = time.perf_counter()
+
+        for _ in range(test_cycles):
+            QPointF(0, 0).x()
+
+        return (time.perf_counter() - start) * 1000000 < 500  # мкс
 
     def update_state(self):
         """Updates the mouse state and returns True if there was movement"""
@@ -111,11 +137,10 @@ class MouseTracker:
         """Sleep state Management"""
         self._sleep_mode = is_sleeping
         if is_sleeping:
-            print("sleep")
-            self.idle_timer.stop()  # Stopping the idle timer
+            pass
+            #self.idle_timer.stop()  # Stopping the idle timer
         else:
-            self.idle_timer.start()
-            print("wake up")
+            self.animation.start()
 
 class Functions:
     def loadResource(win):
@@ -267,6 +292,7 @@ class Functions:
     def update_idle_counter(win):
         """Update the idle counter"""
         if not win.mouse_tracker.mouse_move:
+            #win.mouse_tracker.idle_timer.start()
             pass
 
     def update_mouse_tracking(win):
@@ -274,7 +300,7 @@ class Functions:
         if win.mouse_tracker.update_state():
             if (win.model is not None
                     and not win.mouse_tracker.is_animating
-                    and win.mouse_tracker.should_track_mouse()
+                    and win.tracking_mouse
                     and win.tracking_mouse_switch):
                 smooth_pos = win.mouse_tracker.get_smoothed_coords()
                 if win.model:
@@ -337,9 +363,9 @@ class Functions:
             win.textUpdate()
         if win.t_count == win.sleep_v and win.sleep_switch == True:
             if win.tracking_mouse_switch:
+                win.tracking_mouse = False
                 win.handle_mouse_idle()
                 win.mouse_tracker.set_sleep_state(True)
-            # win.tracking_mouse = False
             win.condition = "Sleep"
             win.text = win.lang['Talk']['Sleep']
             win.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
@@ -357,10 +383,8 @@ class Functions:
             win.idle_anim = True
             win.wake_up = True
             win.sleep = False
-            if win.tracking_mouse_switch:
-                win.tracking_mouse = True
-                win.mouse_tracker.set_sleep_state(False)
-                #win.mouse_tracker.mouse_move = True
+            win.mouse_tracker.set_sleep_state(False)
+            win.tracking_mouse = True
             win.text = win.lang['Talk']['WakeUp']
             win.kaomoji = "(O_~)/"
             print(win.name + ":", "I'm WakeUp (O_~)/")
@@ -379,14 +403,11 @@ class Functions:
         # win.sleepLabel.move(0, win.sleepMoveY * win.a_scale * win.models_scale)
         # win.sleepLabel.show()
         win.anim_manager.set_sleep_state(True)
-        if win.tracking_mouse_switch:
-            win.tracking_mouse = False
         win.idle_anim = False
         win.wake_up = False
-        # win.sleepMove = False
         win.sleep = True
-
         win.model.SetExpression("ClosedEyes")
+        # win.sleepMove = False
         # if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
         #    win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)
         #    win.sleepMove = True
@@ -457,7 +478,6 @@ class Functions:
 
     def takingSleep(win):
         # win.sleepMove = True
-
         win.sleepInputTimer.stop()
 
     def resetExp(win):

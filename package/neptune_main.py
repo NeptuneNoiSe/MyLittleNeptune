@@ -1,11 +1,11 @@
 import os
 import argparse
+import time
+
 import OpenGL.GL as gl
-import numpy as np
-from PIL import Image
 from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, Slot
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon
+from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
@@ -18,10 +18,10 @@ import live2d.v3 as live2d
 import resources
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
-from additional.callbacks import *
 from additional.models import Models
 from additional.on_actions import OnActions
 from additional.functions import Functions
+from additional.functions import MouseTracker
 
 class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
@@ -56,6 +56,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.mouse_tracking_log = False
         # Timer Diagnostic Log:
         self.timer_log = False
+        # Callbacks Log:
+        self.callbacks_log = False
 
         # Language:
         self.language = self.config.get('Main', 'language')
@@ -110,6 +112,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.trm_cmy = 5
         self.twmXR = 0
         self.twmXL = 0
+        self.posXR = 0
+        self.posXL = 0
         self.twmY = 0
         self.twsc = 0
         self.talkX = 180
@@ -118,22 +122,36 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.screenSide = "Right"
         self.modelRotate = 0
         self.sleepMoveY = 0
+        self.model_move = False
         self.talk = True
         self.talkUpd = True
         self.placeThis = False
         self.sleepMove = False
-        self.expression = None
-        self.model: live2d.LAppModel | None = None
+        self.reset_expression = True
+        # Transition From Live2d LAppModel to Model
+        self.model: live2d.Model | None = None
+        self.anim_manager = None
         self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
         self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
         self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
         self.vSize = QScreen.availableVirtualGeometry(QApplication.primaryScreen())
+        #live2d Model New Vars
+        self.last_update_time = 0
+        self.offsetX = 0.0
+        self.offsetY = 0.0
+        self.scale = 1.0
+        self.degrees = 0.0
+        self.lastExpressionId = ""
+        self.activeExpressions = []
+
+        # Mouse Tracker Init
+        self.mouse_tracker = MouseTracker(self)
 
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
-        self.config.set('Main', 'screen_height',str(self.sc_height_size))
+        self.config.set('Main', 'screen_height', str(self.sc_height_size))
         if self.models_switch == 0:
             self.config.set('Model', 'x_param', '600')
             self.config.set('Model', 'y_param', '600')
@@ -159,9 +177,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.my_param = self.config.getint('Model', 'y_param')
             self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
             self.h_res = int(self.my_param * self.a_scale * self.models_scale)
-            self.twmXR = int(60 * self.a_scale * self.models_scale)
-            self.twmXL = int(280 * self.a_scale * self.models_scale)
             self.twmY = int(-15 * self.a_scale * self.models_scale)
+            self.posXR = 64
+            self.posXL = (self.mx_param / 2) - self.posXR / 2
+            self.twmXR = int(self.posXR * self.a_scale * self.models_scale)
+            self.twmXL = int(self.posXL * self.a_scale * self.models_scale)
             self.config.set('Model', 'w_resize', str(self.w_res))
             self.config.set('Model', 'h_resize', str(self.h_res))
             self.config.set('Model', 'w_correction', '-70')
@@ -223,11 +243,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
 
         self.loadResource()
+        self.lastUpdateTime = time.time()
 
     def initializeGL(self) -> None:
         self.makeCurrent()
         live2d.glInit()
-        self.model = live2d.LAppModel()
+        self.model = live2d.Model()
         if live2d.LIVE2D_VERSION == 3:
             self.text = self.lang['Talk']['Hello']
             self.kaomoji = "(^~^)/"
@@ -345,72 +366,93 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
             elif self.models_switch == 14:
                 self.goodness_form = False
-                self.can_transform = False
+                self.can_transform = True
                 self.name = self.lang['Names']['Ram']
                 print(self.name + ": " + self.text + self.kaomoji)
                 self.model.LoadModelJson(os.path.join(
                     resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
 
+            elif self.models_switch == 15:
+                self.goodness_form = True
+                self.can_transform = True
+                self.name = self.lang['Names']['WhiteSisterRam']
+                print(self.name + ": " + self.text + self.kaomoji)
+                self.model.LoadModelJson(os.path.join(
+                    resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
+
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
-        # fps
-        self.startTimer(int(1000 / 60))
+        self.startTimer(int(1000 / 60)) # FPS Set
+        self.initializeAnimations()
         self.timers_init()
         self.talkWidgetInit()
         self.talk_function()
         self.setLanguage()
+        self.model.CreateRenderer(2)
+        self.last_update_time = time.time()
+        self.model.SetExpression("Smile")
+        self.fadeoutTimer.start(7000)
 
     def resizeGL(self, w: int, h: int) -> None:
-        # 使模型的参数按窗口大小进行更新
         if self.model:
             self.model.Resize(w, h)
 
     def paintGL(self) -> None:
-        live2d.clearBuffer()
+        if self.model:
+            live2d.clearBuffer()
+            self.model.Draw()
 
-        self.model.Update()
+        if not self.model:
+            return
 
-        self.model.Draw()
+        try:
+            ct = time.time()
+            delta_secs = max(0.0001, ct - self.last_update_time)
+            self.last_update_time = ct
+
+            # Main Params load
+            self.model.LoadParameters()
+
+            # Safe Animation Update
+            motion_updated = False
+            if not self.model.IsMotionFinished():
+                try:
+                    motion_updated = self.model.UpdateMotion(delta_secs)
+                except Exception as e:
+                    # print(f"Motion update failed: {e}")
+                    motion_updated = False
+
+            auto_blink = self.config.getboolean('Settings', 'auto_blink')
+            self.anim_manager.set_blink_enabled(auto_blink)
+            self.anim_manager.update_blink(delta_secs) if auto_blink else None
+
+            # Secondary Updates
+            #if not motion_updated:
+                #self.anim_manager.update_blink(delta_secs) if auto_blink else None
+                #self.model.UpdateBlink(delta_secs)
+
+            # Save Params
+            self.model.SaveParameters()
+
+            self.model.UpdateBreath(delta_secs) if self.config.getboolean('Settings', 'auto_breath') else None
+
+            self.model.UpdateExpression(delta_secs)
+            self.model.UpdateDrag(delta_secs)
+            self.model.UpdatePhysics(delta_secs)
+            self.model.UpdatePose(delta_secs)
+
+        except Exception as e:
+            print(f"Model update crashed: {e}")
+            # Try Reload Model
+            self.model.ResetExpressions()
+        finally:
+            self.update()
 
         if not self.read:
             self.savePng('screenshot.png')
             self.read = True
-
-    def savePng(self, fName):
-        data = gl.glReadPixels(0, 0, self.width(), self.height(), gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)
-        data = np.frombuffer(data, dtype=np.uint8).reshape(self.height(), self.width(), 4)
-        data = np.flipud(data)
-        new_data = np.zeros_like(data)
-        for rid, row in enumerate(data):
-            for cid, col in enumerate(row):
-                color = None
-                new_data[rid][cid] = col
-                if cid > 0 and data[rid][cid - 1][3] == 0 and col[3] != 0:
-                    color = new_data[rid][cid - 1]
-                elif cid > 0 and data[rid][cid - 1][3] != 0 and col[3] == 0:
-                    color = new_data[rid][cid]
-                if color is not None:
-                    color[0] = 0 # 255
-                    color[1] = 0
-                    color[2] = 0
-                    color[3] = 0 # 255
-                color = None
-                if rid > 0:
-                    if data[rid - 1][cid][3] == 0 and col[3] != 0:
-                        color = new_data[rid - 1][cid]
-                    elif data[rid - 1][cid][3] != 0 and col[3] == 0:
-                        color = new_data[rid][cid]
-                elif col[3] != 0:
-                    color = new_data[rid][cid]
-                if color is not None:
-                    color[0] = 0 #255
-                    color[1] = 0
-                    color[2] = 0
-                    color[3] = 0 # 255
-        img = Image.fromarray(new_data, 'RGBA')
-        img.save(fName)
 
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
@@ -422,48 +464,21 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.setWindowIcon(QIcon(os.path.join(
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
-        auto_blink_param = self.config.getboolean('Settings', 'auto_blink')
-        self.model.SetAutoBlinkEnable(auto_blink_param)
-        auto_breath_param = self.config.getboolean('Settings', 'auto_breath')
-        self.model.SetAutoBreathEnable(auto_breath_param)
-
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
 
-        if self.idle_anim and self.idle_switch == True:
-            self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE, onFinishMotionHandler=idle_callback)
-            if self.t_count <= self.sleep_v:
-                self.idle_anim = True
-            else:
-                self.idle_anim = False
+        # Tired Timer check
+        if self.t_count <= self.sleep_v:
+            self.idle_anim = True
+        else:
+            self.idle_anim = False
+
+        if self.idle_switch and self.idle_anim:
+            current_time = time.time()
+            self.anim_manager.update_idle(current_time)
 
         self.transformMovieTriggers()
 
         self.changeTalkWidgetSide()
-
-        # Mouse Triggers
-        count = 0
-        while True:
-            saved_position = QCursor.pos().y()
-            if count > 20 * 20:
-                break
-            current_position = QCursor.pos().y()
-            if saved_position != current_position:
-                if self.tracking_mouse_switch:
-                    if self.mouse_tracking_log:
-                        print("Mouse is moving", self.tracking_mouse, local_x, local_y)
-                    if self.t_count >= self.sleep_v:
-                        self.tracking_mouse = False
-                        self.mouse_move = False
-                    else:
-                        self.tracking_mouse = True
-                        self.mouse_move = True
-            else:
-                self.mouse_move = False
-            count += 1
-
-        # Tracking the mouse position
-        if self.tracking_mouse:
-            self.model.Drag(local_x, local_y)
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -474,7 +489,12 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 self.on_mouse_anim = False
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
-                self.model.StartRandomMotion("OnMouse", live2d.MotionPriority.NORMAL, onFinishMotionHandler=on_mouse_callback)
+                self.anim_manager.play_animation(
+                    model=self.model,
+                    anim_type='RandomMotion',
+                    group_or_id="OnMouse",
+                    priority=live2d.MotionPriority.NORMAL
+                )
                 self.on_mouse_anim = True
 
             if self.l2d_area_log:
@@ -488,7 +508,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
     def isInL2DArea(self, click_x, click_y):
         h = self.height()
-        alpha = gl.glReadPixels(click_x * self.systemScale, (h - click_y) * self.systemScale, 1, 1, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)[3]
+        alpha = gl.glReadPixels(click_x * self.systemScale, (h - click_y) * self.systemScale, 1, 1, gl.GL_RGBA,
+                                gl.GL_UNSIGNED_BYTE)[3]
         return alpha > 0
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -525,68 +546,87 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             if self.isInLA:
                 self.clickInLA = False
                 self.tap_body_anim = True
+                if (not self.sleep
+                        and not self.tap_body_switch
+                        and not self.sleepMove
+                        and not self.input_lock
+                        and self.placeThis
+                ):
+                    self.placeThis = False
+                    self.reset_expression = False
+                    self.model.ResetExpressions()
+                    self.model.SetExpression("Smile")
+                    self.fadeoutTimer.start(7000)
+                    self.talkDelayTimer.stop()
+                    self.text = self.lang['Talk']['Stay']
+                    self.kaomoji = "(^~^)"
+                    print(self.name + ": " + self.text + self.kaomoji)
+                    self.textUpdate()
+                    self.t_count = 1
                 if self.tap_body_switch and self.sleepMove == False:
-                    self.model.StartRandomMotion("TapBody", live2d.MotionPriority.FORCE, onFinishMotionHandler=tap_body_callback)
+                    hit_part_ids = self.model.HitPart(x, y, True)
+                    hit_parts = {part for part in hit_part_ids if part} if hit_part_ids else set()
+                    self.anim_manager.handle_hit(hit_parts)
+                    # print("hit parts:", hit_parts)
                     self.tap_body_anim = True
                     if not self.sleep and self.input_lock == False:
-                        self.model.ResetExpression()
+                        self.model.ResetExpressions()
                         self.talkDelayTimer.stop()
-                        self.expression = self.model.SetRandomExpression(fadeout=7000)
+                        self.add_random_expression()
                         if self.placeThis:
                             self.placeThis = False
                             self.text = self.lang['Talk']['Stay']
                             self.kaomoji = "(^~^)"
                         else:
-                            if self.expression == "Normal":
+                            if self.lastExpressionId == "Normal":
                                 self.text = self.lang['Talk']['Normal']
                                 self.kaomoji = "(o_o)"
-                            elif self.expression == "Happy":
+                            elif self.lastExpressionId == "Happy":
                                 self.text = self.lang['Talk']['Happy']
                                 self.kaomoji = "(^_^)"
-                            elif self.expression == "Angry":
+                            elif self.lastExpressionId == "Angry":
                                 self.text = self.lang['Talk']['Angry']
                                 self.kaomoji = "(⇀‸↼‶)"
-                            elif self.expression == "Sad":
+                            elif self.lastExpressionId == "Sad":
                                 self.text = self.lang['Talk']['Sad']
                                 self.kaomoji = "(´•ω•̥`)"
-                            elif self.expression == "Smile":
+                            elif self.lastExpressionId == "Smile":
                                 self.text = self.lang['Talk']['Smile']
                                 self.kaomoji = "(^~^)"
-                            elif self.expression == "Tired":
+                            elif self.lastExpressionId == "Tired":
                                 self.text = self.lang['Talk']['Tired']
                                 self.kaomoji = "(๑•﹏•)"
-                            elif self.expression == "ClosedEyes":
+                            elif self.lastExpressionId == "ClosedEyes":
                                 self.text = self.lang['Talk']['ClosedEyes']
                                 self.kaomoji = "(-_-)"
-                            elif self.expression == "Cry":
+                            elif self.lastExpressionId == "Cry":
                                 self.text = self.lang['Talk']['Cry']
                                 self.kaomoji = "(o;TωT)o"
-                            elif self.expression == "Fear":
+                            elif self.lastExpressionId == "Fear":
                                 if self.character_name == "White Heart":
                                     self.text = self.lang['Talk']['FearWH']
                                     self.kaomoji = "(0﹏\‶)"
                                 else:
                                     self.text = self.lang['Talk']['Fear']
                                     self.kaomoji = "(｡ŏ_ŏ)"
-                            elif self.expression == "Star":
+                            elif self.lastExpressionId == "Star":
                                 self.text = self.lang['Talk']['Star']
                                 self.kaomoji = "(✩ω✩)"
-                            elif self.expression == "Surprised":
+                            elif self.lastExpressionId == "Surprised":
                                 self.text = self.lang['Talk']['Surprised']
                                 self.kaomoji = "(0_0)?"
-                            elif self.expression == "Funny" and self.goodness_form == False:
+                            elif self.lastExpressionId == "Funny" and self.goodness_form == False:
                                 if self.character_name == "Blanc":
                                     self.text = self.lang['Talk']['FunnyBl']
                                     self.kaomoji = "(‶/﹏0)"
                                 else:
                                     self.text = self.lang['Talk']['Funny']
                                     self.kaomoji = "(>_<)"
-                            elif self.expression == "Funny" and self.goodness_form == True:
+                            elif self.lastExpressionId == "Funny" and self.goodness_form == True:
                                 self.text = self.lang['Talk']['FunnyGod']
                                 self.kaomoji = "(◕‿◕)"
                         print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-                        self.expression = None
                         self.t_count = 1
                 if self.sleep and self.input_lock == False:
                     # self.model.SetExpression("Surprised")
@@ -599,13 +639,19 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                         self.kaomoji = "(⊙_⊙)✿"
                         print(self.name + ": " + self.text + self.kaomoji)
                         self.textUpdate()
-                        self.model.SetExpression("Fear", fadeout=10000)
+                        self.model.SetExpression("Fear")
+                        self.fadeoutTimer.start(10000)
                         self.t_count = 1
                         self.sleep = False
-                if not self.tap_body_switch and self.sleepMove == False:
+                if (not self.sleep
+                        and not self.tap_body_switch
+                        and not self.sleepMove
+                        and self.reset_expression
+                ):
                     self.model.ResetExpression()
                     self.t_count = 1
                 self.sleepMove = False
+                self.reset_expression = True
                 if self.mouse_click_log:
                     print("Left Button Released")
 
@@ -625,7 +671,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         for hintFlag in self.hintFlags:
             if flags & hintFlag:
                 text += f"\n| Qt.{hintFlag.name}"
-
 
         if self.auto_scale and self.auto_scale_init:
             self.a_scale = auto_scale(self.sc_height_size)
@@ -750,6 +795,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             resources.RESOURCES_DIRECTORY, "icons/ram.ico")), self.lang['NamesActions']['Ram'])
         if not self.input_lock:
             action_ram.triggered.connect(self.on_action_ram)
+        # White Sister Ram
+        action_white_sister_ram = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
+        if not self.input_lock:
+            action_white_sister_ram.triggered.connect(self.on_action_white_sister_ram)
 
         context_menu.addMenu(submenu_character)
 
@@ -833,24 +883,27 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         else:
             self.t_count = 1
             self.model.ResetExpression()
-            self.model.SetExpression("Happy", 5000)
+            self.model.SetExpression("Happy")
+            self.fadeoutTimer.start(5000)
             self.text = self.lang['Talk']['Star']
             self.kaomoji = ":(^~^):"
             print(self.name + ": " + self.text + self.kaomoji)
             self.textUpdate()
             event.ignore()
 
+
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.config = config_main
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
         self.getWindowFlag_WindowCloseButtonHint = self.config.getboolean('WindowFlags', 'WindowCloseButtonHint')
         self.getWindowFlag_WindowStaysOnTopHint = self.config.getboolean('WindowFlags', 'WindowStaysOnTopHint')
         self.getWindowFlag_WindowStaysOnBottomHint = self.config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
-        self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags', 'WindowTransparentForInput')
+        self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags',
+                                                                              'WindowTransparentForInput')
         self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
 
         self.language = self.config.get('Main', 'language')
@@ -881,12 +934,29 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        self.quitButton = QPushButton("&Quit")
-        self.quitButton.clicked.connect(qApp.quit) # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+        self.nepMainImage = os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")
+        self.nepLogoImage = os.path.join(
+            resources.RESOURCES_DIRECTORY, "images/nep_logo.svg")
 
-        bottomLayout = QHBoxLayout()
-        bottomLayout.addStretch()
+        self.nepImageLabel = QLabel()
+        self.nepImageLabel.setPixmap(QPixmap(self.nepMainImage).scaled(QSize(75, 75),
+                                                                       Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.nepImageLabel.setAlignment(Qt.AlignCenter)
+
+        self.quitButton = QPushButton("&Quit")
+        self.quitButton.clicked.connect(
+            qApp.quit)  # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+
+        self.resetPosButton = QPushButton("&Reset Position")
+        self.resetPosButton.clicked.connect(self.reset_position)
+
+        bottomLayout = QVBoxLayout()
+        #bottomLayout.addStretch()
+        bottomLayout.addWidget(self.nepImageLabel)
+        bottomLayout.addWidget(self.resetPosButton)
         bottomLayout.addWidget(self.quitButton)
+        bottomLayout.setAlignment(Qt.AlignCenter)
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.hintsGroupBox)
@@ -901,9 +971,20 @@ class SettingsWindow(QWidget):
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
         self.updateMainWindow()
 
+    def reset_position(self):
+        self.mainWindow.model_move = True
+        self.updateMainWindow()
+
+    def modelMoveOn(self):
+        self.mainWindow.model_move = True
+
+    def modelMoveOff(self):
+        self.mainWindow.model_move = False
+
     def updateSettings(self):
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
+        self.resetPosButton.setText(self.mainWindow.lang['Settings']['ResetPosition'])
         self.quitButton.setText(self.mainWindow.lang['Settings']['Quit'])
         # Window Box
         self.hintsGroupBox.setTitle(self.mainWindow.lang['Settings']['WindowTitle'])
@@ -961,6 +1042,7 @@ class SettingsWindow(QWidget):
             if self.autoScaleCheckBox.isChecked():
                 self.config.set('Scale', 'auto_scale', 'True')
                 self.autoScaleCheckBox.setChecked(True)
+                self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
                 self.modelScaleBox.setReadOnly(True)
                 self.mainWindow.auto_scale = True
                 self.mainWindow.models_scale = 1
@@ -970,6 +1052,7 @@ class SettingsWindow(QWidget):
                 self.config.set('Scale', 'auto_scale', 'False')
                 self.autoScaleCheckBox.setChecked(False)
                 self.modelScaleBox.setReadOnly(False)
+                self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
                 self.mainWindow.auto_scale = False
                 scale_value = self.modelScaleBox.value()
                 self.mainWindow.models_scale = scale_value
@@ -1030,7 +1113,7 @@ class SettingsWindow(QWidget):
             ]
 
             for i, (checkBox, _) in enumerate(self.hintFlagWidgets):
-                layout.addWidget(checkBox, i%2, int(i/2))
+                layout.addWidget(checkBox, i % 2, int(i / 2))
 
             self.typeFlagWidgets[0][0].setChecked(True)
         else:
@@ -1070,6 +1153,11 @@ class SettingsWindow(QWidget):
 
         self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
         self.modelScaleBox.valueChanged.connect(self.updateMainWindow)
+        #if self.mainWindow.settings_state:
+        #    self.modelScaleBox.valueChanged.connect(self.modelMoveOn)
+        #else:
+        #    self.modelScaleBox.valueChanged.connect(self.modelMoveOff)
+        # self.mainWindow.model_move = False
 
         self.scaleGroupBox.setLayout(layout)
 
@@ -1102,7 +1190,7 @@ class SettingsWindow(QWidget):
 
     def createCheckBox(self, text: str) -> QCheckBox:
         checkBox = QCheckBox(text)
-        checkBox.clicked.connect(self.updateMainWindow) # type: ignore[attr-defined]
+        checkBox.clicked.connect(self.updateMainWindow)  # type: ignore[attr-defined]
         return checkBox
 
     def getLanguageName(self):

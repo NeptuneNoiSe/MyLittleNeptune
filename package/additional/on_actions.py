@@ -12,6 +12,7 @@ class OnActions:
 
     # Context Menu Actions
     def on_action_transform(win):
+        win.model_move = False
         if win.can_transform:
             if win.condition == "Sleep":
                 pass
@@ -30,7 +31,8 @@ class OnActions:
             if win.condition == "Sleep":
                 pass
             else:
-                win.model.SetExpression("Sad", fadeout=10000)
+                win.model.SetExpression("Sad")
+                win.fadeoutTimer.start(10000)
                 win.text = win.lang['Talk']['TransformNot']
                 win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
                 print(win.name + ": " + win.text + win.kaomoji)
@@ -42,6 +44,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Neptune"
         win.name = win.lang['Names']['Neptune']
@@ -54,6 +57,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Purple Heart"
         win.name = win.lang['Names']['PurpleHeart']
@@ -66,6 +70,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Noire"
         win.name = win.lang['Names']['Noire']
@@ -78,6 +83,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Black Heart"
         win.name = win.lang['Names']['BlackHeart']
@@ -90,6 +96,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Blanc"
         win.name = win.lang['Names']['Blanc']
@@ -102,6 +109,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "White Heart"
         win.name = win.lang['Names']['WhiteHeart']
@@ -114,6 +122,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Vert"
         win.name = win.lang['Names']['Vert']
@@ -126,6 +135,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Green Heart"
         win.name = win.lang['Names']['GreenHeart']
@@ -138,6 +148,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "NepGear"
         win.name = win.lang['Names']['NepGear']
@@ -150,6 +161,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Purple Sister"
         win.name = win.lang['Names']['PurpleSister']
@@ -162,6 +174,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Uni"
         win.name = win.lang['Names']['Uni']
@@ -174,6 +187,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Black Sister"
         win.name = win.lang['Names']['BlackSister']
@@ -186,6 +200,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Rom"
         win.name = win.lang['Names']['Rom']
@@ -198,6 +213,7 @@ class OnActions:
         win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "White Sister Rom"
         win.name = win.lang['Names']['WhiteSisterRom']
@@ -207,13 +223,27 @@ class OnActions:
 
     def on_action_ram(win):
         win.goodness_form = False
-        win.can_transform = False
+        win.can_transform = True
         win.talkUpd = False
         if not win.transform:
+            win.model_move = True
             win.goodBye()
         win.character_name = "Ram"
         win.name = win.lang['Names']['Ram']
         win.models_switch = 14
+        if win.transform:
+            win.model_update()
+
+    def on_action_white_sister_ram(win):
+        win.goodness_form = True
+        win.can_transform = True
+        win.talkUpd = False
+        if not win.transform:
+            win.model_move = True
+            win.goodBye()
+        win.character_name = "White Sister Ram"
+        win.name = win.lang['Names']['WhiteSisterRam']
+        win.models_switch = 15
         if win.transform:
             win.model_update()
 
@@ -358,7 +388,8 @@ class OnActions:
         else:
             win.t_count = 1
             win.model.ResetExpression()
-            win.model.SetExpression("Happy", 5000)
+            win.model.SetExpression("Happy")
+            win.fadeoutTimer.start(5000)
             win.text = win.lang['Talk']['Star']
             win.kaomoji = ":(^~^):"
             print(win.name + ": " + win.text + win.kaomoji)

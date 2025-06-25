@@ -95,6 +95,7 @@
   },
   "Settings": {
     "Settings": "Параметры",
+    "ResetPosition": "Сброс Положения",
     "Quit": "&Выход",
     "WindowTitle": "Окно",
     "FramelessWindow": "Окно без рамки",

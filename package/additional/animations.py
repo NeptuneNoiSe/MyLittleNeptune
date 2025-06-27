@@ -49,7 +49,7 @@ class AnimationsManager:
     def _load_profiles(self) -> dict:
         """Load a single config for all characters"""
         with open(os.path.join(
-            resources.RESOURCES_DIRECTORY, "anim_cfg/anim_profiles.json"), 'r', encoding='utf-8') as f:
+            resources.RESOURCES_DIRECTORY, "configs/anim_profiles.json"), 'r', encoding='utf-8') as f:
             data = json.load(f)
             # Converting lists to sets for hit_zones
             for char in data.values():

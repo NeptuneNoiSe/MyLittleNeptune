@@ -40,225 +40,157 @@ class OnActions:
 
     # Characters Actions
     def on_action_neptune(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Neptune"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Neptune"
-        win.name = win.lang['Names']['Neptune']
-        win.models_switch = 0
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_purple_heart(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "Purple Heart"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Purple Heart"
-        win.name = win.lang['Names']['PurpleHeart']
-        win.models_switch = 1
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_noire(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Noire"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Noire"
-        win.name = win.lang['Names']['Noire']
-        win.models_switch = 2
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_black_heart(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "Black Heart"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Black Heart"
-        win.name = win.lang['Names']['BlackHeart']
-        win.models_switch = 3
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_blanc(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Blanc"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Blanc"
-        win.name = win.lang['Names']['Blanc']
-        win.models_switch = 4
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_white_heart(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "White Heart"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "White Heart"
-        win.name = win.lang['Names']['WhiteHeart']
-        win.models_switch = 5
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_vert(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Vert"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Vert"
-        win.name = win.lang['Names']['Vert']
-        win.models_switch = 6
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_green_heart(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "Green Heart"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Green Heart"
-        win.name = win.lang['Names']['GreenHeart']
-        win.models_switch = 7
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_nepgear(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "NepGear"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "NepGear"
-        win.name = win.lang['Names']['NepGear']
-        win.models_switch = 8
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_purple_sister(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "Purple Sister"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Purple Sister"
-        win.name = win.lang['Names']['PurpleSister']
-        win.models_switch = 9
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_uni(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Uni"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Uni"
-        win.name = win.lang['Names']['Uni']
-        win.models_switch = 10
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_black_sister(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "Black Sister"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Black Sister"
-        win.name = win.lang['Names']['BlackSister']
-        win.models_switch = 11
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_rom(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Rom"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Rom"
-        win.name = win.lang['Names']['Rom']
-        win.models_switch = 12
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_white_sister_rom(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "White Sister Rom"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "White Sister Rom"
-        win.name = win.lang['Names']['WhiteSisterRom']
-        win.models_switch = 13
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_ram(win):
-        win.goodness_form = False
-        win.can_transform = True
+        win.character_name = "Ram"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Ram"
-        win.name = win.lang['Names']['Ram']
-        win.models_switch = 14
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_white_sister_ram(win):
-        win.goodness_form = True
-        win.can_transform = True
+        win.character_name = "White Sister Ram"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "White Sister Ram"
-        win.name = win.lang['Names']['WhiteSisterRam']
-        win.models_switch = 15
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     def on_action_histoire(win):
-        win.goodness_form = False
-        win.can_transform = False
+        win.character_name = "Histoire"
         win.talkUpd = False
         if not win.transform:
             win.model_move = True
             win.goodBye()
-        win.character_name = "Histoire"
-        win.name = win.lang['Names']['Histoire']
-        win.models_switch = 16
         if win.transform:
-            win.model_update()
+            win.models_manager.update_model(win)
 
     # Animations Actions
     def on_action_idle_true(win):

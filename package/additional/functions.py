@@ -420,14 +420,14 @@ class Functions:
     def wake_up_func(win):
         pass
         # Legacy Function ( may be removed )
-        win.sleepLabel.close()
-        win.model.Rotate(0)
-        if win.sleepMove and win.sleepSide == "Right":
-            win.move(win.x() + win.w_resize / 3.5, win.y() - win.h_resize / 4)
-        elif win.sleepMove and win.sleepSide == "Left":
-            win.move(win.x() - win.w_resize / 4, win.y() - win.h_resize / 4)
-        win.sleepMove = False
-        win.sleepSide = None
+        #win.sleepLabel.close()
+        #win.model.Rotate(0)
+        #if win.sleepMove and win.sleepSide == "Right":
+        #    win.move(win.x() + win.w_resize / 3.5, win.y() - win.h_resize / 4)
+        #elif win.sleepMove and win.sleepSide == "Left":
+        #    win.move(win.x() - win.w_resize / 4, win.y() - win.h_resize / 4)
+        # win.sleepMove = False
+        #win.sleepSide = None
 
     def timers_init(win) -> None:
         # Idle timer

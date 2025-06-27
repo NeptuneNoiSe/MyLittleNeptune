@@ -245,7 +245,7 @@ class TalkWidgetMain:
     def hello(win):
         win.goodByeTimer.stop()
         win.dialogClose()
-        win.model_update()
+        win.models_manager.update_model(win)
         win.text = win.lang['Talk']['Hello']
         win.kaomoji = "(^~^)/"
         win.model.SetExpression("Smile", fadeout=10000)

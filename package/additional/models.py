@@ -4,10 +4,113 @@ from PySide6.QtGui import QMovie
 
 import live2d.v3 as live2d
 from live2d.v3 import Parameter
-# from live2d.utils.lipsync import WavHandler
-# import live2d.v2 as live2d
-from package import resources
+
 from package.additional.config_module import *
+from package.additional.resource_mng import ResourceManager
+
+class ModelsManager:
+    def __init__(self, resources_dir: str):
+        self.resources_dir = resources_dir
+        self.resource_manager = ResourceManager(resources_dir)
+
+    def apply_character_config(self, win, character_name: str) -> None:
+        """Applies the character configuration to the window"""
+        config = self.resource_manager.get_character_config(character_name)
+
+        # Update window attribute
+        for key, value in config.items():
+            if hasattr(win, key):
+                setattr(win, key, value)
+
+        # Name update
+        name_key = config.get('name_key', character_name.replace(' ', ''))
+        win.name = win.lang['Names'].get(name_key, character_name)
+
+    def update_model(self, win) -> None:
+        """Model update"""
+        try:
+            # Load config
+            new_config = win.resource_manager.get_character_config(win.character_name)
+            if win.models_log:
+                print(f"Config load for: {win.character_name}: {new_config}")
+
+            # Update window params
+            self._update_win_params(win, new_config)
+
+            # Work with model
+            self._reload_model(win, new_config)
+
+            # Finalize
+            self._finalize_update(win)
+            if win.models_log:
+                print("The model has been successfully updated!")
+
+        except Exception as e:
+            if win.models_log:
+                print(f"Update Error: {str(e)}")
+            self._load_fallback_model(win)
+
+    def _update_win_params(self, win, config: dict) -> None:
+        """Update window params"""
+        for param, value in config.items():
+            if hasattr(win, param):
+                setattr(win, param, value)
+
+        name_key = config.get('name_key', win.character_name.replace(' ', ''))
+        win.name = win.lang['Names'].get(name_key, win.character_name)
+
+        win.posXL = (win.mx_param / 2) - win.posXR / 2
+        win.twmXR = int(win.posXR * win.a_scale * win.models_scale)
+        win.twmXL = int(win.posXL * win.a_scale * win.models_scale)
+        win.twmY = int(-10 * win.a_scale * win.models_scale) if win.a_scale <= 2 else 0
+
+        # Calculating position
+        win.resize(1, 1)
+        win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
+        win.h_resize = int(win.my_param * win.a_scale * win.models_scale)
+        win.resize(int(win.w_resize), int(win.h_resize))
+
+        if win.model_move:
+            win.frmX = (win.SrcSize.width() - win.width()) - win.w_correction
+            win.frmY = (win.SrcSize.height() - win.height()) - win.h_correction
+            win.move(int(win.frmX), int(win.frmY))
+            win.model_move = False
+        else:
+            pass
+
+        # Save Config
+        models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
+                      win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
+
+    def _reload_model(self, win, config: dict) -> None:
+        """Reload Live2D model"""
+        if hasattr(win, 'model'):
+            del win.model
+            win.model = None
+
+        win.model = live2d.Model()
+        model_path = os.path.join(self.resources_dir, config['model_path'])
+
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"The model file was not found: {model_path}")
+
+        win.model.LoadModelJson(model_path)
+        win.resizeGL(int(win.w_resize), int(win.h_resize))
+
+    def _finalize_update(self, win) -> None:
+        """Final operations"""
+        live2d.clearBuffer()
+        win.model.CreateRenderer(2)
+        win.initializeAnimations()
+
+        if win.talkUpd:
+            win.talkWidgetUpdate()
+
+    def _load_fallback_model(self, win) -> None:
+        """Backup option for errors"""
+        fallback_path = os.path.join(self.resources_dir, "v3/Neptune/Neptune.model3.json")
+        win.model = live2d.Model()
+        win.model.LoadModelJson(fallback_path)
 
 class Models:
     def transform_initialize(win):
@@ -16,8 +119,8 @@ class Models:
             win.anim_manager.play_animation(
                 model=win.model,
                 anim_type='Motion',
-                group_or_id="Unique",  # Группа (str)
-                no=0,  # Номер анимации (int)
+                group_or_id="Unique",  # Group (str)
+                no=0,  # number animation (int)
                 priority=live2d.MotionPriority.FORCE
             )
             if win.character_name == "Neptune":
@@ -25,8 +128,6 @@ class Models:
             elif win.character_name == "Vert":
                 win.model.SetExpression("Smile")
             elif win.character_name == "NepGear":
-                win.model.SetExpression("Star")
-            elif win.character_name == "Histoire":
                 win.model.SetExpression("Star")
             else:
                 win.model.SetExpression("Serious")
@@ -180,288 +281,6 @@ class Models:
         if win.character_name == "Histoire":
             win.name = win.lang['Names']['Histoire']
 
-    def model_update(win):
-        # Update Params
-        if win.character_name == "Neptune":
-            win.character_name = "Neptune"
-            win.name = win.lang['Names']['Neptune']
-            win.models_switch = 0
-            win.t_count = 1
-            win.mx_param = 600
-            win.my_param = 600
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 64
-
-        if win.character_name == "Purple Heart":
-            win.character_name = "Purple Heart"
-            win.name = win.lang['Names']['PurpleHeart']
-            win.models_switch = 1
-            win.t_count = 1
-            win.mx_param = 700
-            win.my_param = 700
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 85
-
-        if win.character_name == "Noire":
-            win.character_name = "Noire"
-            win.name = win.lang['Names']['Noire']
-            win.models_switch = 2
-            win.t_count = 1
-            win.mx_param = 700
-            win.my_param = 700
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 100
-
-        if win.character_name == "Black Heart":
-            win.character_name = "Black Heart"
-            win.name = win.lang['Names']['BlackHeart']
-            win.models_switch = 3
-            win.t_count = 1
-            win.mx_param = 700
-            win.my_param = 700
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 100
-
-        if win.character_name == "Blanc":
-            win.character_name = "Blanc"
-            win.name = win.lang['Names']['Blanc']
-            win.models_switch = 4
-            win.t_count = 1
-            win.mx_param = 600
-            win.my_param = 600
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 60
-
-        if win.character_name == "White Heart":
-            win.character_name = "White Heart"
-            win.name = win.lang['Names']['WhiteHeart']
-            win.models_switch = 5
-            win.t_count = 1
-            win.mx_param = 700
-            win.my_param = 700
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 90
-
-        if win.character_name == "Vert":
-            win.character_name = "Vert"
-            win.name = win.lang['Names']['Vert']
-            win.models_switch = 6
-            win.t_count = 1
-            win.mx_param = 700
-            win.my_param = 700
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 120
-
-        if win.character_name == "Green Heart":
-            win.character_name = "Green Heart"
-            win.name = win.lang['Names']['GreenHeart']
-            win.models_switch = 7
-            win.t_count = 1
-            win.mx_param = 700
-            win.my_param = 700
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 90
-
-        if win.character_name == "NepGear":
-            win.character_name = "NepGear"
-            win.name = win.lang['Names']['NepGear']
-            win.models_switch = 8
-            win.t_count = 1
-            win.mx_param = 600
-            win.my_param = 600
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 55
-
-        if win.character_name == "Purple Sister":
-            win.character_name = "Purple Sister"
-            win.name = win.lang['Names']['PurpleSister']
-            win.models_switch = 9
-            win.t_count = 1
-            win.mx_param = 650
-            win.my_param = 650
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 65
-
-        if win.character_name == "Uni":
-            win.character_name = "Uni"
-            win.name = win.lang['Names']['Uni']
-            win.models_switch = 10
-            win.t_count = 1
-            win.mx_param = 600
-            win.my_param = 600
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 60
-
-        if win.character_name == "Black Sister":
-            win.character_name = "Black Sister"
-            win.name = win.lang['Names']['BlackSister']
-            win.models_switch = 11
-            win.t_count = 1
-            win.mx_param = 650
-            win.my_param = 650
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 110
-
-        if win.character_name == "Rom":
-            win.character_name = "Rom"
-            win.name = win.lang['Names']['Rom']
-            win.models_switch = 12
-            win.t_count = 1
-            win.mx_param = 600
-            win.my_param = 600
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 70
-
-        if win.character_name == "White Sister Rom":
-            win.character_name = "White Sister Rom"
-            win.name = win.lang['Names']['WhiteSisterRom']
-            win.models_switch = 13
-            win.t_count = 1
-            win.mx_param = 650
-            win.my_param = 650
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 130
-
-        if win.character_name == "Ram":
-            win.character_name = "Ram"
-            win.name = win.lang['Names']['Ram']
-            win.models_switch = 14
-            win.t_count = 1
-            win.mx_param = 600
-            win.my_param = 600
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 60
-
-        if win.character_name == "White Sister Ram":
-            win.character_name = "White Sister Ram"
-            win.name = win.lang['Names']['WhiteSisterRam']
-            win.models_switch = 15
-            win.t_count = 1
-            win.mx_param = 650
-            win.my_param = 650
-            win.w_correction = -70
-            win.h_correction = 0
-            win.posXR = 75
-
-        if win.character_name == "Histoire":
-            win.character_name = "Histoire"
-            win.name = win.lang['Names']['Histoire']
-            win.models_switch = 16
-            win.t_count = 1
-            win.mx_param = 500
-            win.my_param = 500
-            win.w_correction = 0
-            win.h_correction = 0
-            win.posXR = 15
-
-        # Update Text Widget Position
-        win.posXL = (win.mx_param / 2) - win.posXR / 2
-        win.twmXR = int(win.posXR * win.a_scale * win.models_scale)
-        win.twmXL = int(win.posXL * win.a_scale * win.models_scale)
-        if win.a_scale <= 2:
-            win.twmY = int(-10 * win.a_scale * win.models_scale)
-        else:
-            win.twmY = int(0 * win.a_scale * win.models_scale)
-
-        # Update Size and Position
-        win.resize(1, 1)
-        win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
-        win.h_resize = int(win.my_param * win.a_scale * win.models_scale)
-        win.resize(int(win.w_resize), int(win.h_resize))
-
-        if win.model_move:
-            win.frmX = (win.SrcSize.width() - win.width()) - win.w_correction
-            win.frmY = (win.SrcSize.height() - win.height()) - win.h_correction
-            win.move(int(win.frmX), int(win.frmY))
-            win.model_move = False
-        else:
-            pass
-
-        # ReInitialize Model
-        win.model: live2d.Model | None = None
-        win.model = live2d.Model()
-        if win.character_name == "Neptune":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
-        if win.character_name == "Purple Heart":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
-        if win.character_name == "Noire":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
-        if win.character_name == "Black Heart":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
-        if win.character_name == "Blanc":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
-        if win.character_name == "White Heart":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
-        if win.character_name == "Vert":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
-        if win.character_name == "Green Heart":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
-        if win.character_name == "NepGear":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
-        if win.character_name == "Purple Sister":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
-        if win.character_name == "Uni":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
-        if win.character_name == "Black Sister":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
-        if win.character_name == "Rom":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
-        if win.character_name == "White Sister Rom":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
-        if win.character_name == "Ram":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
-        if win.character_name == "White Sister Ram":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
-        if win.character_name == "Histoire":
-            win.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v3/Histoire/Histoire.model3.json"))
-        win.resizeGL(int(win.w_resize), int(win.h_resize))
-        # Save Config
-        models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
-                      win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
-
-        live2d.clearBuffer()
-        win.model.CreateRenderer(2)# maskBufferCount=2
-        win.initializeAnimations()
-
-        try:
-            win.sleepLabel.close()
-        except AttributeError:
-            pass
-
-        if win.talkUpd:
-            win.talkWidgetUpdate()
     # Legacy Function( May be removed )
     def setSleepParams(win):
         # Main Model Params

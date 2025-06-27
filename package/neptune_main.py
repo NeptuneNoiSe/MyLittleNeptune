@@ -19,9 +19,11 @@ import resources
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
 from additional.models import Models
+from additional.models import ModelsManager
 from additional.on_actions import OnActions
 from additional.functions import Functions
 from additional.functions import MouseTracker
+from additional.resource_mng import ResourceManager
 
 class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
@@ -48,6 +50,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # LOGS:
         # l2d-py Main Log:
         live2d.setLogEnable(False)
+        # Models Log
+        self.models_log = False
         # l2d-py Area Log:
         self.l2d_area_log = False
         # Mouse Click Log:
@@ -58,6 +62,9 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.timer_log = False
         # Callbacks Log:
         self.callbacks_log = False
+
+        # Resource Manager Init
+        self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
 
         # Language:
         self.language = self.config.get('Main', 'language')
@@ -100,12 +107,15 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.text = "Hello!"
         self.kaomoji = "(^~^)/"
         self.transform = False
-        self.goodness_form = None
+        self.goodness_form = False
         self.transform_state = False
         self.transform_lock = 0
         self.input_lock = False
         self.can_transform = False
         self.transform_text = True
+        self.mx_param = 0
+        self.my_param = 0
+        self.posXR = 0
         self.trm_mx = -50
         self.trm_my = 5
         self.trm_cmx = 100
@@ -131,6 +141,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         # Transition From Live2d LAppModel to Model
         self.model: live2d.Model | None = None
         self.anim_manager = None
+        self.models_manager = ModelsManager(
+            resources_dir=resources.RESOURCES_DIRECTORY)
         self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -245,6 +257,10 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.loadResource()
         self.lastUpdateTime = time.time()
 
+    def apply_character_config(self, character_name: str) -> None:
+        """proxy method"""
+        self.models_manager.apply_character_config(self, character_name)
+
     def initializeGL(self) -> None:
         self.makeCurrent()
         live2d.glInit()
@@ -253,145 +269,62 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             self.text = self.lang['Talk']['Hello']
             self.kaomoji = "(^~^)/"
             if self.models_switch == 0:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Neptune']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Neptune/Neptune.model3.json"))
-
+                self.character_name = "Neptune"
             elif self.models_switch == 1:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['PurpleHeart']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/PurpleHeart/PurpleHeart.model3.json"))
+                self.character_name = "Purple Heart"
 
             elif self.models_switch == 2:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Noire']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Noire/Noire.model3.json"))
+                self.character_name = "Noire"
 
             elif self.models_switch == 3:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['BlackHeart']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/BlackHeart/BlackHeart.model3.json"))
+                self.character_name = "Black Heart"
 
             elif self.models_switch == 4:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Blanc']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Blanc/Blanc.model3.json"))
+                self.character_name = "Blanc"
 
             elif self.models_switch == 5:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['WhiteHeart']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/WhiteHeart/WhiteHeart.model3.json"))
+                self.character_name = "White Heart"
 
             elif self.models_switch == 6:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Vert']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Vert/Vert.model3.json"))
+                self.character_name = "Vert"
 
             elif self.models_switch == 7:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['GreenHeart']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/GreenHeart/GreenHeart.model3.json"))
+                self.character_name = "Green Heart"
 
             elif self.models_switch == 8:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['NepGear']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/NepGear/NepGear.model3.json"))
+                self.character_name = "NepGear"
 
             elif self.models_switch == 9:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['PurpleSister']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/PurpleSister/PurpleSister.model3.json"))
+                self.character_name = "Purple Sister"
 
             elif self.models_switch == 10:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Uni']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Uni/Uni.model3.json"))
+                self.character_name = "Uni"
 
             elif self.models_switch == 11:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['BlackSister']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/BlackSister/BlackSister.model3.json"))
+                self.character_name = "Black Sister"
 
             elif self.models_switch == 12:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Rom']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Rom/Rom.model3.json"))
+                self.character_name = "Rom"
 
             elif self.models_switch == 13:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['WhiteSisterRom']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRom/WhiteSisterRom.model3.json"))
+                self.character_name = "White Sister Rom"
 
             elif self.models_switch == 14:
-                self.goodness_form = False
-                self.can_transform = True
-                self.name = self.lang['Names']['Ram']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Ram/Ram.model3.json"))
+                self.character_name = "Ram"
 
             elif self.models_switch == 15:
-                self.goodness_form = True
-                self.can_transform = True
-                self.name = self.lang['Names']['WhiteSisterRam']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/WhiteSisterRam/WhiteSisterRam.model3.json"))
+                self.character_name = "White Sister Ram"
 
             elif self.models_switch == 16:
-                self.goodness_form = False
-                self.can_transform = False
-                self.name = self.lang['Names']['Histoire']
-                print(self.name + ": " + self.text + self.kaomoji)
-                self.model.LoadModelJson(os.path.join(
-                    resources.RESOURCES_DIRECTORY, "v3/Histoire/Histoire.model3.json"))
+                self.character_name = "Histoire"
 
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
+        print(self.name + ": " + self.text + self.kaomoji)
+        self.model = self.resource_manager.get_model(self.character_name)
+        self.apply_character_config(self.character_name)
         self.startTimer(int(1000 / 60)) # FPS Set
         self.initializeAnimations()
         self.timers_init()
@@ -435,11 +368,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             auto_blink = self.config.getboolean('Settings', 'auto_blink')
             self.anim_manager.set_blink_enabled(auto_blink)
             self.anim_manager.update_blink(delta_secs) if auto_blink else None
-
-            # Secondary Updates
-            #if not motion_updated:
-                #self.anim_manager.update_blink(delta_secs) if auto_blink else None
-                #self.model.UpdateBlink(delta_secs)
 
             # Save Params
             self.model.SaveParameters()
@@ -682,11 +610,11 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
 
         if self.auto_scale and self.auto_scale_init:
             self.a_scale = auto_scale(self.sc_height_size)
-            self.model_update()
+            self.models_manager.update_model(self)
 
         if not self.auto_scale and self.auto_scale_init:
             self.a_scale = 1
-            self.model_update()
+            self.models_manager.update_model(self)
 
         self.auto_scale_init = True
 

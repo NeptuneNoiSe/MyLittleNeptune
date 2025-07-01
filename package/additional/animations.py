@@ -1,3 +1,6 @@
+from PySide6.QtCore import QSize
+from PySide6.QtGui import QMovie, Qt
+
 from package import resources
 import random
 import time
@@ -5,6 +8,7 @@ import math
 import json
 import os
 import live2d.v3 as live2d
+from package.additional.models import ModelsManager
 
 class AnimationsManager:
     def __init__(self, model):
@@ -30,6 +34,9 @@ class AnimationsManager:
             'next_delay': self._random_blink_delay(),
             'override_blink': True  # A critical flag
         }
+        self.models_manager = ModelsManager
+        self.transform_lock = False
+        self.transform_text = False
 
     @property
     def character_name(self):
@@ -169,10 +176,11 @@ class AnimationsManager:
             print(f"Animation {group} {no} start - blink off")
         self.set_blink_enabled(False)  # Using our previously created method
 
-    def _handle_motion_finish(self, group, no):
+    def _handle_motion_finish(self, win, group, no):
         """Callback with Animation Finish"""
-        self.model.ResetExpressions()
-        self.model.ResetAllParameters()
+        if not win.transform:
+            self.model.ResetExpressions()
+            self.model.ResetAllParameters()
         if group != "Idle":  # If the NON-idle animation has ended
             self._reset_idle_state()
             self.set_blink_enabled(True)
@@ -262,3 +270,157 @@ class AnimationsManager:
         # Default Animation
         self._play_profile_animation(profile['animations']['default'])
         return True
+
+    # Transform Animations
+    def check_animation_progress(self, win):
+        """Checking animation progress"""
+        if hasattr(win, 'transformMovie'):
+            if (win.transformMovie.currentFrameNumber() >=
+                    win.transformMovie.frameCount() - 3):
+
+                if win.transform:
+                    win.transformLabel.movie().setScaledSize(QSize(int(1), int(1)))
+                    win.transformMovie.stop()
+                    win.transformLabel.close()
+                    self.handle_transform_completion(win)
+                else:
+                    self._finalize_animation(win)
+
+    def _finalize_animation(self, win):
+        """Animation completion"""
+        win.transformMovie.stop()
+        win.transformLabel.close()
+        win.transformLabel.clear()
+        win.input_lock = False
+        # self.transformMovie = None
+
+        if win.transform_text:
+            text_key = 'TransformedGodness' if win.goodness_form else 'TransformedNormal'
+            win.text = win.lang['Talk'][text_key]
+            win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ" if win.goodness_form else "(> ͜ʖ <)"
+            win.textUpdate()
+            win.transform_text = False
+
+    def handle_transform_failure(self, win):
+        """Processing an unsuccessful transformation"""
+        if hasattr(win, 'model'):
+            win.model.SetExpression("Sad")
+
+        win.fadeoutTimer.start(10000)
+        win.text = win.lang['Talk']['TransformNot']
+        win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
+        print(f"{win.name}: {win.text}{win.kaomoji}")
+        win.textUpdate()
+
+    def play_transform_animation(self, win):
+        """Starting the transformation animation"""
+        win.input_lock = True
+
+        # Setting up Live2D animations
+        self._play_model_animation(win)
+
+        # Init QMovie
+        win.transformMovie = QMovie(win.t_anim_in)
+        win.transformLabel.setMovie(win.transformMovie)
+        win.transformLabel.movie().setScaledSize(
+            self._calculate_animation_size(win)
+        ), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        win.transformMovie.start()
+        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
+        win.transformLabel.show()
+
+        win.transform = True
+        self.transform_lock = 0
+
+    def handle_transform_completion(self, win):
+        """Ending the transformation animation"""
+        if not win.goodness_form and self.transform_lock == 0:
+            self._transform_to_goodness(win)
+        elif win.goodness_form and self.transform_lock == 0:
+            self._transform_to_regular(win)
+
+        # Starting the reverse animation
+        win.transformMovie = None
+        win.transformMovie = QMovie(win.t_anim_out)
+        win.transformLabel.setMovie(win.transformMovie)
+        win.transformLabel.movie().setScaledSize(
+            self._calculate_animation_size(win)
+        ), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        win.transformMovie.start()
+        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
+        win.transformLabel.show()
+        win.transform = False
+        win.talkUpd = True
+
+    def _play_model_animation(self, win):
+        """Model animation playback"""
+        # Regular form processing (goodness_form=False)
+        if not win.goodness_form:
+            # Playing the transformation animation
+            win.anim_manager.play_animation(
+                model=win.model,
+                anim_type='Motion',
+                group_or_id="Unique",
+                no=0,
+                priority=live2d.MotionPriority.FORCE
+            )
+
+            # Setting the default expression for a regular form
+            default_expression = "Serious"
+            expressions = {
+                "Neptune": "Star",
+                "Vert": "Smile",
+                "NepGear": "Star"
+            }
+            win.model.SetExpression(expressions.get(win.character_name, default_expression))
+        # Goodness form processing (goodness_form=True)
+        else:
+            # Special treatment for reverse transformation
+            win.model.SetExpression("Funny")
+
+    def _calculate_animation_size(self, win):
+        """Calculate animation size"""
+        return QSize(
+            int(win.w_resize + win.trm_cmx * win.models_scale),
+            int(win.h_resize + win.trm_cmy * win.models_scale)
+        )
+
+    def _transform_to_goodness(self, win):
+        """Transformation to goodness form"""
+        transformations = {
+            "Neptune": win.on_action_purple_heart,
+            "Noire": win.on_action_black_heart,
+            "Blanc": win.on_action_white_heart,
+            "Vert": win.on_action_green_heart,
+            "NepGear": win.on_action_purple_sister,
+            "Uni": win.on_action_black_sister,
+            "Rom": win.on_action_white_sister_rom,
+            "Ram": win.on_action_white_sister_ram,
+        }
+        if win.character_name in transformations:
+            transformations[win.character_name]()
+        self._transform_end_exp(win)
+
+    def _transform_to_regular(self, win):
+        """Transformation to regular form"""
+        transformations = {
+            "Purple Heart": win.on_action_neptune,
+            "Black Heart": win.on_action_noire,
+            "White Heart": win.on_action_blanc,
+            "Green Heart": win.on_action_vert,
+            "Purple Sister": win.on_action_nepgear,
+            "Black Sister": win.on_action_uni,
+            "White Sister Rom": win.on_action_rom,
+            "White Sister Ram": win.on_action_ram,
+        }
+        if win.character_name in transformations:
+            transformations[win.character_name]()
+        self._transform_end_exp(win)
+
+    def _transform_end_exp(self, win):
+        self.transform_lock = 1
+        win.model.ResetAllParameters()
+        win.model.ResetExpressions()
+        win.model.SetExpression("Funny")
+        win.fadeoutTimer.start(7000)
+        win.transform_text = True

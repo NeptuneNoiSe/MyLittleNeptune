@@ -319,7 +319,7 @@ class Functions:
             print("Mouse is steady")
 
         target_x = 0 - win.frmX * -0.25
-        target_y = 0 - win.frmY * -0.5
+        target_y = 0 - win.h_resize * -0.5
 
         def update_position(pos):
             win.posX = pos.x()

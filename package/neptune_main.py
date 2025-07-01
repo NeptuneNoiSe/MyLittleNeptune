@@ -18,14 +18,13 @@ import live2d.v3 as live2d
 import resources
 from widgets.talk_widget import TalkWidgetMain
 from additional.config_module import *
-from additional.models import Models
 from additional.models import ModelsManager
 from additional.on_actions import OnActions
 from additional.functions import Functions
 from additional.functions import MouseTracker
 from additional.resource_mng import ResourceManager
 
-class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
+class Win(QOpenGLWidget, Functions, OnActions, TalkWidgetMain):
     def __init__(self) -> None:
         super().__init__()
         self.hintFlags: list[Qt.WindowType] = [
@@ -401,7 +400,6 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
-
         # Tired Timer check
         if self.t_count <= self.sleep_v:
             self.idle_anim = True
@@ -412,7 +410,7 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
             current_time = time.time()
             self.anim_manager.update_idle(current_time)
 
-        self.transformMovieTriggers()
+        self.anim_manager.check_animation_progress(self)
 
         self.changeTalkWidgetSide()
 
@@ -619,7 +617,8 @@ class Win(QOpenGLWidget, Functions, Models, OnActions, TalkWidgetMain):
         self.auto_scale_init = True
 
         self.setLanguage()
-        self.name_update()
+        if self.talkUpd:
+            self.apply_character_config(self.character_name)
 
     def settings_show(self):
         settings.show()

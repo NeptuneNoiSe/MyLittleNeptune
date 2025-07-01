@@ -13,6 +13,33 @@ class ModelsManager:
         self.resources_dir = resources_dir
         self.resource_manager = ResourceManager(resources_dir)
 
+    def get_character_name(self, win, config: dict) -> str:
+        """Secure name acquisition with complex name processing"""
+        if not config:
+            return getattr(win, 'character_name', 'Unknown')
+
+        # Get the original name with protection from None
+        char_name = getattr(win, 'character_name', '').strip() or 'Unknown'
+
+        # Try 3 key options by priority:
+        # - The exact specified name_key from the config
+        # - Option without spaces ("PurpleHeart")
+        # - Original name with spaces ("Purple Heart")
+        possible_keys = [
+            config.get('name_key'),  # An explicitly specified key
+            char_name.replace(' ', ''),  # Without spaces
+            char_name  # Original name
+        ]
+        # Looking for the first suitable key in localization
+        try:
+            lang_names = win.lang.get('Names', {})
+            for key in possible_keys:
+                if key and key in lang_names:
+                    return lang_names[key]
+            return char_name
+        except (AttributeError, TypeError):
+            return char_name
+
     def apply_character_config(self, win, character_name: str) -> None:
         """Applies the character configuration to the window"""
         config = self.resource_manager.get_character_config(character_name)
@@ -23,8 +50,7 @@ class ModelsManager:
                 setattr(win, key, value)
 
         # Name update
-        name_key = config.get('name_key', character_name.replace(' ', ''))
-        win.name = win.lang['Names'].get(name_key, character_name)
+        win.name = self.get_character_name(win, config)
 
     def update_model(self, win) -> None:
         """Model update"""
@@ -56,8 +82,7 @@ class ModelsManager:
             if hasattr(win, param):
                 setattr(win, param, value)
 
-        name_key = config.get('name_key', win.character_name.replace(' ', ''))
-        win.name = win.lang['Names'].get(name_key, win.character_name)
+        win.name = self.get_character_name(win, config)
 
         win.posXL = (win.mx_param / 2) - win.posXR / 2
         win.twmXR = int(win.posXR * win.a_scale * win.models_scale)
@@ -113,174 +138,6 @@ class ModelsManager:
         win.model.LoadModelJson(fallback_path)
 
 class Models:
-    def transform_initialize(win):
-        win.input_lock = True
-        if not win.goodness_form:
-            win.anim_manager.play_animation(
-                model=win.model,
-                anim_type='Motion',
-                group_or_id="Unique",  # Group (str)
-                no=0,  # number animation (int)
-                priority=live2d.MotionPriority.FORCE
-            )
-            if win.character_name == "Neptune":
-                win.model.SetExpression("Star")
-            elif win.character_name == "Vert":
-                win.model.SetExpression("Smile")
-            elif win.character_name == "NepGear":
-                win.model.SetExpression("Star")
-            else:
-                win.model.SetExpression("Serious")
-        if win.goodness_form:
-            win.model.SetExpression("Funny")
-        win.transformMovie = QMovie(win.t_anim_in)
-        win.transformLabel.setMovie(win.transformMovie)
-        win.transformLabel.movie().setScaledSize(QSize(int(win.w_resize + win.trm_cmx * win.models_scale),
-                                                       int(win.h_resize + win.trm_cmy * win.models_scale))
-                                                 ), Qt.KeepAspectRatio, Qt.SmoothTransformation
-        win.transformMovie.start()
-        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
-        win.transformLabel.show()
-        win.transform = True
-        win.transform_lock = 0
-
-    def transform_complete(win):
-        if not win.goodness_form and win.transform_lock == 0:
-            win.transform_to_goodness_form()
-            win.transform_lock = 1
-        if win.goodness_form and win.transform_lock == 0:
-            win.transform_to_regular_form()
-            win.transform_lock = 1
-        win.model.ResetExpressions()
-        win.model.SetExpression("Funny")
-        win.fadeoutTimer.start(7000)
-        win.transformMovie = QMovie(win.t_anim_out)
-        win.transformLabel.setMovie(win.transformMovie)
-        win.transformLabel.movie().setScaledSize(QSize(int(win.w_resize + win.trm_cmx * win.models_scale),
-                                                       int(win.h_resize + win.trm_cmy * win.models_scale))
-                                                 ), Qt.KeepAspectRatio, Qt.SmoothTransformation
-        win.transformMovie.start()
-        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
-        win.transformLabel.show()
-        win.transform = False
-        win.talkUpd = True
-
-    def transform_to_goodness_form(win):
-        # Transform to Goodness Form
-        if win.character_name == "Neptune":
-            win.on_action_purple_heart()
-        if win.character_name == "Noire":
-            win.on_action_black_heart()
-        if win.character_name == "Blanc":
-            win.on_action_white_heart()
-        if win.character_name == "Vert":
-            win.on_action_green_heart()
-        if win.character_name == "NepGear":
-            win.on_action_purple_sister()
-        if win.character_name == "Uni":
-            win.on_action_black_sister()
-        if win.character_name == "Rom":
-            win.on_action_white_sister_rom()
-        if win.character_name == "Ram":
-            win.on_action_white_sister_ram()
-
-    def transform_to_regular_form(win):
-        # Transform to Regular Form
-        if win.character_name == "Purple Heart":
-            win.on_action_neptune()
-        if win.character_name == "Black Heart":
-            win.on_action_noire()
-        if win.character_name == "White Heart":
-            win.on_action_blanc()
-        if win.character_name == "Green Heart":
-            win.on_action_vert()
-        if win.character_name == "Purple Sister":
-            win.on_action_nepgear()
-        if win.character_name == "Black Sister":
-            win.on_action_uni()
-        if win.character_name == "White Sister Rom":
-            win.on_action_rom()
-        if win.character_name == "White Sister Ram":
-            win.on_action_ram()
-
-    def transformMovieTriggers(win):
-        if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() - 3 and win.transform == True:
-            win.transformLabel.movie().setScaledSize(QSize(int(1), int(1)))
-            win.transformMovie.stop()
-            win.transformLabel.close()
-            win.transform_complete()
-
-        if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() - 3 and win.transform == False:
-            win.transformMovie.stop()
-            win.transformLabel.close()
-            win.input_lock = False
-            if win.transform_text:
-                if win.goodness_form:
-                    win.text = win.lang['Talk']['TransformedGodness']
-                    win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
-                else:
-                    win.text = win.lang['Talk']['TransformedNormal']
-                    win.kaomoji = "(> ͜ʖ <)"
-                win.textUpdate()
-                win.transform_text = False
-
-        if win.transformMovie.currentFrameNumber() >= win.transformMovie.frameCount() / 2 and win.transform == True:
-            win.dialogClose()
-            win.transform_text = True
-
-    def name_update(win):
-        # Update Params
-        if win.character_name == "Neptune":
-            win.name = win.lang['Names']['Neptune']
-
-        if win.character_name == "Purple Heart":
-            win.name = win.lang['Names']['PurpleHeart']
-
-        if win.character_name == "Noire":
-            win.name = win.lang['Names']['Noire']
-
-        if win.character_name == "Black Heart":
-            win.name = win.lang['Names']['BlackHeart']
-
-        if win.character_name == "Blanc":
-            win.name = win.lang['Names']['Blanc']
-
-        if win.character_name == "White Heart":
-            win.name = win.lang['Names']['WhiteHeart']
-
-        if win.character_name == "Vert":
-            win.name = win.lang['Names']['Vert']
-
-        if win.character_name == "Green Heart":
-            win.name = win.lang['Names']['GreenHeart']
-
-        if win.character_name == "NepGear":
-            win.name = win.lang['Names']['NepGear']
-
-        if win.character_name == "Purple Sister":
-            win.name = win.lang['Names']['PurpleSister']
-
-        if win.character_name == "Uni":
-            win.name = win.lang['Names']['Uni']
-
-        if win.character_name == "Black Sister":
-            win.name = win.lang['Names']['BlackSister']
-
-        if win.character_name == "Rom":
-            win.name = win.lang['Names']['Rom']
-
-        if win.character_name == "White Sister Rom":
-            win.name = win.lang['Names']['WhiteSisterRom']
-
-        if win.character_name == "Ram":
-            win.name = win.lang['Names']['Ram']
-
-        if win.character_name == "White Sister Ram":
-            win.name = win.lang['Names']['WhiteSisterRam']
-
-        if win.character_name == "Histoire":
-            win.name = win.lang['Names']['Histoire']
-
     # Legacy Function( May be removed )
     def setSleepParams(win):
         # Main Model Params

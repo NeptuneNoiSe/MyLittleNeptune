@@ -391,31 +391,12 @@ class Functions:
             win.textUpdate()
 
     def sleep_func(win):
-        # win.setSleepParams()
-        # Model is not rotate now
-        # win.model.Rotate(win.modelRotate)
-        # win.sleepLabel = QLabel(win)
-        # win.cloud = os.path.join(
-        #    resources.RESOURCES_DIRECTORY, "images/cloud.webp")
-        # win.cloudPixmap = QPixmap(win.cloud).scaled(QSize(win.w_resize, win.h_resize),
-        #                                            Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        # win.sleepLabel.setPixmap(win.cloudPixmap)
-        # win.sleepLabel.move(0, win.sleepMoveY * win.a_scale * win.models_scale)
-        # win.sleepLabel.show()
         win.anim_manager.set_sleep_state(True)
         win.idle_anim = False
         win.wake_up = False
         win.sleep = True
         win.model.SetExpression("ClosedEyes")
-        # win.sleepMove = False
-        # if win.x() >= win.SrcSize.width() - win.width() or  win.x() >= win.vSize.width() - win.width():
-        #    win.move(win.x() - win.w_resize / 3.5, win.y() + win.h_resize / 4)
-        #    win.sleepMove = True
-        #    win.sleepSide = "Right"
-        # elif win.x() <= 0 + win.width() or win.x() <= win.SrcSize.width() - win.vSize.width() + win.width():
-        #    win.move(win.x() + win.w_resize / 4, win.y() + win.h_resize / 4)
-        #    win.sleepMove = True
-        #    win.sleepSide = "Left"
+        win.models_manager.setSleepParams(win)
 
     def wake_up_func(win):
         pass
@@ -481,6 +462,7 @@ class Functions:
         win.sleepInputTimer.stop()
 
     def resetExp(win):
+        # win.model.ResetAllParameters()
         win.model.ResetExpressions()
         win.fadeoutTimer.stop()
 

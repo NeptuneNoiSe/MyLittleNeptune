@@ -25,9 +25,9 @@ class OnActions:
         win.t_count = 1
 
         # Setting the transformation text
-        text_key = 'TransformToNormal' if win.goodness_form else 'TransformToGodness'
+        text_key = 'TransformToNormal' if win.hdd_form else 'TransformToHDD'
         win.text = win.lang['Talk'][text_key]
-        win.kaomoji = "(/￣ー￣)/" if win.goodness_form else "(/￣ー￣)/~~☆"
+        win.kaomoji = "(/￣ー￣)/" if win.hdd_form else "(/￣ー￣)/~~☆"
         win.settings_close()
         win.textUpdate()
 

@@ -248,7 +248,8 @@ class TalkWidgetMain:
         win.models_manager.update_model(win)
         win.text = win.lang['Talk']['Hello']
         win.kaomoji = "(^~^)/"
-        win.model.SetExpression("Smile", fadeout=10000)
+        win.model.SetExpression("Smile")
+        win.fadeoutTimer.start(10000)
         print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
         win.talkUpd = True

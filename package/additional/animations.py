@@ -37,6 +37,7 @@ class AnimationsManager:
         self.models_manager = ModelsManager
         self.transform_lock = False
         self.transform_text = False
+        self.transform = False
 
     @property
     def character_name(self):
@@ -176,9 +177,9 @@ class AnimationsManager:
             print(f"Animation {group} {no} start - blink off")
         self.set_blink_enabled(False)  # Using our previously created method
 
-    def _handle_motion_finish(self, win, group, no):
+    def _handle_motion_finish(self, group, no):
         """Callback with Animation Finish"""
-        if not win.transform:
+        if not self.transform:
             self.model.ResetExpressions()
             self.model.ResetAllParameters()
         if group != "Idle":  # If the NON-idle animation has ended
@@ -188,9 +189,9 @@ class AnimationsManager:
             print(f"Animation {group} {no} finish - blink on")
 
         # Additionally: reset the eyes to the open state
-        self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
-        self.model.SetParameterValueById("ParamEyeROpen", 1.0)
-        self.model.SetParameterValueById("ParamMouthOpenY", 0)
+        #self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
+        #self.model.SetParameterValueById("ParamEyeROpen", 1.0)
+        #self.model.SetParameterValueById("ParamMouthOpenY", 0)
 
     def _random_delay(self):
         """Generate Random Interval"""
@@ -295,9 +296,9 @@ class AnimationsManager:
         # self.transformMovie = None
 
         if win.transform_text:
-            text_key = 'TransformedGodness' if win.goodness_form else 'TransformedNormal'
+            text_key = 'TransformedHDD' if win.hdd_form else 'TransformedNormal'
             win.text = win.lang['Talk'][text_key]
-            win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ" if win.goodness_form else "(> ͜ʖ <)"
+            win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ" if win.hdd_form else "(> ͜ʖ <)"
             win.textUpdate()
             win.transform_text = False
 
@@ -328,15 +329,14 @@ class AnimationsManager:
         win.transformMovie.start()
         win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
         win.transformLabel.show()
-
-        win.transform = True
+        self.transform = win.transform = True
         self.transform_lock = 0
 
     def handle_transform_completion(self, win):
         """Ending the transformation animation"""
-        if not win.goodness_form and self.transform_lock == 0:
-            self._transform_to_goodness(win)
-        elif win.goodness_form and self.transform_lock == 0:
+        if not win.hdd_form and self.transform_lock == 0:
+            self._transform_to_hdd(win)
+        elif win.hdd_form and self.transform_lock == 0:
             self._transform_to_regular(win)
 
         # Starting the reverse animation
@@ -349,20 +349,20 @@ class AnimationsManager:
         win.transformMovie.start()
         win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
         win.transformLabel.show()
-        win.transform = False
+        self.transform = win.transform = False
         win.talkUpd = True
 
     def _play_model_animation(self, win):
         """Model animation playback"""
-        # Regular form processing (goodness_form=False)
-        if not win.goodness_form:
+        # Regular form processing (hdd_form=False)
+        if not win.hdd_form:
             # Playing the transformation animation
             win.anim_manager.play_animation(
                 model=win.model,
                 anim_type='Motion',
                 group_or_id="Unique",
                 no=0,
-                priority=live2d.MotionPriority.FORCE
+                priority=live2d.MotionPriority.FORCE,
             )
 
             # Setting the default expression for a regular form
@@ -373,7 +373,7 @@ class AnimationsManager:
                 "NepGear": "Star"
             }
             win.model.SetExpression(expressions.get(win.character_name, default_expression))
-        # Goodness form processing (goodness_form=True)
+        # HDD form processing (hdd_form=True)
         else:
             # Special treatment for reverse transformation
             win.model.SetExpression("Funny")
@@ -385,8 +385,8 @@ class AnimationsManager:
             int(win.h_resize + win.trm_cmy * win.models_scale)
         )
 
-    def _transform_to_goodness(self, win):
-        """Transformation to goodness form"""
+    def _transform_to_hdd(self, win):
+        """Transformation to hdd form"""
         transformations = {
             "Neptune": win.on_action_purple_heart,
             "Noire": win.on_action_black_heart,

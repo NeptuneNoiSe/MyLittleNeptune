@@ -106,7 +106,7 @@ class Win(QOpenGLWidget, Functions, OnActions, TalkWidgetMain):
         self.text = "Hello!"
         self.kaomoji = "(^~^)/"
         self.transform = False
-        self.goodness_form = False
+        self.hdd_form = False
         self.transform_state = False
         self.transform_lock = 0
         self.input_lock = False
@@ -182,7 +182,7 @@ class Win(QOpenGLWidget, Functions, OnActions, TalkWidgetMain):
 
         # Neptune Model parameters
         if self.models_switch == 0:
-            self.goodness_form = False
+            self.hdd_form = False
             self.can_transform = True
             self.mx_param = self.config.getint('Model', 'x_param')
             self.my_param = self.config.getint('Model', 'y_param')
@@ -398,7 +398,6 @@ class Win(QOpenGLWidget, Functions, OnActions, TalkWidgetMain):
             self.setWindowTitle("My Little Neptune")
             self.setWindowIcon(QIcon(os.path.join(
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
-
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
         if self.t_count <= self.sleep_v:
@@ -549,14 +548,14 @@ class Win(QOpenGLWidget, Functions, OnActions, TalkWidgetMain):
                             elif self.lastExpressionId == "Surprised":
                                 self.text = self.lang['Talk']['Surprised']
                                 self.kaomoji = "(0_0)?"
-                            elif self.lastExpressionId == "Funny" and self.goodness_form == False:
+                            elif self.lastExpressionId == "Funny" and self.hdd_form == False:
                                 if self.character_name == "Blanc":
                                     self.text = self.lang['Talk']['FunnyBl']
                                     self.kaomoji = "(‶/﹏0)"
                                 else:
                                     self.text = self.lang['Talk']['Funny']
                                     self.kaomoji = "(>_<)"
-                            elif self.lastExpressionId == "Funny" and self.goodness_form == True:
+                            elif self.lastExpressionId == "Funny" and self.hdd_form == True:
                                 self.text = self.lang['Talk']['FunnyGod']
                                 self.kaomoji = "(◕‿◕)"
                         print(self.name + ": " + self.text + self.kaomoji)

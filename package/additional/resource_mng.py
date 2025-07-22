@@ -14,12 +14,64 @@ class ResourceManager:
         self.loaded_animations: Dict[str, Dict] = {}
         self.ui_labels: Dict[str, QLabel] = {}
         self.character_configs: Dict[str, Dict] = self._load_character_configs()
+        self.languages: Dict[str, Dict] = {}
+        self.animation_files: Dict[str, str] = {}
+        self.extra_motions: Dict[str, str] = {}
 
     def _load_character_configs(self) -> Dict[str, Dict]:
         """Loads character configs from a JSON file"""
         config_path = os.path.join(self.resources_dir, "configs/model_configs.json")
         with open(config_path, encoding="utf-8") as f:
             return json.load(f)
+
+    def load_language(self, language: str) -> Dict[str, Any]:
+        """Loads language file"""
+        if language not in self.languages:
+            lang_path = os.path.join(self.resources_dir, f"lang/{language.lower()}.json")
+            with open(lang_path, encoding="utf-8") as f:
+                self.languages[language] = json.load(f)
+        return self.languages[language]
+
+    def load_animation(self, anim_name: str) -> str:
+        """Returns animation path"""
+        if anim_name not in self.animation_files:
+            self.animation_files[anim_name] = os.path.join(
+                self.resources_dir, f"animations/{anim_name}.webp"
+            )
+        return self.animation_files[anim_name]
+
+    def load_extra_motions(self) -> Dict[str, str]:
+        """Loads all extra animations"""
+        if not self.extra_motions:
+            motions_dir = os.path.join(self.resources_dir, "v3/external_motions")
+            motion_files = {
+                "drag_down": "drag_down.motion3.json",
+                "side_touch_head": "side_touch_head.motion3.json",
+                "touch_body": "touch_body.motion3.json",
+                "touch_body2": "touch_body2.motion3.json",
+                "touch_body3": "touch_body3.motion3.json",
+                "touch_bra": "touch_bra.motion3.json",
+                "touch_bra1": "touch_bra1.motion3.json",
+                "touch_bra2": "touch_bra2.motion3.json",
+                "touch_bra3": "touch_bra3.motion3.json",
+                "touch_head": "touch_head.motion3.json",
+                "touch_head2": "touch_head2.motion3.json",
+                "touch_hl": "touch_hl.motion3.json",
+                "touch_hl1": "touch_hl1.motion3.json",
+                "touch_hl2": "touch_hl2.motion3.json",
+                "touch_hr": "touch_hr.motion3.json",
+                "touch_hr1": "touch_hr1.motion3.json",
+                "touch_hr2": "touch_hr2.motion3.json",
+                "touch_leg": "touch_leg.motion3.json",
+                "touch_leg1": "touch_leg1.motion3.json",
+                "touch_leg2": "touch_leg2.motion3.json",
+                "touch_leg3": "touch_leg3.motion3.json",
+            }
+            self.extra_motions = {
+                name: os.path.join(motions_dir, filename)
+                for name, filename in motion_files.items()
+            }
+        return self.extra_motions
 
     def get_character_config(self, character_name: str) -> Dict[str, Any]:
         """Returns the configuration of the character by name"""

@@ -1,4 +1,4 @@
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, QTimer
 from PySide6.QtGui import QMovie, Qt
 
 from package import resources
@@ -9,10 +9,12 @@ import json
 import os
 import live2d.v3 as live2d
 from package.additional.models import ModelsManager
+from package.additional.resource_mng import ResourceManager
 
 class AnimationsManager:
     def __init__(self, model):
         self.model = model
+        self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self._log_callbacks = False
         self.blink_enabled = True
         self.last_update_time = 0
@@ -38,6 +40,7 @@ class AnimationsManager:
         self.transform_lock = False
         self.transform_text = False
         self.transform = False
+        self._load_extra_motions()
 
     @property
     def character_name(self):
@@ -53,6 +56,12 @@ class AnimationsManager:
     def set_logging(self, enabled: bool):
         """on/off logs callback's"""
         self._log_callbacks = enabled
+
+    def _load_extra_motions(self):
+        """Loads extra motions"""
+        motions = self.resource_manager.load_extra_motions()
+        for i, (name, path) in enumerate(motions.items()):
+            self.model.LoadExtraMotion("Extra", i, path)
 
     def _load_profiles(self) -> dict:
         """Load a single config for all characters"""
@@ -180,7 +189,6 @@ class AnimationsManager:
     def _handle_motion_finish(self, group, no):
         """Callback with Animation Finish"""
         if not self.transform:
-            self.model.ResetExpressions()
             self.model.ResetAllParameters()
         if group != "Idle":  # If the NON-idle animation has ended
             self._reset_idle_state()
@@ -224,7 +232,7 @@ class AnimationsManager:
     def _handle_idle_finish(self, group, no):
         """Callback Animation Finish"""
         self._is_idle_playing = False
-        self.model.ResetExpressions()
+        # self.model.ResetExpressions()
         if self._log_callbacks:
             print(f"Animation {group} {no} finish - blink on")
 
@@ -321,7 +329,8 @@ class AnimationsManager:
         self._play_model_animation(win)
 
         # Init QMovie
-        win.transformMovie = QMovie(win.t_anim_in)
+        t_anim_in = self.resource_manager.load_animation("transform_in")
+        win.transformMovie = QMovie(t_anim_in)
         win.transformLabel.setMovie(win.transformMovie)
         win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size(win)
@@ -341,7 +350,8 @@ class AnimationsManager:
 
         # Starting the reverse animation
         win.transformMovie = None
-        win.transformMovie = QMovie(win.t_anim_out)
+        t_anim_out = self.resource_manager.load_animation("transform_out")
+        win.transformMovie = QMovie(t_anim_out)
         win.transformLabel.setMovie(win.transformMovie)
         win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size(win)
@@ -424,3 +434,120 @@ class AnimationsManager:
         win.model.SetExpression("Funny")
         win.fadeoutTimer.start(7000)
         win.transform_text = True
+
+class TiredAnimation:
+    def __init__(self, win):
+        self.win = win
+
+        # Animation Vars
+        self.condition = "Idle"
+        self.sleep = False
+        self.wake_up = False
+        self.t_count = 1
+        self.sad_v = 60
+        self.tired_v = 80
+        self.sleep_v = 100
+        self.wake_up_v = 160
+
+        # Idle timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.idle_timer)
+        self.timer.start(int(6000 / self.win.time_scale))
+
+        # Sleep Move timer
+        self.sleepInputTimer = QTimer()
+        self.sleepInputTimer.timeout.connect(self.takingSleep)
+
+    def idle_timer(self) -> None:
+        self.t_count += 1
+
+        # Логирование (если нужно)
+        if self.win.timer_log:
+            print(f"{self.t_count} - {self.condition} Condition")
+
+        # Обработка состояний
+        if self.t_count <= self.sad_v:
+            self.set_idle_state()
+
+        if self.t_count <= self.sleep_v and self.win.idle_switch:
+            self.win.idle_anim = True
+
+        if self.t_count >= 5:
+            self.win.set_icon = True
+
+        if self.t_count >= 10 and not self.win.sleep_switch:
+            self.t_count = 1
+
+        # Проверка конкретных состояний
+        if self.t_count == self.sad_v:
+            self.set_sad_state()
+
+        elif self.t_count == self.tired_v and self.win.sleep_switch:
+            self.set_tired_state()
+
+        elif self.t_count == self.sleep_v and self.win.sleep_switch:
+            self.set_sleep_state()
+
+        elif self.t_count == self.wake_up_v and self.win.sleep_switch:
+            self.set_wake_up_state()
+
+    def set_idle_state(self):
+        self.condition = "Idle"
+
+    def set_sad_state(self):
+        self.condition = "Sad"
+        self.win.model.SetExpression("Sad")
+        self.update_text(self.win.lang['Talk']['Sad'], "(´•ω•̥`)")
+
+    def set_tired_state(self):
+        self.condition = "Tired"
+        self.win.model.SetExpression("Tired")
+        self.update_text(self.win.lang['Talk']['Tired'], "(๑•﹏•)")
+
+    def set_sleep_state(self):
+        if self.win.tracking_mouse_switch:
+            self.win.tracking_mouse = False
+            self.win.functions.handle_mouse_idle()
+            self.win.mouse_tracker.set_sleep_state(True)
+
+        self.condition = "Sleep"
+        self.update_text(self.win.lang['Talk']['Sleep'], "(ᴗ˳ᴗ)ｚｚＺ")
+
+    def set_wake_up_state(self):
+        self.wake_up_func()
+        self.win.model.SetExpression("Star")
+        self.win.model.SetExpression("Serious")
+        self.win.fadeoutTimer.start(10000)
+        self.update_text(self.win.lang['Talk']['WakeUp'], "(O_~)/")
+
+    def sleep_func(self):
+        self.win.anim_manager.set_sleep_state(True)
+        self.win.idle_anim = False
+        self.win.wake_up = False
+        self.sleep = True
+        self.win.model.SetExpression("ClosedEyes")
+        self.win.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
+        self.win.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
+
+    def takingSleep(self):
+        # win.sleepMove = True
+        self.sleepInputTimer.stop()
+
+    def wake_up_func(self):
+        self.win.model.ResetAllParameters()
+        self.win.model.ResetExpressions()
+        self.t_count = 0
+        self.condition = None
+        self.set_idle_state()
+        self.win.anim_manager.set_sleep_state(False)
+        self.win.idle_anim = True
+        self.win.wake_up = True
+        self.win.sleep = False
+        self.win.mouse_tracker.set_sleep_state(False)
+        self.win.tracking_mouse = True
+
+    def update_text(self, text, kaomoji):
+        self.win.text = text
+        self.win.kaomoji = kaomoji
+        print(f"{self.win.name}: {text} {kaomoji}")
+        self.win.textUpdate()

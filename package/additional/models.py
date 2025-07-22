@@ -126,7 +126,8 @@ class ModelsManager:
         """Final operations"""
         live2d.clearBuffer()
         win.model.CreateRenderer(2)
-        win.initializeAnimations()
+        win.functions.initAnimations()
+        win.tired_anim.t_count = 1
 
         if win.talkUpd:
             win.talkWidgetUpdate()
@@ -136,15 +137,6 @@ class ModelsManager:
         fallback_path = os.path.join(self.resources_dir, "v3/Neptune/Neptune.model3.json")
         win.model = live2d.Model()
         win.model.LoadModelJson(fallback_path)
-
-    def setSleepParams(self, win):
-        # Main Model Params
-        #win.sleepMoveY = 0
-        #win.model.SetParameterValueById("ParamAngleX", 15, 100)
-        win.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
-        win.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
-        #win.model.SetAndSaveParameterValueById("ParamBodyAngleX", 10.0, 1.0)
-        #win.model.SetAndSaveParameterValueById("ParamBodyAngleZ", 30.0, 1.0)
 
     def getModelParams(self, win):
         for i in range(win.model.GetParameterCount()):

@@ -22,7 +22,7 @@ class OnActions:
             return
 
         win.anim_manager.play_transform_animation(win)
-        win.t_count = 1
+        win.tired_anim.t_count = 1
 
         # Setting the transformation text
         text_key = 'TransformToNormal' if win.hdd_form else 'TransformToHDD'
@@ -188,7 +188,7 @@ class OnActions:
     # Animations Actions
     def on_action_idle_true(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Enable")
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['IdleEnabled']
@@ -205,7 +205,7 @@ class OnActions:
 
     def on_action_idle_false(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Disable")
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['IdleDisabled']
@@ -222,7 +222,7 @@ class OnActions:
 
     def on_action_on_mouse_true(win):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['OnMouseEnabled']
@@ -239,7 +239,7 @@ class OnActions:
 
     def on_action_on_mouse_false(win):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['OnMouseDisabled']
@@ -256,7 +256,7 @@ class OnActions:
 
     def on_action_tap_body_true(win):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['TapBodyEnabled']
@@ -273,7 +273,7 @@ class OnActions:
 
     def on_action_tap_body_false(win):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['TapBodyDisabled']
@@ -289,7 +289,7 @@ class OnActions:
         win.tap_body_anim = False
 
     def on_action_stop_all_motions(win):
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             pass
         else:
             win.text = win.lang['MiscellaneousTalk']['StopMotions']
@@ -308,8 +308,8 @@ class OnActions:
 
     def on_action_quit(win):
         win.model.SetExpression("Cry")
-        if win.condition == "Sleep":
-            win.wake_up_func()
+        if win.tired_anim.condition == "Sleep":
+            win.tired_anim.wake_up_func()
         win.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(win,
                                       win.lang['Actions']['Quit'],
@@ -324,7 +324,7 @@ class OnActions:
             win.textUpdate()
 
         else:
-            win.t_count = 1
+            win.tired_anim.t_count = 1
             win.model.ResetExpression()
             win.model.SetExpression("Happy")
             win.fadeoutTimer.start(5000)

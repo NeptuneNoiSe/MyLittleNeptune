@@ -1,5 +1,5 @@
 import os
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridLayout, QFrame, QFormLayout, \
     QGraphicsOpacityEffect
@@ -223,8 +223,8 @@ class TalkWidgetMain:
         win.dialogCloseTimer.stop()
         win.talkTextLabel.repaint()
         QApplication.processEvents()
-        if win.condition == "Sleep":
-            win.sleep_func()
+        if win.tired_anim.condition == "Sleep":
+            win.tired_anim.sleep_func()
 
     def textUpdate(win):
         win.talkTextLabel.repaint()
@@ -260,6 +260,6 @@ class TalkWidgetMain:
         win.kaomoji = "(-_-)>"
         print(win.name + ": " + win.text + win.kaomoji)
         win.textUpdate()
-        if win.condition == "Sleep":
-            win.wake_up_func()
+        if win.tired_anim.condition == "Sleep":
+            win.tired_anim.wake_up_func()
         win.talkUpd = False

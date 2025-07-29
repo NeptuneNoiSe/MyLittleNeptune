@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Optional, Any
+from typing import Dict, Any
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import QSize
 
@@ -17,6 +17,8 @@ class ResourceManager:
         self.languages: Dict[str, Dict] = {}
         self.animation_files: Dict[str, str] = {}
         self.extra_motions: Dict[str, str] = {}
+        self._talk_images: Dict[str, str] = {}
+        self._mirrored_talk_images: Dict[str, str] = {}
 
     def _load_character_configs(self) -> Dict[str, Dict]:
         """Loads character configs from a JSON file"""
@@ -72,6 +74,53 @@ class ResourceManager:
                 for name, filename in motion_files.items()
             }
         return self.extra_motions
+
+    def load_talk_images(self) -> [Dict[str, str], Dict[str, str]]:
+        """Loads all images for speech widgets"""
+        if self._talk_images is not None:
+            talk_dir = os.path.join(self.resources_dir, "images/talk")
+            mirrored_dir = os.path.join(self.resources_dir, "images/talk_mirrored")
+
+            # File names for all characters
+            image_files = {
+                "Neptune": "neptune_talk.svg",
+                "Purple Heart": "purple_heart_talk.svg",
+                "Noire": "noire_talk.svg",
+                "Black Heart": "black_heart_talk.svg",
+                "Blanc": "blanc_talk.svg",
+                "White Heart": "white_heart_talk.svg",
+                "Vert": "vert_talk.svg",
+                "Green Heart": "green_heart_talk.svg",
+                "NepGear": "nepgear_talk.svg",
+                "Purple Sister": "purple_sister_talk.svg",
+                "Uni": "uni_talk.svg",
+                "Black Sister": "black_sister_talk.svg",
+                "Rom": "rom_talk.svg",
+                "White Sister Rom": "white_sister_rom_talk.svg",
+                "Ram": "ram_talk.svg",
+                "White Sister Ram": "white_sister_ram_talk.svg",
+                "Histoire": "histoire_talk.svg",
+                "default": "talk.svg"
+            }
+
+            # Creating paths for normal and mirror images
+            self._talk_images = {
+                name: os.path.join(talk_dir, filename)
+                for name, filename in image_files.items()
+            }
+
+            self._mirrored_talk_images = {
+                name: os.path.join(mirrored_dir, filename.replace('.svg', '_mirrored.svg'))
+                for name, filename in image_files.items()
+            }
+
+        return self._talk_images, self._mirrored_talk_images
+
+    def get_talk_image(self, character_name: str, mirrored: bool = False) -> str:
+        """Returns the path to the image for the specified character"""
+        talk_images, mirrored_images = self.load_talk_images()
+        image_map = mirrored_images if mirrored else talk_images
+        return image_map.get(character_name, image_map["default"])
 
     def get_character_config(self, character_name: str) -> Dict[str, Any]:
         """Returns the configuration of the character by name"""

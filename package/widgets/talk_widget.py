@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridL
 
 from package import resources
 from package.additional.characters import CharacterManager
+from package.additional.resource_mng import ResourceManager
 
 from PySide6.QtWidgets import (QWidget, QGridLayout, QFrame, QVBoxLayout,
                                QLabel, QFormLayout, QGraphicsOpacityEffect)
@@ -19,6 +20,7 @@ class TalkWidget:
         self.widget = QWidget(win)
         self.init_ui()
         self.character = CharacterManager(self)
+        self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
 
         # Dialog close timer
@@ -142,48 +144,26 @@ class TalkWidget:
             self.talk = True
 
         self.dialogCloseTimer.start(7000)
-        self.widget.move(self.twmXR, self.twmY)
 
-        # We define the image depending on the side and location of the character
-        talk_dir = "talk" if self.screenSide == "Right" else "talk_mirrored"
-        suffix = "" if self.screenSide == "Right" else "_mirrored"
+        # Get image from ResourceManager
+        is_mirrored = self.screenSide == "Left"
+        talk_image = self.resource_manager.get_talk_image(
+            self.character_name,
+            is_mirrored
+        )
 
-        character_images = {
-            "Neptune": f"neptune_talk{suffix}.svg",
-            "Purple Heart": f"purple_heart_talk{suffix}.svg",
-            "Noire": f"noire_talk{suffix}.svg",
-            "Black Heart": f"black_heart_talk{suffix}.svg",
-            "Blanc": f"blanc_talk{suffix}.svg",
-            "White Heart": f"white_heart_talk{suffix}.svg",
-            "Vert": f"vert_talk{suffix}.svg",
-            "Green Heart": f"green_heart_talk{suffix}.svg",
-            "NepGear": f"nepgear_talk{suffix}.svg",
-            "Purple Sister": f"purple_sister_talk{suffix}.svg",
-            "Uni": f"uni_talk{suffix}.svg",
-            "Black Sister": f"black_sister_talk{suffix}.svg",
-            "Rom": f"rom_talk{suffix}.svg",
-            "White Sister Rom": f"white_sister_rom_talk{suffix}.svg",
-            "Ram": f"ram_talk{suffix}.svg",
-            "White Sister Ram": f"white_sister_ram_talk{suffix}.svg",
-            "Histoire": f"histoire_talk{suffix}.svg"
-        }
+        # Set Image
+        self.talk_image = talk_image
+        self._setup_talk_image()
 
-        image_name = character_images.get(self.character_name, f"talk{suffix}.svg")
-        self.talk_image = os.path.join(
-            resources.RESOURCES_DIRECTORY, f"images/{talk_dir}/{image_name}")
-
-        if self.screenSide == "Left":
+        # Widget positioning
+        if is_mirrored:
             self.widget.move(self.twmXR + self.twmXL, self.twmY + 10)
+        else:
+            self.widget.move(self.twmXR, self.twmY)
 
         # Calculating the positioning
         varX, varY = self._calculate_position()
-
-        # Настраиваем изображение
-        talk_pixmap = QPixmap(self.talk_image).scaled(
-            QSize((self.talkX + 15) * self.a_scale * self.models_scale,
-                  (self.talkY + 5) * self.a_scale * self.models_scale),
-            Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.talk_image_label.setPixmap(talk_pixmap)
 
         # Setting up transparency
         opacity_effect = QGraphicsOpacityEffect()
@@ -211,66 +191,132 @@ class TalkWidget:
 
         self.talk_form_layout.setWidget(0, QFormLayout.LabelRole, self.talk_text_label)
 
+    def _setup_talk_image(self):
+        """Adjusts the image in the widget"""
+        if not os.path.exists(self.talk_image):
+            print(f"Warning: Talk image not found at {self.talk_image}")
+            return
+
+        pixmap = QPixmap(self.talk_image)
+        if pixmap.isNull():
+            print(f"Error: Failed to load talk image at {self.talk_image}")
+            return
+
+        scaled_pixmap = pixmap.scaled(
+            int((self.talkX + 15) * self.a_scale * self.models_scale),
+            int((self.talkY + 5) * self.a_scale * self.models_scale),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+        self.talk_image_label.setPixmap(scaled_pixmap)
+
     def _calculate_position(self):
-        """Precise text positioning taking into account all zoom factors"""
-        # Configuration for different sides (in pixels at a base scale of 1.0)
+        """
+        Полный расчет позиции с интеллектуальной коррекцией для обеих осей
+        Особенности:
+        - Автоматическая коррекция X и Y при любом масштабе
+        - Уменьшение шага коррекции при scale > 1.5
+        - Раздельные настройки для правой/левой сторон
+        - Оптимизированные формулы для плавности
+        """
+        # TODO: [HighDPI] Requires testing and adjustment for high resolutions
         CONFIG = {
             'Right': {
+                # Базовые смещения
                 'base_offset_x': 0,
-                'base_offset_y': 0,
+                'base_offset_y': 20,
+
+                # Коррекция X
+                'x_power': 1.2,
+                'base_x_step': 0.25,
+                'x_high_scale_factor': 1.5,
+                'x_high_scale_multiplier': -0.5,
+
+                # Коррекция Y
+                'y_power': 1.5,
+                'base_y_step': 0.4,
+                'y_high_scale_factor': 1.5,
+                'y_high_scale_multiplier': -0.25,
+
+                # Дополнительные параметры
                 'extra_offset_x': 0,
-                'image_padding': 15  # Indentation inside the image
+                'image_padding': 15,
+                'x_scale_factors':  {4: 50, 3: 40, 2: 20, 1: 10, 0: 5}
             },
             'Left': {
                 'base_offset_x': -25.5,
-                'base_offset_y': 0,
+                'base_offset_y': 20,
+                'x_power': 1.3,
+                'base_x_step': 0.35,
+                'x_high_scale_factor': 1.5,
+                'x_high_scale_multiplier': -0.3,
+                'y_power': 1.8,
+                'base_y_step': 0.35,
+                'y_high_scale_factor': 1.5,
+                'y_high_scale_multiplier': -0.2,
                 'extra_offset_x': 15,
-                'image_padding': 30  # Increased indentation for the mirrored version
+                'image_padding': 30,
+                'x_scale_factors':  {4: 50, 3: 40, 2: 10, 1: 10, 0: 5}
             }
         }
 
-        # Defining the current configuration
         side = 'Left' if self.screenSide == "Left" else 'Right'
         cfg = CONFIG[side]
-
-        # Calculating the overall scale
         total_scale = self.a_scale * self.models_scale
+        extra_offset_x = cfg['extra_offset_x']
+        if total_scale >= 2:
+            extra_offset_x += (total_scale * 2)
 
-        # Text offset coefficients (selected experimentally)
-        scale_factors = {
-            4: {'x': 50, 'y': 80},
-            3: {'x': 40, 'y': 70},
-            2: {'x': 20, 'y': 60},
-            1: {'x': 10, 'y': 20},
-            0: {'x': 5, 'y': 20}
-        }
-
-        # Finding a suitable scale level
+        # 1. Расчет базового смещения X
         current_scale = next(
-            key for key in sorted(scale_factors.keys(), reverse=True)
+            key for key in sorted(cfg['x_scale_factors'].keys(), reverse=True)
             if self.a_scale >= key
         )
+        base_x = cfg['x_scale_factors'][current_scale] * total_scale
 
-        # Calculating the base offsets
-        base_x = scale_factors[current_scale]['x'] * total_scale
-        base_y = scale_factors[current_scale]['y'] * total_scale
+        # 2. Коррекция X
+        if total_scale != 1:
+            x_step = cfg['base_x_step']
+            if total_scale > cfg['x_high_scale_factor']:
+                x_step *= cfg['x_high_scale_multiplier']
 
-        # Adjusting based on configuration
-        offset_x = base_x + cfg['base_offset_x'] * total_scale
-        offset_y = base_y + cfg['base_offset_y'] * total_scale
+            x_diff = abs(total_scale - 1.0)
+            x_direction = 1 if total_scale > 1.0 else -1
+            x_adjust = (x_diff ** cfg['x_power']) * x_step * base_x * x_direction
+            base_x += x_adjust
 
-        # Additional correction for the left side
+        if total_scale < 1 and side == 'Right':
+            offset_x = base_x + (cfg['base_offset_x'] + 5) * total_scale
+        else:
+            offset_x = base_x + cfg['base_offset_x'] * total_scale
+
+        # 3. Дополнительная коррекция X для левой стороны
         if side == 'Left':
-            offset_x += cfg['extra_offset_x'] * total_scale
-
-            # Automatic correction based on image size
+            offset_x += extra_offset_x * total_scale
             image_width = (self.talkX + cfg['image_padding']) * total_scale
             text_width = (self.talkX - 25) * total_scale
-
-            # Calculating the free space
             free_space = image_width - text_width - abs(offset_x)
             if free_space < 0:
-                offset_x += free_space * 0.5  # Smooth correction
+                offset_x += free_space * 0.4  # Мягкая коррекция
+
+        # 4. Расчет и коррекция Y
+        base_y = cfg['base_offset_y']
+        y_adjust = 0
+
+        if total_scale != 1.0:
+            y_step = cfg['base_y_step']
+            if total_scale > cfg['y_high_scale_factor']:
+                y_step *= cfg['y_high_scale_multiplier']
+
+            y_diff = abs(total_scale - 1.0)
+            y_direction = 1 if total_scale > 1.0 else -1
+            y_adjust = (y_diff ** cfg['y_power']) * y_step * base_y * y_direction
+
+        offset_y = base_y + y_adjust
+
+        # 5. Отладочный вывод (активировать при настройке)
+        if False:
+            pass
 
         return offset_x, offset_y
 
@@ -304,7 +350,7 @@ class TalkWidget:
         """Updates the widget (for example, after changing settings)"""
         try:
             self.talk = True
-            self.screenSide = "Right"
+            # self.screenSide = "Right"
 
             # Completely cleaning the old widget
             self._clear_widget()

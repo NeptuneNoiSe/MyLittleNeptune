@@ -981,7 +981,7 @@ class SettingsWindow(QWidget):
         self.modelScaleBox = QDoubleSpinBox()
         self.sc_mult_text = QLabel("Scale multiplier:")
         self.modelScaleBox.setMinimum(0.1)
-        self.modelScaleBox.setMaximum(10)
+        self.modelScaleBox.setMaximum(8)
         self.modelScaleBox.setSingleStep(0.5)
         self.modelScaleBox.setValue(self.models_scale)
 

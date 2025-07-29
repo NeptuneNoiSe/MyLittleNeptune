@@ -16,15 +16,19 @@ import live2d.v3 as live2d
 # from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 import resources
-from widgets.talk_widget import TalkWidgetMain
+from widgets.talk_widget import TalkWidget
 from additional.config_module import *
 from additional.models import ModelsManager
+from additional.characters import CharacterManager
 from additional.on_actions import OnActions
 from additional.functions import Functions
-from additional.functions import MouseTracker
+from additional.input_handler import InputHandler
+from additional.input_handler import MouseTracker
 from additional.resource_mng import ResourceManager
+from package.additional.animations import AnimationsManager
+from package.additional.animations import TiredAnimation
 
-class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
+class Win(QOpenGLWidget, OnActions):
     def __init__(self) -> None:
         super().__init__()
         self.hintFlags: list[Qt.WindowType] = [
@@ -109,7 +113,6 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         self.hdd_form = False
         self.transform_state = False
         self.transform_lock = 0
-        self.input_lock = False
         self.can_transform = False
         self.transform_text = True
         self.mx_param = 0
@@ -133,16 +136,17 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         self.sleepMoveY = 0
         self.model_move = False
         self.talk = True
-        self.talkUpd = True
         self.placeThis = False
         self.sleepMove = False
         self.reset_expression = True
         # Transition From Live2d LAppModel to Model
         self.model: live2d.Model | None = None
         self.functions = Functions(self, self.model)
+        self.input_handler = InputHandler(self, self.model)
         self.tired_anim = None
         self.anim_manager = None
         self.lang = None
+        self.talk_update = None
         self.models_manager = ModelsManager(
             resources_dir=resources.RESOURCES_DIRECTORY)
         self.app = QApplication.instance()
@@ -163,7 +167,7 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         # Mouse Tracker Init
         self.mouse_tracker = MouseTracker(self)
         # Mouse tracking timer
-        self.mouse_tracker.idle_timer.timeout.connect(self.functions.handle_mouse_idle)
+        self.mouse_tracker.idle_timer.timeout.connect(self.input_handler.handle_mouse_idle)
 
         #Set screen size
         self.config.set('Main', 'screen_width', str(self.sc_width_size))
@@ -184,6 +188,9 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         # Character Name
         self.character_name = self.config.get('Model', 'character_name')
         self.name = self.character_name
+
+        # Set default model params for first start
+        # self.models_manager.set_default_model_params(self)
 
         # Neptune Model parameters
         if self.models_switch == 0:
@@ -250,30 +257,13 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
 
         self.lastUpdateTime = time.time()
 
-        # Dialog close timer
-        self.dialogCloseTimer = QTimer()
-        self.dialogCloseTimer.timeout.connect(self.dialogClose)
-
-        # GoodBye timer
-        self.goodByeTimer = QTimer()
-        self.goodByeTimer.timeout.connect(self.hello)
-
-        # Talk Delay timer
-        self.talkDelayTimer = QTimer()
-        self.talkDelayTimer.timeout.connect(self.takingTalk)
-
         # Quit timer
         self.quitTimer = QTimer()
         self.quitTimer.timeout.connect(self.quitFunction)
 
-        # Fadeout timer
-        self.fadeoutTimer = QTimer()
-        self.fadeoutTimer.timeout.connect(self.resetExp)
-
-    def resetExp(self):
-        # win.model.ResetAllParameters()
-        self.model.ResetExpressions()
-        self.fadeoutTimer.stop()
+    def change_character(self, name: str):
+        """Set character name in Animation Manager """
+        self.anim_manager.character_name = name
 
     def apply_character_config(self, character_name: str) -> None:
         """proxy method"""
@@ -284,8 +274,6 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         live2d.glInit()
         self.model = live2d.Model()
         if live2d.LIVE2D_VERSION == 3:
-            self.text = self.lang['Talk']['Hello']
-            self.kaomoji = "(^~^)/"
             if self.models_switch == 0:
                 self.character_name = "Neptune"
             elif self.models_switch == 1:
@@ -335,23 +323,29 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
 
             elif self.models_switch == 16:
                 self.character_name = "Histoire"
-
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
 
-        print(self.name + ": " + self.text + self.kaomoji)
         self.model = self.resource_manager.get_model(self.character_name)
         self.apply_character_config(self.character_name)
         self.startTimer(int(1000 / 60)) # FPS Set
-        self.talkWidgetInit()
-        self.talk_function()
         self.functions.setLanguage()
         self.model.CreateRenderer(2)
-        self.functions.initAnimations()
+        self.init_ui()
         self.last_update_time = time.time()
-        self.model.SetExpression("Smile")
-        self.fadeoutTimer.start(7000)
+        self.talk_widget = TalkWidget(self)
+        self.talk_update = self.talk_widget.talk_update
+        self.talk_widget.show_talk()
+        self.character.set_greeting_state()
+        print(self.name + ": " + self.text + self.kaomoji)
+
+    def init_ui(self):
+        self.tired_anim = TiredAnimation(self)
+        self.anim_manager = AnimationsManager(self.model)
+        self.change_character(self.character_name)
+        self.anim_manager.set_logging(self.callbacks_log)
+        self.character = CharacterManager(self)
 
     def resizeGL(self, w: int, h: int) -> None:
         if self.model:
@@ -429,7 +423,7 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
 
         self.anim_manager.check_animation_progress(self)
 
-        self.changeTalkWidgetSide()
+        self.talk_widget.change_talk_widget_side()
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -464,152 +458,44 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         return alpha > 0
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.button() == Qt.LeftButton and not self.input_lock:
+        """Handling mouse button press"""
+        if event.button() == Qt.LeftButton and not self.input_handler.input_lock:
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
+            self.input_handler.start_pos = event.scenePosition()
             if not self.clickInLA:
-                self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowTransparentForInput)
-                self.show()
-                self.functions.mouse_input_timer.start(5000)
+                self.input_handler.set_transparent_input()
             if self.isInL2DArea(x, y):
-                # Get Model Params
-                # self.getModelParams()
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
-                if not self.tired_anim.sleep and self.input_lock == False:
-                    self.talkDelayTimer.start(500)
-                    if self.character_name == "Purple Sister":
-                        self.model.SetExpression("Smile")
-                    if self.character_name == "Black Sister":
-                        self.model.SetExpression("Smile")
-                    else:
-                        self.model.SetExpression("Funny")
-                if self.tired_anim.sleep and self.input_lock == False:
-                    self.tired_anim.sleepInputTimer.start(500)
-                    # self.model.SetExpression("Surprised")
+                self.input_handler.mouse_press_handler()
                 if self.mouse_click_log:
                     print("Left Button Pressed")
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and not self.input_lock:
-            x, y = event.scenePosition().x(), event.scenePosition().y()
-            self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
-            if self.isInLA:
-                self.clickInLA = False
-                self.tap_body_anim = True
-                if (not self.tired_anim.sleep
-                        and not self.tap_body_switch
-                        and not self.sleepMove
-                        and not self.input_lock
-                        and self.placeThis
-                ):
-                    self.placeThis = False
-                    self.reset_expression = False
-                    self.model.ResetExpressions()
-                    self.model.SetExpression("Smile")
-                    self.fadeoutTimer.start(7000)
-                    self.talkDelayTimer.stop()
-                    self.text = self.lang['Talk']['Stay']
-                    self.kaomoji = "(^~^)"
-                    print(self.name + ": " + self.text + self.kaomoji)
-                    self.textUpdate()
-                    self.tired_anim.t_count = 1
-                if self.tap_body_switch and self.sleepMove == False:
-                    hit_part_ids = self.model.HitPart(x, y, True)
-                    hit_parts = {part for part in hit_part_ids if part} if hit_part_ids else set()
-                    self.anim_manager.handle_hit(hit_parts)
-                    # print("hit parts:", hit_parts)
-                    self.tap_body_anim = True
-                    if not self.tired_anim.sleep and self.input_lock == False:
-                        self.model.ResetExpressions()
-                        self.talkDelayTimer.stop()
-                        self.functions.add_random_expression(self)
-                        if self.placeThis:
-                            self.placeThis = False
-                            self.text = self.lang['Talk']['Stay']
-                            self.kaomoji = "(^~^)"
-                        else:
-                            if self.lastExpressionId == "Normal":
-                                self.text = self.lang['Talk']['Normal']
-                                self.kaomoji = "(o_o)"
-                            elif self.lastExpressionId == "Happy":
-                                self.text = self.lang['Talk']['Happy']
-                                self.kaomoji = "(^_^)"
-                            elif self.lastExpressionId == "Angry":
-                                self.text = self.lang['Talk']['Angry']
-                                self.kaomoji = "(⇀‸↼‶)"
-                            elif self.lastExpressionId == "Sad":
-                                self.text = self.lang['Talk']['Sad']
-                                self.kaomoji = "(´•ω•̥`)"
-                            elif self.lastExpressionId == "Smile":
-                                self.text = self.lang['Talk']['Smile']
-                                self.kaomoji = "(^~^)"
-                            elif self.lastExpressionId == "Tired":
-                                self.text = self.lang['Talk']['Tired']
-                                self.kaomoji = "(๑•﹏•)"
-                            elif self.lastExpressionId == "ClosedEyes":
-                                self.text = self.lang['Talk']['ClosedEyes']
-                                self.kaomoji = "(-_-)"
-                            elif self.lastExpressionId == "Cry":
-                                self.text = self.lang['Talk']['Cry']
-                                self.kaomoji = "(o;TωT)o"
-                            elif self.lastExpressionId == "Fear":
-                                if self.character_name == "White Heart":
-                                    self.text = self.lang['Talk']['FearWH']
-                                    self.kaomoji = "(0﹏\‶)"
-                                else:
-                                    self.text = self.lang['Talk']['Fear']
-                                    self.kaomoji = "(｡ŏ_ŏ)"
-                            elif self.lastExpressionId == "Star":
-                                self.text = self.lang['Talk']['Star']
-                                self.kaomoji = "(✩ω✩)"
-                            elif self.lastExpressionId == "Surprised":
-                                self.text = self.lang['Talk']['Surprised']
-                                self.kaomoji = "(0_0)?"
-                            elif self.lastExpressionId == "Funny" and self.hdd_form == False:
-                                if self.character_name == "Blanc":
-                                    self.text = self.lang['Talk']['FunnyBl']
-                                    self.kaomoji = "(‶/﹏0)"
-                                else:
-                                    self.text = self.lang['Talk']['Funny']
-                                    self.kaomoji = "(>_<)"
-                            elif self.lastExpressionId == "Funny" and self.hdd_form == True:
-                                self.text = self.lang['Talk']['FunnyHDD']
-                                self.kaomoji = "(◕‿◕)"
-                        print(self.name + ": " + self.text + self.kaomoji)
-                        self.textUpdate()
-                        self.tired_anim.t_count = 1
-                if self.tired_anim.sleep and self.input_lock == False:
-                    # self.model.SetExpression("Surprised")
-                    self.tired_anim.sleepInputTimer.stop()
-                    if not self.tired_anim.wake_up and self.sleepMove == False:
-                        self.model.ResetExpression()
-                        self.tired_anim.wake_up_func()
-                        self.tired_anim.sleep = False
-                        self.text = self.lang['Talk']['Woke']
-                        self.kaomoji = "(⊙_⊙)✿"
-                        print(self.name + ": " + self.text + self.kaomoji)
-                        self.textUpdate()
-                        self.model.SetExpression("Fear")
-                        self.fadeoutTimer.start(10000)
-                        self.tired_anim.t_count = 1
-                        self.tired_anim.sleep = False
-                if (not self.tired_anim.sleep
-                        and not self.tap_body_switch
-                        and not self.sleepMove
-                        and self.reset_expression
-                ):
-                    self.model.ResetExpression()
-                    self.tired_anim.t_count = 1
-                self.sleepMove = False
-                self.reset_expression = True
-                if self.mouse_click_log:
-                    print("Left Button Released")
+        """Handling mouse button release"""
+        if event.button() != Qt.LeftButton or self.input_handler.input_lock:
+            return
+
+        # Fixing the release position
+        pos = event.scenePosition()
+        self.posX, self.posY = pos.x(), pos.y()
+
+        # Processing actions in the LA
+        if self.isInLA:
+            self.input_handler.mouse_release_handler()
+
+        if self.mouse_click_log:
+            print("Left Button Released")
+
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         x, y = event.scenePosition().x(), event.scenePosition().y()
-        if self.clickInLA and not self.input_lock:
+        if self.clickInLA and not self.input_handler.input_lock:
             self.move(int(self.x() + x - self.clickX - 10), int(self.y() + y - self.clickY - 10))
+
+        current_pos = event.scenePosition()
+        self.input_handler.mouse_move_handler(current_pos)
 
     def setSettings(self, flags: Qt.WindowType) -> None:
         # print(f"setSettings flags: {flags}")
@@ -634,7 +520,7 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         self.auto_scale_init = True
 
         self.functions.setLanguage()
-        if self.talkUpd:
+        if self.talk_update:
             self.apply_character_config(self.character_name)
 
     def settings_show(self):
@@ -664,7 +550,7 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         # Transform Action
         transform_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/transform.svg")), self.lang['Actions']['Transform'], self)
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             transform_action.triggered.connect(self.on_action_transform)
         context_menu.addAction(transform_action)
         context_menu.addSeparator()
@@ -675,87 +561,87 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         # Neptune
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), self.lang['NamesActions']['Neptune'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_neptune.triggered.connect(self.on_action_neptune)
         # Purple Heart
         action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), self.lang['NamesActions']['PurpleHeart'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_purple_heart.triggered.connect(self.on_action_purple_heart)
         # Noire
         action_noire = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/noire.ico")), self.lang['NamesActions']['Noire'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_noire.triggered.connect(self.on_action_noire)
         # Black Heart
         action_black_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), self.lang['NamesActions']['BlackHeart'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_black_heart.triggered.connect(self.on_action_black_heart)
         # Blanc
         action_blanc = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), self.lang['NamesActions']['Blanc'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_blanc.triggered.connect(self.on_action_blanc)
         # White Heart
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), self.lang['NamesActions']['WhiteHeart'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_white_heart.triggered.connect(self.on_action_white_heart)
         # Vert
         action_vert = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/vert.ico")), self.lang['NamesActions']['Vert'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_vert.triggered.connect(self.on_action_vert)
         # Green Heart
         action_green_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), self.lang['NamesActions']['GreenHeart'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_green_heart.triggered.connect(self.on_action_green_heart)
         # NepGear
         action_nepgear = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), self.lang['NamesActions']['NepGear'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_nepgear.triggered.connect(self.on_action_nepgear)
         # Purple Sister
         action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), self.lang['NamesActions']['PurpleSister'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_purple_sister.triggered.connect(self.on_action_purple_sister)
         # Uni
         action_uni = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/uni.ico")), self.lang['NamesActions']['Uni'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_uni.triggered.connect(self.on_action_uni)
         # Black Sister
         action_black_sister = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), self.lang['NamesActions']['BlackSister'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_black_sister.triggered.connect(self.on_action_black_sister)
         # Rom
         action_rom = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/rom.ico")), self.lang['NamesActions']['Rom'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_rom.triggered.connect(self.on_action_rom)
         # White Sister Rom
         action_white_sister_rom = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), self.lang['NamesActions']['WhiteSisterRom'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_white_sister_rom.triggered.connect(self.on_action_white_sister_rom)
         # Ram
         action_ram = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/ram.ico")), self.lang['NamesActions']['Ram'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_ram.triggered.connect(self.on_action_ram)
         # White Sister Ram
         action_white_sister_ram = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_white_sister_ram.triggered.connect(self.on_action_white_sister_ram)
         # Histoire
         action_histoire = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/histoire.ico")), self.lang['NamesActions']['Histoire'])
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             action_histoire.triggered.connect(self.on_action_histoire)
 
         context_menu.addMenu(submenu_character)
@@ -803,7 +689,7 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         # Settings Action
         settings_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/settings.svg")), self.lang['Actions']['Settings'], self)
-        if not self.input_lock:
+        if not self.input_handler.input_lock:
             settings_action.triggered.connect(self.on_action_settings)
         context_menu.addAction(settings_action)
         context_menu.addSeparator()
@@ -823,7 +709,7 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
         context_menu.exec(e.globalPos())
 
     def closeEvent(self, event):
-        self.model.SetExpression("Cry")
+        self.character.expressions.set_cry_expression()
         settings.close()
         if self.tired_anim.condition == "Sleep":
             self.tired_anim.wake_up_func()
@@ -838,12 +724,9 @@ class Win(QOpenGLWidget, OnActions, TalkWidgetMain):
             self.kaomoji = "(^3^)"
             print(self.name + ":", self.lang['Talk']['Goodbye'] + self.kaomoji)
         else:
-            self.model.SetExpression("Happy")
-            self.fadeoutTimer.start(5000)
-            self.text = self.lang['Talk']['Star']
-            self.kaomoji = ":(^~^):"
-            print(self.name + ": " + self.text + self.kaomoji)
-            self.textUpdate()
+            self.tired_anim.t_count = 1
+            self.character.set_quit_state(quit='No')
+            # print(self.name + ": " + self.text + self.kaomoji)
             event.ignore()
 
     def quitFunction(self):

@@ -300,30 +300,13 @@ class AnimationsManager:
         win.transformMovie.stop()
         win.transformLabel.close()
         win.transformLabel.clear()
-        win.input_lock = False
-        # self.transformMovie = None
+        win.input_handler.input_lock = False
 
-        if win.transform_text:
-            text_key = 'TransformedHDD' if win.hdd_form else 'TransformedNormal'
-            win.text = win.lang['Talk'][text_key]
-            win.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ" if win.hdd_form else "(> ͜ʖ <)"
-            win.textUpdate()
-            win.transform_text = False
-
-    def handle_transform_failure(self, win):
-        """Processing an unsuccessful transformation"""
-        if hasattr(win, 'model'):
-            win.model.SetExpression("Sad")
-
-        win.fadeoutTimer.start(10000)
-        win.text = win.lang['Talk']['TransformNot']
-        win.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
-        print(f"{win.name}: {win.text}{win.kaomoji}")
-        win.textUpdate()
+        win.character.set_transformed_state()
 
     def play_transform_animation(self, win):
         """Starting the transformation animation"""
-        win.input_lock = True
+        win.input_handler.input_lock = True
 
         # Setting up Live2D animations
         self._play_model_animation(win)
@@ -360,7 +343,7 @@ class AnimationsManager:
         win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
         win.transformLabel.show()
         self.transform = win.transform = False
-        win.talkUpd = True
+        win.talk_widget.talk_update = True
 
     def _play_model_animation(self, win):
         """Model animation playback"""
@@ -374,19 +357,6 @@ class AnimationsManager:
                 no=0,
                 priority=live2d.MotionPriority.FORCE,
             )
-
-            # Setting the default expression for a regular form
-            default_expression = "Serious"
-            expressions = {
-                "Neptune": "Star",
-                "Vert": "Smile",
-                "NepGear": "Star"
-            }
-            win.model.SetExpression(expressions.get(win.character_name, default_expression))
-        # HDD form processing (hdd_form=True)
-        else:
-            # Special treatment for reverse transformation
-            win.model.SetExpression("Funny")
 
     def _calculate_animation_size(self, win):
         """Calculate animation size"""
@@ -409,7 +379,12 @@ class AnimationsManager:
         }
         if win.character_name in transformations:
             transformations[win.character_name]()
-        self._transform_end_exp(win)
+        self.transform_lock = 1
+        win.character.transform_exp_show = True
+        win.character.transform_text_show = True
+        win.character.expressions.set_funny_expression()
+
+
 
     def _transform_to_regular(self, win):
         """Transformation to regular form"""
@@ -425,15 +400,10 @@ class AnimationsManager:
         }
         if win.character_name in transformations:
             transformations[win.character_name]()
-        self._transform_end_exp(win)
-
-    def _transform_end_exp(self, win):
         self.transform_lock = 1
-        win.model.ResetAllParameters()
-        win.model.ResetExpressions()
-        win.model.SetExpression("Funny")
-        win.fadeoutTimer.start(7000)
-        win.transform_text = True
+        win.character.transform_exp_show = True
+        win.character.transform_text_show = True
+        win.character.expressions.set_funny_expression()
 
 class TiredAnimation:
     def __init__(self, win):
@@ -443,6 +413,7 @@ class TiredAnimation:
         self.condition = "Idle"
         self.sleep = False
         self.wake_up = False
+        self.sleepMove = False
         self.t_count = 1
         self.sad_v = 60
         self.tired_v = 80
@@ -454,18 +425,14 @@ class TiredAnimation:
         self.timer.timeout.connect(self.idle_timer)
         self.timer.start(int(6000 / self.win.time_scale))
 
-        # Sleep Move timer
-        self.sleepInputTimer = QTimer()
-        self.sleepInputTimer.timeout.connect(self.takingSleep)
-
     def idle_timer(self) -> None:
         self.t_count += 1
 
-        # Логирование (если нужно)
+        # Logging
         if self.win.timer_log:
             print(f"{self.t_count} - {self.condition} Condition")
 
-        # Обработка состояний
+        # Processing states
         if self.t_count <= self.sad_v:
             self.set_idle_state()
 
@@ -478,7 +445,7 @@ class TiredAnimation:
         if self.t_count >= 10 and not self.win.sleep_switch:
             self.t_count = 1
 
-        # Проверка конкретных состояний
+        # Checking specific states
         if self.t_count == self.sad_v:
             self.set_sad_state()
 
@@ -507,7 +474,7 @@ class TiredAnimation:
     def set_sleep_state(self):
         if self.win.tracking_mouse_switch:
             self.win.tracking_mouse = False
-            self.win.functions.handle_mouse_idle()
+            self.win.input_handler.handle_mouse_idle()
             self.win.mouse_tracker.set_sleep_state(True)
 
         self.condition = "Sleep"
@@ -529,10 +496,6 @@ class TiredAnimation:
         self.win.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
         self.win.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
 
-    def takingSleep(self):
-        # win.sleepMove = True
-        self.sleepInputTimer.stop()
-
     def wake_up_func(self):
         self.win.model.ResetAllParameters()
         self.win.model.ResetExpressions()
@@ -543,6 +506,7 @@ class TiredAnimation:
         self.win.idle_anim = True
         self.win.wake_up = True
         self.win.sleep = False
+        self.sleepMove = False
         self.win.mouse_tracker.set_sleep_state(False)
         self.win.tracking_mouse = True
 
@@ -550,4 +514,4 @@ class TiredAnimation:
         self.win.text = text
         self.win.kaomoji = kaomoji
         print(f"{self.win.name}: {text} {kaomoji}")
-        self.win.textUpdate()
+        self.win.talk_widget.show_talk()

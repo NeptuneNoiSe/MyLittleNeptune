@@ -126,11 +126,11 @@ class ModelsManager:
         """Final operations"""
         live2d.clearBuffer()
         win.model.CreateRenderer(2)
-        win.functions.initAnimations()
+        win.init_ui()
         win.tired_anim.t_count = 1
 
-        if win.talkUpd:
-            win.talkWidgetUpdate()
+        if win.talk_widget.talk_update:
+            win.talk_widget.update_widget()
 
     def _load_fallback_model(self, win) -> None:
         """Backup option for errors"""

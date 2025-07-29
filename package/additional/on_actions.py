@@ -14,173 +14,169 @@ class OnActions:
     def on_action_transform(win):
         win.model_move = False
         if not win.can_transform:
-            if win.condition != "Sleep":
-                win.anim_manager.handle_transform_failure(win)
+            if win.tired_anim.condition != "Sleep":
+                win.character.set_transform_failure_state()
             return
 
-        if win.condition == "Sleep":
+        if win.tired_anim.condition == "Sleep":
             return
 
         win.anim_manager.play_transform_animation(win)
         win.tired_anim.t_count = 1
-
-        # Setting the transformation text
-        text_key = 'TransformToNormal' if win.hdd_form else 'TransformToHDD'
-        win.text = win.lang['Talk'][text_key]
-        win.kaomoji = "(/￣ー￣)/" if win.hdd_form else "(/￣ー￣)/~~☆"
         win.settings_close()
-        win.textUpdate()
+        win.character.set_transform_state()
 
     # Characters Actions
     def on_action_neptune(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            #win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Neptune"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_purple_heart(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Purple Heart"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_noire(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Noire"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_black_heart(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Black Heart"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_blanc(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Blanc"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_white_heart(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "White Heart"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_vert(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Vert"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_green_heart(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Green Heart"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_nepgear(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "NepGear"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_purple_sister(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Purple Sister"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_uni(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Uni"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_black_sister(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Black Sister"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_rom(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Rom"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_white_sister_rom(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "White Sister Rom"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_ram(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Ram"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_white_sister_ram(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "White Sister Ram"
         if win.transform:
             win.models_manager.update_model(win)
 
     def on_action_histoire(win):
-        win.talkUpd = False
+        win.talk_widget.talk_update = False
         if not win.transform:
             win.model_move = True
-            win.goodBye()
+            win.character.set_goodbye_state()
         win.character_name = "Histoire"
         if win.transform:
             win.models_manager.update_model(win)
@@ -191,10 +187,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['IdleEnabled']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_settings_state(text_key='IdleEnabled')
+            # print(win.name + ": " + win.text + win.kaomoji)
 
         win.config.set('Animations', 'idle_animation', 'True')
         with open('config.ini', 'w') as cfg:
@@ -208,10 +202,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['IdleDisabled']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_settings_state(text_key='IdleDisabled')
+            # print(win.name + ": " + win.text + win.kaomoji)
 
         win.config.set('Animations', 'idle_animation', 'False')
         with open('config.ini', 'w') as cfg:
@@ -225,10 +217,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['OnMouseEnabled']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_settings_state(text_key='OnMouseEnabled')
+            # print(win.name + ": " + win.text + win.kaomoji)
 
         win.config.set('Animations', 'on_mouse_animation', 'True')
         with open('config.ini', 'w') as cfg:
@@ -242,10 +232,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['OnMouseDisabled']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_settings_state(text_key='OnMouseDisabled')
+            # print(win.name + ": " + win.text + win.kaomoji)
 
         win.config.set('Animations', 'on_mouse_animation', 'False')
         with open('config.ini', 'w') as cfg:
@@ -259,10 +247,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['TapBodyEnabled']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_settings_state(text_key='TapBodyEnabled')
+            # print(win.name + ": " + win.text + win.kaomoji)
 
         win.config.set('Animations', 'tap_body_animation', 'True')
         with open('config.ini', 'w') as cfg:
@@ -276,10 +262,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['TapBodyDisabled']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_settings_state(text_key='TapBodyDisabled')
+            # print(win.name + ": " + win.text + win.kaomoji)
 
         win.config.set('Animations', 'tap_body_animation', 'False')
         with open('config.ini', 'w') as cfg:
@@ -292,11 +276,8 @@ class OnActions:
         if win.tired_anim.condition == "Sleep":
             pass
         else:
-            win.text = win.lang['MiscellaneousTalk']['StopMotions']
-            win.kaomoji = "(⌐■_■)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
-
+            win.character.set_settings_state(text_key='StopMotions')
+            # print(win.name + ": " + win.text + win.kaomoji)
         win.model.StopAllMotions()
 
     # Settings Actions
@@ -307,9 +288,9 @@ class OnActions:
         QMessageBox.information(win, win.lang['Actions']['AboutAlt'], win.lang['Actions']['AboutText'])
 
     def on_action_quit(win):
-        win.model.SetExpression("Cry")
         if win.tired_anim.condition == "Sleep":
             win.tired_anim.wake_up_func()
+        win.character.expressions.set_cry_expression()
         win.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(win,
                                       win.lang['Actions']['Quit'],
@@ -318,17 +299,10 @@ class OnActions:
                                       QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             win.quitTimer.start(3000)
-            win.text = win.lang['Talk']['QuitAlt']
-            win.kaomoji = "(^3^)"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
-
+            win.character.set_quit_state(quit='Yes')
+            #print(win.name + ": " + win.text + win.kaomoji)
         else:
             win.tired_anim.t_count = 1
-            win.model.ResetExpression()
-            win.model.SetExpression("Happy")
-            win.fadeoutTimer.start(5000)
-            win.text = win.lang['Talk']['Star']
-            win.kaomoji = ":(^~^):"
-            print(win.name + ": " + win.text + win.kaomoji)
-            win.textUpdate()
+            win.character.set_quit_state(quit='No')
+            #win.model.ResetExpression()
+            # print(win.name + ": " + win.text + win.kaomoji)

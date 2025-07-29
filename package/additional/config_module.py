@@ -176,7 +176,7 @@ def auto_scale(height):
     if sc_height_size == 4800:
         a_scale = 4.444
     if sc_height_size == 8640:
-        a_scale = 8
+        a_scale = 5
     return a_scale
 
 config_main = main_config()

@@ -131,9 +131,15 @@ class InputHandler:
             self.win.tired_anim.t_count = 1
 
         # Drag processing
+        if hasattr(self, 'start_pos'):
+            del self.start_pos
+
         if was_dragging:
             if not self.win.tired_anim.sleep and not self.input_lock:
-                self.win.character.set_stay_state()
+                if self.win.isInLA:
+                    self.win.character.set_stay_state()
+                else:
+                    self.win.character.set_lost_state()
             self.sleepMove = False
             return
 
@@ -152,13 +158,25 @@ class InputHandler:
         # Reset
         self.sleepMove = False
 
-    def mouse_move_handler(self, current_pos):
+    def mouse_move_handler(self, global_pos):
         """Mouse move handler"""
-        if ((current_pos - self.start_pos).manhattanLength() > 10
-                and not self.win.tired_anim.sleep
-                and not self.input_lock):
-            self.win.character.set_drag_state()
+        try:
+            # Проверяем состояние перетаскивания даже если курсор вышел за границы
+            if not hasattr(self, 'start_pos'):
+                self.start_pos = global_pos
 
+            distance = (global_pos - self.start_pos).manhattanLength()
+
+            if (distance > 10
+                    and not self.win.tired_anim.sleep
+                    and not self.input_lock
+                    and QCursor().pos() is not None):  # Дополнительная проверка
+
+                self.win.character.set_drag_state()
+
+        except Exception as e:
+            print(f"Move handler error: {e}")
+            self.win.talk_widget.close_dialog()
 
     def takingTalk(self):
         self.placeThis = True

@@ -158,17 +158,17 @@ class TalkWidget:
 
         # Widget positioning
         if is_mirrored:
-            self.widget.move(self.twmXR + self.twmXL, self.twmY + 10)
+            self.widget.move(self.twmXR + self.twmXL, self.twmY + 10 * self.models_scale)
         else:
-            self.widget.move(self.twmXR, self.twmY)
+            self.widget.move(self.twmXR, self.twmY + 10 * self.models_scale)
 
         # Calculating the positioning
         varX, varY = self._calculate_position()
 
         # Setting up transparency
-        opacity_effect = QGraphicsOpacityEffect()
-        opacity_effect.setOpacity(0.9)
-        self.talk_image_label.setGraphicsEffect(opacity_effect)
+        self.talk_image_label_opacity = QGraphicsOpacityEffect()
+        self.talk_image_label_opacity.setOpacity(0.9)
+        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
 
         # Adding an image to the layout
         self.frame_layout.addWidget(self.talk_image_label)
@@ -212,33 +212,33 @@ class TalkWidget:
 
     def _calculate_position(self):
         """
-        Полный расчет позиции с интеллектуальной коррекцией для обеих осей
-        Особенности:
-        - Автоматическая коррекция X и Y при любом масштабе
-        - Уменьшение шага коррекции при scale > 1.5
-        - Раздельные настройки для правой/левой сторон
-        - Оптимизированные формулы для плавности
+        Full position calculation with intelligent correction for both axes
+        Features:
+        - Automatic X and Y correction at any scale
+        - Reduction of the correction step at scale > 1.5
+        - Separate settings for the right/left sides
+        - Optimized formulas for smoothness
         """
-        # TODO: [HighDPI] Requires testing and adjustment for high resolutions
+
         CONFIG = {
             'Right': {
-                # Базовые смещения
+                # Basic offsets
                 'base_offset_x': 0,
                 'base_offset_y': 20,
 
-                # Коррекция X
+                # Correction X
                 'x_power': 1.2,
                 'base_x_step': 0.25,
                 'x_high_scale_factor': 1.5,
                 'x_high_scale_multiplier': -0.5,
 
-                # Коррекция Y
+                # Correction Y
                 'y_power': 1.5,
                 'base_y_step': 0.4,
                 'y_high_scale_factor': 1.5,
                 'y_high_scale_multiplier': -0.25,
 
-                # Дополнительные параметры
+                # Additional parameters
                 'extra_offset_x': 0,
                 'image_padding': 15,
                 'x_scale_factors':  {4: 50, 3: 40, 2: 20, 1: 10, 0: 5}
@@ -256,7 +256,7 @@ class TalkWidget:
                 'y_high_scale_multiplier': -0.2,
                 'extra_offset_x': 15,
                 'image_padding': 30,
-                'x_scale_factors':  {4: 50, 3: 40, 2: 10, 1: 10, 0: 5}
+                'x_scale_factors':  {4: 50, 3: 40, 2: 20, 1: 10, 0: 5}
             }
         }
 
@@ -264,17 +264,17 @@ class TalkWidget:
         cfg = CONFIG[side]
         total_scale = self.a_scale * self.models_scale
         extra_offset_x = cfg['extra_offset_x']
-        if total_scale >= 2:
+        if total_scale > 1:
             extra_offset_x += (total_scale * 2)
 
-        # 1. Расчет базового смещения X
+        # Calculate Basic offsets X
         current_scale = next(
             key for key in sorted(cfg['x_scale_factors'].keys(), reverse=True)
             if self.a_scale >= key
         )
         base_x = cfg['x_scale_factors'][current_scale] * total_scale
 
-        # 2. Коррекция X
+        # Correction X
         if total_scale != 1:
             x_step = cfg['base_x_step']
             if total_scale > cfg['x_high_scale_factor']:
@@ -290,7 +290,7 @@ class TalkWidget:
         else:
             offset_x = base_x + cfg['base_offset_x'] * total_scale
 
-        # 3. Дополнительная коррекция X для левой стороны
+        # Additional X for Left side
         if side == 'Left':
             offset_x += extra_offset_x * total_scale
             image_width = (self.talkX + cfg['image_padding']) * total_scale
@@ -299,7 +299,7 @@ class TalkWidget:
             if free_space < 0:
                 offset_x += free_space * 0.4  # Мягкая коррекция
 
-        # 4. Расчет и коррекция Y
+        # Calculate and Correction Y
         base_y = cfg['base_offset_y']
         y_adjust = 0
 
@@ -310,11 +310,13 @@ class TalkWidget:
 
             y_diff = abs(total_scale - 1.0)
             y_direction = 1 if total_scale > 1.0 else -1
+            if total_scale == 0.5:
+                base_y += 10
             y_adjust = (y_diff ** cfg['y_power']) * y_step * base_y * y_direction
 
         offset_y = base_y + y_adjust
 
-        # 5. Отладочный вывод (активировать при настройке)
+        # Debug Return
         if False:
             pass
 

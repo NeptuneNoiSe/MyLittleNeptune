@@ -76,6 +76,11 @@ class CharacterManager:
         self.expressions.set_smile_expression(fade_out=7000)
         self.character_text.set_stay_text()
 
+    def set_lost_state(self):
+        """Set lost state"""
+        self.expressions.set_lost_expression(fade_out=7000)
+        self.character_text.set_lost_text()
+
     def set_wake_up_state(self):
         """Set wake up state"""
         self.win.tired_anim.sleep = False
@@ -138,7 +143,7 @@ class CharacterManager:
             self.character_text.set_quit_text()
         elif quit == 'No':
             self.expressions.set_happy_expression(fade_out=5000)
-            self.character_text.set_aux_text(group_name='Talk',text_key='Star',kaomoji=":(^~^):")
+            self.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
 
 
 class CharacterStateManager:
@@ -222,6 +227,11 @@ class CharacterTextManager:
         self.kaomoji = "(^~^)"
         self.update()
 
+    def set_lost_text(self):
+        self.text = ['Talk', 'Lost']
+        self.kaomoji = "(D*D)?"
+        self.update()
+
     def set_wake_up_text(self):
         self.text = ['Talk', 'Woke']
         self.kaomoji = "(⊙_⊙)✿"
@@ -296,6 +306,12 @@ class CharacterExpressionManager:
         # Additional dragging actions
         if hasattr(self.character, 'on_drag_start'):
             self.character.on_drag_start()
+
+    def set_lost_expression(self, fade_out: int | None = None) -> None:
+        if self.character.name == "Black Sister":
+            self._apply_expression("Fear", fade_out)
+        else:
+            self._apply_expression("Surprised", fade_out)
 
     def set_tranform_to_hdd_expression(self, fade_out: int | None = None) -> None:
         # Setting the default expression for a regular form

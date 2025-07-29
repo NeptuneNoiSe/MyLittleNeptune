@@ -1,7 +1,6 @@
 import os
 import argparse
 import time
-
 import OpenGL.GL as gl
 from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize, QTimer
@@ -482,20 +481,20 @@ class Win(QOpenGLWidget, OnActions):
         self.posX, self.posY = pos.x(), pos.y()
 
         # Processing actions in the LA
-        if self.isInLA:
-            self.input_handler.mouse_release_handler()
+        #if self.isInLA:
+        self.input_handler.mouse_release_handler()
 
         if self.mouse_click_log:
             print("Left Button Released")
 
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        x, y = event.scenePosition().x(), event.scenePosition().y()
         if self.clickInLA and not self.input_handler.input_lock:
-            self.move(int(self.x() + x - self.clickX - 10), int(self.y() + y - self.clickY - 10))
+            global_pos = event.globalPosition().toPoint()
+            self.move(global_pos.x() - self.clickX - 10,
+                      global_pos.y() - self.clickY - 10)
 
-        current_pos = event.scenePosition()
-        self.input_handler.mouse_move_handler(current_pos)
+        self.input_handler.mouse_move_handler(event.globalPosition())
 
     def setSettings(self, flags: Qt.WindowType) -> None:
         # print(f"setSettings flags: {flags}")
@@ -980,8 +979,8 @@ class SettingsWindow(QWidget):
         self.modelFlagWidgets = QCheckBox()
         self.modelScaleBox = QDoubleSpinBox()
         self.sc_mult_text = QLabel("Scale multiplier:")
-        self.modelScaleBox.setMinimum(0.1)
-        self.modelScaleBox.setMaximum(8)
+        self.modelScaleBox.setMinimum(0.5)
+        self.modelScaleBox.setMaximum(5)
         self.modelScaleBox.setSingleStep(0.5)
         self.modelScaleBox.setValue(self.models_scale)
 
@@ -1049,6 +1048,45 @@ class SettingsWindow(QWidget):
 
 if __name__ == "__main__":
     import sys
+    from pathlib import Path
+    import re
+    import argparse
+    from PySide6.QtWidgets import QApplication
+
+    # --- SET PROJECT ROOT DIRECTORY ---
+    PROJECT_ROOT = Path(__file__).parent.parent if not getattr(sys, 'frozen', False) else Path(sys.executable).parent
+    os.chdir(PROJECT_ROOT)
+    sys.path.append(str(PROJECT_ROOT))  # Add in PYTHONPATH
+
+    # --- Check critical files ---
+    REQUIRED_FILES = {
+        'README.md': PROJECT_ROOT / 'README.md',
+        'version.py': PROJECT_ROOT / 'version.py',
+        'resources': PROJECT_ROOT / 'resources'
+    }
+
+    for name, path in REQUIRED_FILES.items():
+        if not path.exists():
+            raise FileNotFoundError(f"Не найден критический файл: {name} ({path})")
+
+    # --- Imports after set paths ---
+    from version import __version__
+    import resources
+
+
+    # --- Update README ---
+    def update_readme():
+        readme = PROJECT_ROOT / 'README.md'
+        content = readme.read_text(encoding='utf-8')
+        updated = re.sub(r'app_version-[\d.]+', f'app_version-{__version__}', content)
+        if updated != content:
+            readme.write_text(updated, encoding='utf-8')
+            print(f"Обновлена версия в README: {__version__}")
+        else:
+            print(f"Текущая версия в README: {__version__}")
+
+
+    update_readme()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--pythonic", action='store_true',
@@ -1067,5 +1105,4 @@ if __name__ == "__main__":
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
     app.exec()
-
     live2d.dispose()

@@ -5,7 +5,6 @@ from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridL
     QGraphicsOpacityEffect
 
 from package import resources
-from package.additional.characters import CharacterManager
 from package.additional.resource_mng import ResourceManager
 
 from PySide6.QtWidgets import (QWidget, QGridLayout, QFrame, QVBoxLayout,
@@ -18,7 +17,7 @@ class TalkWidget:
     def __init__(self, win):
         self.win = win
         self.widget = QWidget(win)
-        self.character = CharacterManager(win)
+        # self.character = win.character
         self.init_ui()
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
@@ -27,7 +26,7 @@ class TalkWidget:
         self.dialogCloseTimer = QTimer()
         self.dialogCloseTimer.timeout.connect(self.close_dialog)
 
-        self.fadeoutTimer = self.character.expressions.fadeoutTimer
+        self.fadeoutTimer = self.win.character.expressions.fadeoutTimer
 
     def init_ui(self):
         """Initializing UI elements"""

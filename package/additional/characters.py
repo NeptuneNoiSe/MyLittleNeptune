@@ -39,6 +39,18 @@ class CharacterManager:
         """Always returns the current text"""
         return self._win.lang
 
+    @property
+    def tracking_mouse_switch(self):
+        return self.win.tracking_mouse_switch
+
+    @property
+    def tracking_mouse(self):
+        return self.win.tracking_mouse
+
+    @tracking_mouse.setter
+    def tracking_mouse(self, value: bool) -> None:
+        self.win.tracking_mouse = value
+
     def set_new_character(self):
         """Set new character"""
         self.goodByeTimer.stop()
@@ -116,6 +128,7 @@ class CharacterManager:
         else:
             self.expressions.set_funny_expression(fade_out=14000)
             self.character_text.set_transform_to_normal_text()
+        self.win.talk_widget.dialogCloseTimer.start(3000)
 
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
@@ -123,6 +136,7 @@ class CharacterManager:
         self.expressions.set_sad_expression(fade_out=10000)
         self.character_text.set_transform_failure_text()
 
+    # FIXME: При переходе в HDD форму не срабатывает fade_out
     def set_transformed_state(self):
         self.expressions.fadeoutTimer.stop()
         if self.transform_exp_show:
@@ -131,6 +145,7 @@ class CharacterManager:
         if self.transform_text_show:
             if self.win.hdd_form:
                 self.character_text.set_transformed_hdd_text()
+                # self.expressions.fadeoutTimer.start(7000)
             else:
                 self.character_text.set_transformed_normal_text()
             self.transform_text_show = False
@@ -163,20 +178,15 @@ class CharacterTiredController:
         self.sleep_v = 100
         self.wake_up_v = 160
         self.wake_up = False
-
-        # Tired timer
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.tired_timer)
-        self.timer.start(int(6000 / self.time_scale))
+        self.init_timer()
 
     @property
-    def sleepMove(self):
-        return self.character.win.input_handler.sleepMove
+    def sleep_move(self):
+        return self.character.win.input_handler.sleep_move
 
-    @sleepMove.setter
-    def sleepMove(self, value: bool) -> None:
-        """Сеттер: устанавливает значение sleepMove."""
-        self.character.win.input_handler.sleepMove = value
+    @sleep_move.setter
+    def sleep_move(self, value: bool) -> None:
+        self.character.win.input_handler.sleep_move = value
 
     @property
     def time_scale(self):
@@ -210,6 +220,13 @@ class CharacterTiredController:
     def set_icon(self, value: bool) -> None:
         self.character.win.set_icon = value
 
+    # FIXME: Проблема с дублированием таймера, что приводит к ошибкам
+    def init_timer(self):
+        # Tired timer
+        self.main_tired_timer = QTimer()
+        self.main_tired_timer.timeout.connect(self.tired_timer)
+        self.main_tired_timer.stop()
+        self.main_tired_timer.start(int(6000 / self.time_scale))
 
     def tired_timer(self):
         self.timer_count += 1
@@ -244,21 +261,8 @@ class CharacterTiredController:
         elif self.timer_count == self.wake_up_v and self.sleep_switch:
             self.character.tired_state.set_wake_up_state()
 
-        # Checking specific states
-        if self.timer_count == self.sad_v:
-            self.character.tired_state.set_sad_state()
-
-        elif self.timer_count == self.tired_v and self.sleep_switch:
-            self.character.tired_state.set_tired_state()
-
-        elif self.timer_count == self.sleep_v and self.sleep_switch:
-            self.character.tired_state.set_sleep_state()
-
-        elif self.timer_count == self.wake_up_v and self.sleep_switch:
-            self.character.tired_state.set_wake_up_state()
-
     def sleep_function(self):
-        self.character.anim_manager.set_sleep_state(True)
+        self.character.win.anim_manager.set_sleep_state(True)
         self.idle_anim = False
         self.wake_up = False
         self.sleep = True
@@ -272,12 +276,12 @@ class CharacterTiredController:
         self.timer_count = 0
         self.character.tired_state.condition = None
         self.character.tired_state.set_idle_state()
-        self.character.anim_manager.set_sleep_state(False)
+        self.character.win.anim_manager.set_sleep_state(False)
         self.idle_anim = True
         self.wake_up = True
         self.sleep = False
-        self.sleepMove = False
-        self.character.mouse_tracker.set_sleep_state(False)
+        self.sleep_move = False
+        self.character.win.mouse_tracker.set_sleep_state(False)
         self.character.tracking_mouse = True
 
 class CharacterTiredStateManager:
@@ -286,43 +290,31 @@ class CharacterTiredStateManager:
         self.condition = "idle"
         #self._setup_timers()
 
-    @property
-    def tracking_mouse_switch(self):
-        return self.character.win.tracking_mouse_switch
-
-    @property
-    def tracking_mouse(self):
-        return self.character.win.tracking_mouse
-
-    @tracking_mouse.setter
-    def tracking_mouse(self, value: bool) -> None:
-        self.character.win.tracking_mouse = value
-
     def set_idle_state(self):
         self.condition = "Idle"
 
     def set_sad_state(self):
         self.condition = "Sad"
         self.character.expressions.set_sad_expression()
-        self.character.set_sad_text()
+        self.character.character_text.set_sad_text()
 
     def set_tired_state(self):
         self.condition = "Tired"
         self.character.expressions.set_tired_expression()
-        self.character.set_tired_text()
+        self.character.character_text.set_tired_text()
 
     def set_sleep_state(self):
         self.condition = "Sleep"
-        if self.tracking_mouse_switch:
-            self.tracking_mouse = False
-            self.character.input_handler.handle_mouse_idle()
-            self.character.mouse_tracker.set_sleep_state(True)
-        self.character.set_sleep_text()
+        if self.character.tracking_mouse_switch:
+            self.character.tracking_mouse = False
+            self.character.win.input_handler.handle_mouse_idle()
+            self.character.win.mouse_tracker.set_sleep_state(True)
+        self.character.character_text.set_sleep_text()
 
     def set_wake_up_state(self):
-        self.character.self.tired_controller.wake_up_function()
+        self.character.tired_controller.wake_up_function()
         self.character.expressions.set_wake_up_expression(fade_out=10000)
-        self.character.set_wake_up_text()
+        self.character.character_text.set_wake_up_text()
 
 class CharacterStateManager:
     def __init__(self, character):
@@ -344,7 +336,6 @@ class CharacterMovementsManager:
 
         #if not self.tired_anim.sleep and not self.character.win.input_lock:
         #    self._update_character_expression()
-
 
 class CharacterTextManager:
     def __init__(self, character):
@@ -593,12 +584,14 @@ class CharacterExpressionManager:
         self.character.kaomoji = kaomoji
 
     def _apply_expression(self, exp_id: str, fade_out: int | None) -> None:
+        # print(exp_id)
         self.character.model.SetExpression(exp_id)
         if hasattr(self, 'fadeoutTimer') and fade_out is not None:
             self.fadeoutTimer.start(fade_out)
 
     def reset_expression(self):
         # win.model.ResetAllParameters()
+        # print("reset")
         self.character.model.ResetExpressions()
         self.fadeoutTimer.stop()
 

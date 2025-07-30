@@ -25,7 +25,7 @@ from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_mng import ResourceManager
 from package.additional.animations import AnimationsManager
-#from package.additional.animations import TiredAnimation
+# from package.additional.animations import TiredAnimation
 
 class Win(QOpenGLWidget, OnActions):
     def __init__(self) -> None:
@@ -61,7 +61,7 @@ class Win(QOpenGLWidget, OnActions):
         # Mouse Tracking Log:
         self.mouse_tracking_log = False
         # Timer Diagnostic Log:
-        self.timer_log = False
+        self.timer_log = True
         # Callbacks Log:
         self.callbacks_log = False
 
@@ -135,8 +135,6 @@ class Win(QOpenGLWidget, OnActions):
         self.sleepMoveY = 0
         self.model_move = False
         self.talk = True
-        self.placeThis = False
-        self.sleepMove = False
         self.reset_expression = True
         # Transition From Live2d LAppModel to Model
         self.model: live2d.Model | None = None
@@ -147,7 +145,6 @@ class Win(QOpenGLWidget, OnActions):
         self.anim_manager = None
         self.lang = None
         self.talk_update = None
-        #self.character = None
         self.models_manager = ModelsManager(
             resources_dir=resources.RESOURCES_DIRECTORY)
         self.app = QApplication.instance()
@@ -335,8 +332,7 @@ class Win(QOpenGLWidget, OnActions):
         self.model.CreateRenderer(2)
         self.init_ui()
         self.last_update_time = time.time()
-        # self.talk_widget = TalkWidget(self)
-        self.talk_update = self.talk_widget.talk_update
+        # self.talk_update = self.talk_widget.talk_update
         self.talk_widget.show_talk()
         self.character.set_greeting_state()
         print(self.name + ": " + self.text + self.kaomoji)
@@ -345,7 +341,8 @@ class Win(QOpenGLWidget, OnActions):
         self.anim_manager = AnimationsManager(self.model)
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
-        self.character = CharacterManager(self)
+        # self.character = CharacterManager(self)
+        # self.talk_widget = TalkWidget(self)
 
     def resizeGL(self, w: int, h: int) -> None:
         if self.model:
@@ -703,7 +700,8 @@ class Win(QOpenGLWidget, OnActions):
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/exit.svg")), self.lang['Actions']['Quit'], self)
-        exit_action.triggered.connect(self.on_action_quit)
+        if not self.input_handler.input_lock:
+            exit_action.triggered.connect(self.on_action_quit)
         context_menu.addAction(exit_action)
 
         context_menu.exec(e.globalPos())

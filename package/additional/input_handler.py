@@ -23,8 +23,8 @@ class InputHandler:
     def __init__(self, win, model):
         self.win = win
         self.model = model
-        self.sleepMove = False
-        self.placeThis = False
+        self.sleep_move = False
+        self.place_this = False
         self.start_pos = None
         self.input_lock = False
         self.mouse_press_timer = QElapsedTimer()
@@ -125,9 +125,9 @@ class InputHandler:
         self.sleepInputTimer.stop()
 
         # Defining the type of interaction
-        was_dragging = self.placeThis
-        self.placeThis = False
-        if not self.sleepMove:
+        was_dragging = self.place_this
+        self.place_this = False
+        if not self.sleep_move:
             self.win.character.tired_controller.timer_count = 1
 
         # Drag processing
@@ -140,23 +140,23 @@ class InputHandler:
                     self.win.character.set_stay_state()
                 else:
                     self.win.character.set_lost_state()
-            self.sleepMove = False
+            self.sleep_move = False
             return
 
         if (self.win.character.tired_controller.sleep and
                 not self.input_lock and
-                not self.sleepMove):
+                not self.sleep_move):
             # print("DEBUG: Correct wake up from click!")
             self.win.character.set_woke_state()
             return
 
-        if not self.sleepMove:
-            if self.win.tap_body_switch and not self.sleepMove:
+        if not self.sleep_move:
+            if self.win.tap_body_switch and not self.sleep_move:
                 self.win.character.set_part_hit()
                 if not self.input_lock:
                     self.win.character.set_random_state()
         # Reset
-        self.sleepMove = False
+        self.sleep_move = False
 
     def mouse_move_handler(self, global_pos):
         """Mouse move handler"""
@@ -179,11 +179,11 @@ class InputHandler:
             self.win.talk_widget.close_dialog()
 
     def takingTalk(self):
-        self.placeThis = True
+        self.place_this = True
         self.talkDelayTimer.stop()
 
     def takingSleep(self):
-        self.sleepMove = True
+        self.sleep_move = True
         self.sleepInputTimer.stop()
 
 class MouseTracker:

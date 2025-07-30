@@ -103,12 +103,12 @@ class InputHandler:
 
     def mouse_press_handler(self):
         """Mouse press handler"""
-        if not self.win.tired_anim.sleep and not self.input_lock:
+        if not self.win.character.tired_controller.sleep and not self.input_lock:
             self.mouse_press_timer.start()
             self.hold_timer.start(1500)  # 3 секунды
             self.talkDelayTimer.start(500)
 
-        if self.win.tired_anim.sleep and not self.input_lock:
+        if self.win.character.tired_controller.sleep and not self.input_lock:
             self.sleepInputTimer.start(500)
 
     def mouse_long_press(self):
@@ -128,14 +128,14 @@ class InputHandler:
         was_dragging = self.placeThis
         self.placeThis = False
         if not self.sleepMove:
-            self.win.tired_anim.t_count = 1
+            self.win.character.tired_controller.timer_count = 1
 
         # Drag processing
         if hasattr(self, 'start_pos'):
             del self.start_pos
 
         if was_dragging:
-            if not self.win.tired_anim.sleep and not self.input_lock:
+            if not self.win.character.tired_controller.sleep and not self.input_lock:
                 if self.win.isInLA:
                     self.win.character.set_stay_state()
                 else:
@@ -143,11 +143,11 @@ class InputHandler:
             self.sleepMove = False
             return
 
-        if (self.win.tired_anim.sleep and
+        if (self.win.character.tired_controller.sleep and
                 not self.input_lock and
                 not self.sleepMove):
             # print("DEBUG: Correct wake up from click!")
-            self.win.character.set_wake_up_state()
+            self.win.character.set_woke_state()
             return
 
         if not self.sleepMove:
@@ -168,7 +168,7 @@ class InputHandler:
             distance = (global_pos - self.start_pos).manhattanLength()
 
             if (distance > 10
-                    and not self.win.tired_anim.sleep
+                    and not self.win.character.tired_controller.sleep
                     and not self.input_lock
                     and QCursor().pos() is not None):  # Дополнительная проверка
 

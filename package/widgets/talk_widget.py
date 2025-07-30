@@ -18,8 +18,8 @@ class TalkWidget:
     def __init__(self, win):
         self.win = win
         self.widget = QWidget(win)
+        self.character = CharacterManager(win)
         self.init_ui()
-        self.character = CharacterManager(self)
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
 
@@ -297,7 +297,7 @@ class TalkWidget:
             text_width = (self.talkX - 25) * total_scale
             free_space = image_width - text_width - abs(offset_x)
             if free_space < 0:
-                offset_x += free_space * 0.4  # Мягкая коррекция
+                offset_x += free_space * 0.4  # Soft Correction
 
         # Calculate and Correction Y
         base_y = cfg['base_offset_y']
@@ -334,8 +334,8 @@ class TalkWidget:
         QApplication.processEvents()
 
         # Sleep state processing
-        if hasattr(self.win, 'tired_anim') and self.win.tired_anim.condition == "Sleep":
-            self.win.tired_anim.sleep_func()
+        if hasattr(self.win.character, 'tired_state') and self.win.character.tired_state.condition == "Sleep":
+            self.win.character.tired_controller.sleep_function()
 
     def update_text(self):
         """Updates the text in the widget"""

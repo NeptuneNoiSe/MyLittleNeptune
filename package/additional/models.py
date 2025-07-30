@@ -127,7 +127,7 @@ class ModelsManager:
         live2d.clearBuffer()
         win.model.CreateRenderer(2)
         win.init_ui()
-        win.tired_anim.t_count = 1
+        win.character.tired_controller.timer_count = 1
 
         if win.talk_widget.talk_update:
             win.talk_widget.update_widget()

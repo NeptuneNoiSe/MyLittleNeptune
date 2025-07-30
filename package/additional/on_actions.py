@@ -14,15 +14,15 @@ class OnActions:
     def on_action_transform(win):
         win.model_move = False
         if not win.can_transform:
-            if win.tired_anim.condition != "Sleep":
+            if win.character.tired_controller.condition != "Sleep":
                 win.character.set_transform_failure_state()
             return
 
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             return
 
         win.anim_manager.play_transform_animation(win)
-        win.tired_anim.t_count = 1
+        win.character.tired_controller.timer_count = 1
         win.settings_close()
         win.character.set_transform_state()
 
@@ -184,7 +184,7 @@ class OnActions:
     # Animations Actions
     def on_action_idle_true(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Enable")
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='IdleEnabled')
@@ -199,7 +199,7 @@ class OnActions:
 
     def on_action_idle_false(win):
         # QMessageBox.information(self, "Message", f"Idle Animation: Disable")
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='IdleDisabled')
@@ -214,7 +214,7 @@ class OnActions:
 
     def on_action_on_mouse_true(win):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Enable")
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='OnMouseEnabled')
@@ -229,7 +229,7 @@ class OnActions:
 
     def on_action_on_mouse_false(win):
         # QMessageBox.information(self, "Message", f"OnMouse Animation: Disable")
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='OnMouseDisabled')
@@ -244,7 +244,7 @@ class OnActions:
 
     def on_action_tap_body_true(win):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Enable")
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='TapBodyEnabled')
@@ -259,7 +259,7 @@ class OnActions:
 
     def on_action_tap_body_false(win):
         # QMessageBox.information(self, "Message", f"Tap Body Animation: Disable")
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='TapBodyDisabled')
@@ -273,7 +273,7 @@ class OnActions:
         win.tap_body_anim = False
 
     def on_action_stop_all_motions(win):
-        if win.tired_anim.condition == "Sleep":
+        if win.character.tired_controller.condition == "Sleep":
             pass
         else:
             win.character.set_settings_state(text_key='StopMotions')
@@ -288,8 +288,8 @@ class OnActions:
         QMessageBox.information(win, win.lang['Actions']['AboutAlt'], win.lang['Actions']['AboutText'])
 
     def on_action_quit(win):
-        if win.tired_anim.condition == "Sleep":
-            win.tired_anim.wake_up_func()
+        if win.character.tired_controller.condition == "Sleep":
+            win.character.tired_controller.wake_up_function()
         win.character.expressions.set_cry_expression()
         win.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(win,
@@ -302,7 +302,7 @@ class OnActions:
             win.character.set_quit_state(quit='Yes')
             #print(win.name + ": " + win.text + win.kaomoji)
         else:
-            win.tired_anim.t_count = 1
+            win.character.tired_controller.timer_count = 1
             win.character.set_quit_state(quit='No')
             #win.model.ResetExpression()
             # print(win.name + ": " + win.text + win.kaomoji)

@@ -12,6 +12,8 @@ class CharacterManager:
         #self.character = win.character_name
         #self.model = win.model
         self.state = CharacterStateManager(self)
+        self.tired_controller = CharacterTiredController(self)
+        self.tired_state = CharacterTiredStateManager(self)
         self.expressions = CharacterExpressionManager(self)
         self.character_text = CharacterTextManager(self)
         self.movements = CharacterMovementsManager(self)
@@ -58,8 +60,8 @@ class CharacterManager:
         self.character_text.set_goodbye_text()
 
         # WakeUp if character sleep
-        if hasattr(self.win, 'tired_anim') and self.win.tired_anim.condition == "Sleep":
-            self.win.tired_anim.wake_up_func()
+        if hasattr(self, 'tired_state') and self.tired_state.condition == "Sleep":
+            self.tired_controller.wake_up_function()
 
         self.win.talk_widget.talk_update = False
 
@@ -81,14 +83,14 @@ class CharacterManager:
         self.expressions.set_lost_expression(fade_out=7000)
         self.character_text.set_lost_text()
 
-    def set_wake_up_state(self):
+    def set_woke_state(self):
         """Set wake up state"""
-        self.win.tired_anim.sleep = False
+        self.tired_controller.sleep = False
         self.model.ResetAllParameters()
         self.model.ResetExpressions()
-        self.win.tired_anim.wake_up_func()
+        self.tired_controller.wake_up_function()
         self.expressions.set_surprised_expression(fade_out=10000)
-        self.character_text.set_wake_up_text()
+        self.character_text.set_woke_text()
 
     def set_crying_state(self):
         """Set crying state"""
@@ -145,6 +147,182 @@ class CharacterManager:
             self.expressions.set_happy_expression(fade_out=5000)
             self.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
 
+# TODO: [WIP] Класс в активной разработке. Требуется:
+#       1. Полное тестирование после переноса всех функций
+#       2. Проверка состояний сон/бодроствование персонажа
+#       3. Анализ взаимодействия со всеми связанными классами и основным окном
+#       WARNING: Возможны нестабильности и критические баги!
+class CharacterTiredController:
+    def __init__(self, character):
+        self.character = character
+        self.sleep = False
+        self.wake_up = False
+        self.timer_count = 1
+        self.sad_v = 60
+        self.tired_v = 80
+        self.sleep_v = 100
+        self.wake_up_v = 160
+        self.wake_up = False
+
+        # Tired timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.tired_timer)
+        self.timer.start(int(6000 / self.time_scale))
+
+    @property
+    def sleepMove(self):
+        return self.character.win.input_handler.sleepMove
+
+    @sleepMove.setter
+    def sleepMove(self, value: bool) -> None:
+        """Сеттер: устанавливает значение sleepMove."""
+        self.character.win.input_handler.sleepMove = value
+
+    @property
+    def time_scale(self):
+        return self.character.win.time_scale
+
+    @property
+    def timer_log(self):
+        return self.character.win.timer_log
+
+    @property
+    def idle_switch(self):
+        return self.character.win.idle_switch
+
+    @property
+    def sleep_switch(self):
+        return self.character.win.sleep_switch
+
+    @property
+    def idle_anim(self):
+        return self.character.win.idle_anim
+
+    @idle_anim.setter
+    def idle_anim(self, value: bool) -> None:
+        self.character.win.idle_anim = value
+
+    @property
+    def set_icon(self):
+        return self.character.win.set_icon
+
+    @set_icon.setter
+    def set_icon(self, value: bool) -> None:
+        self.character.win.set_icon = value
+
+
+    def tired_timer(self):
+        self.timer_count += 1
+
+        # Logging
+        if self.timer_log:
+            print(f"{self.timer_count} - {self.character.tired_state.condition} Condition")
+
+        # Processing states
+        if self.timer_count <= self.sad_v:
+            self.character.tired_state.set_idle_state()
+
+        if self.timer_count <= self.sleep_v and self.idle_switch:
+            self.idle_anim = True
+
+        if self.timer_count >= 5:
+            self.set_icon = True
+
+        if self.timer_count >= 10 and not self.sleep_switch:
+            self.timer_count = 1
+
+        # Checking specific states
+        if self.timer_count == self.sad_v:
+            self.character.tired_state.set_sad_state()
+
+        elif self.timer_count == self.tired_v and self.sleep_switch:
+            self.character.tired_state.set_tired_state()
+
+        elif self.timer_count == self.sleep_v and self.sleep_switch:
+            self.character.tired_state.set_sleep_state()
+
+        elif self.timer_count == self.wake_up_v and self.sleep_switch:
+            self.character.tired_state.set_wake_up_state()
+
+        # Checking specific states
+        if self.timer_count == self.sad_v:
+            self.character.tired_state.set_sad_state()
+
+        elif self.timer_count == self.tired_v and self.sleep_switch:
+            self.character.tired_state.set_tired_state()
+
+        elif self.timer_count == self.sleep_v and self.sleep_switch:
+            self.character.tired_state.set_sleep_state()
+
+        elif self.timer_count == self.wake_up_v and self.sleep_switch:
+            self.character.tired_state.set_wake_up_state()
+
+    def sleep_function(self):
+        self.character.anim_manager.set_sleep_state(True)
+        self.idle_anim = False
+        self.wake_up = False
+        self.sleep = True
+        self.character.expressions.set_sleep_expression()
+        self.character.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
+        self.character.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
+
+    def wake_up_function(self):
+        self.character.model.ResetAllParameters()
+        self.character.model.ResetExpressions()
+        self.timer_count = 0
+        self.character.tired_state.condition = None
+        self.character.tired_state.set_idle_state()
+        self.character.anim_manager.set_sleep_state(False)
+        self.idle_anim = True
+        self.wake_up = True
+        self.sleep = False
+        self.sleepMove = False
+        self.character.mouse_tracker.set_sleep_state(False)
+        self.character.tracking_mouse = True
+
+class CharacterTiredStateManager:
+    def __init__(self, character):
+        self.character = character
+        self.condition = "idle"
+        #self._setup_timers()
+
+    @property
+    def tracking_mouse_switch(self):
+        return self.character.win.tracking_mouse_switch
+
+    @property
+    def tracking_mouse(self):
+        return self.character.win.tracking_mouse
+
+    @tracking_mouse.setter
+    def tracking_mouse(self, value: bool) -> None:
+        self.character.win.tracking_mouse = value
+
+    def set_idle_state(self):
+        self.condition = "Idle"
+
+    def set_sad_state(self):
+        self.condition = "Sad"
+        self.character.expressions.set_sad_expression()
+        self.character.set_sad_text()
+
+    def set_tired_state(self):
+        self.condition = "Tired"
+        self.character.expressions.set_tired_expression()
+        self.character.set_tired_text()
+
+    def set_sleep_state(self):
+        self.condition = "Sleep"
+        if self.tracking_mouse_switch:
+            self.tracking_mouse = False
+            self.character.input_handler.handle_mouse_idle()
+            self.character.mouse_tracker.set_sleep_state(True)
+        self.character.set_sleep_text()
+
+    def set_wake_up_state(self):
+        self.character.self.tired_controller.wake_up_function()
+        self.character.expressions.set_wake_up_expression(fade_out=10000)
+        self.character.set_wake_up_text()
 
 class CharacterStateManager:
     def __init__(self, character):
@@ -232,9 +410,29 @@ class CharacterTextManager:
         self.kaomoji = "(D*D)?"
         self.update()
 
-    def set_wake_up_text(self):
+    def set_sad_text(self):
+        self.text = ['Talk', 'Sad']
+        self.kaomoji = "(´•ω•̥`)"
+        self.update()
+
+    def set_tired_text(self):
+        self.text = ['Talk', 'Tired']
+        self.kaomoji = "(๑•﹏•)"
+        self.update()
+
+    def set_sleep_text(self):
+        self.text = ['Talk', 'Sleep']
+        self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
+        self.update()
+
+    def set_woke_text(self):
         self.text = ['Talk', 'Woke']
         self.kaomoji = "(⊙_⊙)✿"
+        self.update()
+
+    def set_wake_up_text(self):
+        self.text = ['Talk', 'WakeUp']
+        self.kaomoji = "(O_~)/"
         self.update()
 
     def set_transform_to_hdd_text(self):
@@ -296,6 +494,16 @@ class CharacterExpressionManager:
 
     def set_funny_expression(self, fade_out: int | None = None) -> None:
         self._apply_expression("Funny", fade_out)
+
+    def set_tired_expression(self, fade_out: int | None = None) -> None:
+        self._apply_expression("Tired", fade_out)
+
+    def set_sleep_expression(self, fade_out: int | None = None) -> None:
+        self._apply_expression("ClosedEyes", fade_out)
+
+    def set_wake_up_expression(self, fade_out: int | None = None) -> None:
+        self._apply_expression("Star", fade_out)
+        self._apply_expression("Serious", fade_out)
 
     def set_drag_expression(self, fade_out: int | None = None) -> None:
         if self.character.name in ["Purple Sister", "Black Sister"]:

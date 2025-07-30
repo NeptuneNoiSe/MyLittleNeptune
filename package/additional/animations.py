@@ -405,7 +405,14 @@ class AnimationsManager:
         win.character.transform_text_show = True
         win.character.expressions.set_funny_expression()
 
+# TODO [DELETE] Удалить класс после переноса функций в класc CharacterManager
 class TiredAnimation:
+    """
+    [DEPRECATED] Этот класс заменён на CharacterTiredController.
+    Все функции должны быть перенесены в новый класс.
+    Любое использование приведёт к ошибке!
+    """
+    pass
     def __init__(self, win):
         self.win = win
 

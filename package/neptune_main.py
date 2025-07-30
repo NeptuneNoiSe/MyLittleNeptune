@@ -25,7 +25,7 @@ from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_mng import ResourceManager
 from package.additional.animations import AnimationsManager
-from package.additional.animations import TiredAnimation
+#from package.additional.animations import TiredAnimation
 
 class Win(QOpenGLWidget, OnActions):
     def __init__(self) -> None:
@@ -140,12 +140,14 @@ class Win(QOpenGLWidget, OnActions):
         self.reset_expression = True
         # Transition From Live2d LAppModel to Model
         self.model: live2d.Model | None = None
+        self.character = CharacterManager(self)
+        self.talk_widget = TalkWidget(self)
         self.functions = Functions(self, self.model)
         self.input_handler = InputHandler(self, self.model)
-        self.tired_anim = None
         self.anim_manager = None
         self.lang = None
         self.talk_update = None
+        #self.character = None
         self.models_manager = ModelsManager(
             resources_dir=resources.RESOURCES_DIRECTORY)
         self.app = QApplication.instance()
@@ -333,14 +335,13 @@ class Win(QOpenGLWidget, OnActions):
         self.model.CreateRenderer(2)
         self.init_ui()
         self.last_update_time = time.time()
-        self.talk_widget = TalkWidget(self)
+        # self.talk_widget = TalkWidget(self)
         self.talk_update = self.talk_widget.talk_update
         self.talk_widget.show_talk()
         self.character.set_greeting_state()
         print(self.name + ": " + self.text + self.kaomoji)
 
     def init_ui(self):
-        self.tired_anim = TiredAnimation(self)
         self.anim_manager = AnimationsManager(self.model)
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
@@ -411,7 +412,7 @@ class Win(QOpenGLWidget, OnActions):
                 resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
-        if self.tired_anim.t_count <= self.tired_anim.sleep_v:
+        if self.character.tired_controller.timer_count <= self.character.tired_controller.sleep_v:
             self.idle_anim = True
         else:
             self.idle_anim = False
@@ -429,7 +430,7 @@ class Win(QOpenGLWidget, OnActions):
             self.clickInLA = True
             self.on_mouse_anim = True
 
-            if self.tired_anim.t_count >= self.tired_anim.sleep_v:
+            if self.character.tired_controller.timer_count >= self.character.tired_controller.sleep_v:
                 self.on_mouse_anim = False
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
@@ -710,8 +711,8 @@ class Win(QOpenGLWidget, OnActions):
     def closeEvent(self, event):
         self.character.expressions.set_cry_expression()
         settings.close()
-        if self.tired_anim.condition == "Sleep":
-            self.tired_anim.wake_up_func()
+        if self.character.tired_state.condition == "Sleep":
+            self.character.tired_controller.wake_up_function()
         self.kaomoji = "(o;TωT)o"
         answer = QMessageBox.question(self,
                                       self.lang['Actions']['Quit'],
@@ -723,7 +724,7 @@ class Win(QOpenGLWidget, OnActions):
             self.kaomoji = "(^3^)"
             print(self.name + ":", self.lang['Talk']['Goodbye'] + self.kaomoji)
         else:
-            self.tired_anim.t_count = 1
+            self.character.tired_controller.timer_count = 1
             self.character.set_quit_state(quit='No')
             # print(self.name + ": " + self.text + self.kaomoji)
             event.ignore()

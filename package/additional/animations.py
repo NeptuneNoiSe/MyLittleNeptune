@@ -1,4 +1,4 @@
-from PySide6.QtCore import QSize, QTimer
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QMovie, Qt
 
 from package import resources
@@ -284,6 +284,10 @@ class AnimationsManager:
     def check_animation_progress(self, win):
         """Checking animation progress"""
         if hasattr(win, 'transformMovie'):
+            if win.transform and (win.transformMovie.currentFrameNumber() >=
+                    (win.transformMovie.frameCount() - 3) / 2):
+                win.talk_widget.close_dialog()
+
             if (win.transformMovie.currentFrameNumber() >=
                     win.transformMovie.frameCount() - 3):
 
@@ -382,7 +386,7 @@ class AnimationsManager:
         self.transform_lock = 1
         win.character.transform_exp_show = True
         win.character.transform_text_show = True
-        win.character.expressions.set_funny_expression()
+        win.character.expressions.set_funny_expression(fade_out=30000)
 
     def _transform_to_regular(self, win):
         """Transformation to regular form"""
@@ -401,4 +405,4 @@ class AnimationsManager:
         self.transform_lock = 1
         win.character.transform_exp_show = True
         win.character.transform_text_show = True
-        win.character.expressions.set_funny_expression()
+        win.character.expressions.set_funny_expression(fade_out=30000)

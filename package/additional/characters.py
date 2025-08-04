@@ -1,16 +1,13 @@
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QThread
 import random
 
 class CharacterManager:
     def __init__(self, win):
         self.win = win
-        self._win = win
         self.text_key = None
         self.kaomoji = None
         self.transform_text_show = False
         self.transform_exp_show = False
-        #self.character = win.character_name
-        #self.model = win.model
         self.state = CharacterStateManager(self)
         self.tired_controller = CharacterTiredController(self)
         self.tired_state = CharacterTiredStateManager(self)
@@ -22,22 +19,23 @@ class CharacterManager:
 
         # GoodBye timer
         self.goodByeTimer = QTimer()
+        self.goodByeTimer.setSingleShot(True)
         self.goodByeTimer.timeout.connect(self.set_new_character)
 
     @property
     def model(self):
         """Always returns the current model"""
-        return self._win.model
+        return self.win.model
 
     @property
     def name(self):
         """Always returns the current name"""
-        return self._win.character_name
+        return self.win.character_name
 
     @property
     def text(self):
         """Always returns the current text"""
-        return self._win.lang
+        return self.win.lang
 
     @property
     def tracking_mouse_switch(self):
@@ -63,8 +61,8 @@ class CharacterManager:
 
     def set_greeting_state(self):
         """Character say hello"""
-        self.character_text.set_greeting_text()
         self.expressions.set_smile_expression(fade_out=7000)
+        self.character_text.set_greeting_text()
 
     def set_goodbye_state(self):
         """Character say goodbye"""
@@ -128,7 +126,6 @@ class CharacterManager:
         else:
             self.expressions.set_funny_expression(fade_out=14000)
             self.character_text.set_transform_to_normal_text()
-        self.win.talk_widget.dialogCloseTimer.start(3000)
 
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
@@ -136,16 +133,13 @@ class CharacterManager:
         self.expressions.set_sad_expression(fade_out=10000)
         self.character_text.set_transform_failure_text()
 
-    # FIXME: При переходе в HDD форму не срабатывает fade_out
     def set_transformed_state(self):
-        self.expressions.fadeoutTimer.stop()
         if self.transform_exp_show:
             self.expressions.set_funny_expression(fade_out=7000)
 
         if self.transform_text_show:
             if self.win.hdd_form:
                 self.character_text.set_transformed_hdd_text()
-                # self.expressions.fadeoutTimer.start(7000)
             else:
                 self.character_text.set_transformed_normal_text()
             self.transform_text_show = False
@@ -178,7 +172,9 @@ class CharacterTiredController:
         self.sleep_v = 100
         self.wake_up_v = 160
         self.wake_up = False
-        self.init_timer()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self._update_state)
+        self._start_timer()
 
     @property
     def sleep_move(self):
@@ -213,27 +209,34 @@ class CharacterTiredController:
         self.character.win.idle_anim = value
 
     @property
-    def set_icon(self):
-        return self.character.win.set_icon
+    def on_mouse_anim(self):
+        return self.character.win.on_mouse_anim
 
-    @set_icon.setter
-    def set_icon(self, value: bool) -> None:
-        self.character.win.set_icon = value
+    @idle_anim.setter
+    def on_mouse_anim(self, value: bool) -> None:
+        self.character.win.on_mouse_anim = value
 
-    # FIXME: Проблема с дублированием таймера, что приводит к ошибкам
-    def init_timer(self):
-        # Tired timer
-        self.main_tired_timer = QTimer()
-        self.main_tired_timer.timeout.connect(self.tired_timer)
-        self.main_tired_timer.stop()
-        self.main_tired_timer.start(int(6000 / self.time_scale))
+    def reset_timer(self):
+        self.timer.stop()
+        self.timer_count = 1
+        if self.timer_log:
+            print("Timer reset")
 
-    def tired_timer(self):
+    def _start_timer(self):
+        self.reset_timer()  # Сброс перед запуском
+        self.timer.start(int(6000 / self.time_scale))
+
+    def _update_state(self):
         self.timer_count += 1
+        state = self.character.tired_state.condition
 
         # Logging
         if self.timer_log:
-            print(f"{self.timer_count} - {self.character.tired_state.condition} Condition")
+            print(f"[TIRED TIMER]"
+                  f" | Active: {self.timer.isActive()}"
+                  f" | Count: {self.timer_count}"
+                  f" | Condition: {state}"
+                  f" | Thread: {QThread.currentThread()}")
 
         # Processing states
         if self.timer_count <= self.sad_v:
@@ -241,9 +244,6 @@ class CharacterTiredController:
 
         if self.timer_count <= self.sleep_v and self.idle_switch:
             self.idle_anim = True
-
-        if self.timer_count >= 5:
-            self.set_icon = True
 
         if self.timer_count >= 10 and not self.sleep_switch:
             self.timer_count = 1
@@ -260,6 +260,9 @@ class CharacterTiredController:
 
         elif self.timer_count == self.wake_up_v and self.sleep_switch:
             self.character.tired_state.set_wake_up_state()
+
+    def reload_timer(self):
+        self._start_timer()
 
     def sleep_function(self):
         self.character.win.anim_manager.set_sleep_state(True)
@@ -459,14 +462,22 @@ class CharacterTextManager:
     def update(self):
         self.character.win.talk_widget.show_talk()
 
-
 class CharacterExpressionManager:
     def __init__(self, character):
         self.character = character
 
         # Fadeout timer
         self.fadeoutTimer = QTimer()
+        self.fadeoutTimer.setSingleShot(True)
         self.fadeoutTimer.timeout.connect(self.reset_expression)
+
+    @property
+    def exp_fade_out_var(self):
+        return self.character.win.talk_widget.exp_fade_out_var
+
+    @exp_fade_out_var.setter
+    def exp_fade_out_var(self, value):
+        self.character.win.talk_widget.exp_fade_out_var = value
 
     def set_happy_expression(self, fade_out: int | None = None) -> None:
         self._apply_expression("Happy", fade_out)
@@ -588,10 +599,10 @@ class CharacterExpressionManager:
         self.character.model.SetExpression(exp_id)
         if hasattr(self, 'fadeoutTimer') and fade_out is not None:
             self.fadeoutTimer.start(fade_out)
+            self.exp_fade_out_var = fade_out
 
     def reset_expression(self):
         # win.model.ResetAllParameters()
         # print("reset")
         self.character.model.ResetExpressions()
         self.fadeoutTimer.stop()
-

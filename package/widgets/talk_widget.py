@@ -17,16 +17,36 @@ class TalkWidget:
     def __init__(self, win):
         self.win = win
         self.widget = QWidget(win)
-        # self.character = win.character
         self.init_ui()
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
+        self.exp_fade_out_var = 7000
 
-        # Dialog close timer
-        self.dialogCloseTimer = QTimer()
-        self.dialogCloseTimer.timeout.connect(self.close_dialog)
+    # Dialog close timer
+    def dialog_timer(self, interval: int | None = None) -> None:
+        """Запускает/обновляет таймер закрытия диалога"""
+        # Стандартный интервал по умолчанию
+        std_interval = 7000
+        # Создаём таймер только если его нет
+        if not hasattr(self, 'dialogCloseTimer'):
+            self.dialogCloseTimer = QTimer()
+            self.dialogCloseTimer.setSingleShot(True)
+            self.dialogCloseTimer.timeout.connect(self.close_dialog)
 
-        self.fadeoutTimer = self.win.character.expressions.fadeoutTimer
+        # Определяем актуальный интервал
+        if interval == None:
+            current_interval = self.exp_fade_out_var if self.exp_fade_out_var != std_interval else std_interval
+        else:
+            current_interval = interval
+
+        # Останавливаем и перезапускаем с новым интервалом
+        self.dialogCloseTimer.stop()
+        self.dialogCloseTimer.start(int(current_interval))
+
+        # Для отладки
+        # Logging
+        if self.win.timer_log:
+            print(f"[Timer] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")
 
     def init_ui(self):
         """Initializing UI elements"""
@@ -142,7 +162,7 @@ class TalkWidget:
             self.widget.show()
             self.talk = True
 
-        self.dialogCloseTimer.start(7000)
+        self.dialog_timer()
 
         # Get image from ResourceManager
         is_mirrored = self.screenSide == "Left"

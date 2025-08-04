@@ -1,6 +1,4 @@
 import os
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QMovie
 
 import live2d.v3 as live2d
 from live2d.v3 import Parameter
@@ -126,8 +124,8 @@ class ModelsManager:
         """Final operations"""
         live2d.clearBuffer()
         win.model.CreateRenderer(2)
-        win.init_ui()
-        win.character.tired_controller.timer_count = 1
+        win.init_classes()
+        win.character.tired_controller.reload_timer()
 
         if win.talk_widget.talk_update:
             win.talk_widget.update_widget()

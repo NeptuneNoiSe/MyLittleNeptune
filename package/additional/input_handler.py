@@ -34,6 +34,7 @@ class InputHandler:
 
         # Input release timer
         self.mouse_input_timer = QTimer()
+        self.mouse_input_timer.setSingleShot(True)
         self.mouse_input_timer.timeout.connect(self.transparent_input_disable)
 
         # Main tracking update timer
@@ -43,10 +44,12 @@ class InputHandler:
 
         # Talk Delay timer
         self.talkDelayTimer = QTimer()
+        self.talkDelayTimer.setSingleShot(True)
         self.talkDelayTimer.timeout.connect(self.takingTalk)
 
         # Sleep Move timer
         self.sleepInputTimer = QTimer()
+        self.sleepInputTimer.setSingleShot(True)
         self.sleepInputTimer.timeout.connect(self.takingSleep)
 
     def transparent_input_disable(self):

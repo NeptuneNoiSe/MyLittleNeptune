@@ -61,7 +61,7 @@ class Win(QOpenGLWidget, OnActions):
         # Mouse Tracking Log:
         self.mouse_tracking_log = False
         # Timer Diagnostic Log:
-        self.timer_log = True
+        self.timer_log = False
         # Callbacks Log:
         self.callbacks_log = False
 
@@ -138,8 +138,8 @@ class Win(QOpenGLWidget, OnActions):
         self.reset_expression = True
         # Transition From Live2d LAppModel to Model
         self.model: live2d.Model | None = None
-        self.character = CharacterManager(self)
-        self.talk_widget = TalkWidget(self)
+        self.character = None
+        self.talk_widget = None
         self.functions = Functions(self, self.model)
         self.input_handler = InputHandler(self, self.model)
         self.anim_manager = None
@@ -274,6 +274,7 @@ class Win(QOpenGLWidget, OnActions):
         if live2d.LIVE2D_VERSION == 3:
             if self.models_switch == 0:
                 self.character_name = "Neptune"
+
             elif self.models_switch == 1:
                 self.character_name = "Purple Heart"
 
@@ -330,19 +331,19 @@ class Win(QOpenGLWidget, OnActions):
         self.startTimer(int(1000 / 60)) # FPS Set
         self.functions.setLanguage()
         self.model.CreateRenderer(2)
-        self.init_ui()
+        self.init_classes()
         self.last_update_time = time.time()
-        # self.talk_update = self.talk_widget.talk_update
+        self.character = CharacterManager(self)
+        self.talk_widget = TalkWidget(self)
         self.talk_widget.show_talk()
         self.character.set_greeting_state()
+
         print(self.name + ": " + self.text + self.kaomoji)
 
-    def init_ui(self):
+    def init_classes(self):
         self.anim_manager = AnimationsManager(self.model)
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
-        # self.character = CharacterManager(self)
-        # self.talk_widget = TalkWidget(self)
 
     def resizeGL(self, w: int, h: int) -> None:
         if self.model:
@@ -387,6 +388,8 @@ class Win(QOpenGLWidget, OnActions):
             self.model.UpdatePhysics(delta_secs)
             self.model.UpdatePose(delta_secs)
 
+            self.set_app_title()
+
         except Exception as e:
             print(f"Model update crashed: {e}")
             # Try Reload Model
@@ -398,21 +401,24 @@ class Win(QOpenGLWidget, OnActions):
             self.functions.savePng('screenshot.png')
             self.read = True
 
+    def set_app_title(self):
+        self.setWindowTitle("My Little Neptune")
+        self.setWindowIcon(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         if not self.isVisible():
             return
         if self.settings_update_state:
             settings.updateSettings()
-        if not self.set_icon:
-            self.setWindowTitle("My Little Neptune")
-            self.setWindowIcon(QIcon(os.path.join(
-                resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+        #if not self.set_icon:
+
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
         if self.character.tired_controller.timer_count <= self.character.tired_controller.sleep_v:
             self.idle_anim = True
         else:
-            self.idle_anim = False
+           self.idle_anim = False
 
         if self.idle_switch and self.idle_anim:
             current_time = time.time()
@@ -485,7 +491,6 @@ class Win(QOpenGLWidget, OnActions):
         if self.mouse_click_log:
             print("Left Button Released")
 
-
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self.clickInLA and not self.input_handler.input_lock:
             global_pos = event.globalPosition().toPoint()
@@ -517,8 +522,8 @@ class Win(QOpenGLWidget, OnActions):
         self.auto_scale_init = True
 
         self.functions.setLanguage()
-        if self.talk_update:
-            self.apply_character_config(self.character_name)
+        # if self.talk_update:
+        self.apply_character_config(self.character_name)
 
     def settings_show(self):
         settings.show()
@@ -1103,5 +1108,12 @@ if __name__ == "__main__":
     settings = SettingsWindow(args.pythonic)
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
+
+    # TODO: [WIP] Добавить функцию смены темы в следующих обновлениях
+    #   app.setStyle("Legacy")
+    #   app.setStyle("Fusion")
+    #   app.setStyle("Windows")
+    #   app.setStyle("windowsvista")
+
     app.exec()
     live2d.dispose()

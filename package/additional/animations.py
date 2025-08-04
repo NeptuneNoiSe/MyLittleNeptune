@@ -306,7 +306,7 @@ class AnimationsManager:
         win.transformLabel.clear()
         win.input_handler.input_lock = False
 
-        win.character.set_transformed_state()
+        win.character.state.set_transformed_state()
 
     def play_transform_animation(self, win):
         """Starting the transformation animation"""

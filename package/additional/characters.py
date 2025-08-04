@@ -14,13 +14,6 @@ class CharacterManager:
         self.expressions = CharacterExpressionManager(self)
         self.character_text = CharacterTextManager(self)
         self.movements = CharacterMovementsManager(self)
-        #self.reactions = CharacterReactionHandler(self)
-        #self.animation = CharacterAnimationController(win.model)
-
-        # GoodBye timer
-        self.goodByeTimer = QTimer()
-        self.goodByeTimer.setSingleShot(True)
-        self.goodByeTimer.timeout.connect(self.set_new_character)
 
     @property
     def model(self):
@@ -49,10 +42,24 @@ class CharacterManager:
     def tracking_mouse(self, value: bool) -> None:
         self.win.tracking_mouse = value
 
+class CharacterStateManager:
+    def __init__(self, character):
+        self.character = character
+
+        # GoodBye timer
+        self.goodByeTimer = QTimer()
+        self.goodByeTimer.setSingleShot(True)
+        self.goodByeTimer.timeout.connect(self.set_new_character)
+
+    @property
+    def win(self):
+        """Всегда актуальная ссылка на окно"""
+        return self.character.win
+
     def set_new_character(self):
         """Set new character"""
         self.goodByeTimer.stop()
-        self.win.talk_widget.close_dialog()
+        self.character.win.talk_widget.close_dialog()
 
         if hasattr(self.win, 'models_manager'):
             self.win.models_manager.update_model(self.win)
@@ -61,106 +68,93 @@ class CharacterManager:
 
     def set_greeting_state(self):
         """Character say hello"""
-        self.expressions.set_smile_expression(fade_out=7000)
-        self.character_text.set_greeting_text()
+        self.character.expressions.set_smile_expression(fade_out=7000)
+        self.character.character_text.set_greeting_text()
 
     def set_goodbye_state(self):
         """Character say goodbye"""
         self.goodByeTimer.start(3000)
-        self.character_text.set_goodbye_text()
+        self.character.character_text.set_goodbye_text()
 
         # WakeUp if character sleep
-        if hasattr(self, 'tired_state') and self.tired_state.condition == "Sleep":
-            self.tired_controller.wake_up_function()
+        if hasattr(self, 'tired_state') and self.character.tired_state.condition == "Sleep":
+            self.character.tired_controller.wake_up_function()
 
-        self.win.talk_widget.talk_update = False
+        self.character.win.talk_widget.talk_update = False
 
     def set_drag_state(self):
         """Set drag state"""
-        #if self.state.is_sleeping:
-        #    return
-        self.expressions.set_drag_expression()
-        self.character_text.set_drag_text()
+        self.character.expressions.set_drag_expression()
+        self.character.character_text.set_drag_text()
 
     def set_stay_state(self):
         """Set stay state"""
-        self.model.ResetExpressions()
-        self.expressions.set_smile_expression(fade_out=7000)
-        self.character_text.set_stay_text()
+        self.character.model.ResetExpressions()
+        self.character.expressions.set_smile_expression(fade_out=7000)
+        self.character.character_text.set_stay_text()
 
     def set_lost_state(self):
         """Set lost state"""
-        self.expressions.set_lost_expression(fade_out=7000)
-        self.character_text.set_lost_text()
+        self.character.expressions.set_lost_expression(fade_out=7000)
+        self.character.character_text.set_lost_text()
 
-    def set_woke_state(self):
+    def set_woke_up_state(self):
         """Set wake up state"""
-        self.tired_controller.sleep = False
-        self.model.ResetAllParameters()
-        self.model.ResetExpressions()
-        self.tired_controller.wake_up_function()
-        self.expressions.set_surprised_expression(fade_out=10000)
-        self.character_text.set_woke_text()
-
-    def set_crying_state(self):
-        """Set crying state"""
-        self.expressions.set_cry_expression()
-
-
-    def set_part_hit(self):
-        """Processing body parts"""
-        #self.model.ResetExpressions()
-        #self.expressions.set_stay_expression()
-        #self.character_text.set_stay_text()
-        self.movements.process_body_hit()
+        self.character.tired_controller.sleep = False
+        self.character.model.ResetAllParameters()
+        self.character.model.ResetExpressions()
+        self.character.tired_controller.wake_up_function()
+        self.character.expressions.set_surprised_expression(fade_out=10000)
+        self.character.character_text.set_woke_up_text()
 
     def set_random_state(self):
-       self.expressions.set_random_expression(fade_out=7000)
-       self.character_text.set_aux_text(group_name='Talk', text_key=self.text_key, kaomoji=self.kaomoji)
+       self.character.expressions.set_random_expression(fade_out=7000)
+       self.character.character_text.set_aux_text(group_name='Talk',
+                                                  text_key=self.character.text_key,
+                                                  kaomoji=self.character.kaomoji)
 
     def set_transform_state(self):
-        self.expressions.fadeoutTimer.stop()
+        self.character.expressions.fadeoutTimer.stop()
         if not self.win.hdd_form:
-            self.expressions.set_tranform_to_hdd_expression()
-            self.character_text.set_transform_to_hdd_text()
+            self.character.expressions.set_tranform_to_hdd_expression()
+            self.character.character_text.set_transform_to_hdd_text()
         else:
-            self.expressions.set_funny_expression(fade_out=14000)
-            self.character_text.set_transform_to_normal_text()
+            self.character.expressions.set_funny_expression(fade_out=14000)
+            self.character.character_text.set_transform_to_normal_text()
 
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
-        self.expressions.fadeoutTimer.stop()
-        self.expressions.set_sad_expression(fade_out=10000)
-        self.character_text.set_transform_failure_text()
+        self.character.expressions.fadeoutTimer.stop()
+        self.character.expressions.set_sad_expression(fade_out=10000)
+        self.character.character_text.set_transform_failure_text()
 
     def set_transformed_state(self):
-        if self.transform_exp_show:
-            self.expressions.set_funny_expression(fade_out=7000)
+        if self.character.transform_exp_show:
+            self.character.expressions.set_funny_expression(fade_out=7000)
 
-        if self.transform_text_show:
+        if self.character.transform_text_show:
             if self.win.hdd_form:
-                self.character_text.set_transformed_hdd_text()
+                self.character.character_text.set_transformed_hdd_text()
             else:
-                self.character_text.set_transformed_normal_text()
-            self.transform_text_show = False
-            self.transform_exp_show = False
+                self.character.character_text.set_transformed_normal_text()
+            self.character.transform_text_show = False
+            self.character.transform_exp_show = False
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
-        self.character_text.set_settings_text(text_key)
+        self.character.character_text.set_settings_text(text_key)
 
     def set_quit_state(self, quit: str):
         if quit == 'Yes':
-            self.expressions.set_cry_expression()
-            self.character_text.set_quit_text()
+            self.character.expressions.set_cry_expression()
+            self.character.character_text.set_quit_text()
         elif quit == 'No':
-            self.expressions.set_happy_expression(fade_out=5000)
-            self.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
+            self.character.expressions.set_happy_expression(fade_out=5000)
+            self.character.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
 
-# TODO: [WIP] Класс в активной разработке. Требуется:
-#       1. Полное тестирование после переноса всех функций
-#       2. Проверка состояний сон/бодроствование персонажа
-#       3. Анализ взаимодействия со всеми связанными классами и основным окном
-#       WARNING: Возможны нестабильности и критические баги!
+    def set_crying_state(self):
+        """Set crying state"""
+        self.character.expressions.set_cry_expression()
+
 class CharacterTiredController:
     def __init__(self, character):
         self.character = character
@@ -319,149 +313,6 @@ class CharacterTiredStateManager:
         self.character.expressions.set_wake_up_expression(fade_out=10000)
         self.character.character_text.set_wake_up_text()
 
-class CharacterStateManager:
-    def __init__(self, character):
-        self.character = character
-        self.condition = "idle"
-        #self._setup_timers()
-
-class CharacterMovementsManager:
-    def __init__(self, character):
-        self.character = character
-
-    def process_body_hit(self):
-        """Processing interactions with body parts"""
-        hit_parts = {
-            part for part in self.character.model.HitPart(self.character.win.posX, self.character.win.posY, True) or []
-            if part  # Filtering None values
-        }
-        self.character.win.anim_manager.handle_hit(hit_parts)
-
-        #if not self.tired_anim.sleep and not self.character.win.input_lock:
-        #    self._update_character_expression()
-
-class CharacterTextManager:
-    def __init__(self, character):
-        self.character = character
-
-    @property
-    def text(self):
-        return self.character.win.text
-
-    @text.setter
-    def text(self, value):
-        if isinstance(value, list):  # Если передали ['Talk', 'Taking']
-            result = self.character.win.lang
-            for key in value:
-                result = result[key]
-            self.character.win.text = result
-        else:
-            self.character.win.text = value
-
-    @property
-    def kaomoji(self):
-        return self.character.win.kaomoji
-
-    @kaomoji.setter
-    def kaomoji(self, value):
-        self.character.win.kaomoji = value
-
-    def set_aux_text(self,
-                     group_name: str | None = None,
-                     text_key: str | None = None,
-                     kaomoji: str | None = None) -> None:
-        self.text = [group_name, text_key]
-        self.kaomoji = kaomoji
-        self.update()
-
-    def set_settings_text(self, text_key):
-        self.text = ['MiscellaneousTalk', text_key]
-        self.kaomoji = "(⌐■_■)"
-        self.update()
-
-    def set_greeting_text(self):
-        self.text = ['Talk', 'Hello']
-        self.kaomoji = "(^~^)/"
-        self.update()
-
-    def set_goodbye_text(self):
-        self.text = ['Talk', 'Goodbye']
-        self.kaomoji = "(-_-)>"
-        self.update()
-
-    def set_drag_text(self):
-        self.text = ['Talk', 'Taking']
-        self.kaomoji = "ε=┌( >_<)┘"
-        self.update()
-
-    def set_stay_text(self):
-        self.text = ['Talk', 'Stay']
-        self.kaomoji = "(^~^)"
-        self.update()
-
-    def set_lost_text(self):
-        self.text = ['Talk', 'Lost']
-        self.kaomoji = "(D*D)?"
-        self.update()
-
-    def set_sad_text(self):
-        self.text = ['Talk', 'Sad']
-        self.kaomoji = "(´•ω•̥`)"
-        self.update()
-
-    def set_tired_text(self):
-        self.text = ['Talk', 'Tired']
-        self.kaomoji = "(๑•﹏•)"
-        self.update()
-
-    def set_sleep_text(self):
-        self.text = ['Talk', 'Sleep']
-        self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
-        self.update()
-
-    def set_woke_text(self):
-        self.text = ['Talk', 'Woke']
-        self.kaomoji = "(⊙_⊙)✿"
-        self.update()
-
-    def set_wake_up_text(self):
-        self.text = ['Talk', 'WakeUp']
-        self.kaomoji = "(O_~)/"
-        self.update()
-
-    def set_transform_to_hdd_text(self):
-        self.text = ['Talk', 'TransformToHDD']
-        self.kaomoji = "(/￣ー￣)/~~☆"
-        self.update()
-
-    def set_transform_to_normal_text(self):
-        self.text = ['Talk', 'TransformToNormal']
-        self.kaomoji = "(/￣ー￣)/"
-        self.update()
-
-    def set_transformed_hdd_text(self):
-        self.text = ['Talk', 'TransformedHDD']
-        self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
-        self.update()
-
-    def set_transformed_normal_text(self):
-        self.text = ['Talk', 'TransformedNormal']
-        self.kaomoji = "(> ͜ʖ <)"
-        self.update()
-
-    def set_transform_failure_text(self):
-        self.text = ['Talk', 'TransformNot']
-        self.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
-        self.update()
-
-    def set_quit_text(self):
-        self.text = ['Talk', 'QuitAlt']
-        self.kaomoji = "(^3^)"
-        self.update()
-
-    def update(self):
-        self.character.win.talk_widget.show_talk()
-
 class CharacterExpressionManager:
     def __init__(self, character):
         self.character = character
@@ -606,3 +457,143 @@ class CharacterExpressionManager:
         # print("reset")
         self.character.model.ResetExpressions()
         self.fadeoutTimer.stop()
+
+class CharacterTextManager:
+    def __init__(self, character):
+        self.character = character
+
+    @property
+    def text(self):
+        return self.character.win.text
+
+    @text.setter
+    def text(self, value):
+        if isinstance(value, list):  # Если передали ['Talk', 'Taking']
+            result = self.character.win.lang
+            for key in value:
+                result = result[key]
+            self.character.win.text = result
+        else:
+            self.character.win.text = value
+
+    @property
+    def kaomoji(self):
+        return self.character.win.kaomoji
+
+    @kaomoji.setter
+    def kaomoji(self, value):
+        self.character.win.kaomoji = value
+
+    def set_aux_text(self,
+                     group_name: str | None = None,
+                     text_key: str | None = None,
+                     kaomoji: str | None = None) -> None:
+        self.text = [group_name, text_key]
+        self.kaomoji = kaomoji
+        self.update()
+
+    def set_settings_text(self, text_key):
+        self.text = ['MiscellaneousTalk', text_key]
+        self.kaomoji = "(⌐■_■)"
+        self.update()
+
+    def set_greeting_text(self):
+        self.text = ['Talk', 'Hello']
+        self.kaomoji = "(^~^)/"
+        self.update()
+
+    def set_goodbye_text(self):
+        self.text = ['Talk', 'Goodbye']
+        self.kaomoji = "(-_-)>"
+        self.update()
+
+    def set_drag_text(self):
+        self.text = ['Talk', 'Taking']
+        self.kaomoji = "ε=┌( >_<)┘"
+        self.update()
+
+    def set_stay_text(self):
+        self.text = ['Talk', 'Stay']
+        self.kaomoji = "(^~^)"
+        self.update()
+
+    def set_lost_text(self):
+        self.text = ['Talk', 'Lost']
+        self.kaomoji = "(D*D)?"
+        self.update()
+
+    def set_sad_text(self):
+        self.text = ['Talk', 'Sad']
+        self.kaomoji = "(´•ω•̥`)"
+        self.update()
+
+    def set_tired_text(self):
+        self.text = ['Talk', 'Tired']
+        self.kaomoji = "(๑•﹏•)"
+        self.update()
+
+    def set_sleep_text(self):
+        self.text = ['Talk', 'Sleep']
+        self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
+        self.update()
+
+    def set_woke_up_text(self):
+        self.text = ['Talk', 'Woke']
+        self.kaomoji = "(⊙_⊙)✿"
+        self.update()
+
+    def set_wake_up_text(self):
+        self.text = ['Talk', 'WakeUp']
+        self.kaomoji = "(O_~)/"
+        self.update()
+
+    def set_transform_to_hdd_text(self):
+        self.text = ['Talk', 'TransformToHDD']
+        self.kaomoji = "(/￣ー￣)/~~☆"
+        self.update()
+
+    def set_transform_to_normal_text(self):
+        self.text = ['Talk', 'TransformToNormal']
+        self.kaomoji = "(/￣ー￣)/"
+        self.update()
+
+    def set_transformed_hdd_text(self):
+        self.text = ['Talk', 'TransformedHDD']
+        self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+        self.update()
+
+    def set_transformed_normal_text(self):
+        self.text = ['Talk', 'TransformedNormal']
+        self.kaomoji = "(> ͜ʖ <)"
+        self.update()
+
+    def set_transform_failure_text(self):
+        self.text = ['Talk', 'TransformNot']
+        self.kaomoji = "(ﾉ>ω<)ﾉ :｡･"
+        self.update()
+
+    def set_quit_text(self):
+        self.text = ['Talk', 'QuitAlt']
+        self.kaomoji = "(^3^)"
+        self.update()
+
+    def update(self):
+        self.character.win.talk_widget.show_talk()
+
+class CharacterMovementsManager:
+    def __init__(self, character):
+        self.character = character
+
+    def process_body_hit(self):
+        """Processing interactions with body parts"""
+        #self.model.ResetExpressions()
+        #self.expressions.set_stay_expression()
+        #self.character_text.set_stay_text()
+        hit_parts = {
+            part for part in self.character.model.HitPart(self.character.win.posX, self.character.win.posY, True) or []
+            if part  # Filtering None values
+        }
+        self.character.win.anim_manager.handle_hit(hit_parts)
+
+        #if not self.tired_anim.sleep and not self.character.win.input_lock:
+        #    self._update_character_expression()

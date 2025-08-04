@@ -336,7 +336,7 @@ class Win(QOpenGLWidget, OnActions):
         self.character = CharacterManager(self)
         self.talk_widget = TalkWidget(self)
         self.talk_widget.show_talk()
-        self.character.set_greeting_state()
+        self.character.state.set_greeting_state()
 
         print(self.name + ": " + self.text + self.kaomoji)
 
@@ -728,7 +728,7 @@ class Win(QOpenGLWidget, OnActions):
             print(self.name + ":", self.lang['Talk']['Goodbye'] + self.kaomoji)
         else:
             self.character.tired_controller.timer_count = 1
-            self.character.set_quit_state(quit='No')
+            self.character.state.set_quit_state(quit='No')
             # print(self.name + ": " + self.text + self.kaomoji)
             event.ignore()
 

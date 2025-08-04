@@ -381,7 +381,7 @@ class TalkWidget:
 
             # Updating content
             self.widget.updateGeometry()
-            self.win.character.set_settings_state(text_key='SettingsApplied')
+            self.win.character.state.set_settings_state(text_key='SettingsApplied')
             # print("Widget updated successfully")
 
         except Exception as e:

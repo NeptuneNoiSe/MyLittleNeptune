@@ -140,9 +140,9 @@ class InputHandler:
         if was_dragging:
             if not self.win.character.tired_controller.sleep and not self.input_lock:
                 if self.win.isInLA:
-                    self.win.character.set_stay_state()
+                    self.win.character.state.set_stay_state()
                 else:
-                    self.win.character.set_lost_state()
+                    self.win.character.state.set_lost_state()
             self.sleep_move = False
             return
 
@@ -150,14 +150,14 @@ class InputHandler:
                 not self.input_lock and
                 not self.sleep_move):
             # print("DEBUG: Correct wake up from click!")
-            self.win.character.set_woke_state()
+            self.win.character.state.set_woke_up_state()
             return
 
         if not self.sleep_move:
             if self.win.tap_body_switch and not self.sleep_move:
-                self.win.character.set_part_hit()
+                self.win.character.movements.process_body_hit()
                 if not self.input_lock:
-                    self.win.character.set_random_state()
+                    self.win.character.state.set_random_state()
         # Reset
         self.sleep_move = False
 
@@ -175,7 +175,7 @@ class InputHandler:
                     and not self.input_lock
                     and QCursor().pos() is not None):  # Дополнительная проверка
 
-                self.win.character.set_drag_state()
+                self.win.character.state.set_drag_state()
 
         except Exception as e:
             print(f"Move handler error: {e}")

@@ -210,6 +210,14 @@ class CharacterTiredController:
     def on_mouse_anim(self, value: bool) -> None:
         self.character.win.on_mouse_anim = value
 
+    def should_enable_idle_anim(self) -> bool:
+        """Проверяет, можно ли включить idle-анимацию."""
+        return self.timer_count <= self.sleep_v
+
+    def should_enable_mouse_anim(self) -> bool:
+        """Проверяет, можно ли включить анимацию при наведении мыши."""
+        return self.timer_count <= self.sleep_v
+
     def reset_timer(self):
         self.timer.stop()
         self.timer_count = 1

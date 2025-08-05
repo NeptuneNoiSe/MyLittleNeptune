@@ -4,7 +4,7 @@ import live2d.v3 as live2d
 from live2d.v3 import Parameter
 
 from package.additional.config_module import *
-from package.additional.resource_mng import ResourceManager
+from package.additional.resource_manager import ResourceManager
 
 class ModelsManager:
     def __init__(self, resources_dir: str):

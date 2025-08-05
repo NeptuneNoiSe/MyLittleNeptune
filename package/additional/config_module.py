@@ -1,4 +1,8 @@
+import os
+import json
+from typing import Any, Union
 from configparser import ConfigParser
+from PySide6.QtCore import QObject, Signal
 
 def main_config():
     config = ConfigParser()
@@ -180,3 +184,145 @@ def auto_scale(height):
     return a_scale
 
 config_main = main_config()
+
+# TODO: [WIP] Класс в активной разработке. Требуется:
+#       Полное тестирование после переноса всех функций
+class AppConfig(QObject):
+    """Класс для управления настройками приложения."""
+
+    config_changed = Signal(str, str, str)  # section, key, value
+
+    def __init__(self):
+        super().__init__()
+        self._config = config_main  # Используем ваш существующий config_main
+        #self._models_config = self._load_models_json("model_configs.json")
+        #self._setup_defaults()
+
+    def _load_models_json(self, path: str) -> dict:
+        """Loads character configs from a JSON file"""
+        config_path = os.path.join(self.resources_dir, "configs/models_config.json")
+        with open(config_path, encoding="utf-8") as f:
+            return json.load(f)
+
+    def _setup_defaults(self):
+        """Проверяет и добавляет отсутствующие секции/ключи."""
+        # Можно оставить ваш текущий код из main_config() или адаптировать его здесь
+        pass
+
+    @property
+    def language(self) -> str:
+        return self._config.get('Main', 'language')
+
+    @language.setter
+    def language(self, value: str):
+        self._config.set('Main', 'language', value)
+        self._save_and_notify('Main', 'language', value)
+
+    #@property
+    #def models_switch(self) -> str:
+    #    return self._config.get('Model', 'selected_model')
+
+    #@models_switch.setter
+    #def models_switch(self, value: str):
+    #    self._config.set('Model', 'selected_model', value)
+    #    self._save_and_notify('Model', 'selected_model', value)
+
+
+    @property
+    def idle_switch(self) -> str:
+        return self._config.getboolean('Animations', 'idle_animation')
+
+    @idle_switch.setter
+    def idle_switch(self, value: str):
+        self._config.set('Animations', 'idle_animation', value)
+        self._save_and_notify('Animations', 'idle_animation', value)
+
+    @property
+    def on_mouse_switch(self) -> str:
+        return self._config.getboolean('Animations', 'on_mouse_animation')
+
+    @on_mouse_switch.setter
+    def on_mouse_switch(self, value: str):
+        self._config.set('Animations', 'on_mouse_animation', value)
+        self._save_and_notify('Animations', 'on_mouse_animation', value)
+
+    @property
+    def tap_body_switch(self) -> str:
+        return self._config.getboolean('Animations', 'tap_body_animation')
+
+    @tap_body_switch.setter
+    def tap_body_switch(self, value: str):
+        self._config.set('Animations', 'tap_body_animation', value)
+        self._save_and_notify('Animations', 'tap_body_animation', value)
+
+    @property
+    def sleep_switch(self) -> str:
+        return self._config.getboolean('Settings', 'sleep')
+
+    @sleep_switch.setter
+    def sleep_switch(self, value: str):
+        self._config.set('Settings', 'sleep', value)
+        self._save_and_notify('Settings', 'sleep', value)
+
+    @property
+    def tracking_mouse_switch(self) -> str:
+        return self._config.getboolean('Settings', 'tracking_mouse')
+
+    @tracking_mouse_switch.setter
+    def tracking_mouse_switch(self, value: str):
+        self._config.set('Settings', 'tracking_mouse', value)
+        self._save_and_notify('Settings', 'tracking_mouse', value)
+
+    @property
+    def auto_blink(self) -> str:
+        return self._config.getboolean('Settings', 'auto_blink')
+
+    @auto_blink.setter
+    def auto_blink(self, value: str):
+        self._config.set('Settings', 'auto_blink', value)
+        self._save_and_notify('Settings', 'auto_blink', value)
+
+    @property
+    def auto_breath(self) -> str:
+        return self._config.getboolean('Settings', 'auto_breath')
+
+    @auto_blink.setter
+    def auto_breath(self, value: str):
+        self._config.set('Settings', 'auto_breath', value)
+        self._save_and_notify('Settings', 'auto_breath', value)
+
+    @property
+    def window_flags(self) -> dict[str, bool]:
+        """Возвращает флаги окна как словарь {flag_name: enabled}."""
+        return {
+            'FramelessWindowHint': self._config.getboolean('WindowFlags', 'FramelessWindowHint'),
+            'WindowStaysOnTopHint': self._config.getboolean('WindowFlags', 'WindowStaysOnTopHint'),
+            'WindowMinimizeButtonHint': self._config.getboolean('WindowFlags', 'WindowMinimizeButtonHint'),
+            'WindowMaximizeButtonHint': self._config.getboolean('WindowFlags', 'WindowMaximizeButtonHint'),
+            'WindowCloseButtonHint': self._config.getboolean('WindowFlags', 'WindowCloseButtonHint'),
+            'WindowTransparentForInput': self._config.getboolean('WindowFlags', 'WindowTransparentForInput'),
+            'WindowType_Mask': self._config.getboolean('WindowFlags', 'WindowType_Mask'),
+            'WindowStaysOnBottomHint': self._config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
+        }
+
+    @window_flags.setter
+    def window_flags(self, flags: dict[str, bool]):
+        """Устанавливает флаги окна из словаря {flag_name: enabled}"""
+        for flag_name, enabled in flags.items():
+            self._config.set('WindowFlags', flag_name, str(enabled))
+        self._save_and_notify('WindowFlags', 'flags_updated', 'true')
+
+    def set_window_flag(self, flag_name: str, enabled: bool):
+        """Устанавливает конкретный флаг окна"""
+        self._config.set('WindowFlags', flag_name, str(enabled))
+        self._save_and_notify('WindowFlags', flag_name, str(enabled))
+
+
+
+    def _save_and_notify(self, section: str, key: str, value: str):
+        """Сохраняет конфиг и отправляет сигнал об изменении."""
+        with open('config.ini', 'w') as cfg:
+            self._config.write(cfg)
+        self.config_changed.emit(section, key, value)
+
+

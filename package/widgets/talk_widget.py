@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridL
     QGraphicsOpacityEffect
 
 from package import resources
-from package.additional.resource_mng import ResourceManager
+from package.additional.resource_manager import ResourceManager
 
 from PySide6.QtWidgets import (QWidget, QGridLayout, QFrame, QVBoxLayout,
                                QLabel, QFormLayout, QGraphicsOpacityEffect)

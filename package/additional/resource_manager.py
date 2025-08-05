@@ -22,7 +22,7 @@ class ResourceManager:
 
     def _load_character_configs(self) -> Dict[str, Dict]:
         """Loads character configs from a JSON file"""
-        config_path = os.path.join(self.resources_dir, "configs/model_configs.json")
+        config_path = os.path.join(self.resources_dir, "configs/models_config.json")
         with open(config_path, encoding="utf-8") as f:
             return json.load(f)
 

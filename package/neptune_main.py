@@ -17,38 +17,23 @@ import live2d.v3 as live2d
 import resources
 from widgets.talk_widget import TalkWidget
 from additional.config_module import *
-from additional.models import ModelsManager
-from additional.characters import CharacterManager
-from additional.on_actions import OnActions
+from additional.models_manager import ModelsManager
+from additional.character_manager import CharacterManager
+from additional.action_handler import ActionHandler
 from additional.functions import Functions
 from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
-from additional.resource_mng import ResourceManager
-from package.additional.animations import AnimationsManager
+from additional.resource_manager import ResourceManager
+from package.additional.animation_manager import AnimationsManager
 # from package.additional.animations import TiredAnimation
 
-class Win(QOpenGLWidget, OnActions):
+class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
-        self.hintFlags: list[Qt.WindowType] = [
-            Qt.WindowType.MSWindowsFixedSizeDialogHint,
-            Qt.WindowType.X11BypassWindowManagerHint,
-            Qt.WindowType.FramelessWindowHint,
-            Qt.WindowType.NoDropShadowWindowHint,
-            Qt.WindowType.WindowTitleHint,
-            Qt.WindowType.WindowSystemMenuHint,
-            Qt.WindowType.WindowMinimizeButtonHint,
-            Qt.WindowType.WindowMaximizeButtonHint,
-            Qt.WindowType.WindowCloseButtonHint,
-            Qt.WindowType.WindowContextHelpButtonHint,
-            Qt.WindowType.WindowShadeButtonHint,
-            Qt.WindowType.WindowStaysOnTopHint,
-            Qt.WindowType.WindowStaysOnBottomHint,
-            Qt.WindowType.CustomizeWindowHint,
-            Qt.WindowType.WindowTransparentForInput,
-            Qt.WindowType.WindowType_Mask
-        ]
+        self._init_window_flags()
+
         self.config = config_main
+
         # LOGS:
         # l2d-py Main Log:
         live2d.setLogEnable(False)
@@ -68,11 +53,16 @@ class Win(QOpenGLWidget, OnActions):
         # Resource Manager Init
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
 
+        self.app_config = AppConfig()
+
         # Language:
-        self.language = self.config.get('Main', 'language')
+        self.language = self.app_config.language
 
         # Models Switch:
         self.models_switch = self.config.getint('Model', 'selected_model')
+        #self.models_switch = self.app_config.models_switch
+        #self._init_model_properties()
+        #self._init_window_geometry()
 
         # AutoScale: If True, the models is scaled based on the screen size
         self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
@@ -137,6 +127,7 @@ class Win(QOpenGLWidget, OnActions):
         self.talk = True
         self.reset_expression = True
         # Transition From Live2d LAppModel to Model
+        self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
         self.character = None
         self.talk_widget = None
@@ -247,17 +238,65 @@ class Win(QOpenGLWidget, OnActions):
         self.tap_body_anim = False
 
         # Animation Switches
-        self.idle_switch = self.config.getboolean('Animations', 'idle_animation')
-        self.on_mouse_switch = self.config.getboolean('Animations', 'on_mouse_animation')
-        self.tap_body_switch = self.config.getboolean('Animations', 'tap_body_animation')
-        self.sleep_switch = self.config.getboolean('Settings', 'sleep')
-        self.tracking_mouse_switch = self.config.getboolean('Settings', 'tracking_mouse')
+        self.idle_switch = self.app_config.idle_switch
+        self.on_mouse_switch = self.app_config.on_mouse_switch
+        self.tap_body_switch = self.app_config.tap_body_switch
+        self.sleep_switch = self.app_config.sleep_switch
+        self.tracking_mouse_switch = self.app_config.tracking_mouse_switch
 
         self.lastUpdateTime = time.time()
 
         # Quit timer
         self.quitTimer = QTimer()
         self.quitTimer.timeout.connect(self.quitFunction)
+
+    def _init_window_flags(self):
+        '''Inialize Window Flags'''
+        self.hintFlags: list[Qt.WindowType] = [
+            Qt.WindowType.MSWindowsFixedSizeDialogHint,
+            Qt.WindowType.X11BypassWindowManagerHint,
+            Qt.WindowType.FramelessWindowHint,
+            Qt.WindowType.NoDropShadowWindowHint,
+            Qt.WindowType.WindowTitleHint,
+            Qt.WindowType.WindowSystemMenuHint,
+            Qt.WindowType.WindowMinimizeButtonHint,
+            Qt.WindowType.WindowMaximizeButtonHint,
+            Qt.WindowType.WindowCloseButtonHint,
+            Qt.WindowType.WindowContextHelpButtonHint,
+            Qt.WindowType.WindowShadeButtonHint,
+            Qt.WindowType.WindowStaysOnTopHint,
+            Qt.WindowType.WindowStaysOnBottomHint,
+            Qt.WindowType.CustomizeWindowHint,
+            Qt.WindowType.WindowTransparentForInput,
+            Qt.WindowType.WindowType_Mask
+        ]
+
+    def _init_model_properties(self):
+        """Инициализация свойств модели"""
+        self.mx_param = self.app_config.mx_param
+        self.my_param = self.app_config.my_param
+        self.w_correction = self.app_config.w_correction
+        self.h_correction = self.app_config.h_correction
+        self.can_transform = self.app_config.can_transform
+        self.hdd_form = self.app_config.hdd_form
+
+    def _init_window_geometry(self):
+        """Инициализация геометрии окна"""
+        self.w_resize = self.app_config.w_resize
+        self.h_resize = self.app_config.h_resize
+        self.resize(self.w_resize, self.h_resize)
+
+        self.twmXR = self.app_config.twmXR
+        self.twmXL = self.app_config.twmXL
+        self.twmY = self.app_config.twmY
+
+        self._position_window()
+
+    def _position_window(self):
+        """Позиционирование окна"""
+        frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(frmX), int(frmY))
 
     def change_character(self, name: str):
         """Set character name in Animation Manager """
@@ -374,14 +413,14 @@ class Win(QOpenGLWidget, OnActions):
                     # print(f"Motion update failed: {e}")
                     motion_updated = False
 
-            auto_blink = self.config.getboolean('Settings', 'auto_blink')
+            auto_blink = self.app_config.auto_blink
             self.anim_manager.set_blink_enabled(auto_blink)
             self.anim_manager.update_blink(delta_secs) if auto_blink else None
 
             # Save Params
             self.model.SaveParameters()
 
-            self.model.UpdateBreath(delta_secs) if self.config.getboolean('Settings', 'auto_breath') else None
+            self.model.UpdateBreath(delta_secs) if self.app_config.auto_breath else None
 
             self.model.UpdateExpression(delta_secs)
             self.model.UpdateDrag(delta_secs)
@@ -413,12 +452,12 @@ class Win(QOpenGLWidget, OnActions):
             settings.updateSettings()
         #if not self.set_icon:
 
+        #print(self.sleep_switch)
+
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
-        if self.character.tired_controller.timer_count <= self.character.tired_controller.sleep_v:
-            self.idle_anim = True
-        else:
-           self.idle_anim = False
+        # Проверка idle_anim
+        self.idle_anim = self.character.tired_controller.should_enable_idle_anim()
 
         if self.idle_switch and self.idle_anim:
             current_time = time.time()
@@ -431,10 +470,9 @@ class Win(QOpenGLWidget, OnActions):
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
             self.clickInLA = True
-            self.on_mouse_anim = True
 
-            if self.character.tired_controller.timer_count >= self.character.tired_controller.sleep_v:
-                self.on_mouse_anim = False
+            # Проверка on_mouse_anim (если курсор в зоне)
+            self.on_mouse_anim = self.character.tired_controller.should_enable_mouse_anim()
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
                 self.anim_manager.play_animation(
@@ -542,10 +580,10 @@ class Win(QOpenGLWidget, OnActions):
             resources.RESOURCES_DIRECTORY, "icons/window.svg")), self.lang['Actions']['Window'])
         action_minimize = submenu_window.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), self.lang['Actions']['Minimize'])
-        action_minimize.triggered.connect(self.on_action_minimize)
+        action_minimize.triggered.connect(self.action_handler.on_action_minimize)
         action_normal = submenu_window.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), self.lang['Actions']['Normal'])
-        action_normal.triggered.connect(self.on_action_normal)
+        action_normal.triggered.connect(self.action_handler.on_action_normal)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
@@ -553,7 +591,7 @@ class Win(QOpenGLWidget, OnActions):
         transform_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/transform.svg")), self.lang['Actions']['Transform'], self)
         if not self.input_handler.input_lock:
-            transform_action.triggered.connect(self.on_action_transform)
+            transform_action.triggered.connect(self.action_handler.on_action_transform)
         context_menu.addAction(transform_action)
         context_menu.addSeparator()
 
@@ -564,87 +602,87 @@ class Win(QOpenGLWidget, OnActions):
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), self.lang['NamesActions']['Neptune'])
         if not self.input_handler.input_lock:
-            action_neptune.triggered.connect(self.on_action_neptune)
+            action_neptune.triggered.connect(self.action_handler.on_action_neptune)
         # Purple Heart
         action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), self.lang['NamesActions']['PurpleHeart'])
         if not self.input_handler.input_lock:
-            action_purple_heart.triggered.connect(self.on_action_purple_heart)
+            action_purple_heart.triggered.connect(self.action_handler.on_action_purple_heart)
         # Noire
         action_noire = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/noire.ico")), self.lang['NamesActions']['Noire'])
         if not self.input_handler.input_lock:
-            action_noire.triggered.connect(self.on_action_noire)
+            action_noire.triggered.connect(self.action_handler.on_action_noire)
         # Black Heart
         action_black_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), self.lang['NamesActions']['BlackHeart'])
         if not self.input_handler.input_lock:
-            action_black_heart.triggered.connect(self.on_action_black_heart)
+            action_black_heart.triggered.connect(self.action_handler.on_action_black_heart)
         # Blanc
         action_blanc = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), self.lang['NamesActions']['Blanc'])
         if not self.input_handler.input_lock:
-            action_blanc.triggered.connect(self.on_action_blanc)
+            action_blanc.triggered.connect(self.action_handler.on_action_blanc)
         # White Heart
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), self.lang['NamesActions']['WhiteHeart'])
         if not self.input_handler.input_lock:
-            action_white_heart.triggered.connect(self.on_action_white_heart)
+            action_white_heart.triggered.connect(self.action_handler.on_action_white_heart)
         # Vert
         action_vert = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/vert.ico")), self.lang['NamesActions']['Vert'])
         if not self.input_handler.input_lock:
-            action_vert.triggered.connect(self.on_action_vert)
+            action_vert.triggered.connect(self.action_handler.on_action_vert)
         # Green Heart
         action_green_heart = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), self.lang['NamesActions']['GreenHeart'])
         if not self.input_handler.input_lock:
-            action_green_heart.triggered.connect(self.on_action_green_heart)
+            action_green_heart.triggered.connect(self.action_handler.on_action_green_heart)
         # NepGear
         action_nepgear = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), self.lang['NamesActions']['NepGear'])
         if not self.input_handler.input_lock:
-            action_nepgear.triggered.connect(self.on_action_nepgear)
+            action_nepgear.triggered.connect(self.action_handler.on_action_nepgear)
         # Purple Sister
         action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), self.lang['NamesActions']['PurpleSister'])
         if not self.input_handler.input_lock:
-            action_purple_sister.triggered.connect(self.on_action_purple_sister)
+            action_purple_sister.triggered.connect(self.action_handler.on_action_purple_sister)
         # Uni
         action_uni = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/uni.ico")), self.lang['NamesActions']['Uni'])
         if not self.input_handler.input_lock:
-            action_uni.triggered.connect(self.on_action_uni)
+            action_uni.triggered.connect(self.action_handler.on_action_uni)
         # Black Sister
         action_black_sister = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), self.lang['NamesActions']['BlackSister'])
         if not self.input_handler.input_lock:
-            action_black_sister.triggered.connect(self.on_action_black_sister)
+            action_black_sister.triggered.connect(self.action_handler.on_action_black_sister)
         # Rom
         action_rom = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/rom.ico")), self.lang['NamesActions']['Rom'])
         if not self.input_handler.input_lock:
-            action_rom.triggered.connect(self.on_action_rom)
+            action_rom.triggered.connect(self.action_handler.on_action_rom)
         # White Sister Rom
         action_white_sister_rom = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), self.lang['NamesActions']['WhiteSisterRom'])
         if not self.input_handler.input_lock:
-            action_white_sister_rom.triggered.connect(self.on_action_white_sister_rom)
+            action_white_sister_rom.triggered.connect(self.action_handler.on_action_white_sister_rom)
         # Ram
         action_ram = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/ram.ico")), self.lang['NamesActions']['Ram'])
         if not self.input_handler.input_lock:
-            action_ram.triggered.connect(self.on_action_ram)
+            action_ram.triggered.connect(self.action_handler.on_action_ram)
         # White Sister Ram
         action_white_sister_ram = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
         if not self.input_handler.input_lock:
-            action_white_sister_ram.triggered.connect(self.on_action_white_sister_ram)
+            action_white_sister_ram.triggered.connect(self.action_handler.on_action_white_sister_ram)
         # Histoire
         action_histoire = submenu_character.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/histoire.ico")), self.lang['NamesActions']['Histoire'])
         if not self.input_handler.input_lock:
-            action_histoire.triggered.connect(self.on_action_histoire)
+            action_histoire.triggered.connect(self.action_handler.on_action_histoire)
 
         context_menu.addMenu(submenu_character)
 
@@ -657,33 +695,33 @@ class Win(QOpenGLWidget, OnActions):
         action_checked_idle.setCheckable(True)
         action_checked_idle.setChecked(self.idle_switch)
         if action_checked_idle.isChecked():
-            action_checked_idle.triggered.connect(self.on_action_idle_false)
+            action_checked_idle.triggered.connect(self.action_handler.on_action_idle_false)
         else:
-            action_checked_idle.triggered.connect(self.on_action_idle_true)
+            action_checked_idle.triggered.connect(self.action_handler.on_action_idle_true)
 
         # OnMouse Animation CheckBox
         action_checked_on_mouse = submenu_animations.addAction(self.lang['Actions']['OnMouse'])
         action_checked_on_mouse.setCheckable(True)
         action_checked_on_mouse.setChecked(self.on_mouse_switch)
         if action_checked_on_mouse.isChecked():
-            action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_false)
+            action_checked_on_mouse.triggered.connect(self.action_handler.on_action_on_mouse_false)
         else:
-            action_checked_on_mouse.triggered.connect(self.on_action_on_mouse_true)
+            action_checked_on_mouse.triggered.connect(self.action_handler.on_action_on_mouse_true)
 
         # Tap Body Animation CheckBox
         action_checked_tap_body = submenu_animations.addAction(self.lang['Actions']['TapBody'])
         action_checked_tap_body.setCheckable(True)
         action_checked_tap_body.setChecked(self.tap_body_switch)
         if action_checked_tap_body.isChecked():
-            action_checked_tap_body.triggered.connect(self.on_action_tap_body_false)
+            action_checked_tap_body.triggered.connect(self.action_handler.on_action_tap_body_false)
         else:
-            action_checked_tap_body.triggered.connect(self.on_action_tap_body_true)
+            action_checked_tap_body.triggered.connect(self.action_handler.on_action_tap_body_true)
 
         # Stop All Motions
         submenu_animations.addSeparator()
         action_stop_all_motions = submenu_animations.addAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/stop.svg")), self.lang['Actions']['StopMotions'])
-        action_stop_all_motions.triggered.connect(self.on_action_stop_all_motions)
+        action_stop_all_motions.triggered.connect(self.action_handler.on_action_stop_all_motions)
 
         context_menu.addMenu(submenu_animations)
         context_menu.addSeparator()
@@ -692,21 +730,21 @@ class Win(QOpenGLWidget, OnActions):
         settings_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/settings.svg")), self.lang['Actions']['Settings'], self)
         if not self.input_handler.input_lock:
-            settings_action.triggered.connect(self.on_action_settings)
+            settings_action.triggered.connect(self.action_handler.on_action_settings)
         context_menu.addAction(settings_action)
         context_menu.addSeparator()
 
         # About Action
         about_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/about.svg")), self.lang['Actions']['About'], self)
-        about_action.triggered.connect(self.on_action_about)
+        about_action.triggered.connect(self.action_handler.on_action_about)
         context_menu.addAction(about_action)
 
         # Exit Action
         exit_action = QAction(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/exit.svg")), self.lang['Actions']['Quit'], self)
         if not self.input_handler.input_lock:
-            exit_action.triggered.connect(self.on_action_quit)
+            exit_action.triggered.connect(self.action_handler.on_action_quit)
         context_menu.addAction(exit_action)
 
         context_menu.exec(e.globalPos())
@@ -742,6 +780,7 @@ class SettingsWindow(QWidget):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.config = config_main
+        self.app_config = AppConfig()
         self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
         self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
         self.getWindowFlag_WindowCloseButtonHint = self.config.getboolean('WindowFlags', 'WindowCloseButtonHint')
@@ -751,13 +790,13 @@ class SettingsWindow(QWidget):
                                                                               'WindowTransparentForInput')
         self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
 
-        self.language = self.config.get('Main', 'language')
+        self.language = self.app_config.language
         self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
         self.models_scale = self.config.getfloat('Scale', 'models_scale')
-        self.auto_blink = self.config.getboolean('Settings', 'auto_blink')
-        self.auto_breath = self.config.getboolean('Settings', 'auto_breath')
-        self.tracking_mouse = self.config.getboolean('Settings', 'tracking_mouse')
-        self.sleep = self.config.getboolean('Settings', 'sleep')
+        self.auto_blink = self.app_config.auto_blink
+        self.auto_breath = self.app_config.auto_breath
+        self.tracking_mouse = self.app_config.tracking_mouse_switch
+        self.sleep = self.app_config.sleep_switch
 
         self.pythonic_reg = pythonic_window_registration
         self.mainWindow = Win()
@@ -904,40 +943,40 @@ class SettingsWindow(QWidget):
                 self.config.set('Scale', 'models_scale', str(scale_value))
 
             if self.autoBlinkCheckBox.isChecked():
-                self.config.set('Settings', 'auto_blink', 'True')
+                self.app_config.auto_blink = 'True'
                 self.autoBlinkCheckBox.setChecked(True)
             else:
-                self.config.set('Settings', 'auto_blink', 'False')
+                self.app_config.auto_blink = 'False'
                 self.autoBlinkCheckBox.setChecked(False)
 
             if self.autoBreathCheckBox.isChecked():
-                self.config.set('Settings', 'auto_breath', 'True')
+                self.app_config.auto_breath = 'True'
                 self.autoBreathCheckBox.setChecked(True)
             else:
-                self.config.set('Settings', 'auto_breath', 'False')
+                self.app_config.auto_breath = 'False'
                 self.autoBreathCheckBox.setChecked(False)
 
             if self.trackingMouseCheckBox.isChecked():
-                self.config.set('Settings', 'tracking_mouse', 'True')
                 self.trackingMouseCheckBox.setChecked(True)
                 self.mainWindow.tracking_mouse_switch = True
+                self.app_config.tracking_mouse_switch = 'True'
             else:
-                self.config.set('Settings', 'tracking_mouse', 'False')
                 self.trackingMouseCheckBox.setChecked(False)
                 self.mainWindow.tracking_mouse_switch = False
+                self.app_config.tracking_mouse_switch = 'False'
 
             if self.sleepCheckBox.isChecked():
-                self.config.set('Settings', 'sleep', 'True')
                 self.sleepCheckBox.setChecked(True)
                 self.mainWindow.sleep_switch = True
+                self.app_config.sleep_switch = 'True'
             else:
-                self.config.set('Settings', 'sleep', 'False')
                 self.sleepCheckBox.setChecked(False)
                 self.mainWindow.sleep_switch = False
+                self.app_config.sleep_switch = 'False'
 
             self.language_org = self.langComboBox.currentText()
             self.getLanguageName()
-            self.config.set('Main', 'language', str(self.language_get))
+            #self.config.set('Main', 'language', str(self.language_get))
             self.mainWindow.language = self.language_get
 
         with open('config.ini', 'w') as cfg:

@@ -1,5 +1,5 @@
 from package import resources
-from package.additional.resource_mng import ResourceManager
+from package.additional.resource_manager import ResourceManager
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image

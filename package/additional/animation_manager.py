@@ -8,8 +8,8 @@ import math
 import json
 import os
 import live2d.v3 as live2d
-from package.additional.models import ModelsManager
-from package.additional.resource_mng import ResourceManager
+from package.additional.models_manager import ModelsManager
+from package.additional.resource_manager import ResourceManager
 
 class AnimationsManager:
     def __init__(self, model):
@@ -372,14 +372,14 @@ class AnimationsManager:
     def _transform_to_hdd(self, win):
         """Transformation to hdd form"""
         transformations = {
-            "Neptune": win.on_action_purple_heart,
-            "Noire": win.on_action_black_heart,
-            "Blanc": win.on_action_white_heart,
-            "Vert": win.on_action_green_heart,
-            "NepGear": win.on_action_purple_sister,
-            "Uni": win.on_action_black_sister,
-            "Rom": win.on_action_white_sister_rom,
-            "Ram": win.on_action_white_sister_ram,
+            "Neptune": win.action_handler.on_action_purple_heart,
+            "Noire": win.action_handler.on_action_black_heart,
+            "Blanc": win.action_handler.on_action_white_heart,
+            "Vert": win.action_handler.on_action_green_heart,
+            "NepGear": win.action_handler.on_action_purple_sister,
+            "Uni": win.action_handler.on_action_black_sister,
+            "Rom": win.action_handler.on_action_white_sister_rom,
+            "Ram": win.action_handler.on_action_white_sister_ram,
         }
         if win.character_name in transformations:
             transformations[win.character_name]()
@@ -391,14 +391,14 @@ class AnimationsManager:
     def _transform_to_regular(self, win):
         """Transformation to regular form"""
         transformations = {
-            "Purple Heart": win.on_action_neptune,
-            "Black Heart": win.on_action_noire,
-            "White Heart": win.on_action_blanc,
-            "Green Heart": win.on_action_vert,
-            "Purple Sister": win.on_action_nepgear,
-            "Black Sister": win.on_action_uni,
-            "White Sister Rom": win.on_action_rom,
-            "White Sister Ram": win.on_action_ram,
+            "Purple Heart": win.action_handler.on_action_neptune,
+            "Black Heart": win.action_handler.on_action_noire,
+            "White Heart": win.action_handler.on_action_blanc,
+            "Green Heart": win.action_handler.on_action_vert,
+            "Purple Sister": win.action_handler.on_action_nepgear,
+            "Black Sister": win.action_handler.on_action_uni,
+            "White Sister Rom": win.action_handler.on_action_rom,
+            "White Sister Ram": win.action_handler.on_action_ram,
         }
         if win.character_name in transformations:
             transformations[win.character_name]()

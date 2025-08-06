@@ -50,33 +50,71 @@ class Win(QOpenGLWidget):
         # Callbacks Log:
         self.callbacks_log = False
 
-        # Resource Manager Init
-        self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
+        # Sleep Animation Time Scale
+        self.time_scale = 1
 
+        self._init_config()
+
+        self._init_vars()
+
+        self._init_ui()
+
+        self._init_window_geometry()
+
+        self._init_model_params()
+
+        self._resize_model()
+
+        self._position_window()
+
+        self._position_widget()
+
+        self._init_animations()
+
+        self._init_sound()
+
+    def _init_window_flags(self):
+        '''Inialize Window Flags'''
+        self.hintFlags: list[Qt.WindowType] = [
+            Qt.WindowType.MSWindowsFixedSizeDialogHint,
+            Qt.WindowType.X11BypassWindowManagerHint,
+            Qt.WindowType.FramelessWindowHint,
+            Qt.WindowType.NoDropShadowWindowHint,
+            Qt.WindowType.WindowTitleHint,
+            Qt.WindowType.WindowSystemMenuHint,
+            Qt.WindowType.WindowMinimizeButtonHint,
+            Qt.WindowType.WindowMaximizeButtonHint,
+            Qt.WindowType.WindowCloseButtonHint,
+            Qt.WindowType.WindowContextHelpButtonHint,
+            Qt.WindowType.WindowShadeButtonHint,
+            Qt.WindowType.WindowStaysOnTopHint,
+            Qt.WindowType.WindowStaysOnBottomHint,
+            Qt.WindowType.CustomizeWindowHint,
+            Qt.WindowType.WindowTransparentForInput,
+            Qt.WindowType.WindowType_Mask
+        ]
+
+    def _init_config(self):
         self.app_config = AppConfig()
 
         # Language:
         self.language = self.app_config.language
 
         # Models Switch:
-        self.models_switch = self.config.getint('Model', 'selected_model')
-        #self.models_switch = self.app_config.models_switch
-        #self._init_model_properties()
-        #self._init_window_geometry()
+        # self.models_switch = self.config.getint('Model', 'selected_model')
+        self.models_switch = self.app_config.models_switch
+        # self._init_model_properties()
+        # self._init_window_geometry()
 
         # AutoScale: If True, the models is scaled based on the screen size
-        self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
+        self.auto_scale = self.app_config.auto_scale
 
         # Models Scale
-        self.models_scale = self.config.getfloat('Scale', 'models_scale')
+        self.models_scale = self.app_config.models_scale
 
-        # Tracking the mouse position
-        self.tracking_mouse = True
-
-        # Sleep Animation Time Scale
-        self.time_scale = 1
-
+    def _init_vars(self):
         # Init Vars
+        self.tracking_mouse = True
         self.w_correction = 0
         self.h_correction = 0
         self.a_scale = 1
@@ -88,7 +126,6 @@ class Win(QOpenGLWidget):
         self.click = False
         self.test = False
         self.read = False
-        self.set_icon = False
         self.settings_update_state = False
         self.clickX = -1
         self.clickY = -1
@@ -123,10 +160,20 @@ class Win(QOpenGLWidget):
         self.screenSide = "Right"
         self.modelRotate = 0
         self.sleepMoveY = 0
+
+        self.last_update_time = 0
+        self.offsetX = 0.0
+        self.offsetY = 0.0
+        self.scale = 1.0
+        self.degrees = 0.0
+        self.lastExpressionId = ""
+        self.activeExpressions = []
         self.model_move = False
         self.talk = True
         self.reset_expression = True
-        # Transition From Live2d LAppModel to Model
+
+    def _init_ui(self):
+        self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
         self.character = None
@@ -138,48 +185,57 @@ class Win(QOpenGLWidget):
         self.talk_update = None
         self.models_manager = ModelsManager(
             resources_dir=resources.RESOURCES_DIRECTORY)
-        self.app = QApplication.instance()
-        self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
-        self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
-        self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
-        self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
-        self.vSize = QScreen.availableVirtualGeometry(QApplication.primaryScreen())
-        #live2d Model New Vars
-        self.last_update_time = 0
-        self.offsetX = 0.0
-        self.offsetY = 0.0
-        self.scale = 1.0
-        self.degrees = 0.0
-        self.lastExpressionId = ""
-        self.activeExpressions = []
-
         # Mouse Tracker Init
         self.mouse_tracker = MouseTracker(self)
         # Mouse tracking timer
         self.mouse_tracker.idle_timer.timeout.connect(self.input_handler.handle_mouse_idle)
 
+    def _init_window_geometry(self):
+        """Инициализация геометрии окна"""
+        # self.app = QApplication.instance()
+        self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
+        self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
+        self.sc_width_size = self.screen().size().width() * self.screen().devicePixelRatio()
+        self.SrcSize = QScreen.availableGeometry(QApplication.primaryScreen())
+        self.vSize = QScreen.availableVirtualGeometry(QApplication.primaryScreen())
+
         #Set screen size
-        self.config.set('Main', 'screen_width', str(self.sc_width_size))
-        self.config.set('Main', 'screen_height', str(self.sc_height_size))
+        self.app_config.sc_width_size = self.sc_width_size
+        self.app_config.sc_height_size = self.sc_height_size
+        #self.config.set('Main', 'screen_width', str(self.sc_width_size))
+        #self.config.set('Main', 'screen_height', str(self.sc_height_size))
+
+        # Screen Size for AutoScale
+        if self.auto_scale:
+            self.a_scale = self.app_config.get_auto_scale(int(self.sc_height_size))
+        if not self.auto_scale:
+            self.a_scale = 1
+
+        # Windows flags
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+
+    def _position_window(self):
+        """Позиционирование окна"""
+        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
+        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
+        self.move(int(self.frmX), int(self.frmY))
+
+    # TODO: [WIP] Реализовать загрузку начальной конфигурации модели и текстового виджета через класс AppConfig
+    def _init_model_params(self):
+        # Character Name
+        self.character_name = self.app_config.character_name
+        # self.character_name = self.config.get('Model', 'character_name')
+        self.name = self.character_name
+
+        # Set default model params for first start
+        # self.models_manager.set_default_model_params(self)
+
         if self.models_switch == 0:
             self.config.set('Model', 'x_param', '600')
             self.config.set('Model', 'y_param', '600')
         with open('config.ini', 'w') as cfg:
             cfg: [str, int, tuple, object]
             self.config.write(cfg)
-
-        # Screen Size for AutoScale
-        if self.auto_scale:
-            self.a_scale = auto_scale(self.sc_height_size)
-        if not self.auto_scale:
-            self.a_scale = 1
-
-        # Character Name
-        self.character_name = self.config.get('Model', 'character_name')
-        self.name = self.character_name
-
-        # Set default model params for first start
-        # self.models_manager.set_default_model_params(self)
 
         # Neptune Model parameters
         if self.models_switch == 0:
@@ -205,6 +261,7 @@ class Win(QOpenGLWidget):
                 cfg: [str, int, tuple, object]
                 self.config.write(cfg)
 
+    def _resize_model(self):
         # Model Resize
         self.w_resize = self.config.getint('Model', 'w_resize')
         self.h_resize = self.config.getint('Model', 'h_resize')
@@ -213,26 +270,13 @@ class Win(QOpenGLWidget):
 
         self.resize(int(self.w_resize), int(self.h_resize))
 
-        # Center on Axis X
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        # Center on Axis Y
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        # Move window
-        self.move(int(self.frmX), int(self.frmY))
-
+    def _position_widget(self):
         # Widget Move Params
         self.twmXR = self.config.getfloat('Model', 'twmXR')
         self.twmXL = self.config.getfloat('Model', 'twmXL')
         self.twmY = self.config.getfloat('Model', 'twmY')
 
-        # Windows flags
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-
-        #self.wavHandler = WavHandler()
-        #self.lipSyncN = 2.5
-        #self.audioPlayed = False
-
-        # Init Animation
+    def _init_animations(self):
         self.idle_anim = True
         self.on_mouse_anim = False
         self.tap_body_anim = False
@@ -246,31 +290,13 @@ class Win(QOpenGLWidget):
 
         self.lastUpdateTime = time.time()
 
-        # Quit timer
-        self.quitTimer = QTimer()
-        self.quitTimer.timeout.connect(self.quitFunction)
+    def _init_sound(self):
+        #self.wavHandler = WavHandler()
+        #self.lipSyncN = 2.5
+        #self.audioPlayed = False
+        pass
 
-    def _init_window_flags(self):
-        '''Inialize Window Flags'''
-        self.hintFlags: list[Qt.WindowType] = [
-            Qt.WindowType.MSWindowsFixedSizeDialogHint,
-            Qt.WindowType.X11BypassWindowManagerHint,
-            Qt.WindowType.FramelessWindowHint,
-            Qt.WindowType.NoDropShadowWindowHint,
-            Qt.WindowType.WindowTitleHint,
-            Qt.WindowType.WindowSystemMenuHint,
-            Qt.WindowType.WindowMinimizeButtonHint,
-            Qt.WindowType.WindowMaximizeButtonHint,
-            Qt.WindowType.WindowCloseButtonHint,
-            Qt.WindowType.WindowContextHelpButtonHint,
-            Qt.WindowType.WindowShadeButtonHint,
-            Qt.WindowType.WindowStaysOnTopHint,
-            Qt.WindowType.WindowStaysOnBottomHint,
-            Qt.WindowType.CustomizeWindowHint,
-            Qt.WindowType.WindowTransparentForInput,
-            Qt.WindowType.WindowType_Mask
-        ]
-
+    # FIXME: Функция референс
     def _init_model_properties(self):
         """Инициализация свойств модели"""
         self.mx_param = self.app_config.mx_param
@@ -279,24 +305,6 @@ class Win(QOpenGLWidget):
         self.h_correction = self.app_config.h_correction
         self.can_transform = self.app_config.can_transform
         self.hdd_form = self.app_config.hdd_form
-
-    def _init_window_geometry(self):
-        """Инициализация геометрии окна"""
-        self.w_resize = self.app_config.w_resize
-        self.h_resize = self.app_config.h_resize
-        self.resize(self.w_resize, self.h_resize)
-
-        self.twmXR = self.app_config.twmXR
-        self.twmXL = self.app_config.twmXL
-        self.twmY = self.app_config.twmY
-
-        self._position_window()
-
-    def _position_window(self):
-        """Позиционирование окна"""
-        frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(frmX), int(frmY))
 
     def change_character(self, name: str):
         """Set character name in Animation Manager """
@@ -450,13 +458,10 @@ class Win(QOpenGLWidget):
             return
         if self.settings_update_state:
             settings.updateSettings()
-        #if not self.set_icon:
-
-        #print(self.sleep_switch)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
-        # Проверка idle_anim
+        # Check idle_animation
         self.idle_anim = self.character.tired_controller.should_enable_idle_anim()
 
         if self.idle_switch and self.idle_anim:
@@ -471,7 +476,7 @@ class Win(QOpenGLWidget):
             self.isInLA = True
             self.clickInLA = True
 
-            # Проверка on_mouse_anim (если курсор в зоне)
+            # Check on_mouse_animation
             self.on_mouse_anim = self.character.tired_controller.should_enable_mouse_anim()
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
@@ -550,7 +555,7 @@ class Win(QOpenGLWidget):
                 text += f"\n| Qt.{hintFlag.name}"
 
         if self.auto_scale and self.auto_scale_init:
-            self.a_scale = auto_scale(self.sc_height_size)
+            self.a_scale = self.app_config.get_auto_scale(self.sc_height_size)
             self.models_manager.update_model(self)
 
         if not self.auto_scale and self.auto_scale_init:
@@ -770,10 +775,6 @@ class Win(QOpenGLWidget):
             # print(self.name + ": " + self.text + self.kaomoji)
             event.ignore()
 
-    def quitFunction(self):
-        self.quitTimer.stop()
-        exit(0)
-
 
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
@@ -781,18 +782,18 @@ class SettingsWindow(QWidget):
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.config = config_main
         self.app_config = AppConfig()
-        self.getWindowFlag_FramelessWindowHint = self.config.getboolean('WindowFlags', 'FramelessWindowHint')
-        self.getWindowFlag_WindowMinimizeButtonHint = self.config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
-        self.getWindowFlag_WindowCloseButtonHint = self.config.getboolean('WindowFlags', 'WindowCloseButtonHint')
-        self.getWindowFlag_WindowStaysOnTopHint = self.config.getboolean('WindowFlags', 'WindowStaysOnTopHint')
-        self.getWindowFlag_WindowStaysOnBottomHint = self.config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
-        self.getWindowFlag_WindowTransparentForInput = self.config.getboolean('WindowFlags',
-                                                                              'WindowTransparentForInput')
-        self.getWindowFlag_WindowType_Mask = self.config.getboolean('WindowFlags', 'WindowType_Mask')
+        self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
+        self.getWindowFlag_WindowStaysOnTopHint = self.app_config.WindowStaysOnTopHint
+
+        self.getWindowFlag_WindowMinimizeButtonHint = self.app_config.WindowMinimizeButtonHint
+        self.getWindowFlag_WindowCloseButtonHint = self.app_config.WindowCloseButtonHint
+        self.getWindowFlag_WindowStaysOnBottomHint = self.app_config.WindowStaysOnBottomHint
+        self.getWindowFlag_WindowTransparentForInput = self.app_config.WindowTransparentForInput
+        self.getWindowFlag_WindowType_Mask = self.app_config.WindowType_Mask
 
         self.language = self.app_config.language
-        self.auto_scale = self.config.getboolean('Scale', 'auto_scale')
-        self.models_scale = self.config.getfloat('Scale', 'models_scale')
+        self.auto_scale = self.app_config.auto_scale
+        self.models_scale = self.app_config.models_scale
         self.auto_blink = self.app_config.auto_blink
         self.auto_breath = self.app_config.auto_breath
         self.tracking_mouse = self.app_config.tracking_mouse_switch
@@ -865,6 +866,11 @@ class SettingsWindow(QWidget):
     def modelMoveOff(self):
         self.mainWindow.model_move = False
 
+    def set_setting(self, name, value):
+        setattr(self.app_config, name, value)  # вызовет сеттер и сохранит
+        setattr(self.mainWindow, name, value)
+        setattr(self, name, value)
+
     def updateSettings(self):
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
@@ -908,80 +914,67 @@ class SettingsWindow(QWidget):
         else:
             if self.framelessWindowCheckBox.isChecked():
                 flags = flags | Qt.WindowType.FramelessWindowHint
-                self.config.set('WindowFlags', 'FramelessWindowHint', 'True')
+                self.app_config.FramelessWindowHint = True
                 self.framelessWindowCheckBox.setChecked(True)
             else:
-                self.config.set('WindowFlags', 'FramelessWindowHint', 'False')
+                self.app_config.FramelessWindowHint = False
                 self.framelessWindowCheckBox.setChecked(False)
 
             if self.windowStaysOnTopCheckBox.isChecked():
                 flags = flags | Qt.WindowType.WindowStaysOnTopHint
-                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'True')
+                self.app_config.WindowStaysOnTopHint = True
                 self.windowStaysOnTopCheckBox.setChecked(True)
             else:
-                self.config.set('WindowFlags', 'WindowStaysOnTopHint', 'False')
+                self.app_config.WindowStaysOnTopHint = False
                 self.windowStaysOnTopCheckBox.setChecked(False)
-                self.config.set('WindowFlags', 'WindowStaysOnBottomHint', 'True')
+                self.app_config.WindowStaysOnBottomHint = True
 
             if self.autoScaleCheckBox.isChecked():
-                self.config.set('Scale', 'auto_scale', 'True')
                 self.autoScaleCheckBox.setChecked(True)
                 self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
                 self.modelScaleBox.setReadOnly(True)
-                self.mainWindow.auto_scale = True
-                self.mainWindow.models_scale = 1
+                self.set_setting('auto_scale', True)
+                self.set_setting('models_scale', 1)
                 self.modelScaleBox.setValue(1)
-                self.config.set('Scale', 'models_scale', '1')
             else:
-                self.config.set('Scale', 'auto_scale', 'False')
                 self.autoScaleCheckBox.setChecked(False)
                 self.modelScaleBox.setReadOnly(False)
                 self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
-                self.mainWindow.auto_scale = False
                 scale_value = self.modelScaleBox.value()
-                self.mainWindow.models_scale = scale_value
-                self.config.set('Scale', 'models_scale', str(scale_value))
+                self.set_setting('auto_scale', False)
+                self.set_setting('models_scale', scale_value)
 
             if self.autoBlinkCheckBox.isChecked():
-                self.app_config.auto_blink = 'True'
                 self.autoBlinkCheckBox.setChecked(True)
+                self.app_config.auto_blink = True
             else:
-                self.app_config.auto_blink = 'False'
                 self.autoBlinkCheckBox.setChecked(False)
+                self.app_config.auto_blink = False
 
             if self.autoBreathCheckBox.isChecked():
-                self.app_config.auto_breath = 'True'
                 self.autoBreathCheckBox.setChecked(True)
+                self.app_config.auto_breath = True
             else:
-                self.app_config.auto_breath = 'False'
                 self.autoBreathCheckBox.setChecked(False)
+                self.app_config.auto_breath = False
 
             if self.trackingMouseCheckBox.isChecked():
                 self.trackingMouseCheckBox.setChecked(True)
-                self.mainWindow.tracking_mouse_switch = True
-                self.app_config.tracking_mouse_switch = 'True'
+                self.set_setting('tracking_mouse_switch', True)
             else:
                 self.trackingMouseCheckBox.setChecked(False)
-                self.mainWindow.tracking_mouse_switch = False
-                self.app_config.tracking_mouse_switch = 'False'
+                self.set_setting('tracking_mouse_switch', False)
 
             if self.sleepCheckBox.isChecked():
                 self.sleepCheckBox.setChecked(True)
-                self.mainWindow.sleep_switch = True
-                self.app_config.sleep_switch = 'True'
+                self.set_setting('sleep_switch', True)
             else:
                 self.sleepCheckBox.setChecked(False)
-                self.mainWindow.sleep_switch = False
-                self.app_config.sleep_switch = 'False'
+                self.set_setting('sleep_switch', False)
 
             self.language_org = self.langComboBox.currentText()
             self.getLanguageName()
-            #self.config.set('Main', 'language', str(self.language_get))
-            self.mainWindow.language = self.language_get
-
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
+            self.set_setting('language', str(self.language_get))
 
         self.mainWindow.setSettings(flags)
         self.mainWindow.show()

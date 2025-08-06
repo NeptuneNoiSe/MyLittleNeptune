@@ -1,3 +1,4 @@
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QMessageBox
 
 
@@ -173,7 +174,7 @@ class ActionHandler:
         )
 
         if answer == QMessageBox.StandardButton.Yes:
-            self.win.quitTimer.start(3000)
+            QTimer.singleShot(3000, lambda: exit(0))
             self.win.character.state.set_quit_state(quit='Yes')
         else:
             self.win.character.tired_controller.timer_count = 1

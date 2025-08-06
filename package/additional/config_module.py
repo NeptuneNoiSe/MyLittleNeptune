@@ -89,100 +89,6 @@ def models_config(ms, cn, mx, my, wr, hr, wc, hc, twmxr, twmxl, twmy):
         config.write(cfg)
     # return
 
-def auto_scale(height):
-    sc_height_size = height
-    if sc_height_size == 120:
-        a_scale = 0.111
-    if sc_height_size == 160:
-        a_scale = 0.148
-    if sc_height_size == 192:
-        a_scale = 0.178
-    if sc_height_size == 240:
-        a_scale = 0.222
-    if sc_height_size == 272:
-        a_scale = 0.252
-    if sc_height_size == 320:
-        a_scale = 0.296
-    if sc_height_size == 360:
-        a_scale = 0.333
-    if sc_height_size == 384:
-        a_scale = 0.355
-    if sc_height_size == 480:
-        a_scale = 0.444
-    if sc_height_size == 540:
-        a_scale = 0.5
-    if sc_height_size == 576:
-        a_scale = 0.533
-    if sc_height_size == 600:
-        a_scale = 0.555
-    if sc_height_size == 640:
-        a_scale = 0.592
-    if sc_height_size == 720:
-        a_scale = 0.666
-    if sc_height_size == 768:
-        a_scale = 0.711
-    if sc_height_size == 800:
-        a_scale = 0.741
-    if sc_height_size == 810:
-        a_scale = 0.75
-    if sc_height_size == 864:
-        a_scale = 0.8
-    if sc_height_size == 900:
-        a_scale = 0.833
-    if sc_height_size == 960:
-        a_scale = 0.888
-    if sc_height_size == 1024:
-        a_scale = 0.948
-    if sc_height_size == 1050:
-        a_scale = 0.972
-    if sc_height_size == 1080:
-        a_scale = 1
-    if sc_height_size == 1152:
-        a_scale = 1.066
-    if sc_height_size == 1200:
-        a_scale = 1.111
-    if sc_height_size == 1280:
-        a_scale = 1.185
-    if sc_height_size == 1350:
-        a_scale = 1.25
-    if sc_height_size == 1440:
-        a_scale = 1.333
-    if sc_height_size == 1536:
-        a_scale = 1.422
-    if sc_height_size == 1600:
-        a_scale = 1.481
-    if sc_height_size == 1620:
-        a_scale = 1.5
-    if sc_height_size == 1800:
-        a_scale = 1.666
-    if sc_height_size == 2048:
-        a_scale = 1.896
-    if sc_height_size == 2160:
-        a_scale = 2
-    if sc_height_size == 2400:
-        a_scale = 2.222
-    if sc_height_size == 2560:
-        a_scale = 2.370
-    if sc_height_size == 2880:
-        a_scale = 2.666
-    if sc_height_size == 3072:
-        a_scale = 2.844
-    if sc_height_size == 3200:
-        a_scale = 2.963
-    if sc_height_size == 3240:
-        a_scale = 3
-    if sc_height_size == 3384:
-        a_scale = 3.133
-    if sc_height_size == 4096:
-        a_scale = 3.793
-    if sc_height_size == 4320:
-        a_scale = 4
-    if sc_height_size == 4800:
-        a_scale = 4.444
-    if sc_height_size == 8640:
-        a_scale = 5
-    return a_scale
-
 config_main = main_config()
 
 # TODO: [WIP] Класс в активной разработке. Требуется:
@@ -210,6 +116,64 @@ class AppConfig(QObject):
         pass
 
     @property
+    def sc_width_size(self) -> float:
+        return self._config.getfloat('Main', 'screen_width')
+
+    @sc_width_size.setter
+    def sc_width_size(self, value: float):
+        self._config.set('Main', 'screen_width', str(value))
+        self._save_and_notify('Main', 'screen_width', str(value))
+
+    @property
+    def sc_height_size(self) -> float:
+        return self._config.getfloat('Main', 'screen_height')
+
+    @sc_height_size.setter
+    def sc_height_size(self, value: float):
+        self._config.set('Main', 'screen_height', str(value))
+        self._save_and_notify('Main', 'screen_height', str(value))
+
+    @staticmethod
+    def get_auto_scale(height: int) -> float:
+        """Оптимизированный вариант auto_scale с использованием словаря."""
+        scale_map = {
+            120: 0.111, 160: 0.148, 192: 0.178, 240: 0.222, 272: 0.252, 320: 0.296, 360: 0.333, 384: 0.355, 480: 0.444,
+            540: 0.5, 576: 0.533, 600: 0.555, 640: 0.592, 720: 0.666, 768: 0.711, 800: 0.741, 810: 0.75, 864: 0.8,
+            900: 0.833, 960: 0.888, 1024: 0.948, 1050: 0.972, 1080: 1, 1152: 1.066, 1200: 1.111, 1280: 1.185,
+            1350: 1.25, 1440: 1.333, 1536: 1.422, 1600: 1.481, 1620: 1.5, 1800: 1.666, 2048: 1.896, 2160: 2,
+            2400: 2.222, 2560: 2.370, 2880: 2.666, 3072: 2.844, 3200: 2.963, 3240: 3, 3384: 3.133, 4096: 3.793,
+            4320: 4, 4800: 4.444, 8640: 5
+        }
+        return scale_map.get(height, 1.0)  # 1.0 - значение по умолчанию
+
+    @property
+    def auto_scale(self) -> bool:
+        return self._config.getboolean('Scale', 'auto_scale')
+
+    @auto_scale.setter
+    def auto_scale(self, value: bool):
+        self._config.set('Scale', 'auto_scale', str(value))
+        self._save_and_notify('Scale', 'auto_scale', str(value))
+
+    @property
+    def models_scale(self) -> float:
+        return self._config.getfloat('Scale', 'models_scale')
+
+    @models_scale.setter
+    def models_scale(self, value: float):
+        self._config.set('Scale', 'models_scale', str(value))
+        self._save_and_notify('Scale', 'models_scale', str(value))
+
+    @property
+    def models_switch(self) -> int:
+        return self._config.getfloat('Model', 'selected_model')
+
+    @models_switch.setter
+    def models_switch(self, value: int):
+        self._config.set('Model', 'selected_model', str(value))
+        self._save_and_notify('Model', 'selected_model', str(value))
+
+    @property
     def language(self) -> str:
         return self._config.get('Main', 'language')
 
@@ -218,106 +182,143 @@ class AppConfig(QObject):
         self._config.set('Main', 'language', value)
         self._save_and_notify('Main', 'language', value)
 
-    #@property
-    #def models_switch(self) -> str:
-    #    return self._config.get('Model', 'selected_model')
-
-    #@models_switch.setter
-    #def models_switch(self, value: str):
-    #    self._config.set('Model', 'selected_model', value)
-    #    self._save_and_notify('Model', 'selected_model', value)
 
 
     @property
-    def idle_switch(self) -> str:
+    def character_name(self) -> str:
+        return self._config.get('Model', 'character_name')
+
+    @character_name.setter
+    def character_name(self, value: str):
+        self._config.set('Model', 'character_name', str(value))
+        self._save_and_notify('Model', 'character_name', str(value))
+
+
+    @property
+    def idle_switch(self) -> bool:
         return self._config.getboolean('Animations', 'idle_animation')
 
     @idle_switch.setter
-    def idle_switch(self, value: str):
-        self._config.set('Animations', 'idle_animation', value)
-        self._save_and_notify('Animations', 'idle_animation', value)
+    def idle_switch(self, value: bool):
+        self._config.set('Animations', 'idle_animation', str(value))
+        self._save_and_notify('Animations', 'idle_animation', str(value))
 
     @property
-    def on_mouse_switch(self) -> str:
+    def on_mouse_switch(self) -> bool:
         return self._config.getboolean('Animations', 'on_mouse_animation')
 
     @on_mouse_switch.setter
-    def on_mouse_switch(self, value: str):
-        self._config.set('Animations', 'on_mouse_animation', value)
-        self._save_and_notify('Animations', 'on_mouse_animation', value)
+    def on_mouse_switch(self, value: bool):
+        self._config.set('Animations', 'on_mouse_animation', str(value))
+        self._save_and_notify('Animations', 'on_mouse_animation', str(value))
 
     @property
-    def tap_body_switch(self) -> str:
+    def tap_body_switch(self) -> bool:
         return self._config.getboolean('Animations', 'tap_body_animation')
 
     @tap_body_switch.setter
-    def tap_body_switch(self, value: str):
-        self._config.set('Animations', 'tap_body_animation', value)
-        self._save_and_notify('Animations', 'tap_body_animation', value)
+    def tap_body_switch(self, value: bool):
+        self._config.set('Animations', 'tap_body_animation', str(value))
+        self._save_and_notify('Animations', 'tap_body_animation', str(value))
 
     @property
-    def sleep_switch(self) -> str:
+    def sleep_switch(self) -> bool:
         return self._config.getboolean('Settings', 'sleep')
 
     @sleep_switch.setter
-    def sleep_switch(self, value: str):
-        self._config.set('Settings', 'sleep', value)
-        self._save_and_notify('Settings', 'sleep', value)
+    def sleep_switch(self, value: bool):
+        self._config.set('Settings', 'sleep', str(value))
+        self._save_and_notify('Settings', 'sleep', str(value))
 
     @property
-    def tracking_mouse_switch(self) -> str:
+    def tracking_mouse_switch(self) -> bool:
         return self._config.getboolean('Settings', 'tracking_mouse')
 
     @tracking_mouse_switch.setter
-    def tracking_mouse_switch(self, value: str):
-        self._config.set('Settings', 'tracking_mouse', value)
-        self._save_and_notify('Settings', 'tracking_mouse', value)
+    def tracking_mouse_switch(self, value: bool):
+        self._config.set('Settings', 'tracking_mouse', str(value))
+        self._save_and_notify('Settings', 'tracking_mouse', str(value))
 
     @property
-    def auto_blink(self) -> str:
+    def auto_blink(self) -> bool:
         return self._config.getboolean('Settings', 'auto_blink')
 
     @auto_blink.setter
-    def auto_blink(self, value: str):
-        self._config.set('Settings', 'auto_blink', value)
-        self._save_and_notify('Settings', 'auto_blink', value)
+    def auto_blink(self, value: bool):
+        self._config.set('Settings', 'auto_blink', str(value))
+        self._save_and_notify('Settings', 'auto_blink', str(value))
 
     @property
-    def auto_breath(self) -> str:
+    def auto_breath(self) -> bool:
         return self._config.getboolean('Settings', 'auto_breath')
 
-    @auto_blink.setter
-    def auto_breath(self, value: str):
-        self._config.set('Settings', 'auto_breath', value)
-        self._save_and_notify('Settings', 'auto_breath', value)
+    @auto_breath.setter
+    def auto_breath(self, value: bool):
+        self._config.set('Settings', 'auto_breath', str(value))
+        self._save_and_notify('Settings', 'auto_breath', str(value))
 
     @property
-    def window_flags(self) -> dict[str, bool]:
-        """Возвращает флаги окна как словарь {flag_name: enabled}."""
-        return {
-            'FramelessWindowHint': self._config.getboolean('WindowFlags', 'FramelessWindowHint'),
-            'WindowStaysOnTopHint': self._config.getboolean('WindowFlags', 'WindowStaysOnTopHint'),
-            'WindowMinimizeButtonHint': self._config.getboolean('WindowFlags', 'WindowMinimizeButtonHint'),
-            'WindowMaximizeButtonHint': self._config.getboolean('WindowFlags', 'WindowMaximizeButtonHint'),
-            'WindowCloseButtonHint': self._config.getboolean('WindowFlags', 'WindowCloseButtonHint'),
-            'WindowTransparentForInput': self._config.getboolean('WindowFlags', 'WindowTransparentForInput'),
-            'WindowType_Mask': self._config.getboolean('WindowFlags', 'WindowType_Mask'),
-            'WindowStaysOnBottomHint': self._config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
-        }
+    def FramelessWindowHint(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'FramelessWindowHint')
 
-    @window_flags.setter
-    def window_flags(self, flags: dict[str, bool]):
-        """Устанавливает флаги окна из словаря {flag_name: enabled}"""
-        for flag_name, enabled in flags.items():
-            self._config.set('WindowFlags', flag_name, str(enabled))
-        self._save_and_notify('WindowFlags', 'flags_updated', 'true')
+    @FramelessWindowHint.setter
+    def FramelessWindowHint(self, value: bool):
+        self._config.set('WindowFlags', 'FramelessWindowHint', str(value))
+        self._save_and_notify('WindowFlags', 'FramelessWindowHint', str(value))
 
-    def set_window_flag(self, flag_name: str, enabled: bool):
-        """Устанавливает конкретный флаг окна"""
-        self._config.set('WindowFlags', flag_name, str(enabled))
-        self._save_and_notify('WindowFlags', flag_name, str(enabled))
+    @property
+    def WindowStaysOnTopHint(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'WindowStaysOnTopHint')
 
+    @WindowStaysOnTopHint.setter
+    def WindowStaysOnTopHint(self, value: bool):
+        self._config.set('WindowFlags', 'WindowStaysOnTopHint', str(value))
+        self._save_and_notify('WindowFlags', 'WindowStaysOnTopHint', str(value))
 
+    @property
+    def WindowMinimizeButtonHint(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'WindowMinimizeButtonHint')
+
+    @WindowMinimizeButtonHint.setter
+    def WindowMinimizeButtonHint(self, value: bool):
+        self._config.set('WindowFlags', 'WindowMinimizeButtonHint', str(value))
+        self._save_and_notify('WindowFlags', 'WindowMinimizeButtonHint', str(value))
+
+    @property
+    def WindowCloseButtonHint(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'WindowCloseButtonHint')
+
+    @WindowCloseButtonHint.setter
+    def WindowCloseButtonHint(self, value: bool):
+        self._config.set('WindowFlags', 'WindowCloseButtonHint', str(value))
+        self._save_and_notify('WindowFlags', 'WindowCloseButtonHint', str(value))
+
+    @property
+    def WindowStaysOnBottomHint(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'WindowStaysOnBottomHint')
+
+    @WindowStaysOnBottomHint.setter
+    def WindowStaysOnBottomHint(self, value: bool):
+        self._config.set('WindowFlags', 'WindowStaysOnBottomHint', str(value))
+        self._save_and_notify('WindowFlags', 'WindowStaysOnBottomHint', str(value))
+
+    @property
+    def WindowTransparentForInput(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'WindowTransparentForInput')
+
+    @WindowTransparentForInput.setter
+    def WindowTransparentForInput(self, value: bool):
+        self._config.set('WindowFlags', 'WindowTransparentForInput', str(value))
+        self._save_and_notify('WindowFlags', 'WindowTransparentForInput', str(value))
+
+    @property
+    def WindowType_Mask(self) -> bool:
+        return self._config.getboolean('WindowFlags', 'WindowType_Mask')
+
+    @WindowType_Mask.setter
+    def WindowType_Mask(self, value: bool):
+        self._config.set('WindowFlags', 'WindowType_Mask', str(value))
+        self._save_and_notify('WindowFlags', 'WindowType_Mask', str(value))
 
     def _save_and_notify(self, section: str, key: str, value: str):
         """Сохраняет конфиг и отправляет сигнал об изменении."""

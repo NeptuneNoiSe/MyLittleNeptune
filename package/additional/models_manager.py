@@ -1,15 +1,15 @@
 import os
-
 import live2d.v3 as live2d
 from live2d.v3 import Parameter
 
-from package.additional.config_module import *
+from package.additional.config_module import AppConfig
 from package.additional.resource_manager import ResourceManager
 
 class ModelsManager:
     def __init__(self, resources_dir: str):
         self.resources_dir = resources_dir
         self.resource_manager = ResourceManager(resources_dir)
+        self.app_config = AppConfig()
 
     def get_character_name(self, win, config: dict) -> str:
         """Secure name acquisition with complex name processing"""
@@ -82,28 +82,37 @@ class ModelsManager:
 
         win.name = self.get_character_name(win, config)
 
+        scale_factor = win.a_scale * win.models_scale
+
         win.posXL = (win.mx_param / 2) - win.posXR / 2
-        win.twmXR = int(win.posXR * win.a_scale * win.models_scale)
-        win.twmXL = int(win.posXL * win.a_scale * win.models_scale)
-        win.twmY = int(-10 * win.a_scale * win.models_scale) if win.a_scale <= 2 else 0
+        win.twmXR = int(win.posXR * scale_factor)
+        win.twmXL = int(win.posXL * scale_factor)
+        win.twmY = int(-10 * scale_factor) if win.a_scale <= 2 else 0
 
         # Calculating position
         win.resize(1, 1)
-        win.w_resize = int(win.mx_param * win.a_scale * win.models_scale)
-        win.h_resize = int(win.my_param * win.a_scale * win.models_scale)
+        win.w_resize = int(win.mx_param * scale_factor)
+        win.h_resize = int(win.my_param * scale_factor)
         win.resize(int(win.w_resize), int(win.h_resize))
 
         if win.model_move:
-            win.frmX = (win.SrcSize.width() - win.width()) - win.w_correction
-            win.frmY = (win.SrcSize.height() - win.height()) - win.h_correction
-            win.move(int(win.frmX), int(win.frmY))
+            win.position_window()
             win.model_move = False
         else:
             pass
 
         # Save Config
-        models_config(win.models_switch, win.character_name, win.mx_param, win.my_param, win.w_resize,
-                      win.h_resize, win.w_correction, win.h_correction, win.twmXR, win.twmXL, win.twmY)
+        win.app_config.update_model_params(model_id=win.models_switch,
+                                           character_name=win.character_name,
+                                           x_param=win.mx_param,
+                                           y_param=win.my_param,
+                                           w_resize=win.w_resize,
+                                           h_resize=win.h_resize,
+                                           w_correction=win.w_correction,
+                                           h_correction=win.h_correction,
+                                           twm_xr=win.twmXR,
+                                           twm_xl=win.twmXL,
+                                           twm_y=win.twmY)
 
     def _reload_model(self, win, config: dict) -> None:
         """Reload Live2D model"""

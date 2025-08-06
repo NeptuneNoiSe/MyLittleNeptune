@@ -1,12 +1,10 @@
 import os
-import argparse
 import time
 import OpenGL.GL as gl
-from PySide6 import QtCore
-from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize, QTimer
+from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
+from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
 from PySide6.QtGui import QGuiApplication
 
@@ -16,7 +14,7 @@ import live2d.v3 as live2d
 # import live2d.v2 as live2d
 import resources
 from widgets.talk_widget import TalkWidget
-from additional.config_module import *
+from additional.config_module import AppConfig
 from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
 from additional.action_handler import ActionHandler
@@ -25,14 +23,11 @@ from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_manager import ResourceManager
 from package.additional.animation_manager import AnimationsManager
-# from package.additional.animations import TiredAnimation
 
 class Win(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
         self._init_window_flags()
-
-        self.config = config_main
 
         # LOGS:
         # l2d-py Main Log:
@@ -53,6 +48,7 @@ class Win(QOpenGLWidget):
         # Sleep Animation Time Scale
         self.time_scale = 1
 
+        # Initialize functions
         self._init_config()
 
         self._init_vars()
@@ -65,7 +61,7 @@ class Win(QOpenGLWidget):
 
         self._resize_model()
 
-        self._position_window()
+        self.position_window()
 
         self._position_widget()
 
@@ -74,7 +70,7 @@ class Win(QOpenGLWidget):
         self._init_sound()
 
     def _init_window_flags(self):
-        '''Inialize Window Flags'''
+        """Initialize Window Flags"""
         self.hintFlags: list[Qt.WindowType] = [
             Qt.WindowType.MSWindowsFixedSizeDialogHint,
             Qt.WindowType.X11BypassWindowManagerHint,
@@ -95,16 +91,14 @@ class Win(QOpenGLWidget):
         ]
 
     def _init_config(self):
+        """Initialize config"""
         self.app_config = AppConfig()
 
         # Language:
         self.language = self.app_config.language
 
         # Models Switch:
-        # self.models_switch = self.config.getint('Model', 'selected_model')
         self.models_switch = self.app_config.models_switch
-        # self._init_model_properties()
-        # self._init_window_geometry()
 
         # AutoScale: If True, the models is scaled based on the screen size
         self.auto_scale = self.app_config.auto_scale
@@ -113,37 +107,16 @@ class Win(QOpenGLWidget):
         self.models_scale = self.app_config.models_scale
 
     def _init_vars(self):
-        # Init Vars
+        """Initialize Main Vars"""
         self.tracking_mouse = True
+
+        # Geometry and positioning
+        self.auto_scale_init = False
         self.w_correction = 0
         self.h_correction = 0
         self.a_scale = 1
-        self.auto_scale_init = False
-        self.mouse_move = False
-        self.mouse_timer = None
-        self.isInLA = False
-        self.clickInLA = False
-        self.click = False
-        self.test = False
-        self.read = False
-        self.settings_update_state = False
-        self.clickX = -1
-        self.clickY = -1
-        self.posX = -1
-        self.posY = -1
-        self.transformLayout = QVBoxLayout()
-        self.transformLabel = QLabel(self)
-        self.text = "Hello!"
-        self.kaomoji = "(^~^)/"
-        self.transform = False
-        self.hdd_form = False
-        self.transform_state = False
-        self.transform_lock = 0
-        self.can_transform = False
-        self.transform_text = True
         self.mx_param = 0
         self.my_param = 0
-        self.posXR = 0
         self.trm_mx = -50
         self.trm_my = 5
         self.trm_cmx = 100
@@ -156,11 +129,18 @@ class Win(QOpenGLWidget):
         self.twsc = 0
         self.talkX = 180
         self.talkY = 150
-        self.talkFontSize = 10
-        self.screenSide = "Right"
         self.modelRotate = 0
         self.sleepMoveY = 0
 
+        # Model state
+        self.transform = False
+        self.hdd_form = False
+        self.transform_state = False
+        self.transform_lock = 0
+        self.can_transform = False
+        self.transform_text = True
+
+        # Temporary variables
         self.last_update_time = 0
         self.offsetX = 0.0
         self.offsetY = 0.0
@@ -168,11 +148,38 @@ class Win(QOpenGLWidget):
         self.degrees = 0.0
         self.lastExpressionId = ""
         self.activeExpressions = []
+
+        # UI elements
+        self.transformLayout = QVBoxLayout()
+        self.transformLabel = QLabel(self)
+
+        # Text and display
+        self.text = "Hello!"
+        self.kaomoji = "(^~^)/"
+        self.screenSide = "Right"
+        self.talkFontSize = 10
+
+        # Status flags
+        self.mouse_move = False
+        self.mouse_timer = None
+        self.isInLA = False
+        self.clickInLA = False
+        self.click = False
+        self.test = False
+        self.read = False
+        self.settings_update_state = False
         self.model_move = False
         self.talk = True
         self.reset_expression = True
 
+        # Mouse position
+        self.clickX = -1
+        self.clickY = -1
+        self.posX = -1
+        self.posY = -1
+
     def _init_ui(self):
+        """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
@@ -191,7 +198,7 @@ class Win(QOpenGLWidget):
         self.mouse_tracker.idle_timer.timeout.connect(self.input_handler.handle_mouse_idle)
 
     def _init_window_geometry(self):
-        """Инициализация геометрии окна"""
+        """Initialize the window geometry"""
         # self.app = QApplication.instance()
         self.systemScale = QGuiApplication.primaryScreen().devicePixelRatio()
         self.sc_height_size = self.screen().size().height() * self.screen().devicePixelRatio()
@@ -202,8 +209,6 @@ class Win(QOpenGLWidget):
         #Set screen size
         self.app_config.sc_width_size = self.sc_width_size
         self.app_config.sc_height_size = self.sc_height_size
-        #self.config.set('Main', 'screen_width', str(self.sc_width_size))
-        #self.config.set('Main', 'screen_height', str(self.sc_height_size))
 
         # Screen Size for AutoScale
         if self.auto_scale:
@@ -214,69 +219,64 @@ class Win(QOpenGLWidget):
         # Windows flags
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
-    def _position_window(self):
-        """Позиционирование окна"""
+    def _init_model_params(self):
+        """Initialize Model Parameters"""
+        # Character Name
+        self.character_name = self.app_config.character_name
+        self.name = self.character_name
+
+        # Set Neptune Default Model parameters
+        if self.models_switch == 0:
+            self.app_config.update_model_params(
+                x_param=600,
+                y_param=600
+            )
+
+            # Calculating the derived parameters
+            self.hdd_form = False
+            self.can_transform = True
+
+            self.mx_param = self.app_config.mx_param  # Через property
+            self.my_param = self.app_config.my_param
+
+            scale_factor = self.a_scale * self.models_scale
+            self.w_res = int(self.mx_param * scale_factor)
+            self.h_res = int(self.my_param * scale_factor)
+
+            # Updating the remaining parameters
+            self.app_config.update_model_params(
+                w_resize=self.w_res,
+                h_resize=self.h_res,
+                w_correction=-70,
+                h_correction=0,
+                twm_xr=int(64 * scale_factor),
+                twm_xl=int((self.mx_param / 2 - 32) * scale_factor),
+                twm_y=int(-15 * scale_factor)
+            )
+
+
+    def _resize_model(self):
+        """Resize the model with config"""
+        # Model Resize
+        self.w_resize = self.app_config.w_resize
+        self.h_resize = self.app_config.h_resize
+        self.resize(int(self.w_resize), int(self.h_resize))
+
+    def position_window(self):
+        """Set window position"""
         self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
         self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
         self.move(int(self.frmX), int(self.frmY))
 
-    # TODO: [WIP] Реализовать загрузку начальной конфигурации модели и текстового виджета через класс AppConfig
-    def _init_model_params(self):
-        # Character Name
-        self.character_name = self.app_config.character_name
-        # self.character_name = self.config.get('Model', 'character_name')
-        self.name = self.character_name
-
-        # Set default model params for first start
-        # self.models_manager.set_default_model_params(self)
-
-        if self.models_switch == 0:
-            self.config.set('Model', 'x_param', '600')
-            self.config.set('Model', 'y_param', '600')
-        with open('config.ini', 'w') as cfg:
-            cfg: [str, int, tuple, object]
-            self.config.write(cfg)
-
-        # Neptune Model parameters
-        if self.models_switch == 0:
-            self.hdd_form = False
-            self.can_transform = True
-            self.mx_param = self.config.getint('Model', 'x_param')
-            self.my_param = self.config.getint('Model', 'y_param')
-            self.w_res = int(self.mx_param * self.a_scale * self.models_scale)
-            self.h_res = int(self.my_param * self.a_scale * self.models_scale)
-            self.twmY = int(-15 * self.a_scale * self.models_scale)
-            self.posXR = 64
-            self.posXL = (self.mx_param / 2) - self.posXR / 2
-            self.twmXR = int(self.posXR * self.a_scale * self.models_scale)
-            self.twmXL = int(self.posXL * self.a_scale * self.models_scale)
-            self.config.set('Model', 'w_resize', str(self.w_res))
-            self.config.set('Model', 'h_resize', str(self.h_res))
-            self.config.set('Model', 'w_correction', '-70')
-            self.config.set('Model', 'h_correction', '0')
-            self.config.set('Model', 'twmXR', str(self.twmXR))
-            self.config.set('Model', 'twmXL', str(self.twmXL))
-            self.config.set('Model', 'twmY', str(self.twmY))
-            with open('config.ini', 'w') as cfg:
-                cfg: [str, int, tuple, object]
-                self.config.write(cfg)
-
-    def _resize_model(self):
-        # Model Resize
-        self.w_resize = self.config.getint('Model', 'w_resize')
-        self.h_resize = self.config.getint('Model', 'h_resize')
-        self.w_correction = self.config.getfloat('Model', 'w_correction')
-        self.h_correction = self.config.getfloat('Model', 'h_correction')
-
-        self.resize(int(self.w_resize), int(self.h_resize))
-
     def _position_widget(self):
+        """Position the widget"""
         # Widget Move Params
-        self.twmXR = self.config.getfloat('Model', 'twmXR')
-        self.twmXL = self.config.getfloat('Model', 'twmXL')
-        self.twmY = self.config.getfloat('Model', 'twmY')
+        self.twmXR = self.app_config.twmXR
+        self.twmXL = self.app_config.twmXL
+        self.twmY = self.app_config.twmY
 
     def _init_animations(self):
+        """Initialize animations"""
         self.idle_anim = True
         self.on_mouse_anim = False
         self.tap_body_anim = False
@@ -291,20 +291,11 @@ class Win(QOpenGLWidget):
         self.lastUpdateTime = time.time()
 
     def _init_sound(self):
+        """Initialize sound"""
         #self.wavHandler = WavHandler()
         #self.lipSyncN = 2.5
         #self.audioPlayed = False
         pass
-
-    # FIXME: Функция референс
-    def _init_model_properties(self):
-        """Инициализация свойств модели"""
-        self.mx_param = self.app_config.mx_param
-        self.my_param = self.app_config.my_param
-        self.w_correction = self.app_config.w_correction
-        self.h_correction = self.app_config.h_correction
-        self.can_transform = self.app_config.can_transform
-        self.hdd_form = self.app_config.hdd_form
 
     def change_character(self, name: str):
         """Set character name in Animation Manager """
@@ -315,6 +306,7 @@ class Win(QOpenGLWidget):
         self.models_manager.apply_character_config(self, character_name)
 
     def initializeGL(self) -> None:
+        """Initialize GL"""
         self.makeCurrent()
         live2d.glInit()
         self.model = live2d.Model()
@@ -388,15 +380,18 @@ class Win(QOpenGLWidget):
         print(self.name + ": " + self.text + self.kaomoji)
 
     def init_classes(self):
+        """Initialize classes"""
         self.anim_manager = AnimationsManager(self.model)
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
 
     def resizeGL(self, w: int, h: int) -> None:
+        """Resize GL"""
         if self.model:
             self.model.Resize(w, h)
 
     def paintGL(self) -> None:
+        """Paint GL"""
         if self.model:
             live2d.clearBuffer()
             self.model.Draw()
@@ -449,11 +444,13 @@ class Win(QOpenGLWidget):
             self.read = True
 
     def set_app_title(self):
+        """Set app title and icon"""
         self.setWindowTitle("My Little Neptune")
         self.setWindowIcon(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
     def timerEvent(self, a0: QTimerEvent | None) -> None:
+        """Timer event"""
         if not self.isVisible():
             return
         if self.settings_update_state:
@@ -498,6 +495,7 @@ class Win(QOpenGLWidget):
         self.update()
 
     def isInL2DArea(self, click_x, click_y):
+        """Mouse in model area"""
         h = self.height()
         alpha = gl.glReadPixels(click_x * self.systemScale, (h - click_y) * self.systemScale, 1, 1, gl.GL_RGBA,
                                 gl.GL_UNSIGNED_BYTE)[3]
@@ -535,6 +533,7 @@ class Win(QOpenGLWidget):
             print("Left Button Released")
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        """Mouse mouse move event"""
         if self.clickInLA and not self.input_handler.input_lock:
             global_pos = event.globalPosition().toPoint()
             self.move(global_pos.x() - self.clickX - 10,
@@ -543,6 +542,7 @@ class Win(QOpenGLWidget):
         self.input_handler.mouse_move_handler(event.globalPosition())
 
     def setSettings(self, flags: Qt.WindowType) -> None:
+        """Set Settings from Settings Window"""
         # print(f"setSettings flags: {flags}")
         self.setWindowFlags(flags)
 
@@ -555,7 +555,7 @@ class Win(QOpenGLWidget):
                 text += f"\n| Qt.{hintFlag.name}"
 
         if self.auto_scale and self.auto_scale_init:
-            self.a_scale = self.app_config.get_auto_scale(self.sc_height_size)
+            self.a_scale = self.app_config.get_auto_scale(int(self.sc_height_size))
             self.models_manager.update_model(self)
 
         if not self.auto_scale and self.auto_scale_init:
@@ -569,15 +569,18 @@ class Win(QOpenGLWidget):
         self.apply_character_config(self.character_name)
 
     def settings_show(self):
+        """Show Settings Window"""
         settings.show()
         self.settings_update_state = True
 
     def settings_close(self):
+        """Close Settings Window"""
         settings.close()
         self.settings_update_state = False
 
     # Context Menu
     def contextMenuEvent(self, e):
+        """Context Menu Event"""
         context_menu = QMenu(self).addMenu('&File')
 
         # Window Submenu
@@ -755,6 +758,7 @@ class Win(QOpenGLWidget):
         context_menu.exec(e.globalPos())
 
     def closeEvent(self, event):
+        """Close Event"""
         self.character.expressions.set_cry_expression()
         settings.close()
         if self.character.tired_state.condition == "Sleep":
@@ -780,7 +784,6 @@ class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
-        self.config = config_main
         self.app_config = AppConfig()
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
         self.getWindowFlag_WindowStaysOnTopHint = self.app_config.WindowStaysOnTopHint
@@ -851,27 +854,30 @@ class SettingsWindow(QWidget):
         mainLayout.addLayout(bottomLayout)
         self.setLayout(mainLayout)
         self.setWindowTitle("Settings")
-        self.mainWindow.setWindowTitle("My Little Neptune")
-        self.mainWindow.setWindowIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+        self.mainWindow.set_app_title()
         self.updateMainWindow()
 
     def reset_position(self):
+        """Reset model position"""
         self.mainWindow.model_move = True
         self.updateMainWindow()
 
     def modelMoveOn(self):
+        """Model Move Trigger On"""
         self.mainWindow.model_move = True
 
     def modelMoveOff(self):
+        """Model Move Trigger Off"""
         self.mainWindow.model_move = False
 
     def set_setting(self, name, value):
-        setattr(self.app_config, name, value)  # вызовет сеттер и сохранит
+        """Synchronize mainWindow and app_config vars"""
+        setattr(self.app_config, name, value)
         setattr(self.mainWindow, name, value)
         setattr(self, name, value)
 
     def updateSettings(self):
+        """Update main window settings"""
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
         self.resetPosButton.setText(self.mainWindow.lang['Settings']['ResetPosition'])
@@ -894,6 +900,7 @@ class SettingsWindow(QWidget):
 
     @Slot()
     def updateMainWindow(self) -> None:
+        """Update main window settings"""
         flags = Qt.WindowType()
         if self.getWindowFlag_WindowMinimizeButtonHint:
             flags = flags | Qt.WindowType.WindowMinimizeButtonHint
@@ -980,6 +987,7 @@ class SettingsWindow(QWidget):
         self.mainWindow.show()
 
     def createHintsGroupBox(self) -> None:
+        """Create Hints GroupBox"""
         self.hintsGroupBox = QGroupBox("Window")
         layout = QGridLayout()
 
@@ -1010,6 +1018,7 @@ class SettingsWindow(QWidget):
         self.hintsGroupBox.setLayout(layout)
 
     def createScaleGroupBox(self) -> None:
+        """Create Scale GroupBox"""
         self.scaleGroupBox = QGroupBox("Scale")
         layout = QGridLayout()
         self.modelFlagWidgets = QCheckBox()
@@ -1039,6 +1048,7 @@ class SettingsWindow(QWidget):
         self.scaleGroupBox.setLayout(layout)
 
     def createOtherGroupBox(self) -> None:
+        """Create Other GroupBox"""
         self.otherGroupBox = QGroupBox("Other")
         layout = QGridLayout()
         self.otherFlagWidgets = QCheckBox()
@@ -1066,17 +1076,20 @@ class SettingsWindow(QWidget):
         self.otherGroupBox.setLayout(layout)
 
     def createCheckBox(self, text: str) -> QCheckBox:
+        """Create CheckBox"""
         checkBox = QCheckBox(text)
         checkBox.clicked.connect(self.updateMainWindow)  # type: ignore[attr-defined]
         return checkBox
 
     def getLanguageName(self):
+        """Get language name"""
         if self.language_org == "Русский":
             self.language_get = "Russian"
         else:
             self.language_get = "English"
 
     def setLanguageName(self):
+        """Set language name"""
         if self.language == "Russian":
             self.language_set = "Русский"
         else:
@@ -1112,6 +1125,7 @@ if __name__ == "__main__":
 
     # --- Update README ---
     def update_readme():
+        """Update App Version in README.md file"""
         readme = PROJECT_ROOT / 'README.md'
         content = readme.read_text(encoding='utf-8')
         updated = re.sub(r'app_version-[\d.]+', f'app_version-{__version__}', content)

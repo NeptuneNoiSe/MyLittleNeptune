@@ -309,6 +309,16 @@ class AppConfig(QObject):
         self._config.set('Model', 'h_resize', str(value))
         self._save_and_notify('Model', 'h_resize', str(value))
 
+    # Character position correction
+    @property
+    def w_correction(self) -> int:
+        return self._config.getint('Model', 'w_correction')
+
+    @property
+    def h_correction(self) -> int:
+        return self._config.getint('Model', 'h_correction')
+
+    # Talk Widget position
     @property
     def twmXR(self) -> float:
         return self._config.getint('Model', 'twmXR')

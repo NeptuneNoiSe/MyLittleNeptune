@@ -1,17 +1,11 @@
 import os
-from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtCore import Qt, QSize, QTimer, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QGridLayout, QFrame, QFormLayout, \
     QGraphicsOpacityEffect
 
 from package import resources
 from package.additional.resource_manager import ResourceManager
-
-from PySide6.QtWidgets import (QWidget, QGridLayout, QFrame, QVBoxLayout,
-                               QLabel, QFormLayout, QGraphicsOpacityEffect)
-from PySide6.QtGui import QPixmap, QFont
-from PySide6.QtCore import QSize, Qt
-import os
 
 class TalkWidget:
     def __init__(self, win):
@@ -156,6 +150,23 @@ class TalkWidget:
         elif center <= 0:
             self.screenSide = "Left"
 
+    def show_appearance_animation(self):
+        """Show widget Animation"""
+        # Setting up transparency with animation
+        self.talk_image_label_opacity = QGraphicsOpacityEffect()
+        self.talk_image_label_opacity.setOpacity(0.0)  # Начальное значение прозрачности
+        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
+
+        # Создаем анимацию
+        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
+        self.opacity_animation.setDuration(250)  # Длительность анимации в миллисекундаха
+        self.opacity_animation.setStartValue(0.0)  # Начальное значение
+        self.opacity_animation.setEndValue(0.9)  # Конечное значение
+        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Плавность анимации
+
+        # Добавляем анимацию в очередь (чтобы не блокировать основной поток)
+        QTimer.singleShot(0, self.opacity_animation.start)
+
     def show_talk(self):
         """Shows a widget with the text"""
         if not self.talk:
@@ -184,10 +195,7 @@ class TalkWidget:
         # Calculating the positioning
         varX, varY = self._calculate_position()
 
-        # Setting up transparency
-        self.talk_image_label_opacity = QGraphicsOpacityEffect()
-        self.talk_image_label_opacity.setOpacity(0.9)
-        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
+        self.show_appearance_animation()
 
         # Adding an image to the layout
         self.frame_layout.addWidget(self.talk_image_label)
@@ -342,10 +350,20 @@ class TalkWidget:
         return offset_x, offset_y
 
     def close_dialog(self):
-        """Closes the dialog box"""
+        """Close dialog box with Animation"""
+        self.dialogCloseTimer.stop()
+        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
+        self.opacity_animation.setDuration(500)
+        self.opacity_animation.setStartValue(0.9)
+        self.opacity_animation.setEndValue(0.0)
+        self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Плавность анимации
+        self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Скрыть после анимации
+        QTimer.singleShot(0, self.opacity_animation.start)
+
+    def close_dialog_after_animation(self):
+        """Closes the dialog box after animation"""
         self.talk = False
         self.widget.close()
-        self.dialogCloseTimer.stop()
         self.talk_text_label.repaint()
 
         # If you need to process Qt events

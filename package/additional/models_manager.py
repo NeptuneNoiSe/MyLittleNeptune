@@ -1,15 +1,12 @@
 import os
 import live2d.v3 as live2d
 from live2d.v3 import Parameter
-
-from package.additional.config_module import AppConfig
 from package.additional.resource_manager import ResourceManager
 
 class ModelsManager:
     def __init__(self, resources_dir: str):
         self.resources_dir = resources_dir
         self.resource_manager = ResourceManager(resources_dir)
-        self.app_config = AppConfig()
 
     def get_character_name(self, win, config: dict) -> str:
         """Secure name acquisition with complex name processing"""

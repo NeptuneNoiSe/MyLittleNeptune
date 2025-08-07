@@ -1,5 +1,6 @@
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, QTimer
 from PySide6.QtGui import QMovie, Qt
+from PySide6.QtWidgets import QApplication
 
 from package import resources
 import random
@@ -286,8 +287,7 @@ class AnimationsManager:
         if hasattr(win, 'transformMovie'):
             if win.transform and (win.transformMovie.currentFrameNumber() >=
                     (win.transformMovie.frameCount() - 3) / 2):
-                win.talk_widget.close_dialog()
-
+                win.talk_widget.close_dialog_after_animation()
             if (win.transformMovie.currentFrameNumber() >=
                     win.transformMovie.frameCount() - 3):
 
@@ -319,6 +319,7 @@ class AnimationsManager:
         t_anim_in = self.resource_manager.load_animation("transform_in")
         win.transformMovie = QMovie(t_anim_in)
         win.transformLabel.setMovie(win.transformMovie)
+        win.transformLabel.raise_()
         win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size(win)
         ), Qt.KeepAspectRatio, Qt.SmoothTransformation

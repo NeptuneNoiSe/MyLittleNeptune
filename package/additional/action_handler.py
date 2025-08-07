@@ -94,49 +94,84 @@ class ActionHandler:
         self._change_character("Histoire")
 
     # Animations Actions
-    def _toggle_animation_setting(self, config_key, switch_attr, anim_attr, enabled_text_key, disabled_text_key,
-                                  enabled):
+    def _toggle_animation_setting(self, config_key, switch_attr, anim_attr,
+                                  enabled_text_key, disabled_text_key, enabled):
+        # Обновляем конфиг (новое добавление)
+        setattr(self.win.app_config, switch_attr, enabled)
+
         if self.win.character.tired_state.condition != "Sleep":
             text_key = enabled_text_key if enabled else disabled_text_key
             self.win.character.state.set_settings_state(text_key=text_key)
 
-        self.win.config.set('Animations', config_key, str(enabled))
-        with open('config.ini', 'w') as cfg:
-            self.win.config.write(cfg)
         setattr(self.win, switch_attr, enabled)
         setattr(self.win, anim_attr, enabled)
 
+    def _create_toggle_handlers(self):
+        """Генерирует пары обработчиков для разных типов анимаций"""
+        handlers = {
+            'idle': ('idle_animation', 'IdleEnabled', 'IdleDisabled'),
+            'on_mouse': ('on_mouse_animation', 'OnMouseEnabled', 'OnMouseDisabled'),
+            'tap_body': ('tap_body_animation', 'TapBodyEnabled', 'TapBodyDisabled'),
+        }
+
+        for prefix, (config_key, enabled_text, disabled_text) in handlers.items():
+            # True handler
+            def make_true_handler(prefix=prefix, config_key=config_key,
+                                  enabled_text=enabled_text, disabled_text=disabled_text):
+                return lambda: self._toggle_animation_setting(
+                    config_key, f'{prefix}_switch', f'{prefix}_anim',
+                    enabled_text, disabled_text, True
+                )
+
+            setattr(self, f'on_action_{prefix}_true', make_true_handler())
+
+            # False handler
+            def make_false_handler(prefix=prefix, config_key=config_key,
+                                   enabled_text=enabled_text, disabled_text=disabled_text):
+                return lambda: self._toggle_animation_setting(
+                    config_key, f'{prefix}_switch', f'{prefix}_anim',
+                    enabled_text, disabled_text, False
+                )
+
+            setattr(self, f'on_action_{prefix}_false', make_false_handler())
+
     def on_action_idle_true(self):
+        self.win.app_config.idle_switch = True
         self._toggle_animation_setting(
             'idle_animation', 'idle_switch', 'idle_anim',
             'IdleEnabled', 'IdleDisabled', True
         )
 
     def on_action_idle_false(self):
+        self.win.app_config.idle_switch = False
         self._toggle_animation_setting(
             'idle_animation', 'idle_switch', 'idle_anim',
             'IdleEnabled', 'IdleDisabled', False
         )
 
     def on_action_on_mouse_true(self):
+        self.win.app_config.on_mouse_switch = True
         self._toggle_animation_setting(
             'on_mouse_animation', 'on_mouse_switch', 'on_mouse_anim',
             'OnMouseEnabled', 'OnMouseDisabled', True
         )
 
     def on_action_on_mouse_false(self):
+        self.win.app_config.on_mouse_switch = True
         self._toggle_animation_setting(
             'on_mouse_animation', 'on_mouse_switch', 'on_mouse_anim',
             'OnMouseEnabled', 'OnMouseDisabled', False
         )
 
     def on_action_tap_body_true(self):
+        self.win.app_config.tap_body_switch = True
         self._toggle_animation_setting(
             'tap_body_animation', 'tap_body_switch', 'tap_body_anim',
             'TapBodyEnabled', 'TapBodyDisabled', True
         )
 
     def on_action_tap_body_false(self):
+        self.win.app_config.tap_body_switch = True
         self._toggle_animation_setting(
             'tap_body_animation', 'tap_body_switch', 'tap_body_anim',
             'TapBodyEnabled', 'TapBodyDisabled', False

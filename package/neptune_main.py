@@ -1,3 +1,4 @@
+import math
 import os
 import time
 import OpenGL.GL as gl
@@ -9,6 +10,7 @@ from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, 
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
+from live2d.utils.canvas import Canvas
 # from live2d.v3 import StandardParams
 # from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
@@ -24,11 +26,9 @@ from additional.input_handler import MouseTracker
 from additional.resource_manager import ResourceManager
 from package.additional.animation_manager import AnimationsManager
 
-class Win(QOpenGLWidget):
+class MainWindow(QOpenGLWidget):
     def __init__(self) -> None:
         super().__init__()
-        self._init_window_flags()
-
         # LOGS:
         # l2d-py Main Log:
         live2d.setLogEnable(False)
@@ -49,6 +49,8 @@ class Win(QOpenGLWidget):
         self.time_scale = 1
 
         # Initialize functions
+        self._init_window_flags()
+
         self._init_config()
 
         self._init_vars()
@@ -178,11 +180,16 @@ class Win(QOpenGLWidget):
         self.posX = -1
         self.posY = -1
 
+        # Canvas Vars
+        self.radius_per_frame = math.pi * 0.5 / 120
+        self.total_radius = 0
+
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
+        self.canvas: Canvas | None = None
         self.character = None
         self.talk_widget = None
         self.functions = Functions(self, self.model)
@@ -196,6 +203,7 @@ class Win(QOpenGLWidget):
         self.mouse_tracker = MouseTracker(self)
         # Mouse tracking timer
         self.mouse_tracker.idle_timer.timeout.connect(self.input_handler.handle_mouse_idle)
+
 
     def _init_window_geometry(self):
         """Initialize the window geometry"""
@@ -261,6 +269,8 @@ class Win(QOpenGLWidget):
         self.w_resize = self.app_config.w_resize
         self.h_resize = self.app_config.h_resize
         self.resize(int(self.w_resize), int(self.h_resize))
+        self.w_correction = self.app_config.w_correction
+        self.h_correction = self.app_config.h_correction
 
     def position_window(self):
         """Set window position"""
@@ -309,6 +319,8 @@ class Win(QOpenGLWidget):
         """Initialize GL"""
         self.makeCurrent()
         live2d.glInit()
+        #gl.glClearColor(0, 0, 0, 0)
+        #self.setAutoFillBackground(False)
         self.model = live2d.Model()
         if live2d.LIVE2D_VERSION == 3:
             if self.models_switch == 0:
@@ -367,6 +379,7 @@ class Win(QOpenGLWidget):
 
         self.model = self.resource_manager.get_model(self.character_name)
         self.apply_character_config(self.character_name)
+        self.canvas = Canvas()
         self.startTimer(int(1000 / 60)) # FPS Set
         self.functions.setLanguage()
         self.model.CreateRenderer(2)
@@ -389,12 +402,18 @@ class Win(QOpenGLWidget):
         """Resize GL"""
         if self.model:
             self.model.Resize(w, h)
+            self.canvas.SetSize(w, h)
+
+    def on_draw(self):
+        live2d.clearBuffer()
+        self.model.Draw()
 
     def paintGL(self) -> None:
         """Paint GL"""
         if self.model:
             live2d.clearBuffer()
-            self.model.Draw()
+            # self.model.Draw()
+            self.canvas.Draw(self.on_draw)
 
         if not self.model:
             return
@@ -424,6 +443,8 @@ class Win(QOpenGLWidget):
             self.model.SaveParameters()
 
             self.model.UpdateBreath(delta_secs) if self.app_config.auto_breath else None
+
+            #self.model.Update(delta_secs)
 
             self.model.UpdateExpression(delta_secs)
             self.model.UpdateDrag(delta_secs)
@@ -455,6 +476,12 @@ class Win(QOpenGLWidget):
             return
         if self.settings_update_state:
             settings.updateSettings()
+
+        self.total_radius += self.radius_per_frame
+        v = abs(math.cos(self.total_radius))
+
+        # change opacity
+        self.canvas.SetOutputOpacity(1)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
@@ -783,8 +810,11 @@ class Win(QOpenGLWidget):
 class SettingsWindow(QWidget):
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
+        self.pythonic_reg = pythonic_window_registration
+        self.mainWindow = MainWindow()
+        self.app_config = self.mainWindow.app_config
+
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
-        self.app_config = AppConfig()
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
         self.getWindowFlag_WindowStaysOnTopHint = self.app_config.WindowStaysOnTopHint
 
@@ -802,8 +832,6 @@ class SettingsWindow(QWidget):
         self.tracking_mouse = self.app_config.tracking_mouse_switch
         self.sleep = self.app_config.sleep_switch
 
-        self.pythonic_reg = pythonic_window_registration
-        self.mainWindow = Win()
         self.language_set = None
         self.language_get = None
 
@@ -870,11 +898,11 @@ class SettingsWindow(QWidget):
         """Model Move Trigger Off"""
         self.mainWindow.model_move = False
 
-    def set_setting(self, name, value):
+    def set_setting(self, key, value):
         """Synchronize mainWindow and app_config vars"""
-        setattr(self.app_config, name, value)
-        setattr(self.mainWindow, name, value)
-        setattr(self, name, value)
+        setattr(self.app_config, key, value)
+        setattr(self.mainWindow, key, value)
+        setattr(self, key, value)
 
     def updateSettings(self):
         """Update main window settings"""
@@ -982,6 +1010,7 @@ class SettingsWindow(QWidget):
             self.language_org = self.langComboBox.currentText()
             self.getLanguageName()
             self.set_setting('language', str(self.language_get))
+            #self.mainWindow.app_config.language = str(self.language_get)
 
         self.mainWindow.setSettings(flags)
         self.mainWindow.show()
@@ -1105,7 +1134,7 @@ if __name__ == "__main__":
     # --- SET PROJECT ROOT DIRECTORY ---
     PROJECT_ROOT = Path(__file__).parent.parent if not getattr(sys, 'frozen', False) else Path(sys.executable).parent
     os.chdir(PROJECT_ROOT)
-    sys.path.append(str(PROJECT_ROOT))  # Add in PYTHONPATH
+    sys.path.append(str(PROJECT_ROOT))  # Add in PYTHON PATH
 
     # --- Check critical files ---
     REQUIRED_FILES = {
@@ -1138,10 +1167,9 @@ if __name__ == "__main__":
 
     update_readme()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--pythonic", action='store_true',
-                        help="Create and register widgets pythonically.")
-    args = parser.parse_args()
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument("-p", "--pythonic", action='store_true')
+    #args = parser.parse_args()
 
     live2d.init()
     format = QSurfaceFormat.defaultFormat()
@@ -1149,9 +1177,9 @@ if __name__ == "__main__":
     QSurfaceFormat.setDefaultFormat(format)
 
     app = QApplication(sys.argv)
-    win = Win()
+    win = MainWindow()
 
-    settings = SettingsWindow(args.pythonic)
+    settings = SettingsWindow()
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
 

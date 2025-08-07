@@ -272,11 +272,33 @@ class MainWindow(QOpenGLWidget):
         self.w_correction = self.app_config.w_correction
         self.h_correction = self.app_config.h_correction
 
+
     def position_window(self):
-        """Set window position"""
-        self.frmX = (self.SrcSize.width() - self.width()) - self.w_correction
-        self.frmY = (self.SrcSize.height() - self.height()) - self.h_correction
-        self.move(int(self.frmX), int(self.frmY))
+        """Set window position with conditions"""
+        window_width = self.width()
+        window_height = self.height()
+        screen_geom = self.screen().availableGeometry()
+
+        # Checking that the model is SMALLER or EQUAL to the screen size
+        if (window_width <= screen_geom.width() and
+                window_height <= screen_geom.height()):
+
+            self.frmX = (self.SrcSize.width() - window_width) - self.w_correction
+            self.frmY = (self.SrcSize.height() - window_height) - self.h_correction
+            self.move(int(self.frmX), int(self.frmY))
+
+        else:
+            # Defensive logic for large models
+            if window_width > screen_geom.width():
+                safe_x = screen_geom.left() - (window_width - screen_geom.width()) // 2
+            else:
+                safe_x = (self.SrcSize.width() - window_width) - self.w_correction
+
+            # Fix the upper limit, allow going beyond the bottom
+            safe_y = max(screen_geom.top(),
+                         (self.SrcSize.height() - window_height) - self.h_correction)
+
+            self.move(int(safe_x), int(safe_y))
 
     def _position_widget(self):
         """Position the widget"""
@@ -319,8 +341,6 @@ class MainWindow(QOpenGLWidget):
         """Initialize GL"""
         self.makeCurrent()
         live2d.glInit()
-        #gl.glClearColor(0, 0, 0, 0)
-        #self.setAutoFillBackground(False)
         self.model = live2d.Model()
         if live2d.LIVE2D_VERSION == 3:
             if self.models_switch == 0:
@@ -398,6 +418,7 @@ class MainWindow(QOpenGLWidget):
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
 
+    # FIXME: После перехода на Canvas для управления прозрачностью были обнаружены черные границы на краях модели
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""
         if self.model:
@@ -412,7 +433,6 @@ class MainWindow(QOpenGLWidget):
         """Paint GL"""
         if self.model:
             live2d.clearBuffer()
-            # self.model.Draw()
             self.canvas.Draw(self.on_draw)
 
         if not self.model:
@@ -476,12 +496,6 @@ class MainWindow(QOpenGLWidget):
             return
         if self.settings_update_state:
             settings.updateSettings()
-
-        self.total_radius += self.radius_per_frame
-        v = abs(math.cos(self.total_radius))
-
-        # change opacity
-        self.canvas.SetOutputOpacity(1)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check

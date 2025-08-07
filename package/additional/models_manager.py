@@ -72,33 +72,56 @@ class ModelsManager:
             self._load_fallback_model(win)
 
     def _update_win_params(self, win, config: dict) -> None:
-        """Update window params"""
+        """Update window params with size-aware position compensation"""
+        # Save the current dimensions and position
+        old_width = win.width()
+        old_height = win.height()
+        current_pos = win.pos()
+        current_bottom = current_pos.y() + old_height
+
+        # Updating the parameters from the config
         for param, value in config.items():
             if hasattr(win, param):
                 setattr(win, param, value)
 
         win.name = self.get_character_name(win, config)
-
         scale_factor = win.a_scale * win.models_scale
 
+        # Calculation of new parameters
         win.posXL = (win.mx_param / 2) - win.posXR / 2
         win.twmXR = int(win.posXR * scale_factor)
         win.twmXL = int(win.posXL * scale_factor)
         win.twmY = int(-10 * scale_factor) if win.a_scale <= 2 else 0
 
-        # Calculating position
-        win.resize(1, 1)
-        win.w_resize = int(win.mx_param * scale_factor)
-        win.h_resize = int(win.my_param * scale_factor)
-        win.resize(int(win.w_resize), int(win.h_resize))
+        # Calculation of new scale
+        new_width = int(win.mx_param * scale_factor)
+        new_height = int(win.my_param * scale_factor)
 
+        # Set resize
+        win.resize(1, 1)  # reset size
+        win.w_resize = new_width
+        win.h_resize = new_height
+        win.resize(new_width, new_height)
+
+        # Position correction
         if win.model_move:
             win.position_window()
             win.model_move = False
         else:
-            pass
+            # Fixing the lower bound (new position Y = current bottom - new height)
+            new_y = current_bottom - new_height
 
-        # Save Config
+            # Centering horizontally
+            new_x = current_pos.x() - (new_width - old_width) // 2
+
+            # Protection from going beyond the boundaries of the screen
+            screen_geom = win.screen().availableGeometry()
+            new_x = max(screen_geom.left(), min(new_x, screen_geom.right() - new_width))
+            new_y = max(screen_geom.top(), min(new_y, screen_geom.bottom() - new_height))
+
+            win.move(new_x, new_y)
+
+        # Save config
         win.app_config.update_model_params(model_id=win.models_switch,
                                            character_name=win.character_name,
                                            x_param=win.mx_param,

@@ -281,22 +281,35 @@ class AnimationsManager:
         self._play_profile_animation(profile['animations']['default'])
         return True
 
+    # TODO: [WIP] Добавлена функция изменения прозрачности при трансформации персонажа.
+    #  Требуется: дальнейшее тестирование: Возможно мерцание персонажа при изменении уровня прозрачности
     # Transform Animations
     def check_animation_progress(self, win):
-        """Checking animation progress"""
+        """Checking animation progress with opacity control"""
         if hasattr(win, 'transformMovie'):
-            if win.transform and (win.transformMovie.currentFrameNumber() >=
-                    (win.transformMovie.frameCount() - 3) / 2):
-                win.talk_widget.close_dialog_after_animation()
-            if (win.transformMovie.currentFrameNumber() >=
-                    win.transformMovie.frameCount() - 3):
+            current_frame = win.transformMovie.currentFrameNumber()
+            total_frames = win.transformMovie.frameCount()
 
+            # Closing the dialog in the middle of the animation
+            if win.transform and current_frame >= (total_frames - 3) / 2:
+                win.talk_widget.close_dialog_after_animation()
+
+                # Smooth disappearance of the model
+                fade_start = int(total_frames * 0.5)
+                fade_progress = min(1.0, (current_frame - fade_start) / (total_frames - fade_start - 3))
+                opacity = 1.0 - fade_progress
+                win.canvas.SetOutputOpacity(opacity)
+
+            # Finish Animation
+            if current_frame >= total_frames - 3:
                 if win.transform:
-                    win.transformLabel.movie().setScaledSize(QSize(int(1), int(1)))
+                    win.transformLabel.movie().setScaledSize(QSize(1, 1))
                     win.transformMovie.stop()
                     win.transformLabel.close()
                     self.handle_transform_completion(win)
                 else:
+                    # Restoring transparency
+                    win.canvas.SetOutputOpacity(1.0)
                     self._finalize_animation(win)
 
     def _finalize_animation(self, win):
@@ -305,32 +318,58 @@ class AnimationsManager:
         win.transformLabel.close()
         win.transformLabel.clear()
         win.input_handler.input_lock = False
-
         win.character.state.set_transformed_state()
 
     def play_transform_animation(self, win):
-        """Starting the transformation animation"""
+        """Starting the transformation animation with fade-out"""
         win.input_handler.input_lock = True
 
-        # Setting up Live2D animations
+        # Initializing transparency
+        win.canvas.SetOutputOpacity(1.0)  # Starting with full visibility
+
         self._play_model_animation(win)
 
-        # Init QMovie
+        # Initializing QMovie
         t_anim_in = self.resource_manager.load_animation("transform_in")
         win.transformMovie = QMovie(t_anim_in)
         win.transformLabel.setMovie(win.transformMovie)
         win.transformLabel.raise_()
         win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size(win)
-        ), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
         win.transformMovie.start()
         win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
         win.transformLabel.show()
         self.transform = win.transform = True
         self.transform_lock = 0
 
+        # Connecting a frame handler for smooth fade
+        win.transformMovie.frameChanged.connect(
+            lambda: self._update_fade_out_opacity(win)
+        )
+
+    def _update_fade_out_opacity(self, win):
+        """Smooth disappearance of the model during the transformation"""
+        if not hasattr(win, 'transformMovie') or not win.transformMovie:
+            return
+
+        current_frame = win.transformMovie.currentFrameNumber()
+        total_frames = win.transformMovie.frameCount()
+
+        # Start fading after 50% animation
+        fade_start = int(total_frames * 0.5)
+
+        if current_frame < fade_start:
+            opacity = 1.0
+        else:
+            # Smooth attenuation with a quadratic curve
+            progress = (current_frame - fade_start) / (total_frames - fade_start)
+            opacity = max(0.0, 1.0 - progress ** 2)
+
+        win.canvas.SetOutputOpacity(opacity)
+
     def handle_transform_completion(self, win):
-        """Ending the transformation animation"""
+        """Ending the transformation animation with fade-in"""
         if not win.hdd_form and self.transform_lock == 0:
             self._transform_to_hdd(win)
         elif win.hdd_form and self.transform_lock == 0:
@@ -340,15 +379,46 @@ class AnimationsManager:
         win.transformMovie = None
         t_anim_out = self.resource_manager.load_animation("transform_out")
         win.transformMovie = QMovie(t_anim_out)
+
+        # Initial transparency 0
+        win.canvas.SetOutputOpacity(0.0)
+
+        # Setting up animations
         win.transformLabel.setMovie(win.transformMovie)
         win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size(win)
-        ), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
         win.transformMovie.start()
         win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
         win.transformLabel.show()
+
+        # Connecting a handler for smooth appearance
+        win.transformMovie.frameChanged.connect(
+            lambda: self._update_fade_in_opacity(win)
+        )
+
         self.transform = win.transform = False
         win.talk_widget.talk_update = True
+
+    def _update_fade_in_opacity(self, win):
+        """Smooth appearance of the model during the reverse transformation"""
+        if not hasattr(win, 'transformMovie') or not win.transformMovie:
+            return
+
+        current_frame = win.transformMovie.currentFrameNumber()
+        total_frames = win.transformMovie.frameCount()
+
+        # Full appearance by 80% of animation
+        fade_end = int(total_frames * 0.8)
+
+        if current_frame >= fade_end:
+            opacity = 1.0
+        else:
+            # Quadratic curve for smooth effect
+            progress = current_frame / fade_end
+            opacity = min(1.0, progress ** 2)
+
+        win.canvas.SetOutputOpacity(opacity)
 
     def _play_model_animation(self, win):
         """Model animation playback"""

@@ -14,6 +14,7 @@ class TalkWidget:
         self.init_ui()
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
+        self.dialog_animation = True
         self.exp_fade_out_var = 7000
 
     # Dialog close timer
@@ -195,7 +196,8 @@ class TalkWidget:
         # Calculating the positioning
         varX, varY = self._calculate_position()
 
-        self.show_appearance_animation()
+        if self.dialog_animation:
+            self.show_appearance_animation()
 
         # Adding an image to the layout
         self.frame_layout.addWidget(self.talk_image_label)
@@ -352,13 +354,16 @@ class TalkWidget:
     def close_dialog(self):
         """Close dialog box with Animation"""
         self.dialogCloseTimer.stop()
-        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-        self.opacity_animation.setDuration(500)
-        self.opacity_animation.setStartValue(0.9)
-        self.opacity_animation.setEndValue(0.0)
-        self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Плавность анимации
-        self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Скрыть после анимации
-        QTimer.singleShot(0, self.opacity_animation.start)
+        if self.dialog_animation:
+            self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
+            self.opacity_animation.setDuration(500)
+            self.opacity_animation.setStartValue(0.9)
+            self.opacity_animation.setEndValue(0.0)
+            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Плавность анимации
+            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Скрыть после анимации
+            QTimer.singleShot(0, self.opacity_animation.start)
+        else:
+            self.close_dialog_after_animation()
 
     def close_dialog_after_animation(self):
         """Closes the dialog box after animation"""

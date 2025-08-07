@@ -143,6 +143,7 @@ class InputHandler:
                     self.win.character.state.set_stay_state()
                 else:
                     self.win.character.state.set_lost_state()
+            self.win.talk_widget.dialog_animation = True
             self.sleep_move = False
             return
 
@@ -176,6 +177,7 @@ class InputHandler:
                     and QCursor().pos() is not None):  # Дополнительная проверка
 
                 self.win.character.state.set_drag_state()
+                self.win.talk_widget.dialog_animation = False
 
         except Exception as e:
             print(f"Move handler error: {e}")

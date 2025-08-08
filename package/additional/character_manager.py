@@ -1,4 +1,4 @@
-from PySide6.QtCore import QTimer, QThread
+from PySide6.QtCore import QTimer, QThread, QPropertyAnimation, QEasingCurve, QVariantAnimation
 import random
 
 class CharacterManager:
@@ -60,6 +60,14 @@ class CharacterStateManager:
         """Set new character"""
         self.goodByeTimer.stop()
         self.character.win.talk_widget.close_dialog()
+        #self.win.anim_manager.animate_opacity(
+        #    window=self.win,
+        #    start=1.0,
+        #    end=0.0,
+        #    duration=500,
+        #    on_finished=lambda: print("HUI")
+        #)
+
 
         if hasattr(self.win, 'models_manager'):
             self.win.models_manager.update_model(self.win)

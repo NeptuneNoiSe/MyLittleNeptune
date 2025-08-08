@@ -1,6 +1,6 @@
-from PySide6.QtCore import QSize, QTimer
+from PySide6.QtCore import QSize, QTimer, QPropertyAnimation, QEasingCurve, QVariantAnimation
 from PySide6.QtGui import QMovie, Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
 
 from package import resources
 import random
@@ -477,3 +477,22 @@ class AnimationsManager:
         win.character.transform_exp_show = True
         win.character.transform_text_show = True
         win.character.expressions.set_funny_expression(fade_out=30000)
+
+    def animate_opacity(self, window, start, end, duration=500, on_finished=None):
+        """Анимация прозрачности через QVariantAnimation"""
+        anim = QVariantAnimation()
+        anim.setDuration(duration)
+        anim.setStartValue(float(start))
+        anim.setEndValue(float(end))
+
+
+        anim.setEasingCurve(QEasingCurve.OutQuad)
+
+        # Подключаем напрямую к SetOutputOpacity
+        anim.valueChanged.connect(window.canvas.SetOutputOpacity)
+
+        if on_finished:
+            anim.finished.connect(on_finished)
+
+        anim.start()
+        return anim

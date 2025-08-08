@@ -418,7 +418,6 @@ class MainWindow(QOpenGLWidget):
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
 
-    # FIXME: После перехода на Canvas для управления прозрачностью были обнаружены черные границы на краях модели
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""
         if self.model:
@@ -426,7 +425,7 @@ class MainWindow(QOpenGLWidget):
             self.canvas.SetSize(w, h)
 
     def on_draw(self):
-        live2d.clearBuffer()
+        live2d.clearBuffer(1,1,1,0)
         self.model.Draw()
 
     def paintGL(self) -> None:
@@ -434,6 +433,8 @@ class MainWindow(QOpenGLWidget):
         if self.model:
             live2d.clearBuffer()
             self.canvas.Draw(self.on_draw)
+            # Direct rendering of the model bypassing the "live2d Canvas"
+            # self.model.Draw()
 
         if not self.model:
             return
@@ -496,6 +497,12 @@ class MainWindow(QOpenGLWidget):
             return
         if self.settings_update_state:
             settings.updateSettings()
+
+        # Test canvas opacity
+        #self.total_radius += self.radius_per_frame
+        #v = abs(math.cos(self.total_radius))
+        # change opacity
+        #self.canvas.SetOutputOpacity(v)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check

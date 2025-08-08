@@ -115,8 +115,13 @@ class ModelsManager:
             new_x = current_pos.x() - (new_width - old_width) // 2
 
             # Protection from going beyond the boundaries of the screen
+            window_width = win.width()
             screen_geom = win.screen().availableGeometry()
-            new_x = max(screen_geom.left(), min(new_x, screen_geom.right() - new_width))
+            if window_width > screen_geom.width():
+                new_x = screen_geom.left() - (window_width - screen_geom.width()) // 2
+            else:
+                new_x = max(screen_geom.left(), min(new_x, screen_geom.right() - new_width))
+
             new_y = max(screen_geom.top(), min(new_y, screen_geom.bottom() - new_height))
 
             win.move(new_x, new_y)

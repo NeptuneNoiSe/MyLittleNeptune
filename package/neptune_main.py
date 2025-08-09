@@ -225,7 +225,7 @@ class MainWindow(QOpenGLWidget):
             self.a_scale = 1
 
         # Windows flags
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     def _init_model_params(self):
         """Initialize Model Parameters"""
@@ -400,23 +400,27 @@ class MainWindow(QOpenGLWidget):
         self.model = self.resource_manager.get_model(self.character_name)
         self.apply_character_config(self.character_name)
         self.canvas = Canvas()
-        self.startTimer(int(1000 / 60)) # FPS Set
+        self.target_fps = 60  # Сохраняем значение FPS
+        self.startTimer(int(1000 / self.target_fps))
         self.functions.setLanguage()
         self.model.CreateRenderer(2)
+        self.canvas.SetOutputOpacity(0)
         self.init_classes()
         self.last_update_time = time.time()
         self.character = CharacterManager(self)
         self.talk_widget = TalkWidget(self)
         self.talk_widget.show_talk()
-        self.character.state.set_greeting_state()
+        self.character.state.set_greeting_state(is_first_run=True)
 
         print(self.name + ": " + self.text + self.kaomoji)
 
     def init_classes(self):
         """Initialize classes"""
         self.anim_manager = AnimationsManager(self.model)
+        self.anim_manager.set_target_fps(self.target_fps)  # Передаем в менеджер
         self.change_character(self.character_name)
         self.anim_manager.set_logging(self.callbacks_log)
+
 
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""
@@ -425,7 +429,7 @@ class MainWindow(QOpenGLWidget):
             self.canvas.SetSize(w, h)
 
     def on_draw(self):
-        live2d.clearBuffer(1,1,1,0)
+        live2d.clearBuffer()
         self.model.Draw()
 
     def paintGL(self) -> None:
@@ -513,8 +517,6 @@ class MainWindow(QOpenGLWidget):
             current_time = time.time()
             self.anim_manager.update_idle(current_time)
 
-        self.anim_manager.check_animation_progress(self)
-
         self.talk_widget.change_talk_widget_side()
 
         if self.isInL2DArea(local_x, local_y):
@@ -582,6 +584,8 @@ class MainWindow(QOpenGLWidget):
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         """Mouse mouse move event"""
+        if event.buttons() & Qt.RightButton:
+            return
         if self.clickInLA and not self.input_handler.input_lock:
             global_pos = event.globalPosition().toPoint()
             self.move(global_pos.x() - self.clickX - 10,
@@ -1195,11 +1199,14 @@ if __name__ == "__main__":
     live2d.init()
     format = QSurfaceFormat.defaultFormat()
     format.setSwapInterval(0)
+    format.setAlphaBufferSize(8)
+    format.setRenderableType(QSurfaceFormat.OpenGL)
+    format.setSwapBehavior(QSurfaceFormat.DoubleBuffer)
     QSurfaceFormat.setDefaultFormat(format)
 
     app = QApplication(sys.argv)
     win = MainWindow()
-
+    win.setFormat(format)
     settings = SettingsWindow()
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))

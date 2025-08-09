@@ -53,29 +53,42 @@ class CharacterStateManager:
 
     @property
     def win(self):
-        """Всегда актуальная ссылка на окно"""
+        """Actual window link"""
         return self.character.win
 
     def set_new_character(self):
         """Set new character"""
         self.goodByeTimer.stop()
         self.character.win.talk_widget.close_dialog()
-        #self.win.anim_manager.animate_opacity(
-        #    window=self.win,
-        #    start=1.0,
-        #    end=0.0,
-        #    duration=500,
-        #    on_finished=lambda: print("HUI")
-        #)
+        self.win.anim_manager.animate_opacity(win=self.win,
+                                              start=1.0,
+                                              end=0.0,
+                                              duration=500,
+                                              easing="out_quad",
+                                              on_finished= self._after_animation_fade_out_callback)
 
-
+    def _after_animation_fade_out_callback(self):
+        """Runs after the animation is completed"""
         if hasattr(self.win, 'models_manager'):
             self.win.models_manager.update_model(self.win)
         self.set_greeting_state()
         self.win.talk_widget.talk_update = True
 
-    def set_greeting_state(self):
-        """Character say hello"""
+    def set_greeting_state(self, is_first_run: bool = False) -> None:
+        """Starts the animation of the character's appearance with a callback only for repeated launches.
+        Args:
+            is_first_run: If True, the callback is not called (for the first character display).
+        """
+        self.win.anim_manager.animate_opacity(win=self.win,
+                                              start=0.0,
+                                              end=1.0,
+                                              duration=1500,
+                                              easing="in_quad",
+                                              on_finished=None if is_first_run else self._after_animation_fade_in_callback)
+
+
+    def _after_animation_fade_in_callback(self):
+        """Runs after the animation is completed"""
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_greeting_text()
 
@@ -155,6 +168,16 @@ class CharacterStateManager:
         if quit == 'Yes':
             self.character.expressions.set_cry_expression()
             self.character.character_text.set_quit_text()
+            self.win.talk_widget.is_quitting = True
+            QTimer.singleShot(3000, lambda: (
+                self.win.talk_widget.close_dialog(),
+                self.win.anim_manager.animate_opacity(win=self.win,
+                                                      start=1.0,
+                                                      end=0.0,
+                                                      duration=500,
+                                                      easing="out_quad",
+                                                      on_finished=lambda: exit(0))))
+
         elif quit == 'No':
             self.character.expressions.set_happy_expression(fade_out=5000)
             self.character.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
@@ -219,11 +242,11 @@ class CharacterTiredController:
         self.character.win.on_mouse_anim = value
 
     def should_enable_idle_anim(self) -> bool:
-        """Проверяет, можно ли включить idle-анимацию."""
+        """Checks whether idle animation can be enabled."""
         return self.timer_count <= self.sleep_v
 
     def should_enable_mouse_anim(self) -> bool:
-        """Проверяет, можно ли включить анимацию при наведении мыши."""
+        """Checks whether animation can be enabled on mouse hover."""
         return self.timer_count <= self.sleep_v
 
     def reset_timer(self):

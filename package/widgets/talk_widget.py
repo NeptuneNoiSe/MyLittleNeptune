@@ -16,6 +16,7 @@ class TalkWidget:
         self.talk_update = True
         self.dialog_animation = True
         self.exp_fade_out_var = 7000
+        self.is_quitting = True
 
     # Dialog close timer
     def dialog_timer(self, interval: int | None = None) -> None:
@@ -31,6 +32,8 @@ class TalkWidget:
         # Определяем актуальный интервал
         if interval == None:
             current_interval = self.exp_fade_out_var if self.exp_fade_out_var != std_interval else std_interval
+        elif self.is_quitting:
+            current_interval = 3000
         else:
             current_interval = interval
 

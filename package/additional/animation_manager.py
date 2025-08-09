@@ -17,6 +17,10 @@ class AnimationsManager:
         self.model = model
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self._log_callbacks = False
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self._on_animation_tick)
+        self.target_fps = 60  # Default FPS Set
+        self.frame_delay = int(1000 / 60)  # Auto Calculate
         self.blink_enabled = True
         self.last_update_time = 0
         self.blinkProgress = 0.0
@@ -38,10 +42,16 @@ class AnimationsManager:
             'override_blink': True  # A critical flag
         }
         self.models_manager = ModelsManager
-        self.transform_lock = False
+
+        # Transform Animation State
         self.transform_text = False
         self.transform = False
+        self.current_animation_win = None
+        self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
+        self.transform_lock = False
+
         self._load_extra_motions()
+        self.anim = QVariantAnimation()
 
     @property
     def character_name(self):
@@ -53,6 +63,13 @@ class AnimationsManager:
         if name in self.profiles and name != self._current_character:
             self._current_character = name
             data = self.profiles[name]
+
+    def set_target_fps(self, fps):
+        """Update animation FPS"""
+        self.target_fps = fps
+        self.frame_delay = int(1000 / fps)  # 16.67 ms for 60 FPS
+        if self.animation_timer.isActive():
+            self.animation_timer.setInterval(self.frame_delay)
 
     def set_logging(self, enabled: bool):
         """on/off logs callback's"""
@@ -281,144 +298,138 @@ class AnimationsManager:
         self._play_profile_animation(profile['animations']['default'])
         return True
 
-    # TODO: [WIP] Добавлена функция изменения прозрачности при трансформации персонажа.
-    #  Требуется: дальнейшее тестирование: Возможно мерцание персонажа при изменении уровня прозрачности
     # Transform Animations
-    def check_animation_progress(self, win):
-        """Checking animation progress with opacity control"""
-        if hasattr(win, 'transformMovie'):
-            current_frame = win.transformMovie.currentFrameNumber()
-            total_frames = win.transformMovie.frameCount()
+    def play_transform_animation(self, win):
+        """Start full transformation sequence"""
+        if self.animation_phase != 0:
+            return
 
-            # Closing the dialog in the middle of the animation
-            if win.transform and current_frame >= (total_frames - 3) / 2:
-                win.talk_widget.close_dialog_after_animation()
+        self.current_animation_win = win
+        self.animation_phase = 1
+        win.input_handler.input_lock = True
+        self.transform = win.transform = True
+        win.canvas.SetOutputOpacity(1.0)
 
-                # Smooth disappearance of the model
-                fade_start = int(total_frames * 0.5)
-                fade_progress = min(1.0, (current_frame - fade_start) / (total_frames - fade_start - 3))
-                opacity = 1.0 - fade_progress
-                win.canvas.SetOutputOpacity(opacity)
+        # Setup transform_in animation
+        self._play_model_animation(win)
+        win.transformMovie = QMovie(self.resource_manager.load_animation("transform_in"))
+        win.transformLabel.setMovie(win.transformMovie)
+        win.transformMovie.setCacheMode(QMovie.CacheAll)
+        win.transformLabel.raise_()
+        win.transformLabel.movie().setScaledSize(self._calculate_animation_size(win))
+        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
+        win.transformMovie.start()
+        win.transformLabel.show()
 
-            # Finish Animation
-            if current_frame >= total_frames - 3:
-                if win.transform:
-                    win.transformLabel.movie().setScaledSize(QSize(1, 1))
-                    win.transformMovie.stop()
-                    win.transformLabel.close()
-                    self.handle_transform_completion(win)
-                else:
-                    # Restoring transparency
-                    win.canvas.SetOutputOpacity(1.0)
-                    self._finalize_animation(win)
+        self.animation_timer.start(16)  # 60 FPS
 
-    def _finalize_animation(self, win):
-        """Animation completion"""
+    def _on_animation_tick(self):
+        if not self.current_animation_win:
+            self.animation_timer.stop()
+            return
+
+        win = self.current_animation_win
+
+        if self.animation_phase == 1:
+            self._process_fade_out(win)
+        elif self.animation_phase == 2:
+            self._execute_model_swap(win)
+            self.animation_phase = 3
+            self._init_fade_in(win)
+        elif self.animation_phase == 3:
+            self._process_fade_in(win)
+
+    def _process_fade_out(self, win):
+        """Handle transform_in animation and opacity fade"""
+        current_frame = win.transformMovie.currentFrameNumber()
+        total_frames = win.transformMovie.frameCount()
+
+        # Smooth fade from 70% to 100% animation
+        fade_start = int(total_frames * 0.70)
+        if current_frame >= fade_start:
+            progress = (current_frame - fade_start) / (total_frames - fade_start)
+            win.canvas.SetOutputOpacity(1.0 - progress)
+
+        # When fade out completes, move to model swap
+        if current_frame >= total_frames - 3:
+            win.transformMovie.stop()
+            self.animation_phase = 2
+         # Close dialog
+        if current_frame >= (total_frames - 3) / 2:
+            win.talk_widget.close_dialog_after_animation()
+
+    def _execute_model_swap(self, win):
+        """Execute model transformation using your existing methods"""
+        try:
+            if not win.hdd_form:
+                self._transform_to_hdd(win)  # Your HDD transformation
+            else:
+                self._transform_to_regular(win)  # Your regular transformation
+        finally:
+            self._transform_animation_reset(win)
+
+    def _transform_animation_reset(self, win):
+        win.transformLabel.movie().setScaledSize(QSize(1, 1))
         win.transformMovie.stop()
         win.transformLabel.close()
-        win.transformLabel.clear()
-        win.input_handler.input_lock = False
-        win.character.state.set_transformed_state()
 
-    def play_transform_animation(self, win):
-        """Starting the transformation animation with fade-out"""
-        win.input_handler.input_lock = True
-
-        # Initializing transparency
-        win.canvas.SetOutputOpacity(1.0)  # Starting with full visibility
-
-        self._play_model_animation(win)
-
-        # Initializing QMovie
-        t_anim_in = self.resource_manager.load_animation("transform_in")
-        win.transformMovie = QMovie(t_anim_in)
+    def _init_fade_in(self, win):
+        """Initialize transform_out animation"""
+        win.transformMovie = QMovie(self.resource_manager.load_animation("transform_out"))
         win.transformLabel.setMovie(win.transformMovie)
-        win.transformLabel.raise_()
+        win.transformMovie.setCacheMode(QMovie.CacheAll)
         win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size(win)
         )
         win.transformMovie.start()
         win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
         win.transformLabel.show()
-        self.transform = win.transform = True
-        self.transform_lock = 0
 
-        # Connecting a frame handler for smooth fade
-        win.transformMovie.frameChanged.connect(
-            lambda: self._update_fade_out_opacity(win)
-        )
+        win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
 
-    def _update_fade_out_opacity(self, win):
-        """Smooth disappearance of the model during the transformation"""
-        if not hasattr(win, 'transformMovie') or not win.transformMovie:
-            return
-
+    def _process_fade_in(self, win):
+        """Handle transform_out animation with delayed opacity restore"""
         current_frame = win.transformMovie.currentFrameNumber()
         total_frames = win.transformMovie.frameCount()
 
-        # Start fading after 50% animation
-        fade_start = int(total_frames * 0.5)
+        # Starting the appearance with 15% animation
+        fade_start = int(total_frames * 0.15)
+        fade_end = int(total_frames * 0.7)  # Finalize on 70%
 
         if current_frame < fade_start:
-            opacity = 1.0
+            # Transparency Delay from 0% to 25% of the animation
+            win.canvas.SetOutputOpacity(0.0)
+        elif fade_start <= current_frame <= fade_end:
+            # Smooth appearance from 25% to 70%
+            progress = (current_frame - fade_start) / (fade_end - fade_start)
+            win.canvas.SetOutputOpacity(progress)
         else:
-            # Smooth attenuation with a quadratic curve
-            progress = (current_frame - fade_start) / (total_frames - fade_start)
-            opacity = max(0.0, 1.0 - progress ** 2)
+            # After 70%, set 100% transparency
+            win.canvas.SetOutputOpacity(1.0)
 
-        win.canvas.SetOutputOpacity(opacity)
+        # Final Animation with end
+        if current_frame >= total_frames - 3:
+            self._finalize_transformation(win)
 
-    def handle_transform_completion(self, win):
-        """Ending the transformation animation with fade-in"""
-        if not win.hdd_form and self.transform_lock == 0:
-            self._transform_to_hdd(win)
-        elif win.hdd_form and self.transform_lock == 0:
-            self._transform_to_regular(win)
+    def _finalize_transformation(self, win):
+        """Cleanup after transformation"""
+        try:
+            win.transformMovie.stop()
+            win.transformLabel.close()
+            win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
+            win.input_handler.input_lock = False
+            win.transform_lock = False
+            win.talk_widget.talk_update = True
+            self.transform = win.transform = False
+            win.character.state.set_transformed_state()
 
-        # Starting the reverse animation
-        win.transformMovie = None
-        t_anim_out = self.resource_manager.load_animation("transform_out")
-        win.transformMovie = QMovie(t_anim_out)
-
-        # Initial transparency 0
-        win.canvas.SetOutputOpacity(0.0)
-
-        # Setting up animations
-        win.transformLabel.setMovie(win.transformMovie)
-        win.transformLabel.movie().setScaledSize(
-            self._calculate_animation_size(win)
-        )
-        win.transformMovie.start()
-        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
-        win.transformLabel.show()
-
-        # Connecting a handler for smooth appearance
-        win.transformMovie.frameChanged.connect(
-            lambda: self._update_fade_in_opacity(win)
-        )
-
-        self.transform = win.transform = False
-        win.talk_widget.talk_update = True
-
-    def _update_fade_in_opacity(self, win):
-        """Smooth appearance of the model during the reverse transformation"""
-        if not hasattr(win, 'transformMovie') or not win.transformMovie:
-            return
-
-        current_frame = win.transformMovie.currentFrameNumber()
-        total_frames = win.transformMovie.frameCount()
-
-        # Full appearance by 80% of animation
-        fade_end = int(total_frames * 0.8)
-
-        if current_frame >= fade_end:
-            opacity = 1.0
-        else:
-            # Quadratic curve for smooth effect
-            progress = current_frame / fade_end
-            opacity = min(1.0, progress ** 2)
-
-        win.canvas.SetOutputOpacity(opacity)
+            # Reset transformation flags
+            win.character.transform_exp_show = False
+            win.character.transform_text_show = False
+        finally:
+            self.animation_timer.stop()
+            self.current_animation_win = None
+            self.animation_phase = 0
 
     def _play_model_animation(self, win):
         """Model animation playback"""
@@ -478,21 +489,36 @@ class AnimationsManager:
         win.character.transform_text_show = True
         win.character.expressions.set_funny_expression(fade_out=30000)
 
-    def animate_opacity(self, window, start, end, duration=500, on_finished=None):
-        """Анимация прозрачности через QVariantAnimation"""
-        anim = QVariantAnimation()
-        anim.setDuration(duration)
-        anim.setStartValue(float(start))
-        anim.setEndValue(float(end))
+    def animate_opacity(self, win, start, end, duration=500, easing="linear", on_finished=None):
+        """Animation of character transparency via QVariantAnimation"""
+        # Set base params
+        self.anim.setDuration(duration)
+        self.anim.setStartValue(float(start))
+        self.anim.setEndValue(float(end))
 
+        # Process easing curve
+        if not hasattr(self, 'EASING_TYPES'):
+            self.EASING_TYPES = {
+                "linear": QEasingCurve.Linear,
+                "in_quad": QEasingCurve.InQuad,
+                "out_quad": QEasingCurve.OutQuad,
+                "in_out_quad": QEasingCurve.InOutQuad,
+            }
 
-        anim.setEasingCurve(QEasingCurve.OutQuad)
+        easing_curve = self.EASING_TYPES.get(easing, QEasingCurve.Linear)
 
-        # Подключаем напрямую к SetOutputOpacity
-        anim.valueChanged.connect(window.canvas.SetOutputOpacity)
+        # Set Var SetOutputOpacity
+        self.anim.valueChanged.connect(win.canvas.SetOutputOpacity)
 
-        if on_finished:
-            anim.finished.connect(on_finished)
+        #  on_finished connect
+        if hasattr(self, "_last_finished_slot"):
+            try:
+                self.anim.finished.disconnect(self._last_finished_slot)
+            except RuntimeError:
+                pass
 
-        anim.start()
-        return anim
+        if callable(on_finished):
+            self.anim.finished.connect(on_finished)
+            self._last_finished_slot = on_finished  # Сохраняем для будущего отключения
+
+        self.anim.start()

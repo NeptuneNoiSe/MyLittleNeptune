@@ -209,7 +209,6 @@ class ActionHandler:
         )
 
         if answer == QMessageBox.StandardButton.Yes:
-            QTimer.singleShot(3000, lambda: exit(0))
             self.win.character.state.set_quit_state(quit='Yes')
         else:
             self.win.character.tired_controller.timer_count = 1

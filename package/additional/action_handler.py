@@ -27,7 +27,7 @@ class ActionHandler:
         if self.win.character.tired_state.condition == "Sleep":
             return
 
-        self.win.anim_manager.play_transform_animation(self.win)
+        self.win.animation_manager.transform_animation_start()
         self.win.character.tired_controller.timer_count = 1
         self.win.settings_close()
         self.win.character.state.set_transform_state()

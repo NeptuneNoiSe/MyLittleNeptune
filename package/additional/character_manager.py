@@ -60,12 +60,13 @@ class CharacterStateManager:
         """Set new character"""
         self.goodByeTimer.stop()
         self.character.win.talk_widget.close_dialog()
-        self.win.anim_manager.animate_opacity(win=self.win,
-                                              start=1.0,
-                                              end=0.0,
-                                              duration=500,
-                                              easing="out_quad",
-                                              on_finished= self._after_animation_fade_out_callback)
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            win=self.win,
+            start=1.0,
+            end=0.0,
+            duration=500,
+            easing="out_quad",
+            on_finished= self._after_animation_fade_out_callback)
 
     def _after_animation_fade_out_callback(self):
         """Runs after the animation is completed"""
@@ -79,12 +80,13 @@ class CharacterStateManager:
         Args:
             is_first_run: If True, the callback is not called (for the first character display).
         """
-        self.win.anim_manager.animate_opacity(win=self.win,
-                                              start=0.0,
-                                              end=1.0,
-                                              duration=1500,
-                                              easing="in_quad",
-                                              on_finished=None if is_first_run else self._after_animation_fade_in_callback)
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            win=self.win,
+            start=0.0,
+            end=1.0,
+            duration=1500,
+            easing="in_quad",
+            on_finished=None if is_first_run else self._after_animation_fade_in_callback)
 
 
     def _after_animation_fade_in_callback(self):
@@ -171,12 +173,13 @@ class CharacterStateManager:
             self.win.talk_widget.is_quitting = True
             QTimer.singleShot(3000, lambda: (
                 self.win.talk_widget.close_dialog(),
-                self.win.anim_manager.animate_opacity(win=self.win,
-                                                      start=1.0,
-                                                      end=0.0,
-                                                      duration=500,
-                                                      easing="out_quad",
-                                                      on_finished=lambda: exit(0))))
+                self.win.animation_manager.opacity_animator.animate_opacity(
+                    win=self.win,
+                    start=1.0,
+                    end=0.0,
+                    duration=500,
+                    easing="out_quad",
+                    on_finished=lambda: exit(0))))
 
         elif quit == 'No':
             self.character.expressions.set_happy_expression(fade_out=5000)
@@ -298,7 +301,7 @@ class CharacterTiredController:
         self._start_timer()
 
     def sleep_function(self):
-        self.character.win.anim_manager.set_sleep_state(True)
+        self.character.win.animation_manager.set_sleep_state(True)
         self.idle_anim = False
         self.wake_up = False
         self.sleep = True
@@ -312,7 +315,7 @@ class CharacterTiredController:
         self.timer_count = 0
         self.character.tired_state.condition = None
         self.character.tired_state.set_idle_state()
-        self.character.win.anim_manager.set_sleep_state(False)
+        self.character.win.animation_manager.set_sleep_state(False)
         self.idle_anim = True
         self.wake_up = True
         self.sleep = False
@@ -632,7 +635,7 @@ class CharacterMovementsManager:
             part for part in self.character.model.HitPart(self.character.win.posX, self.character.win.posY, True) or []
             if part  # Filtering None values
         }
-        self.character.win.anim_manager.handle_hit(hit_parts)
+        self.character.win.animation_manager.handle_hit(hit_parts)
 
         #if not self.tired_anim.sleep and not self.character.win.input_lock:
         #    self._update_character_expression()

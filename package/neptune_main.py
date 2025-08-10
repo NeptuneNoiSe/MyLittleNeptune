@@ -184,6 +184,11 @@ class MainWindow(QOpenGLWidget):
         self.radius_per_frame = math.pi * 0.5 / 120
         self.total_radius = 0
 
+        self.b_red = 0.0
+        self.b_green = 0.0
+        self.b_blue = 0.0
+        self.b_alpha = 0.0
+
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
@@ -194,7 +199,7 @@ class MainWindow(QOpenGLWidget):
         self.talk_widget = None
         self.functions = Functions(self, self.model)
         self.input_handler = InputHandler(self, self.model)
-        self.anim_manager = None
+        self.animation_manager = None
         self.lang = None
         self.talk_update = None
         self.models_manager = ModelsManager(
@@ -331,7 +336,7 @@ class MainWindow(QOpenGLWidget):
 
     def change_character(self, name: str):
         """Set character name in Animation Manager """
-        self.anim_manager.character_name = name
+        self.animation_manager.character_name = name
 
     def apply_character_config(self, character_name: str) -> None:
         """proxy method"""
@@ -416,11 +421,10 @@ class MainWindow(QOpenGLWidget):
 
     def init_classes(self):
         """Initialize classes"""
-        self.anim_manager = AnimationsManager(self.model)
-        self.anim_manager.set_target_fps(self.target_fps)  # Передаем в менеджер
+        self.animation_manager = AnimationsManager(self, self.model)
+        self.animation_manager.set_target_fps(self.target_fps)  # Передаем в менеджер
         self.change_character(self.character_name)
-        self.anim_manager.set_logging(self.callbacks_log)
-
+        self.animation_manager.set_logging(self.callbacks_log)
 
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""
@@ -429,7 +433,7 @@ class MainWindow(QOpenGLWidget):
             self.canvas.SetSize(w, h)
 
     def on_draw(self):
-        live2d.clearBuffer()
+        live2d.clearBuffer(self.b_red, self.b_green, self.b_blue, self.b_alpha)
         self.model.Draw()
 
     def paintGL(self) -> None:
@@ -461,8 +465,8 @@ class MainWindow(QOpenGLWidget):
                     motion_updated = False
 
             auto_blink = self.app_config.auto_blink
-            self.anim_manager.set_blink_enabled(auto_blink)
-            self.anim_manager.update_blink(delta_secs) if auto_blink else None
+            self.animation_manager.blink_animator.set_blink_enabled(auto_blink)
+            self.animation_manager.blink_animator.update_blink(delta_secs) if auto_blink else None
 
             # Save Params
             self.model.SaveParameters()
@@ -515,7 +519,7 @@ class MainWindow(QOpenGLWidget):
 
         if self.idle_switch and self.idle_anim:
             current_time = time.time()
-            self.anim_manager.update_idle(current_time)
+            self.animation_manager.update_idle(current_time)
 
         self.talk_widget.change_talk_widget_side()
 
@@ -527,7 +531,7 @@ class MainWindow(QOpenGLWidget):
             self.on_mouse_anim = self.character.tired_controller.should_enable_mouse_anim()
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
-                self.anim_manager.play_animation(
+                self.animation_manager.play_animation(
                     model=self.model,
                     anim_type='RandomMotion',
                     group_or_id="OnMouse",

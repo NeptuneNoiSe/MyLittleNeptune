@@ -1,4 +1,5 @@
-from PySide6.QtCore import QSize, QTimer, QPropertyAnimation, QEasingCurve, QVariantAnimation
+from PySide6.QtCore import QSize, QObject, QTimer, QPropertyAnimation, QEasingCurve, QVariantAnimation, \
+    QParallelAnimationGroup
 from PySide6.QtGui import QMovie, Qt
 from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
 
@@ -13,45 +14,28 @@ from package.additional.models_manager import ModelsManager
 from package.additional.resource_manager import ResourceManager
 
 class AnimationsManager:
-    def __init__(self, model):
+    def __init__(self, win, model):
         self.model = model
+        self.win = win
+        self.transform_animator = TransformAnimator(self)
+        self.blink_animator = BlinkAnimator(self)
+        self.opacity_animator = OpacityAnimator(self)
+        self.color_animator = ColorAnimator(self)
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
+        self.models_manager = ModelsManager
         self._log_callbacks = False
-        self.animation_timer = QTimer()
-        self.animation_timer.timeout.connect(self._on_animation_tick)
+
         self.target_fps = 60  # Default FPS Set
         self.frame_delay = int(1000 / 60)  # Auto Calculate
-        self.blink_enabled = True
-        self.last_update_time = 0
-        self.blinkProgress = 0.0
-        self.nextBlinkInterval = 0.0
-        self.lastBlinkTime = 0.0
-        self.isBlinking = True
+
         self._is_idle_playing = False
         self._last_idle_time = 0.0
         self._next_idle_delay = 0.0
         self.profiles = self._load_profiles()
         self._current_character = None
         self._active_model = None
-        self._blink_state = {
-            'enabled': True,
-            'is_active': False,
-            'progress': 0.0,
-            'last_blink': time.time(),
-            'next_delay': self._random_blink_delay(),
-            'override_blink': True  # A critical flag
-        }
-        self.models_manager = ModelsManager
-
-        # Transform Animation State
-        self.transform_text = False
-        self.transform = False
-        self.current_animation_win = None
-        self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
-        self.transform_lock = False
 
         self._load_extra_motions()
-        self.anim = QVariantAnimation()
 
     @property
     def character_name(self):
@@ -64,16 +48,19 @@ class AnimationsManager:
             self._current_character = name
             data = self.profiles[name]
 
+    def set_logging(self, enabled: bool):
+        """on/off logs callback's"""
+        self._log_callbacks = enabled
+
     def set_target_fps(self, fps):
         """Update animation FPS"""
         self.target_fps = fps
         self.frame_delay = int(1000 / fps)  # 16.67 ms for 60 FPS
-        if self.animation_timer.isActive():
-            self.animation_timer.setInterval(self.frame_delay)
+        if self.transform_animator.animation_timer.isActive():
+            self.transform_animator.animation_timer.setInterval(self.frame_delay)
 
-    def set_logging(self, enabled: bool):
-        """on/off logs callback's"""
-        self._log_callbacks = enabled
+    def transform_animation_start(self):
+        self.transform_animator.play_transform_animation()
 
     def _load_extra_motions(self):
         """Loads extra motions"""
@@ -91,74 +78,6 @@ class AnimationsManager:
                 char['hit_zones'] = {k: set(v) for k, v in char['hit_zones'].items()}
             return data
 
-    # AutoBlink Function
-    def update_blink(self, delta_time: float):
-        """Main Blink Logic"""
-        if not self._blink_state['enabled']:
-            self._reset_blink_state()
-            return
-
-        # Run new blink logic
-        if not self._blink_state['is_active']:
-            if time.time() - self._blink_state['last_blink'] > self._blink_state['next_delay']:
-                self._start_new_blink()
-
-        # Blink animation
-        if self._blink_state['is_active']:
-            self._update_blink_animation(delta_time)
-
-    def _update_blink_animation(self, delta_time):
-        """Update blink progress"""
-        state = self._blink_state
-        state['progress'] += delta_time * 0.5
-
-        if state['progress'] >= 1.0:
-            self._reset_blink_state()
-        else:
-            # Sinusoidal animation
-            if state['progress'] < 0.4:
-                eye_open = 1.0 - math.sin(state['progress'] * math.pi * 0.25)
-            else:
-                eye_open = math.sin((state['progress'] - 0.4) * math.pi * 0.833)
-
-            # We apply it with a small spread
-            self._set_eye_params(eye_open)
-
-    def _set_eye_params(self, base_value: float):
-        """Save apply eyes parameters"""
-        if self._blink_state['override_blink']:
-            self.model.SetParameterValueById("ParamEyeLOpen",
-                                             base_value * random.uniform(0.95, 1.0))
-            self.model.SetParameterValueById("ParamEyeROpen",
-                                             base_value * random.uniform(0.98, 1.0))
-
-    def _start_new_blink(self):
-        """Initialize new blink"""
-        self._blink_state.update({
-            'is_active': True,
-            'progress': 0.0,
-            'last_blink': time.time(),
-            'next_delay': self._random_blink_delay()
-        })
-
-    def _reset_blink_state(self):
-        """Full Reset State"""
-        self._blink_state.update({
-            'is_active': False,
-            'progress': 0.0
-        })
-        # if not self._blink_state['enabled']:
-        #    self._set_eye_params(1.0)  # Force eyes open
-
-    def set_blink_enabled(self, enabled: bool):
-        """Blink system switch"""
-        self._blink_state['enabled'] = enabled
-        if not enabled:
-            self._reset_blink_state()
-
-    def _random_blink_delay(self):
-        """Generate Random Interval"""
-        return random.uniform(2.0, 5.0) if random.random() < 0.7 else random.uniform(6.0, 10.0)
 
     def play_animation(self,model, anim_type: str, group_or_id, no=None, priority=None,
                        custom_start=None, custom_finish=None):
@@ -298,196 +217,171 @@ class AnimationsManager:
         self._play_profile_animation(profile['animations']['default'])
         return True
 
-    # Transform Animations
-    def play_transform_animation(self, win):
-        """Start full transformation sequence"""
-        if self.animation_phase != 0:
-            return
 
-        self.current_animation_win = win
-        self.animation_phase = 1
-        win.input_handler.input_lock = True
-        self.transform = win.transform = True
-        win.canvas.SetOutputOpacity(1.0)
+    #Color Animations
+    def start_rainbow_effect(self, speed=1.0):
+        """Запуск эффекта радуги"""
+        self.color_animator.start(speed)
 
-        # Setup transform_in animation
-        self._play_model_animation(win)
-        win.transformMovie = QMovie(self.resource_manager.load_animation("transform_in"))
-        win.transformLabel.setMovie(win.transformMovie)
-        win.transformMovie.setCacheMode(QMovie.CacheAll)
-        win.transformLabel.raise_()
-        win.transformLabel.movie().setScaledSize(self._calculate_animation_size(win))
-        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
-        win.transformMovie.start()
-        win.transformLabel.show()
+    def stop_rainbow_effect(self, smooth=True):
+        """Остановка эффекта"""
+        self.color_animator.stop(smooth)
 
-        self.animation_timer.start(16)  # 60 FPS
+    def set_solid_color(self, r, g, b, fade_duration = 0):
+        """Установка статичного цвета"""
+        self.color_animator.set_solid_color(r, g, b, fade_duration)
 
-    def _on_animation_tick(self):
-        if not self.current_animation_win:
-            self.animation_timer.stop()
-            return
+    def play_fade_to_zero(self, duration: int | None = None) -> None:
+        self.color_animator.fade_to_zero(duration)
 
-        win = self.current_animation_win
+    def play_fade_to_color(self,
+                           r: int | None = 0 ,
+                           g: int | None = 0,
+                           b: int | None = 0,
+                           duration: int | None = 1000) -> None:
+        self.color_animator.fade_to_color(r,g,b,duration)
 
-        if self.animation_phase == 1:
-            self._process_fade_out(win)
-        elif self.animation_phase == 2:
-            self._execute_model_swap(win)
-            self.animation_phase = 3
-            self._init_fade_in(win)
-        elif self.animation_phase == 3:
-            self._process_fade_in(win)
+    def enable_pulse(self, enable=True, speed=5):
+        """Включение/выключение пульсации"""
+        if enable:
+            def pulse_update():
+                pulse_val = (math.sin(time.time() * speed) + 1) / 2  # 0-1
+                self.win.b_red *= pulse_val
+                self.win.b_green *= pulse_val
+                self.win.b_blue *= pulse_val
 
-    def _process_fade_out(self, win):
-        """Handle transform_in animation and opacity fade"""
-        current_frame = win.transformMovie.currentFrameNumber()
-        total_frames = win.transformMovie.frameCount()
-
-        # Smooth fade from 70% to 100% animation
-        fade_start = int(total_frames * 0.70)
-        if current_frame >= fade_start:
-            progress = (current_frame - fade_start) / (total_frames - fade_start)
-            win.canvas.SetOutputOpacity(1.0 - progress)
-
-        # When fade out completes, move to model swap
-        if current_frame >= total_frames - 3:
-            win.transformMovie.stop()
-            self.animation_phase = 2
-         # Close dialog
-        if current_frame >= (total_frames - 3) / 2:
-            win.talk_widget.close_dialog_after_animation()
-
-    def _execute_model_swap(self, win):
-        """Execute model transformation using your existing methods"""
-        try:
-            if not win.hdd_form:
-                self._transform_to_hdd(win)  # Your HDD transformation
-            else:
-                self._transform_to_regular(win)  # Your regular transformation
-        finally:
-            self._transform_animation_reset(win)
-
-    def _transform_animation_reset(self, win):
-        win.transformLabel.movie().setScaledSize(QSize(1, 1))
-        win.transformMovie.stop()
-        win.transformLabel.close()
-
-    def _init_fade_in(self, win):
-        """Initialize transform_out animation"""
-        win.transformMovie = QMovie(self.resource_manager.load_animation("transform_out"))
-        win.transformLabel.setMovie(win.transformMovie)
-        win.transformMovie.setCacheMode(QMovie.CacheAll)
-        win.transformLabel.movie().setScaledSize(
-            self._calculate_animation_size(win)
-        )
-        win.transformMovie.start()
-        win.transformLabel.move(int(win.trm_mx * win.models_scale), int(win.trm_my * win.models_scale))
-        win.transformLabel.show()
-
-        win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
-
-    def _process_fade_in(self, win):
-        """Handle transform_out animation with delayed opacity restore"""
-        current_frame = win.transformMovie.currentFrameNumber()
-        total_frames = win.transformMovie.frameCount()
-
-        # Starting the appearance with 15% animation
-        fade_start = int(total_frames * 0.15)
-        fade_end = int(total_frames * 0.7)  # Finalize on 70%
-
-        if current_frame < fade_start:
-            # Transparency Delay from 0% to 25% of the animation
-            win.canvas.SetOutputOpacity(0.0)
-        elif fade_start <= current_frame <= fade_end:
-            # Smooth appearance from 25% to 70%
-            progress = (current_frame - fade_start) / (fade_end - fade_start)
-            win.canvas.SetOutputOpacity(progress)
+            self.color_animator.timer.timeout.disconnect()
+            self.color_animator.timer.timeout.connect(pulse_update)
         else:
-            # After 70%, set 100% transparency
-            win.canvas.SetOutputOpacity(1.0)
+            self.color_animator.timer.timeout.disconnect()
+            self.color_animator.timer.timeout.connect(self.color_animator.update_colors)
 
-        # Final Animation with end
-        if current_frame >= total_frames - 3:
-            self._finalize_transformation(win)
+    def enable_glow(self, intensity=0.3):
+        """Добавляет эффект мягкого свечения"""
+        self.glow_intensity = max(0.1, min(1.0, intensity))
 
-    def _finalize_transformation(self, win):
-        """Cleanup after transformation"""
-        try:
-            win.transformMovie.stop()
-            win.transformLabel.close()
-            win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
-            win.input_handler.input_lock = False
-            win.transform_lock = False
-            win.talk_widget.talk_update = True
-            self.transform = win.transform = False
-            win.character.state.set_transformed_state()
-
-            # Reset transformation flags
-            win.character.transform_exp_show = False
-            win.character.transform_text_show = False
-        finally:
-            self.animation_timer.stop()
-            self.current_animation_win = None
-            self.animation_phase = 0
-
-    def _play_model_animation(self, win):
-        """Model animation playback"""
-        # Regular form processing (hdd_form=False)
-        if not win.hdd_form:
-            # Playing the transformation animation
-            win.anim_manager.play_animation(
-                model=win.model,
-                anim_type='Motion',
-                group_or_id="Unique",
-                no=0,
-                priority=live2d.MotionPriority.FORCE,
-            )
-
-    def _calculate_animation_size(self, win):
-        """Calculate animation size"""
-        return QSize(
-            int(win.w_resize + win.trm_cmx * win.models_scale),
-            int(win.h_resize + win.trm_cmy * win.models_scale)
-        )
-
-    def _transform_to_hdd(self, win):
-        """Transformation to hdd form"""
-        transformations = {
-            "Neptune": win.action_handler.on_action_purple_heart,
-            "Noire": win.action_handler.on_action_black_heart,
-            "Blanc": win.action_handler.on_action_white_heart,
-            "Vert": win.action_handler.on_action_green_heart,
-            "NepGear": win.action_handler.on_action_purple_sister,
-            "Uni": win.action_handler.on_action_black_sister,
-            "Rom": win.action_handler.on_action_white_sister_rom,
-            "Ram": win.action_handler.on_action_white_sister_ram,
+    def set_mood(self, mood):
+        """Устанавливает цветовую палитру под настроение"""
+        moods = {
+            'happy': (1.0, 0.9, 0.5),  # Тёплый жёлтый
+            'calm': (0.4, 0.7, 1.0),  # Голубой
+            'energy': (1.0, 0.2, 0.3),  # Ярко-красный
+            'magic': (0.7, 0.0, 1.0)  # Фиолетовый
         }
-        if win.character_name in transformations:
-            transformations[win.character_name]()
-        self.transform_lock = 1
-        win.character.transform_exp_show = True
-        win.character.transform_text_show = True
-        win.character.expressions.set_funny_expression(fade_out=30000)
+        self.color_anim.stop(smooth=False)
+        self.win.b_red, self.win.b_green, self.win.b_blue = moods.get(mood, (0, 0, 0))
 
-    def _transform_to_regular(self, win):
-        """Transformation to regular form"""
-        transformations = {
-            "Purple Heart": win.action_handler.on_action_neptune,
-            "Black Heart": win.action_handler.on_action_noire,
-            "White Heart": win.action_handler.on_action_blanc,
-            "Green Heart": win.action_handler.on_action_vert,
-            "Purple Sister": win.action_handler.on_action_nepgear,
-            "Black Sister": win.action_handler.on_action_uni,
-            "White Sister Rom": win.action_handler.on_action_rom,
-            "White Sister Ram": win.action_handler.on_action_ram,
+    def on_audio_peak(self, volume):
+        """Вызывается при аудиопиках"""
+        if self.color_anim.is_running:
+            self.win.b_red = min(1.0, self.win.b_red + volume * 0.2)
+            self.win.b_blue = min(1.0, self.win.b_blue + volume * 0.1)
+
+class BlinkAnimator:
+    def __init__(self, anim_manager):
+        self.anim_manager = anim_manager
+
+        self.blink_enabled = True
+        self.last_update_time = 0
+        self.blinkProgress = 0.0
+        self.nextBlinkInterval = 0.0
+        self.lastBlinkTime = 0.0
+        self.isBlinking = True
+
+        self._blink_state = {
+            'enabled': True,
+            'is_active': False,
+            'progress': 0.0,
+            'last_blink': time.time(),
+            'next_delay': self._random_blink_delay(),
+            'override_blink': True  # A critical flag
         }
-        if win.character_name in transformations:
-            transformations[win.character_name]()
-        self.transform_lock = 1
-        win.character.transform_exp_show = True
-        win.character.transform_text_show = True
-        win.character.expressions.set_funny_expression(fade_out=30000)
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.anim_manager.win
+
+        # AutoBlink Function
+
+    def update_blink(self, delta_time: float):
+        """Main Blink Logic"""
+        if not self._blink_state['enabled']:
+            self._reset_blink_state()
+            return
+
+        # Run new blink logic
+        if not self._blink_state['is_active']:
+            if time.time() - self._blink_state['last_blink'] > self._blink_state['next_delay']:
+                self._start_new_blink()
+
+        # Blink animation
+        if self._blink_state['is_active']:
+            self._update_blink_animation(delta_time)
+
+    def _update_blink_animation(self, delta_time):
+        """Update blink progress"""
+        state = self._blink_state
+        state['progress'] += delta_time * 0.5
+
+        if state['progress'] >= 1.0:
+            self._reset_blink_state()
+        else:
+            # Sinusoidal animation
+            if state['progress'] < 0.4:
+                eye_open = 1.0 - math.sin(state['progress'] * math.pi * 0.25)
+            else:
+                eye_open = math.sin((state['progress'] - 0.4) * math.pi * 0.833)
+
+            # We apply it with a small spread
+            self._set_eye_params(eye_open)
+
+    def _set_eye_params(self, base_value: float):
+        """Save apply eyes parameters"""
+        if self._blink_state['override_blink']:
+            self.anim_manager.model.SetParameterValueById("ParamEyeLOpen",
+                                                          base_value * random.uniform(0.95, 1.0))
+            self.anim_manager.model.SetParameterValueById("ParamEyeROpen",
+                                                          base_value * random.uniform(0.98, 1.0))
+
+    def _start_new_blink(self):
+        """Initialize new blink"""
+        self._blink_state.update({
+            'is_active': True,
+            'progress': 0.0,
+            'last_blink': time.time(),
+            'next_delay': self._random_blink_delay()
+        })
+
+    def _reset_blink_state(self):
+        """Full Reset State"""
+        self._blink_state.update({
+            'is_active': False,
+            'progress': 0.0
+        })
+        # if not self._blink_state['enabled']:
+        #    self._set_eye_params(1.0)  # Force eyes open
+
+    def set_blink_enabled(self, enabled: bool):
+        """Blink system switch"""
+        self._blink_state['enabled'] = enabled
+        if not enabled:
+            self._reset_blink_state()
+
+    def _random_blink_delay(self):
+        """Generate Random Interval"""
+        return random.uniform(2.0, 5.0) if random.random() < 0.7 else random.uniform(6.0, 10.0)
+
+class OpacityAnimator:
+    def __init__(self, anim_manager):
+        self.anim_manager = anim_manager
+
+        self.anim = QVariantAnimation()
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.anim_manager.win
 
     def animate_opacity(self, win, start, end, duration=500, easing="linear", on_finished=None):
         """Animation of character transparency via QVariantAnimation"""
@@ -522,3 +416,384 @@ class AnimationsManager:
             self._last_finished_slot = on_finished  # Сохраняем для будущего отключения
 
         self.anim.start()
+
+class TransformAnimator:
+    def __init__(self, anim_manager):
+        self.anim_manager = anim_manager
+
+        self._win = None
+
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self._on_animation_tick)
+
+        # Transform Animation State
+        self.transform_text = False
+        self.transform = False
+        self.current_animation_win = None
+        self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
+        self.transform_lock = False
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.anim_manager.win
+
+    # Transform Animations
+    def play_transform_animation(self):
+        """Start full transformation sequence"""
+        if self.animation_phase != 0:
+            return
+
+        self.current_animation_win = self.win
+        self.animation_phase = 1
+        self.win.input_handler.input_lock = True
+        self.transform = self.win.transform = True
+        self.win.canvas.SetOutputOpacity(1.0)
+
+        # Setup transform_in animation
+        self._play_model_animation()
+        self.win.transformMovie = QMovie(self.anim_manager.resource_manager.load_animation("transform_in"))
+        self.win.transformLabel.setMovie(self.win.transformMovie)
+        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+        self.win.transformLabel.raise_()
+        self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
+        self.win.transformMovie.start()
+        self.win.transformLabel.show()
+
+        self.animation_timer.start(16)  # 60 FPS
+
+    def _on_animation_tick(self):
+        if not self.current_animation_win:
+            self.animation_timer.stop()
+            return
+
+        self._win = self.current_animation_win
+
+        if self.animation_phase == 1:
+            self._process_fade_out()
+        elif self.animation_phase == 2:
+            self._execute_model_swap()
+            self.animation_phase = 3
+            self._init_fade_in()
+        elif self.animation_phase == 3:
+            self._process_fade_in()
+
+    def _process_fade_out(self):
+        """Handle transform_in animation and opacity fade"""
+        current_frame = self.win.transformMovie.currentFrameNumber()
+        total_frames = self.win.transformMovie.frameCount()
+
+        # Smooth fade from 70% to 100% animation
+        fade_start = int(total_frames * 0.70)
+        if current_frame >= fade_start:
+            progress = (current_frame - fade_start) / (total_frames - fade_start)
+            self.win.canvas.SetOutputOpacity(1.0 - progress)
+
+        # When fade out completes, move to model swap
+        if current_frame >= total_frames - 3:
+            self.win.transformMovie.stop()
+            self.animation_phase = 2
+         # Close dialog
+        if current_frame >= (total_frames - 3) / 2:
+            self.win.talk_widget.close_dialog_after_animation()
+
+    def _execute_model_swap(self):
+        """Execute model transformation using your existing methods"""
+        try:
+            if not self.win.hdd_form:
+                self._transform_to_hdd()  # Your HDD transformation
+            else:
+                self._transform_to_regular()  # Your regular transformation
+        finally:
+            self._transform_animation_reset()
+
+    def _transform_animation_reset(self):
+        self.win.transformLabel.movie().setScaledSize(QSize(1, 1))
+        self.win.transformMovie.stop()
+        self.win.transformLabel.close()
+
+    def _init_fade_in(self):
+        """Initialize transform_out animation"""
+        self.win.transformMovie = QMovie(self.anim_manager.resource_manager.load_animation("transform_out"))
+        self.win.transformLabel.setMovie(self.win.transformMovie)
+        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+        self.win.transformLabel.movie().setScaledSize(
+            self._calculate_animation_size()
+        )
+        self.win.transformMovie.start()
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
+        self.win.transformLabel.show()
+
+        self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
+
+    def _process_fade_in(self):
+        """Handle transform_out animation with delayed opacity restore"""
+        current_frame = self.win.transformMovie.currentFrameNumber()
+        total_frames = self.win.transformMovie.frameCount()
+
+        # Starting the appearance with 15% animation
+        fade_start = int(total_frames * 0.15)
+        fade_end = int(total_frames * 0.7)  # Finalize on 70%
+
+        if current_frame < fade_start:
+            # Transparency Delay from 0% to 25% of the animation
+            self.win.canvas.SetOutputOpacity(0.0)
+        elif fade_start <= current_frame <= fade_end:
+            # Smooth appearance from 25% to 70%
+            progress = (current_frame - fade_start) / (fade_end - fade_start)
+            self. win.canvas.SetOutputOpacity(progress)
+        else:
+            # After 70%, set 100% transparency
+            self.win.canvas.SetOutputOpacity(1.0)
+
+        # Final Animation with end
+        if current_frame >= total_frames - 3:
+            self._finalize_transformation()
+
+    def _finalize_transformation(self):
+        """Cleanup after transformation"""
+        try:
+            self.win.transformMovie.stop()
+            self.win.transformLabel.close()
+            self.win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
+            self.win.input_handler.input_lock = False
+            self.win.transform_lock = False
+            self.win.talk_widget.talk_update = True
+            self.transform = self.win.transform = False
+            self.win.character.state.set_transformed_state()
+
+            # Reset transformation flags
+            self.win.character.transform_exp_show = False
+            self.win.character.transform_text_show = False
+        finally:
+            self.animation_timer.stop()
+            self.current_animation_win = None
+            self.animation_phase = 0
+
+    def _play_model_animation(self):
+        """Model animation playback"""
+        # Regular form processing (hdd_form=False)
+        if not self.win.hdd_form:
+            # Playing the transformation animation
+            self.anim_manager.play_animation(
+                model=self.win.model,
+                anim_type='Motion',
+                group_or_id="Unique",
+                no=0,
+                priority=live2d.MotionPriority.FORCE,
+            )
+
+    def _calculate_animation_size(self):
+        """Calculate animation size"""
+        return QSize(
+            int(self.win.w_resize + self.win.trm_cmx * self.win.models_scale),
+            int(self.win.h_resize + self.win.trm_cmy * self.win.models_scale)
+        )
+
+    def _transform_to_hdd(self):
+        """Transformation to hdd form"""
+        transformations = {
+            "Neptune": self.win.action_handler.on_action_purple_heart,
+            "Noire": self.win.action_handler.on_action_black_heart,
+            "Blanc": self.win.action_handler.on_action_white_heart,
+            "Vert": self.win.action_handler.on_action_green_heart,
+            "NepGear": self.win.action_handler.on_action_purple_sister,
+            "Uni": self.win.action_handler.on_action_black_sister,
+            "Rom": self.win.action_handler.on_action_white_sister_rom,
+            "Ram": self.win.action_handler.on_action_white_sister_ram,
+        }
+        if self.win.character_name in transformations:
+            transformations[self.win.character_name]()
+        self.transform_lock = 1
+        self.win.character.transform_exp_show = True
+        self.win.character.transform_text_show = True
+        self.win.character.expressions.set_funny_expression(fade_out=30000)
+
+    def _transform_to_regular(self):
+        """Transformation to regular form"""
+        transformations = {
+            "Purple Heart": self.win.action_handler.on_action_neptune,
+            "Black Heart": self.win.action_handler.on_action_noire,
+            "White Heart": self.win.action_handler.on_action_blanc,
+            "Green Heart": self.win.action_handler.on_action_vert,
+            "Purple Sister": self.win.action_handler.on_action_nepgear,
+            "Black Sister": self.win.action_handler.on_action_uni,
+            "White Sister Rom": self.win.action_handler.on_action_rom,
+            "White Sister Ram": self.win.action_handler.on_action_ram,
+        }
+        if self.win.character_name in transformations:
+            transformations[self.win.character_name]()
+        self.transform_lock = 1
+        self.win.character.transform_exp_show = True
+        self.win.character.transform_text_show = True
+        self.win.character.expressions.set_funny_expression(fade_out=30000)
+
+# TODO: [WIP] Новый класс Цветовой анимации Требуется тестирование
+class ColorAnimator(QObject):
+    def __init__(self, anim_manager):
+        super().__init__()
+        self.anim_manager = anim_manager
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_colors)
+
+        # Настройки анимации
+        self.speed = 1.0
+        self.is_running = False
+        self.current_hue = 0  # 0-360 градусов
+        self.target_rgb = (0.0, 0.0, 0.0)  # Теперь в диапазоне 0-1
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.anim_manager.win
+
+    @property
+    def red(self):
+        return self.anim_manager.win.b_red
+
+    @red.setter
+    def red(self, value):
+        self.anim_manager.win.b_red = max(0.0, min(1.0, value))
+
+    @property
+    def green(self):
+        return self.anim_manager.win.b_green
+
+    @green.setter
+    def green(self, value):
+        self.anim_manager.win.b_green = max(0.0, min(1.0, value))
+
+    @property
+    def blue(self):
+        return self.anim_manager.win.b_blue
+
+    @blue.setter
+    def blue(self, value):
+        self.anim_manager.win.b_blue = max(0.0, min(1.0, value))
+
+    def start(self, speed=1.0):
+        """Запуск анимации с указанной скоростью"""
+        self.speed = max(0.1, min(5.0, speed))  # Ограничиваем скорость
+        self.is_running = True
+        self.timer.start(16)  # ~60 FPS
+
+    def stop(self, smooth=True):
+        """Остановка анимации"""
+        self.is_running = False
+        self.target_rgb = (0.0, 0.0, 0.0)
+        if not smooth:
+            self._reset_colors()
+            self.timer.stop()
+
+    def update_colors(self):
+        """Обновление цветовых значений"""
+        if self.is_running:
+            # Плавное изменение оттенка
+            self.current_hue = (self.current_hue + 0.6 * self.speed) % 360
+            self.target_rgb = self.hsv_to_rgb(self.current_hue, 1.0, 1.0)
+
+        # Плавная интерполяция
+        self.win.b_red = round(self.lerp(self.win.b_red, self.target_rgb[0], 0.15), 4)
+        self.win.b_green = round(self.lerp(self.win.b_green, self.target_rgb[1], 0.15), 4)
+        self.win.b_blue = round(self.lerp(self.win.b_blue, self.target_rgb[2], 0.15), 4)
+
+        # Проверка завершения анимации
+        if not self.is_running and all(c < 0.01 for c in (self.win.b_red, self.win.b_green, self.win.b_blue)):
+            self._reset_colors()
+            self.timer.stop()
+
+    def _reset_colors(self):
+        """Сброс цветов к нулю"""
+        self.win.b_red = 0.0
+        self.win.b_green = 0.0
+        self.win.b_blue = 0.0
+
+    @staticmethod
+    def hsv_to_rgb(h, s, v):
+        """Конвертация HSV в RGB (возвращает 0.0-1.0)"""
+        h /= 60.0
+        i = math.floor(h)
+        f = h - i
+        p = v * (1 - s)
+        q = v * (1 - s * f)
+        t = v * (1 - s * (1 - f))
+
+        if i == 0:
+            return (v, t, p)
+        elif i == 1:
+            return (q, v, p)
+        elif i == 2:
+            return (p, v, t)
+        elif i == 3:
+            return (p, q, v)
+        elif i == 4:
+            return (t, p, v)
+        else:
+            return (v, p, q)
+
+    @staticmethod
+    def lerp(a, b, t):
+        """Линейная интерполяция для значений 0-1"""
+        return a + (b - a) * t
+
+    def set_solid_color(self, r, g, b, fade_duration=0):
+        """Установка цвета с опциональным плавным переходом"""
+        if fade_duration > 0:
+            # Плавный переход к новому цвету
+            self.fade_to_color(r, g, b, fade_duration)
+        else:
+            # Мгновенная установка
+            self.stop(smooth=False)
+            self.win.b_red = max(0.0, min(1.0, r))
+            self.win.b_green = max(0.0, min(1.0, g))
+            self.win.b_blue = max(0.0, min(1.0, b))
+
+    def fade_to_color(self, r, g, b, duration=10000):
+        """Плавный переход к указанному цвету"""
+        self.stop(smooth=False)
+
+        self.anim_red = QPropertyAnimation(self, b"red")
+        self.anim_green = QPropertyAnimation(self, b"green")
+        self.anim_blue = QPropertyAnimation(self, b"blue")
+
+        for anim, start, end in zip(
+                [self.anim_red, self.anim_green, self.anim_blue],
+                [self.red, self.green, self.blue],
+                [r, g, b]
+        ):
+            anim.setDuration(duration)
+            anim.setStartValue(start)
+            anim.setEndValue(end)
+            anim.setEasingCurve(QEasingCurve.InOutQuad)
+
+        self.anim_group = QParallelAnimationGroup()
+        for anim in [self.anim_red, self.anim_green, self.anim_blue]:
+            self.anim_group.addAnimation(anim)
+
+        self.anim_group.start()
+
+    def fade_to_zero(self, duration=1000):
+        """Плавное затухание текущего цвета в черный"""
+        self.stop(smooth=False)  # Останавливаем текущие анимации
+
+        # Создаем анимацию для каждого канала
+        self.anim_red = QPropertyAnimation(self, b"red")
+        self.anim_green = QPropertyAnimation(self, b"green")
+        self.anim_blue = QPropertyAnimation(self, b"blue")
+
+        # Настраиваем анимации
+        for anim, start_val in zip(
+                [self.anim_red, self.anim_green, self.anim_blue],
+                [self.red, self.green, self.blue]):
+            anim.setDuration(duration)
+            anim.setStartValue(start_val)
+            anim.setEndValue(0.0)
+            anim.setEasingCurve(QEasingCurve.OutQuad)
+
+        # Запускаем все анимации
+        self.anim_group = QParallelAnimationGroup()
+        for anim in [self.anim_red, self.anim_green, self.anim_blue]:
+            self.anim_group.addAnimation(anim)
+
+        self.anim_group.start()

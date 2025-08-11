@@ -223,6 +223,8 @@ class TalkWidget:
 
         self.talk_form_layout.setWidget(0, QFormLayout.LabelRole, self.talk_text_label)
 
+        print(f"{self.name}: {self.text}\n{self.kaomoji}")
+
     def _setup_talk_image(self):
         """Adjusts the image in the widget"""
         if not os.path.exists(self.talk_image):

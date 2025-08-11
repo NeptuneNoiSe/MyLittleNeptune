@@ -417,8 +417,6 @@ class MainWindow(QOpenGLWidget):
         self.talk_widget.show_talk()
         self.character.state.set_greeting_state(is_first_run=True)
 
-        print(self.name + ": " + self.text + self.kaomoji)
-
     def init_classes(self):
         """Initialize classes"""
         self.animation_manager = AnimationsManager(self, self.model)
@@ -831,11 +829,9 @@ class MainWindow(QOpenGLWidget):
         if answer == QMessageBox.StandardButton.Yes:
             event.accept()
             self.kaomoji = "(^3^)"
-            print(self.name + ":", self.lang['Talk']['Goodbye'] + self.kaomoji)
         else:
             self.character.tired_controller.timer_count = 1
             self.character.state.set_quit_state(quit='No')
-            # print(self.name + ": " + self.text + self.kaomoji)
             event.ignore()
 
 

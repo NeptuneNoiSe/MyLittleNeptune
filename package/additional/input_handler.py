@@ -17,47 +17,12 @@ import math
 from PIL import Image
 # import resources
 # import json
-# TODO: [WIP] Новый класс анимации перетаскивания Требуется:
-#           1. Тестирование и отладка
-#           2. Перенос класса в AnimationPlayer
-class DragAnimator:
-    def __init__(self, input_handler):
-        self.input_handler = input_handler
-        self.angle = 0.0
-        self.return_timer = QTimer()
-        self.return_timer.timeout.connect(self._update_return_animation)
-        self.return_timer.setInterval(16)  # ~60 FPS
 
-    def update_drag_animation(self):
-        """Обновление анимации наклона"""
-        try:
-            self.angle = self.input_handler.drag_direction * self.input_handler.drag_intensity * 10
-            if hasattr(self.input_handler.win, 'model'):
-                self.input_handler.win.model.Rotate(int(self.angle))
-        except Exception as e:
-            print(f"Rotation error: {e}")
-
-    def start_return_animation(self):
-        """Запуск плавного возврата"""
-        if not self.return_timer.isActive():
-            self.return_timer.start()
-
-    def _update_return_animation(self):
-        """Кадр анимации возврата"""
-        if abs(self.angle) < 0.1:  # Порог завершения
-            self.angle = 0
-            self.return_timer.stop()
-        else:
-            self.angle *= 0.7  # Коэффициент плавности
-
-        if hasattr(self.input_handler.win, 'model'):
-            self.input_handler.win.model.Rotate(int(self.angle))
 
 class InputHandler:
     def __init__(self, win, model):
         self.win = win
         self.model = model
-        self.drag_animator = DragAnimator(self)
         self.sleep_move = False
         self.place_this = False
         self.input_lock = False
@@ -66,11 +31,14 @@ class InputHandler:
         self.hold_timer.setSingleShot(True)
         self.hold_timer.timeout.connect(self.mouse_long_press)
 
-        self.start_pos = QPoint(0, 0)  # Явная инициализация
-        self.last_pos = QPoint(0, 0)  # с целыми числами
-        self.drag_direction = 0  # -1 влево, 0 нейтрально, 1 вправо
-        self.drag_intensity = 0  # сила покачивания (0-1)
+        self.start_pos = QPoint(0, 0)
+        self.last_pos = QPoint(0, 0)
+        self.drag_direction = 0  # -1 left, 0 neutral, 1 right
+        self.drag_intensity = 0  # drag force (0-1)
         self.angle = 0
+        self.drag_threshold = 200  # Minimum distance to start animation
+        self.direction_threshold = 10  # The threshold for determining the direction
+        self.distance_normalizer = 500  # Divider for intensity
 
         # Input release timer
         self.mouse_input_timer = QTimer()
@@ -204,9 +172,9 @@ class InputHandler:
         self.sleep_move = False
 
     def mouse_move_handler(self, global_pos):
-        """Гарантированно корректная обработка координат"""
+        """Mouse move handler"""
         try:
-            # Преобразование в целочисленные координаты
+            # Conversion to integer coordinates
             if hasattr(global_pos, 'toPoint'):
                 current_pos = global_pos.toPoint()
             else:
@@ -218,62 +186,56 @@ class InputHandler:
                     print(f"Invalid pos: {global_pos}")
                     return
 
-            # Первый вызов - инициализация
+            # The first call is initialization
             if self.last_pos.isNull():
                 self.start_pos = current_pos
                 self.last_pos = current_pos
                 return
 
-            # Вычисление delta с проверкой
+            # Delta calculation with validation
+            distance = (current_pos - self.start_pos).manhattanLength()
             delta_x = current_pos.x() - self.last_pos.x()
-            print(f"Pos: {current_pos.x()},{current_pos.y()} | "
-                  f"Last: {self.last_pos.x()},{self.last_pos.y()} | "
-                  f"Delta: {delta_x}")
 
-            # Обновление параметров drag
-            if abs(delta_x) > 2:
+            # Updated trigger threshold
+            if abs(delta_x) > self.direction_threshold:
                 direction = 1 if delta_x > 0 else -1
-                self.drag_direction = 0.9 * self.drag_direction + 0.1 * direction
-                self.drag_intensity = min(
-                    (current_pos - self.start_pos).manhattanLength() / 100,
-                    1.0
-                )
+                self.drag_direction = 0.7 * self.drag_direction + 0.3 * direction
+
+            # Normalization of intensity with a new divider
+            self.drag_intensity = min(distance / self.distance_normalizer, 1.0)
+
+            self.win.animation_manager.drag_animator.update_angle(self.drag_direction, self.drag_intensity)
+
+            # Checking for exceeding the threshold
+            if distance > self.drag_threshold:
                 self._trigger_drag_animation()
 
-            # Всегда обновляем last_pos
             self.last_pos = current_pos
 
         except Exception as e:
             print(f"Move error: {type(e).__name__}: {str(e)}")
 
     def _trigger_drag_animation(self):
-        """Активация анимации с проверками"""
+        """Activation of animation with checks"""
         if (not self.win.character.tired_controller.sleep
                 and not self.input_lock):
             try:
                 self.win.character.state.set_drag_state()
                 if hasattr(self.win.talk_widget, 'dialog_animation'):
                     self.win.talk_widget.dialog_animation = False
-                self.update_drag_animation()
+                self.win.animation_manager.update_drag_animation()
             except AttributeError as e:
                 print(f"Animation error: {e}")
 
-    def reset_drag_animation(self):
-        """Инициирует возврат в исходное положение"""
-        self.drag_animator.start_return_animation()
-
-    def update_drag_animation(self):
-        """Обновляет анимацию перетаскивания"""
-        self.drag_animator.update_drag_animation()
-
     def reset_drag_state(self):
-        """Сбрасывает состояние перетаскивания"""
+        """Full reset state"""
+        self.win.animation_manager.drag_animator.stop_animation()
         self.start_pos = QPoint()
         self.last_pos = QPoint()
         self.drag_direction = 0
         self.drag_intensity = 0
-        self.reset_drag_animation()
-
+        self.win.animation_manager.drag_animator.angle = 0
+        self.win.animation_manager.drag_animator.apply_rotation()  # Reset angle
 
     def takingTalk(self):
         self.place_this = True
@@ -332,29 +294,32 @@ class MouseTracker:
             return 5
 
     def get_smoothed_coords(self):
-        current_pos = self.widget.mapFromGlobal(QCursor.pos())
+        try:
+            current_pos = self.widget.mapFromGlobal(QCursor.pos())
 
-        # Update buffer
-        self.position_buffer.pop(0)
-        self.position_buffer.append(current_pos)
+            # Update buffer
+            self.position_buffer.pop(0)
+            self.position_buffer.append(current_pos)
 
-        # Adaptive avg
-        avg_x = sum(p.x() for p in self.position_buffer) / self.adaptive_buffer_size
-        avg_y = sum(p.y() for p in self.position_buffer) / self.adaptive_buffer_size
+            # Adaptive avg
+            avg_x = sum(p.x() for p in self.position_buffer) / self.adaptive_buffer_size
+            avg_y = sum(p.y() for p in self.position_buffer) / self.adaptive_buffer_size
 
-        # Dynamic smoothing
-        if self._is_high_performance():
-            # for Power PC - Agressive smooting
-            self.smooth_factor = max(0.1, self.smooth_factor - 0.02)
-        else:
-            self.smooth_factor = min(0.4, self.smooth_factor + 0.02)
+            # Dynamic smoothing
+            if self._is_high_performance():
+                # for Power PC - Agressive smooting
+                self.smooth_factor = max(0.1, self.smooth_factor - 0.02)
+            else:
+                self.smooth_factor = min(0.4, self.smooth_factor + 0.02)
 
-        self.smoothed_position = QPointF(
-            self.smoothed_position.x() * (1 - self.smooth_factor) + avg_x * self.smooth_factor,
-            self.smoothed_position.y() * (1 - self.smooth_factor) + avg_y * self.smooth_factor
-        )
+            self.smoothed_position = QPointF(
+                self.smoothed_position.x() * (1 - self.smooth_factor) + avg_x * self.smooth_factor,
+                self.smoothed_position.y() * (1 - self.smooth_factor) + avg_y * self.smooth_factor
+            )
 
-        return self.smoothed_position
+            return self.smoothed_position
+        except AttributeError as e:
+            pass
 
     def _is_high_performance(self):
         """Determines high performance in terms of processing time"""

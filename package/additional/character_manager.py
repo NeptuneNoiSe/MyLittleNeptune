@@ -80,6 +80,7 @@ class CharacterStateManager:
         Args:
             is_first_run: If True, the callback is not called (for the first character display).
         """
+        self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_greeting_text()
         self.win.animation_manager.opacity_animator.animate_opacity(
             win=self.win,
@@ -87,7 +88,7 @@ class CharacterStateManager:
             end=1.0,
             duration=1500,
             easing="in_quad",
-            on_finished=None if is_first_run else self._after_animation_fade_in_callback)
+            on_finished=None) # None if is_first_run else self._after_animation_fade_in_callback
 
 
     def _after_animation_fade_in_callback(self):

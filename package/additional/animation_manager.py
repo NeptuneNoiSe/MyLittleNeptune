@@ -26,6 +26,7 @@ class AnimationsManager:
         self.transform_animator = TransformAnimator(self)
         self.blink_animator = BlinkAnimator(self)
         self.opacity_animator = OpacityAnimator(self)
+        self.drag_animator = DragAnimator(self)
         self.color_animator = ColorAnimator(self)
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.models_manager = ModelsManager
@@ -114,6 +115,14 @@ class AnimationsManager:
         """Proxy method for updating idle animations"""
         return self.animation_player.update_idle(current_time)
 
+    def update_drag_animation(self):
+        """Updates the drag animation"""
+        self.drag_animator.update_drag_animation()
+
+    def reset_drag_animation(self):
+        """Initiates the return to the starting position"""
+        self.drag_animator.start_return_animation()
+
     #Color Animations
     def start_rainbow_effect(self, speed=1.0):
         """Start rainbow backlight effect"""
@@ -138,7 +147,6 @@ class AnimationsManager:
                            duration: int | None = 1000) -> None:
         """Start fade to color backlight effect"""
         self.color_animator.fade_to_color(r,g,b,duration)
-
 
 class AnimationPlayer:
     """Animation Player"""
@@ -667,7 +675,75 @@ class TransformAnimator:
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
-# TODO: [WIP] Новый класс Цветовой анимации Требуется тестирование
+# TODO: [WIP] Новый класс анимации перетаскивания Требуется: Тестирование и отладка
+class DragAnimator:
+    def __init__(self, animation_manager):
+        self.animation_manager = animation_manager
+
+        self.angle = 0.0
+        self.max_angle = 15.0
+        self.return_delay = 500  # Задержка перед возвратом (мс)
+        self.return_speed = 0.5  # Скорость возврата (0.1-0.9)
+        self.drag_direction = 0
+        self.drag_intensity = 0
+        self.max_angle = 10
+
+        # Таймеры
+        self.return_timer = QTimer()
+        self.return_timer.setSingleShot(True)
+        self.return_timer.timeout.connect(self.start_return_animation)
+
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self._update_return_animation)
+        self.animation_timer.setInterval(16)  # 60 FPS
+
+    @property
+    def win(self):
+        return self.animation_manager.win
+
+    def update_angle(self, direction, intensity):
+        self.drag_direction = direction
+        self.drag_intensity = intensity
+
+    def update_drag_animation(self):
+        """Tilt angle update"""
+        target_angle = self.drag_direction * self.drag_intensity * self.max_angle
+        self.angle = 0.3 * target_angle + 0.7 * self.angle  # Strong smoothing
+
+        self.win.model.Rotate(int(self.angle))
+
+        # Restart the delay timer
+        self.return_timer.stop()
+        self.return_timer.start(self.return_delay)
+
+    def start_return_animation(self):
+        """Starting the return animation"""
+        if not self.animation_timer.isActive():
+            self.animation_timer.start()
+
+    def _update_return_animation(self):
+        """Updating the frame of the return animation"""
+        if abs(self.angle) < 0.1:  # Completion threshold
+            self.angle = 0
+            self.animation_timer.stop()
+        else:
+            self.angle *= self.return_speed
+
+        self.apply_rotation()
+
+    def apply_rotation(self):
+        """Applies the current angle to the model"""
+        try:
+            if hasattr(self.win, 'model'):
+                self.win.model.Rotate(int(self.angle))
+        except Exception as e:
+            print(f"Rotation error: {e}")
+
+    def stop_animation(self):
+        """Stopping all animations"""
+        self.return_timer.stop()
+        self.animation_timer.stop()
+
 class ColorAnimator(QObject):
     """Color Animation"""
     def __init__(self, animation_manager):
@@ -679,7 +755,7 @@ class ColorAnimator(QObject):
         # Animation Settings
         self.speed = 1.0
         self.is_running = False
-        self.current_hue = 0  # 0-360 degress
+        self.current_hue = random.uniform(0, 360)  # 0-360 degress
         self.target_rgb = (0.0, 0.0, 0.0)  # Color range 0-1
 
     @property

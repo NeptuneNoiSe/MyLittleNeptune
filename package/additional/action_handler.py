@@ -3,10 +3,11 @@ from PySide6.QtWidgets import QMessageBox
 
 
 class ActionHandler:
+    """OnActions Handler"""
     def __init__(self, win):
         self.win = win
 
-    # win Actions
+    #Actions
     def on_action_normal(self):
         self.win.showNormal()
 
@@ -107,7 +108,7 @@ class ActionHandler:
         setattr(self.win, anim_attr, enabled)
 
     def _create_toggle_handlers(self):
-        """Генерирует пары обработчиков для разных типов анимаций"""
+        """Generates handler pairs for different animation types"""
         handlers = {
             'idle': ('idle_animation', 'IdleEnabled', 'IdleDisabled'),
             'on_mouse': ('on_mouse_animation', 'OnMouseEnabled', 'OnMouseDisabled'),

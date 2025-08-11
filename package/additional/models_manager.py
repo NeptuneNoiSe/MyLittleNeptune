@@ -171,6 +171,7 @@ class ModelsManager:
         win.model.LoadModelJson(fallback_path)
 
     def getModelParams(self, win):
+        """Get model parameters"""
         for i in range(win.model.GetParameterCount()):
             param: Parameter = win.model.GetParameter(i)
             print(param.id, param.type, param.value, param.max, param.min, param.default)

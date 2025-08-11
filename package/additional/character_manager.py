@@ -80,6 +80,7 @@ class CharacterStateManager:
         Args:
             is_first_run: If True, the callback is not called (for the first character display).
         """
+        self.character.character_text.set_greeting_text()
         self.win.animation_manager.opacity_animator.animate_opacity(
             win=self.win,
             start=0.0,
@@ -137,6 +138,7 @@ class CharacterStateManager:
                                                   kaomoji=self.character.kaomoji)
 
     def set_transform_state(self):
+        """Transform state"""
         self.character.expressions.fadeoutTimer.stop()
         if not self.win.hdd_form:
             self.character.expressions.set_tranform_to_hdd_expression()
@@ -152,6 +154,7 @@ class CharacterStateManager:
         self.character.character_text.set_transform_failure_text()
 
     def set_transformed_state(self):
+        """Transformed State"""
         if self.character.transform_exp_show:
             self.character.expressions.set_funny_expression(fade_out=7000)
 
@@ -164,9 +167,11 @@ class CharacterStateManager:
             self.character.transform_exp_show = False
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
+        """Update Settings state"""
         self.character.character_text.set_settings_text(text_key)
 
     def set_quit_state(self, quit: str):
+        """Quiting state"""
         if quit == 'Yes':
             self.character.expressions.set_cry_expression()
             self.character.character_text.set_quit_text()
@@ -253,16 +258,19 @@ class CharacterTiredController:
         return self.timer_count <= self.sleep_v
 
     def reset_timer(self):
+        """Timer reset"""
         self.timer.stop()
         self.timer_count = 1
         if self.timer_log:
             print("Timer reset")
 
     def _start_timer(self):
+        """Start timer"""
         self.reset_timer()  # Сброс перед запуском
         self.timer.start(int(6000 / self.time_scale))
 
     def _update_state(self):
+        """Update character state"""
         self.timer_count += 1
         state = self.character.tired_state.condition
 
@@ -298,9 +306,11 @@ class CharacterTiredController:
             self.character.tired_state.set_wake_up_state()
 
     def reload_timer(self):
+        """Timer reload"""
         self._start_timer()
 
     def sleep_function(self):
+        """Run if character sleep"""
         self.character.win.animation_manager.set_sleep_state(True)
         self.idle_anim = False
         self.wake_up = False
@@ -310,6 +320,7 @@ class CharacterTiredController:
         self.character.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
 
     def wake_up_function(self):
+        """Run if character wake_up"""
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
         self.timer_count = 0

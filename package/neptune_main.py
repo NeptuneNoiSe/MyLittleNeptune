@@ -45,6 +45,9 @@ class MainWindow(QOpenGLWidget):
         # Callbacks Log:
         self.callbacks_log = False
 
+        # Set False if you want use model.Draw()
+        self.canvas_draw = True
+
         # Sleep Animation Time Scale
         self.time_scale = 1
 
@@ -209,7 +212,6 @@ class MainWindow(QOpenGLWidget):
         # Mouse tracking timer
         self.mouse_tracker.idle_timer.timeout.connect(self.input_handler.handle_mouse_idle)
 
-
     def _init_window_geometry(self):
         """Initialize the window geometry"""
         # self.app = QApplication.instance()
@@ -267,7 +269,6 @@ class MainWindow(QOpenGLWidget):
                 twm_y=int(-15 * scale_factor)
             )
 
-
     def _resize_model(self):
         """Resize the model with config"""
         # Model Resize
@@ -276,7 +277,6 @@ class MainWindow(QOpenGLWidget):
         self.resize(int(self.w_resize), int(self.h_resize))
         self.w_correction = self.app_config.w_correction
         self.h_correction = self.app_config.h_correction
-
 
     def position_window(self):
         """Set window position with conditions"""
@@ -433,6 +433,7 @@ class MainWindow(QOpenGLWidget):
             self.canvas.SetSize(w, h)
 
     def on_draw(self):
+        """Canvas draw method"""
         live2d.clearBuffer(self.b_red, self.b_green, self.b_blue, self.b_alpha)
         self.model.Draw()
 
@@ -440,9 +441,11 @@ class MainWindow(QOpenGLWidget):
         """Paint GL"""
         if self.model:
             live2d.clearBuffer()
-            self.canvas.Draw(self.on_draw)
-            # Direct rendering of the model bypassing the "live2d Canvas"
-            # self.model.Draw()
+            if self.canvas_draw:
+                self.canvas.Draw(self.on_draw)
+            else:
+                # Direct rendering of the model bypassing the "live2d Canvas"
+                self.model.Draw()
 
         if not self.model:
             return

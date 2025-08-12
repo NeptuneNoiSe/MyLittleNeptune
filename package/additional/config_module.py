@@ -35,6 +35,7 @@ class AppConfig(QObject):
         if not config.has_section('Main'):
             config.add_section('Main')
             config.set('Main', 'language', 'English')
+            config.set('Main', 'theme', '')
             config.set('Main', 'screen_width', '0')
             config.set('Main', 'screen_height', '0')
 
@@ -213,6 +214,16 @@ class AppConfig(QObject):
     def language(self, value: str):
         self._config.set('Main', 'language', value)
         self._save_and_notify('Main', 'language', value)
+
+    # Theme config
+    @property
+    def theme(self) -> str:
+        return self._config.get('Main', 'theme')
+
+    @theme.setter
+    def theme(self, value: str):
+        self._config.set('Main', 'theme', value)
+        self._save_and_notify('Main', 'theme', value)
 
     # Models config
     @property

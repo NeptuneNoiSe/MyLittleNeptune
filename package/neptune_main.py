@@ -6,7 +6,7 @@ from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
-    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox
+    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -101,6 +101,24 @@ class MainWindow(QOpenGLWidget):
 
         # Language:
         self.language = self.app_config.language
+
+        # Theme:
+        self.theme = ""
+        self.display_to_style = {
+            "Legacy": "windows",
+            "Windows": "windows",
+            "Windows Vista": "windowsvista",
+            "Windows 11": "windows11",
+            "Fusion": "fusion",
+            "macOS": "macos",
+            "GTK+": "gtk+",
+            "Breeze (KDE)": "breeze",
+            "Adwaita (GNOME)": "adwaita",
+            "Qt5 GTK2": "qt5gtk2",
+            "CDE (Unix)": "cde",
+            "Motif (Unix)": "motif",
+            "CleanLooks": "cleanlooks"
+        }
 
         # Models Switch:
         self.models_switch = self.app_config.models_switch
@@ -342,6 +360,30 @@ class MainWindow(QOpenGLWidget):
         """proxy method"""
         self.models_manager.apply_character_config(self, character_name)
 
+    def set_theme(self):
+        #app.setStyle(self.theme if self.theme != "Default" else "")  # Default = пустая строка
+        style_key = self.display_to_style.get(self.theme, "")  # Если темы нет в словаре → Default ("")
+
+        # 2. Устанавливаем стиль
+        if style_key:
+            app.setStyle(QStyleFactory.create(style_key))  # Для Windows 11, Fusion и др.
+        else:
+            app.setStyle("")  # Системный стиль (Default)
+
+    def get_system_theme(self):
+        """Возвращает 'dark', 'light' или 'unknown' в зависимости от системы."""
+        app = QGuiApplication.instance()
+        if not app:
+            return "unknown"
+
+        scheme = app.styleHints().colorScheme()
+        if scheme == Qt.ColorScheme.Dark:
+            return "dark"
+        elif scheme == Qt.ColorScheme.Light:
+            return "light"
+        else:
+            return "unknown"
+
     def initializeGL(self) -> None:
         """Initialize GL"""
         self.makeCurrent()
@@ -512,6 +554,7 @@ class MainWindow(QOpenGLWidget):
         #v = abs(math.cos(self.total_radius))
         # change opacity
         #self.canvas.SetOutputOpacity(v)
+        #print(self.theme)
 
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
@@ -622,6 +665,7 @@ class MainWindow(QOpenGLWidget):
         self.auto_scale_init = True
 
         self.functions.setLanguage()
+        self.set_theme()
         # if self.talk_update:
         self.apply_character_config(self.character_name)
 
@@ -842,6 +886,8 @@ class SettingsWindow(QWidget):
         self.mainWindow = MainWindow()
         self.app_config = self.mainWindow.app_config
 
+        self.available_styles = self.get_available_styles()
+
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
         self.getWindowFlag_WindowStaysOnTopHint = self.app_config.WindowStaysOnTopHint
@@ -853,6 +899,7 @@ class SettingsWindow(QWidget):
         self.getWindowFlag_WindowType_Mask = self.app_config.WindowType_Mask
 
         self.language = self.app_config.language
+        self.theme = self.app_config.theme
         self.auto_scale = self.app_config.auto_scale
         self.models_scale = self.app_config.models_scale
         self.auto_blink = self.app_config.auto_blink
@@ -913,6 +960,44 @@ class SettingsWindow(QWidget):
         self.mainWindow.set_app_title()
         self.updateMainWindow()
 
+    def get_available_styles(self):
+        """Возвращает список доступных стилей, где первый элемент — текущий системный стиль."""
+        style_names = {
+            # Базовые стили Qt
+            "legacy": "Windows",
+            "windows": "Windows",
+            "windowsvista": "Windows Vista",
+            "windows11": "Windows 11",
+            "fusion": "Fusion",
+            "macos": "macOS",
+
+            # Стили для Linux
+            "gtk+": "GTK+",
+            "breeze": "Breeze (KDE)",
+            "adwaita": "Adwaita (GNOME)",
+            "qt5gtk2": "Qt5 GTK2",
+
+            # Устаревшие/экзотические стили
+            "cde": "CDE (Unix)",
+            "motif": "Motif (Unix)",
+            "cleanlooks": "CleanLooks"
+        }
+
+        # Получаем текущий стиль системы
+        current_style = QApplication.style().objectName().lower()
+        current_display_name = style_names.get(current_style, "System Default")
+
+        # Формируем список, где первый элемент — текущий стиль
+        available_styles = [current_display_name]  # Первый элемент — активный стиль
+
+        # Добавляем остальные доступные стили (исключая дубликаты)
+        for style_key in QStyleFactory.keys():
+            if style_key != current_style:  # Не добавляем текущий стиль повторно
+                display_name = style_names.get(style_key, style_key.title())
+                available_styles.append(display_name)
+
+        return available_styles
+
     def reset_position(self):
         """Reset model position"""
         self.mainWindow.model_move = True
@@ -943,6 +1028,7 @@ class SettingsWindow(QWidget):
         self.framelessWindowCheckBox.setText(self.mainWindow.lang['Settings']['FramelessWindow'])
         self.windowStaysOnTopCheckBox.setText(self.mainWindow.lang['Settings']['StaysOnTop'])
         self.langText.setText(self.mainWindow.lang['Settings']['Language'])
+        self.themeText.setText(self.mainWindow.lang['Settings']['Theme'])
         # Scale Box
         self.scaleGroupBox.setTitle(self.mainWindow.lang['Settings']['ScaleTitle'])
         self.autoScaleCheckBox.setText(self.mainWindow.lang['Settings']['AutoScale'])
@@ -1037,8 +1123,12 @@ class SettingsWindow(QWidget):
 
             self.language_org = self.langComboBox.currentText()
             self.getLanguageName()
+            self.theme = self.themeComboBox.currentText()
             self.set_setting('language', str(self.language_get))
+            self.set_setting('theme', str(self.theme))
             #self.mainWindow.app_config.language = str(self.language_get)
+            #print(self.themeComboBox.currentText())
+
 
         self.mainWindow.setSettings(flags)
         self.mainWindow.show()
@@ -1067,11 +1157,21 @@ class SettingsWindow(QWidget):
             self.setLanguageName()
             self.langComboBox.setCurrentText(self.language_set)
 
+            self.themeText = QLabel("Theme:")
+            self.themeComboBox = QComboBox()
+            self.themeComboBox.addItems(self.available_styles)
+            #self.setThemeName()
+            self.themeComboBox.setCurrentText(self.theme)
+            self.theme =self.themeComboBox.currentText()
+
             layout.addWidget(self.framelessWindowCheckBox, 0, 0)
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
             layout.addWidget(self.langText, 3, 0)
             layout.addWidget(self.langComboBox, 4, 0)
+            layout.addWidget(self.themeText, 3, 1)
+            layout.addWidget(self.themeComboBox, 4, 1)
             self.langComboBox.currentTextChanged.connect(self.updateMainWindow)
+            self.themeComboBox.currentTextChanged.connect(self.updateMainWindow)
         self.hintsGroupBox.setLayout(layout)
 
     def createScaleGroupBox(self) -> None:
@@ -1213,12 +1313,6 @@ if __name__ == "__main__":
     settings = SettingsWindow()
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
-
-    # TODO: [WIP] Добавить функцию смены темы в следующих обновлениях
-    #   app.setStyle("Legacy")
-    #   app.setStyle("Fusion")
-    #   app.setStyle("Windows")
-    #   app.setStyle("windowsvista")
 
     app.exec()
     live2d.dispose()

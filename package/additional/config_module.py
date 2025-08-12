@@ -35,6 +35,7 @@ class AppConfig(QObject):
         if not config.has_section('Main'):
             config.add_section('Main')
             config.set('Main', 'language', 'English')
+            config.set('Main', 'color_icons', 'False')
             config.set('Main', 'theme', '')
             config.set('Main', 'screen_width', '0')
             config.set('Main', 'screen_height', '0')
@@ -214,6 +215,15 @@ class AppConfig(QObject):
     def language(self, value: str):
         self._config.set('Main', 'language', value)
         self._save_and_notify('Main', 'language', value)
+
+    @property
+    def color_icons(self) -> bool:
+        return self._config.getboolean('Main', 'color_icons')
+
+    @color_icons.setter
+    def color_icons(self, value: bool):
+        self._config.set('Main', 'color_icons', str(value))
+        self._save_and_notify('Main', 'color_icons', str(value))
 
     # Theme config
     @property

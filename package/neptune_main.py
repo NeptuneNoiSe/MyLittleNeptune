@@ -112,11 +112,11 @@ class MainWindow(QOpenGLWidget):
             "Fusion": "fusion",
             "macOS": "macos",
             "GTK+": "gtk+",
-            "Breeze (KDE)": "breeze",
-            "Adwaita (GNOME)": "adwaita",
+            "Breeze": "breeze",
+            "Adwaita": "adwaita",
             "Qt5 GTK2": "qt5gtk2",
-            "CDE (Unix)": "cde",
-            "Motif (Unix)": "motif",
+            "CDE": "cde",
+            "Motif": "motif",
             "CleanLooks": "cleanlooks"
         }
 
@@ -131,7 +131,9 @@ class MainWindow(QOpenGLWidget):
 
     def _init_vars(self):
         """Initialize Main Vars"""
-        self.tracking_mouse = True
+        # Icons Vars
+        self.ICON_COLOR_FOLDER = "black"
+        self.color_icons = True
 
         # Geometry and positioning
         self.auto_scale_init = False
@@ -183,6 +185,7 @@ class MainWindow(QOpenGLWidget):
         self.talkFontSize = 10
 
         # Status flags
+        self.tracking_mouse = True
         self.mouse_move = False
         self.mouse_timer = None
         self.isInLA = False
@@ -371,18 +374,54 @@ class MainWindow(QOpenGLWidget):
             app.setStyle("")  # Системный стиль (Default)
 
     def get_system_theme(self):
-        """Возвращает 'dark', 'light' или 'unknown' в зависимости от системы."""
+        """
+        Определяет тему системы и цвет иконок.
+        Приоритеты:
+        1. Если color_icons=True - всегда цветные иконки
+        2. Особые стили (например, WindowsVista)
+        3. Системная тема (Dark/Light)
+        """
         app = QGuiApplication.instance()
         if not app:
             return "unknown"
 
+        # Приоритет 1: Принудительные цветные иконки
+        if getattr(self, 'color_icons', False):
+            self.ICON_COLOR_FOLDER = "color"
+            return "color_theme"  # Специальное значение для цветного режима
+
+        current_style = app.style().name().lower()
+
+        # Приоритет 2: Особые стили
+        SPECIAL_STYLES = {
+            "windowsvista": ("black", "vista"),
+            #"windows": ("black", "legacy"),
+            "motif": ("black", "motif")
+        }
+
+        if current_style in SPECIAL_STYLES:
+            self.ICON_COLOR_FOLDER, theme_name = SPECIAL_STYLES[current_style]
+            return theme_name
+
+        # Приоритет 3: Системная тема
         scheme = app.styleHints().colorScheme()
         if scheme == Qt.ColorScheme.Dark:
+            self.ICON_COLOR_FOLDER = "white"
             return "dark"
-        elif scheme == Qt.ColorScheme.Light:
-            return "light"
-        else:
-            return "unknown"
+
+        # Все остальные случаи (Light/Unknown)
+        self.ICON_COLOR_FOLDER = "black"
+        return "light"
+
+    def get_icon(self, icon_name):
+        """Динамически загружает иконку с учётом текущей темы."""
+        icon_path = os.path.join(
+            resources.RESOURCES_DIRECTORY,
+            "icons",
+            self.ICON_COLOR_FOLDER,
+            f"{icon_name}.svg"
+        )
+        return QIcon(icon_path)
 
     def initializeGL(self) -> None:
         """Initialize GL"""
@@ -549,6 +588,9 @@ class MainWindow(QOpenGLWidget):
         if self.settings_update_state:
             settings.updateSettings()
 
+        # Check current system color scheme
+        self.get_system_theme()
+
         # Test canvas opacity
         #self.total_radius += self.radius_per_frame
         #v = abs(math.cos(self.total_radius))
@@ -685,119 +727,113 @@ class MainWindow(QOpenGLWidget):
         context_menu = QMenu(self).addMenu('&File')
 
         # Window Submenu
-        submenu_window = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window.svg")), self.lang['Actions']['Window'])
-        action_minimize = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_min.svg")), self.lang['Actions']['Minimize'])
+        submenu_window = QMenu(self).addMenu(self.get_icon("window"), self.lang['Actions']['Window'])
+        action_minimize = submenu_window.addAction(self.get_icon("window_min"), self.lang['Actions']['Minimize'])
         action_minimize.triggered.connect(self.action_handler.on_action_minimize)
-        action_normal = submenu_window.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/window_restore.svg")), self.lang['Actions']['Normal'])
+        action_normal = submenu_window.addAction(self.get_icon("window_restore"), self.lang['Actions']['Normal'])
         action_normal.triggered.connect(self.action_handler.on_action_normal)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
         # Transform Action
-        transform_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/transform.svg")), self.lang['Actions']['Transform'], self)
+        transform_action = QAction(self.get_icon("transform"), self.lang['Actions']['Transform'], self)
         if not self.input_handler.input_lock:
             transform_action.triggered.connect(self.action_handler.on_action_transform)
         context_menu.addAction(transform_action)
         context_menu.addSeparator()
 
         # Character Submenu
-        submenu_character = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/character.svg")), self.lang['Actions']['Characters'])
+        submenu_character = QMenu(self).addMenu(self.get_icon("character"), self.lang['Actions']['Characters'])
         # Neptune
         action_neptune = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/neptune.ico")), self.lang['NamesActions']['Neptune'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/neptune.ico")), self.lang['NamesActions']['Neptune'])
         if not self.input_handler.input_lock:
             action_neptune.triggered.connect(self.action_handler.on_action_neptune)
         # Purple Heart
         action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/purple_heart.ico")), self.lang['NamesActions']['PurpleHeart'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/purple_heart.ico")), self.lang['NamesActions']['PurpleHeart'])
         if not self.input_handler.input_lock:
             action_purple_heart.triggered.connect(self.action_handler.on_action_purple_heart)
         # Noire
         action_noire = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/noire.ico")), self.lang['NamesActions']['Noire'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/noire.ico")), self.lang['NamesActions']['Noire'])
         if not self.input_handler.input_lock:
             action_noire.triggered.connect(self.action_handler.on_action_noire)
         # Black Heart
         action_black_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/black_heart.ico")), self.lang['NamesActions']['BlackHeart'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/black_heart.ico")), self.lang['NamesActions']['BlackHeart'])
         if not self.input_handler.input_lock:
             action_black_heart.triggered.connect(self.action_handler.on_action_black_heart)
         # Blanc
         action_blanc = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/blanc.ico")), self.lang['NamesActions']['Blanc'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/blanc.ico")), self.lang['NamesActions']['Blanc'])
         if not self.input_handler.input_lock:
             action_blanc.triggered.connect(self.action_handler.on_action_blanc)
         # White Heart
         action_white_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/white_heart.ico")), self.lang['NamesActions']['WhiteHeart'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/white_heart.ico")), self.lang['NamesActions']['WhiteHeart'])
         if not self.input_handler.input_lock:
             action_white_heart.triggered.connect(self.action_handler.on_action_white_heart)
         # Vert
         action_vert = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/vert.ico")), self.lang['NamesActions']['Vert'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/vert.ico")), self.lang['NamesActions']['Vert'])
         if not self.input_handler.input_lock:
             action_vert.triggered.connect(self.action_handler.on_action_vert)
         # Green Heart
         action_green_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/green_heart.ico")), self.lang['NamesActions']['GreenHeart'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/green_heart.ico")), self.lang['NamesActions']['GreenHeart'])
         if not self.input_handler.input_lock:
             action_green_heart.triggered.connect(self.action_handler.on_action_green_heart)
         # NepGear
         action_nepgear = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/nepgear.ico")), self.lang['NamesActions']['NepGear'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/nepgear.ico")), self.lang['NamesActions']['NepGear'])
         if not self.input_handler.input_lock:
             action_nepgear.triggered.connect(self.action_handler.on_action_nepgear)
         # Purple Sister
         action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/purple_sister.ico")), self.lang['NamesActions']['PurpleSister'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/purple_sister.ico")), self.lang['NamesActions']['PurpleSister'])
         if not self.input_handler.input_lock:
             action_purple_sister.triggered.connect(self.action_handler.on_action_purple_sister)
         # Uni
         action_uni = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/uni.ico")), self.lang['NamesActions']['Uni'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/uni.ico")), self.lang['NamesActions']['Uni'])
         if not self.input_handler.input_lock:
             action_uni.triggered.connect(self.action_handler.on_action_uni)
         # Black Sister
         action_black_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/black_sister.ico")), self.lang['NamesActions']['BlackSister'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/black_sister.ico")), self.lang['NamesActions']['BlackSister'])
         if not self.input_handler.input_lock:
             action_black_sister.triggered.connect(self.action_handler.on_action_black_sister)
         # Rom
         action_rom = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/rom.ico")), self.lang['NamesActions']['Rom'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/rom.ico")), self.lang['NamesActions']['Rom'])
         if not self.input_handler.input_lock:
             action_rom.triggered.connect(self.action_handler.on_action_rom)
         # White Sister Rom
         action_white_sister_rom = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/white_sister_rom.ico")), self.lang['NamesActions']['WhiteSisterRom'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/white_sister_rom.ico")), self.lang['NamesActions']['WhiteSisterRom'])
         if not self.input_handler.input_lock:
             action_white_sister_rom.triggered.connect(self.action_handler.on_action_white_sister_rom)
         # Ram
         action_ram = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/ram.ico")), self.lang['NamesActions']['Ram'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/ram.ico")), self.lang['NamesActions']['Ram'])
         if not self.input_handler.input_lock:
             action_ram.triggered.connect(self.action_handler.on_action_ram)
         # White Sister Ram
         action_white_sister_ram = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
         if not self.input_handler.input_lock:
             action_white_sister_ram.triggered.connect(self.action_handler.on_action_white_sister_ram)
         # Histoire
         action_histoire = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/histoire.ico")), self.lang['NamesActions']['Histoire'])
+            resources.RESOURCES_DIRECTORY, "icons/characters/histoire.ico")), self.lang['NamesActions']['Histoire'])
         if not self.input_handler.input_lock:
             action_histoire.triggered.connect(self.action_handler.on_action_histoire)
 
         context_menu.addMenu(submenu_character)
 
         # Animations Submenu
-        submenu_animations = QMenu(self).addMenu(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/animation.svg")), self.lang['Actions']['Animations'])
+        submenu_animations = QMenu(self).addMenu(self.get_icon("animation"), self.lang['Actions']['Animations'])
 
         # Idle Animation CheckBox
         action_checked_idle = submenu_animations.addAction(self.lang['Actions']['Idle'])
@@ -828,30 +864,27 @@ class MainWindow(QOpenGLWidget):
 
         # Stop All Motions
         submenu_animations.addSeparator()
-        action_stop_all_motions = submenu_animations.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/stop.svg")), self.lang['Actions']['StopMotions'])
+        action_stop_all_motions = submenu_animations.addAction(self.get_icon("stop"),
+                                                               self.lang['Actions']['StopMotions'])
         action_stop_all_motions.triggered.connect(self.action_handler.on_action_stop_all_motions)
 
         context_menu.addMenu(submenu_animations)
         context_menu.addSeparator()
 
         # Settings Action
-        settings_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/settings.svg")), self.lang['Actions']['Settings'], self)
+        settings_action = QAction(self.get_icon("settings"), self.lang['Actions']['Settings'], self)
         if not self.input_handler.input_lock:
             settings_action.triggered.connect(self.action_handler.on_action_settings)
         context_menu.addAction(settings_action)
         context_menu.addSeparator()
 
         # About Action
-        about_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/about.svg")), self.lang['Actions']['About'], self)
+        about_action = QAction(self.get_icon("about"), self.lang['Actions']['About'], self)
         about_action.triggered.connect(self.action_handler.on_action_about)
         context_menu.addAction(about_action)
 
         # Exit Action
-        exit_action = QAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/exit.svg")), self.lang['Actions']['Quit'], self)
+        exit_action = QAction(self.get_icon("exit"), self.lang['Actions']['Quit'], self)
         if not self.input_handler.input_lock:
             exit_action.triggered.connect(self.action_handler.on_action_quit)
         context_menu.addAction(exit_action)
@@ -880,6 +913,7 @@ class MainWindow(QOpenGLWidget):
 
 
 class SettingsWindow(QWidget):
+    """Settings Window Class"""
     def __init__(self, pythonic_window_registration: bool = False):
         super().__init__()
         self.pythonic_reg = pythonic_window_registration
@@ -887,6 +921,11 @@ class SettingsWindow(QWidget):
         self.app_config = self.mainWindow.app_config
 
         self.available_styles = self.get_available_styles()
+
+        # Set fixed window size
+        self.setMinimumHeight(175)
+        self.setMaximumHeight(175)
+        self.setMaximumWidth(915)
 
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
@@ -898,7 +937,9 @@ class SettingsWindow(QWidget):
         self.getWindowFlag_WindowTransparentForInput = self.app_config.WindowTransparentForInput
         self.getWindowFlag_WindowType_Mask = self.app_config.WindowType_Mask
 
+        # Init AppConfig vars
         self.language = self.app_config.language
+        self.color_icons = self.app_config.color_icons
         self.theme = self.app_config.theme
         self.auto_scale = self.app_config.auto_scale
         self.models_scale = self.app_config.models_scale
@@ -907,9 +948,11 @@ class SettingsWindow(QWidget):
         self.tracking_mouse = self.app_config.tracking_mouse_switch
         self.sleep = self.app_config.sleep_switch
 
+        #Init language
         self.language_set = None
         self.language_get = None
 
+        #Create Groups
         self.createHintsGroupBox()
         self.createScaleGroupBox()
         self.createOtherGroupBox()
@@ -919,6 +962,7 @@ class SettingsWindow(QWidget):
         self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
 
         # Settings Control
+        self.colorIconsCheckBox.setChecked(self.color_icons)
         self.autoScaleCheckBox.setChecked(self.auto_scale)
         self.autoBlinkCheckBox.setChecked(self.auto_blink)
         self.autoBreathCheckBox.setChecked(self.auto_breath)
@@ -960,6 +1004,17 @@ class SettingsWindow(QWidget):
         self.mainWindow.set_app_title()
         self.updateMainWindow()
 
+    @property
+    def icon_color_folder(self):
+        return self.mainWindow.ICON_COLOR_FOLDER
+
+    def update_icons(self):
+        """Update icons color in real time"""
+        self.autoBlinkCheckBox.setIcon(self.mainWindow.get_icon("eye_closed"))
+        self.autoBreathCheckBox.setIcon(self.mainWindow.get_icon("breath"))
+        self.trackingMouseCheckBox.setIcon(self.mainWindow.get_icon("mouse"))
+        self.sleepCheckBox.setIcon(self.mainWindow.get_icon("sleep"))
+
     def get_available_styles(self):
         """Возвращает список доступных стилей, где первый элемент — текущий системный стиль."""
         style_names = {
@@ -973,13 +1028,13 @@ class SettingsWindow(QWidget):
 
             # Стили для Linux
             "gtk+": "GTK+",
-            "breeze": "Breeze (KDE)",
-            "adwaita": "Adwaita (GNOME)",
+            "breeze": "Breeze",
+            "adwaita": "Adwaita",
             "qt5gtk2": "Qt5 GTK2",
 
             # Устаревшие/экзотические стили
-            "cde": "CDE (Unix)",
-            "motif": "Motif (Unix)",
+            "cde": "CDE",
+            "motif": "Motif",
             "cleanlooks": "CleanLooks"
         }
 
@@ -1028,6 +1083,7 @@ class SettingsWindow(QWidget):
         self.framelessWindowCheckBox.setText(self.mainWindow.lang['Settings']['FramelessWindow'])
         self.windowStaysOnTopCheckBox.setText(self.mainWindow.lang['Settings']['StaysOnTop'])
         self.langText.setText(self.mainWindow.lang['Settings']['Language'])
+        self.colorIconsCheckBox.setText(self.mainWindow.lang['Settings']['ColorIcons'])
         self.themeText.setText(self.mainWindow.lang['Settings']['Theme'])
         # Scale Box
         self.scaleGroupBox.setTitle(self.mainWindow.lang['Settings']['ScaleTitle'])
@@ -1039,6 +1095,8 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox.setText(self.mainWindow.lang['Settings']['AutoBreath'])
         self.trackingMouseCheckBox.setText(self.mainWindow.lang['Settings']['TrackingMouse'])
         self.sleepCheckBox.setText(self.mainWindow.lang['Settings']['Sleep'])
+        # Update icons
+        self.update_icons()
 
     @Slot()
     def updateMainWindow(self) -> None:
@@ -1077,6 +1135,13 @@ class SettingsWindow(QWidget):
                 self.app_config.WindowStaysOnTopHint = False
                 self.windowStaysOnTopCheckBox.setChecked(False)
                 self.app_config.WindowStaysOnBottomHint = True
+
+            if self.colorIconsCheckBox.isChecked():
+                self.set_setting('color_icons', True)
+                self.colorIconsCheckBox.setChecked(True)
+            else:
+                self.set_setting('color_icons', False)
+                self.colorIconsCheckBox.setChecked(False)
 
             if self.autoScaleCheckBox.isChecked():
                 self.autoScaleCheckBox.setChecked(True)
@@ -1151,6 +1216,7 @@ class SettingsWindow(QWidget):
         else:
             self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
             self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
+            self.colorIconsCheckBox = self.createCheckBox("Color icons")
             self.langText = QLabel("Language:")
             self.langComboBox = QComboBox()
             self.langComboBox.addItems(["English", "Русский"])
@@ -1168,6 +1234,7 @@ class SettingsWindow(QWidget):
             layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
             layout.addWidget(self.langText, 3, 0)
             layout.addWidget(self.langComboBox, 4, 0)
+            layout.addWidget(self.colorIconsCheckBox, 1, 1)
             layout.addWidget(self.themeText, 3, 1)
             layout.addWidget(self.themeComboBox, 4, 1)
             self.langComboBox.currentTextChanged.connect(self.updateMainWindow)
@@ -1190,9 +1257,9 @@ class SettingsWindow(QWidget):
 
         self.autoScaleCheckBox = self.createCheckBox("AutoScale")
 
-        layout.addWidget(self.autoScaleCheckBox)
-        layout.addWidget(self.sc_mult_text)
-        layout.addWidget(self.modelScaleBox)
+        layout.addWidget(self.autoScaleCheckBox, 0, 0)
+        layout.addWidget(self.sc_mult_text, 1, 0)
+        layout.addWidget(self.modelScaleBox, 1, 1)
 
         self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
         self.modelScaleBox.valueChanged.connect(self.updateMainWindow)
@@ -1214,15 +1281,6 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox = self.createCheckBox("Auto Breath")
         self.trackingMouseCheckBox = self.createCheckBox("Tracking Mouse Position")
         self.sleepCheckBox = self.createCheckBox("Sleep")
-
-        self.autoBlinkCheckBox.setIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/eye_closed.svg")))
-        self.autoBreathCheckBox.setIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/breath.svg")))
-        self.trackingMouseCheckBox.setIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/mouse.svg")))
-        self.sleepCheckBox.setIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/sleep.svg")))
 
         layout.addWidget(self.autoBlinkCheckBox)
         layout.addWidget(self.autoBreathCheckBox)
@@ -1312,7 +1370,7 @@ if __name__ == "__main__":
     win.setFormat(format)
     settings = SettingsWindow()
     settings.setWindowIcon(QIcon(os.path.join(
-        resources.RESOURCES_DIRECTORY, "icons/settings.svg")))
+        resources.RESOURCES_DIRECTORY, "icons/color/settings.svg")))
 
     app.exec()
     live2d.dispose()

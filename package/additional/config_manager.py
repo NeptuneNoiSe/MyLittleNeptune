@@ -216,6 +216,7 @@ class AppConfig(QObject):
         self._config.set('Main', 'language', value)
         self._save_and_notify('Main', 'language', value)
 
+    # Color icons config
     @property
     def color_icons(self) -> bool:
         return self._config.getboolean('Main', 'color_icons')

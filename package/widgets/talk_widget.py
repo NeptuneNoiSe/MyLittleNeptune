@@ -158,17 +158,17 @@ class TalkWidget:
         """Show widget Animation"""
         # Setting up transparency with animation
         self.talk_image_label_opacity = QGraphicsOpacityEffect()
-        self.talk_image_label_opacity.setOpacity(0.0)  # Начальное значение прозрачности
+        self.talk_image_label_opacity.setOpacity(0.0)  # Initial transparency value
         self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
 
-        # Создаем анимацию
+        # Creating an animation
         self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-        self.opacity_animation.setDuration(250)  # Длительность анимации в миллисекундаха
-        self.opacity_animation.setStartValue(0.0)  # Начальное значение
-        self.opacity_animation.setEndValue(0.9)  # Конечное значение
-        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Плавность анимации
+        self.opacity_animation.setDuration(250)  # Animation duration in milliseconds
+        self.opacity_animation.setStartValue(0.0)  # Initial value
+        self.opacity_animation.setEndValue(0.9)  # Final value
+        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Smoothness of animation
 
-        # Добавляем анимацию в очередь (чтобы не блокировать основной поток)
+        # Adding animations to the queue (so as not to block the main thread)
         QTimer.singleShot(0, self.opacity_animation.start)
 
     def show_talk(self):
@@ -364,8 +364,8 @@ class TalkWidget:
             self.opacity_animation.setDuration(500)
             self.opacity_animation.setStartValue(0.9)
             self.opacity_animation.setEndValue(0.0)
-            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Плавность анимации
-            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Скрыть после анимации
+            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Smoothness of animation
+            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Hide after animation
             QTimer.singleShot(0, self.opacity_animation.start)
         else:
             self.close_dialog_after_animation()

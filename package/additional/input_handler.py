@@ -3,20 +3,11 @@ from PySide6 import QtCore
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QSize, QPropertyAnimation, QEasingCurve,QPoint, QPointF, QElapsedTimer
 from PySide6.QtGui import QPixmap, QMovie, QCursor
 
-# from package import resources
-# from package.additional.animations import AnimationsManager
-# from package.additional.animations import TiredAnimation
-# from package.additional.resource_mng import ResourceManager
-# from package.additional.config_module import *
-# import live2d.v3 as live2d
-# import OpenGL.GL as gl
 import numpy as np
 import random
 import time
 import math
 from PIL import Image
-# import resources
-# import json
 
 
 class InputHandler:

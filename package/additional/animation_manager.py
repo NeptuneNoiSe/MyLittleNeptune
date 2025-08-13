@@ -78,7 +78,7 @@ class AnimationsManager:
     def _load_profiles(self) -> dict:
         """Load a single config for all characters"""
         with open(os.path.join(
-            resources.RESOURCES_DIRECTORY, "configs/anim_profiles.json"), 'r', encoding='utf-8') as f:
+            resources.RESOURCES_DIRECTORY, "configs/animation_profiles.json"), 'r', encoding='utf-8') as f:
             data = json.load(f)
             # Converting lists to sets for hit_zones
             for char in data.values():
@@ -675,15 +675,14 @@ class TransformAnimator:
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
-# TODO: [WIP] Новый класс анимации перетаскивания Требуется: Тестирование и отладка
 class DragAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
 
         self.angle = 0.0
         self.max_angle = 15.0
-        self.return_delay = 500  # Задержка перед возвратом (мс)
-        self.return_speed = 0.5  # Скорость возврата (0.1-0.9)
+        self.return_delay = 500  # Delay before return (ms)
+        self.return_speed = 0.5  # Return rate (0.1-0.9)
         self.drag_direction = 0
         self.drag_intensity = 0
         self.max_angle = 10

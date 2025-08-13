@@ -16,7 +16,7 @@ from live2d.utils.canvas import Canvas
 # import live2d.v2 as live2d
 import resources
 from widgets.talk_widget import TalkWidget
-from additional.config_module import AppConfig
+from additional.config_manager import AppConfig
 from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
 from additional.action_handler import ActionHandler
@@ -363,66 +363,6 @@ class MainWindow(QOpenGLWidget):
         """proxy method"""
         self.models_manager.apply_character_config(self, character_name)
 
-    def set_theme(self):
-        #app.setStyle(self.theme if self.theme != "Default" else "")  # Default = пустая строка
-        style_key = self.display_to_style.get(self.theme, "")  # Если темы нет в словаре → Default ("")
-
-        # 2. Устанавливаем стиль
-        if style_key:
-            app.setStyle(QStyleFactory.create(style_key))  # Для Windows 11, Fusion и др.
-        else:
-            app.setStyle("")  # Системный стиль (Default)
-
-    def get_system_theme(self):
-        """
-        Определяет тему системы и цвет иконок.
-        Приоритеты:
-        1. Если color_icons=True - всегда цветные иконки
-        2. Особые стили (например, WindowsVista)
-        3. Системная тема (Dark/Light)
-        """
-        app = QGuiApplication.instance()
-        if not app:
-            return "unknown"
-
-        # Приоритет 1: Принудительные цветные иконки
-        if getattr(self, 'color_icons', False):
-            self.ICON_COLOR_FOLDER = "color"
-            return "color_theme"  # Специальное значение для цветного режима
-
-        current_style = app.style().name().lower()
-
-        # Приоритет 2: Особые стили
-        SPECIAL_STYLES = {
-            "windowsvista": ("black", "vista"),
-            #"windows": ("black", "legacy"),
-            "motif": ("black", "motif")
-        }
-
-        if current_style in SPECIAL_STYLES:
-            self.ICON_COLOR_FOLDER, theme_name = SPECIAL_STYLES[current_style]
-            return theme_name
-
-        # Приоритет 3: Системная тема
-        scheme = app.styleHints().colorScheme()
-        if scheme == Qt.ColorScheme.Dark:
-            self.ICON_COLOR_FOLDER = "white"
-            return "dark"
-
-        # Все остальные случаи (Light/Unknown)
-        self.ICON_COLOR_FOLDER = "black"
-        return "light"
-
-    def get_icon(self, icon_name):
-        """Динамически загружает иконку с учётом текущей темы."""
-        icon_path = os.path.join(
-            resources.RESOURCES_DIRECTORY,
-            "icons",
-            self.ICON_COLOR_FOLDER,
-            f"{icon_name}.svg"
-        )
-        return QIcon(icon_path)
-
     def initializeGL(self) -> None:
         """Initialize GL"""
         self.makeCurrent()
@@ -580,6 +520,66 @@ class MainWindow(QOpenGLWidget):
         self.setWindowTitle("My Little Neptune")
         self.setWindowIcon(QIcon(os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+
+    def set_theme(self):
+        #app.setStyle(self.theme if self.theme != "Default" else "")  # Default = пустая строка
+        style_key = self.display_to_style.get(self.theme, "")  # Если темы нет в словаре → Default ("")
+
+        # 2. Устанавливаем стиль
+        if style_key:
+            app.setStyle(QStyleFactory.create(style_key))  # Для Windows 11, Fusion и др.
+        else:
+            app.setStyle("")  # Системный стиль (Default)
+
+    def get_system_theme(self):
+        """
+        Defines the theme of the system and the color of the icons.
+                Priorities:
+                1. If color_icons=True, always color icons.
+                2. Special styles (for example, WindowsVista)
+                3. System theme (Dark/Light)
+        """
+        app = QGuiApplication.instance()
+        if not app:
+            return "unknown"
+
+        # Priority 1: Forced color icons
+        if getattr(self, 'color_icons', False):
+            self.ICON_COLOR_FOLDER = "color"
+            return "color_theme"  # Special value for color mode
+
+        current_style = app.style().name().lower()
+
+        # Priority 2: Special styles
+        SPECIAL_STYLES = {
+            "windowsvista": ("black", "vista"),
+            #"windows": ("black", "legacy"),
+            "motif": ("black", "motif")
+        }
+
+        if current_style in SPECIAL_STYLES:
+            self.ICON_COLOR_FOLDER, theme_name = SPECIAL_STYLES[current_style]
+            return theme_name
+
+        # Priority 3: System Theme
+        scheme = app.styleHints().colorScheme()
+        if scheme == Qt.ColorScheme.Dark:
+            self.ICON_COLOR_FOLDER = "white"
+            return "dark"
+
+        # All other cases (Light/Unknown)
+        self.ICON_COLOR_FOLDER = "black"
+        return "light"
+
+    def get_icon(self, icon_name):
+        """Dynamically loads the icon based on the current theme."""
+        icon_path = os.path.join(
+            resources.RESOURCES_DIRECTORY,
+            "icons",
+            self.ICON_COLOR_FOLDER,
+            f"{icon_name}.svg"
+        )
+        return QIcon(icon_path)
 
     def timerEvent(self, a0: QTimerEvent | None) -> None:
         """Timer event"""
@@ -1016,9 +1016,9 @@ class SettingsWindow(QWidget):
         self.sleepCheckBox.setIcon(self.mainWindow.get_icon("sleep"))
 
     def get_available_styles(self):
-        """Возвращает список доступных стилей, где первый элемент — текущий системный стиль."""
+        """Dynamically loads the icon based on the current theme."""
         style_names = {
-            # Базовые стили Qt
+            # Basic Qt Styles
             "legacy": "Windows",
             "windows": "Windows",
             "windowsvista": "Windows Vista",
@@ -1026,28 +1026,28 @@ class SettingsWindow(QWidget):
             "fusion": "Fusion",
             "macos": "macOS",
 
-            # Стили для Linux
+            # Styles for Linux
             "gtk+": "GTK+",
             "breeze": "Breeze",
             "adwaita": "Adwaita",
             "qt5gtk2": "Qt5 GTK2",
 
-            # Устаревшие/экзотические стили
+            # Outdated/exotic styles
             "cde": "CDE",
             "motif": "Motif",
             "cleanlooks": "CleanLooks"
         }
 
-        # Получаем текущий стиль системы
+        # Getting the current system style
         current_style = QApplication.style().objectName().lower()
         current_display_name = style_names.get(current_style, "System Default")
 
-        # Формируем список, где первый элемент — текущий стиль
-        available_styles = [current_display_name]  # Первый элемент — активный стиль
+        # Creating a list where the first element is the current style
+        available_styles = [current_display_name]  # The first element is the active style
 
-        # Добавляем остальные доступные стили (исключая дубликаты)
+        # Add the remaining available styles (excluding duplicates)
         for style_key in QStyleFactory.keys():
-            if style_key != current_style:  # Не добавляем текущий стиль повторно
+            if style_key != current_style:  # Do not add the current style again
                 display_name = style_names.get(style_key, style_key.title())
                 available_styles.append(display_name)
 

@@ -100,6 +100,7 @@ class ResourceManager:
                 "Ram": "ram_talk.svg",
                 "White Sister Ram": "white_sister_ram_talk.svg",
                 "Histoire": "histoire_talk.svg",
+                "Maho": "maho_talk.svg",
                 "default": "talk.svg"
             }
 

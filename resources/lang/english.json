@@ -16,7 +16,8 @@
     "WhiteSisterRom": "White Sister Rom",
     "Ram": "Ram",
     "WhiteSisterRam": "White Sister Ram",
-    "Histoire": "Histoire"
+    "Histoire": "Histoire",
+    "Maho": "Maho"
   },
   "NamesActions": {
     "Neptune": "&Neptune",
@@ -35,7 +36,8 @@
     "WhiteSisterRom": "&White Sister Rom",
     "Ram": "&Ram",
     "WhiteSisterRam": "&White Sister Ram",
-    "Histoire": "&Histoire"
+    "Histoire": "&Histoire",
+    "Maho": "&Maho"
   },
   "Talk": {
     "Hello": "Hello!",

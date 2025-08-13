@@ -16,7 +16,8 @@
     "WhiteSisterRom": "Белая Сестра Ром",
     "Ram": "Рам",
     "WhiteSisterRam": "Белая Сестра Рам",
-    "Histoire": "Хистоар"
+    "Histoire": "Хистоар",
+    "Maho": "Махо"
   },
   "NamesActions": {
     "Neptune": "&Нептун",
@@ -35,7 +36,8 @@
     "WhiteSisterRom": "&Белая Сестра Ром",
     "Ram": "&Рам",
     "WhiteSisterRam": "&Белая Сестра Рам",
-    "Histoire": "&Хистоар"
+    "Histoire": "&Хистоар",
+    "Maho": "&Махо"
   },
   "Talk": {
     "Hello": "Привет!",

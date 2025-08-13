@@ -1,0 +1,211 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "Maho.moc3",
+		"Textures": [
+			"textures/texture_00.png",
+			"textures/texture_10.png"
+		],
+		"Expressions": [
+			{
+				"Name": "Normal",
+				"File": "expressions/Normal.json"
+			},
+			{
+				"Name": "Happy",
+				"File": "expressions/Happy.json"
+			},
+			{
+				"Name": "Angry",
+				"File": "expressions/Angry.json"
+			},
+			{
+				"Name": "Sad",
+				"File": "expressions/Sad.json"
+			},
+			{
+				"Name": "Smile",
+				"File": "expressions/Smile.json"
+			},
+			{
+				"Name": "Tired",
+				"File": "expressions/Tired.json"
+			},
+			{
+				"Name": "ClosedEyes",
+				"File": "expressions/ClosedEyes.json"
+			},
+			{
+				"Name": "Cry",
+				"File": "expressions/Cry.json"
+			},
+			{
+				"Name": "Fear",
+				"File": "expressions/Fear.json"
+			},
+			{
+				"Name": "Incredulous",
+				"File": "expressions/Incredulous.json"
+			},
+			{
+				"Name": "Star",
+				"File": "expressions/Star.json"
+			},
+			{
+				"Name": "Surprised",
+				"File": "expressions/Surprised.json"
+			},
+			{
+				"Name": "Funny",
+				"File": "expressions/Funny.json"
+			},
+			{
+				"Name": "Normal_Alt",
+				"File": "expressions/Normal_Alt.json"
+			},
+			{
+				"Name": "Happy_Alt",
+				"File": "expressions/Happy_Alt.json"
+			},
+			{
+				"Name": "Angry_Alt",
+				"File": "expressions/Angry_Alt.json"
+			},
+			{
+				"Name": "Sad_Alt",
+				"File": "expressions/Sad_Alt.json"
+			},
+			{
+				"Name": "Smile_Alt",
+				"File": "expressions/Smile_Alt.json"
+			},
+			{
+				"Name": "Tired_Alt",
+				"File": "expressions/Tired_Alt.json"
+			},
+			{
+				"Name": "ClosedEyes_Alt",
+				"File": "expressions/ClosedEyes_Alt.json"
+			},
+			{
+				"Name": "Cry_Alt",
+				"File": "expressions/Cry_Alt.json"
+			},
+			{
+				"Name": "Fear_Alt",
+				"File": "expressions/Fear_Alt.json"
+			},
+			{
+				"Name": "Incredulous_Alt",
+				"File": "expressions/Incredulous_Alt.json"
+			},
+			{
+				"Name": "Star_Alt",
+				"File": "expressions/Star_Alt.json"
+			},
+			{
+				"Name": "Surprised_Alt",
+				"File": "expressions/Surprised_Alt.json"
+			},
+			{
+				"Name": "Funny_Alt",
+				"File": "expressions/Funny_Alt.json"
+			}
+		],
+		"Motions": {
+			"TapBody": [
+				{
+					"File": "motions/tap_m00.motion3.json"
+				},
+				{
+					"File": "motions/tap_m01.motion3.json"
+				},
+              {
+					"File": "motions/tap_m02.motion3.json"
+				},
+              {
+					"File": "motions/tap_m03.motion3.json"
+				},
+              {
+					"File": "motions/tap_m04.motion3.json"
+				},
+              {
+					"File": "motions/tap_m05.motion3.json"
+				},
+              {
+					"File": "motions/tap_m06.motion3.json"
+				}
+			],
+            "Idle": [
+                {
+                    "File": "motions/idle_m00.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m01.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m02.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m03.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m04.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m05.motion3.json"
+                },
+                {
+                    "File": "motions/idle_m06.motion3.json"
+                },
+              {
+                    "File": "motions/idle_m07.motion3.json"
+                }
+			],
+			"OnMouse": [
+				{
+					"File": "motions/mtn_01.motion3.json"
+				},
+				{
+					"File": "motions/mtn_02.motion3.json"
+				},
+                  {
+					"File": "motions/mtn_03.motion3.json"
+				},
+				{
+					"File": "motions/mtn_04.motion3.json"
+				},
+                  {
+					"File": "motions/mtn_05.motion3.json"
+				}
+                ],
+			"Unique": [
+
+                ]
+		},
+		"Groups": [
+			{
+				"Target": "Parameter",
+				"Name": "EyeBlink",
+				"Ids": [
+					"ParamEyeROpen",
+					"ParamEyeLOpen"
+				]
+			},
+			{
+				"Target": "Parameter",
+				"Name": "LipSync",
+				"Ids": [
+					"ParamMouthForm",
+					"ParamMouthOpenY"
+				]
+			}
+		]
+	},
+	"HitAreas": [
+		{
+			"Id": "HitAreaBody",
+			"Name": "Body"
+		}
+	]
+}

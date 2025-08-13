@@ -202,5 +202,17 @@
     "w_correction": 0,
     "h_correction": 0,
     "posXR": 40
+    },
+  "Maho": {
+    "model_path": "v3/Maho/Maho.model3.json",
+    "name_key": "Maho",
+    "models_switch": 17,
+    "hdd_form": false,
+    "can_transform": false,
+    "mx_param": 600,
+    "my_param": 600,
+    "w_correction": -70,
+    "h_correction": 0,
+    "posXR": 40
     }
 }

@@ -419,6 +419,9 @@ class MainWindow(QOpenGLWidget):
 
             elif self.models_switch == 16:
                 self.character_name = "Histoire"
+
+            elif self.models_switch == 16:
+                self.character_name = "Maho"
         else:
             self.model.LoadModelJson(os.path.join(
                 resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
@@ -829,6 +832,11 @@ class MainWindow(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/characters/histoire.ico")), self.lang['NamesActions']['Histoire'])
         if not self.input_handler.input_lock:
             action_histoire.triggered.connect(self.action_handler.on_action_histoire)
+        # Maho
+        action_histoire = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/characters/maho.ico")), self.lang['NamesActions']['Maho'])
+        if not self.input_handler.input_lock:
+            action_histoire.triggered.connect(self.action_handler.on_action_maho)
 
         context_menu.addMenu(submenu_character)
 

@@ -93,6 +93,9 @@ class ActionHandler:
     def on_action_histoire(self):
         self._change_character("Histoire")
 
+    def on_action_maho(self):
+        self._change_character("Maho")
+
     # Animations Actions
     def _toggle_animation_setting(self, config_key, switch_attr, anim_attr,
                                   enabled_text_key, disabled_text_key, enabled):

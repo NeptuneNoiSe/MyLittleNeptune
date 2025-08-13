@@ -142,6 +142,8 @@ class MainWindow(QOpenGLWidget):
         self.a_scale = 1
         self.mx_param = 0
         self.my_param = 0
+        self.frmX = 0
+        self.frmY = 0
         self.trm_mx = -50
         self.trm_my = 5
         self.trm_cmx = 100

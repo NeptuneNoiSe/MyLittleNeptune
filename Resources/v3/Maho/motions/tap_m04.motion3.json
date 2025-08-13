@@ -583,31 +583,6 @@
 		},
 		{
 			"Target": "Parameter",
-			"Id": "ParamMouthOpenY",
-			"Segments": [
-				0,
-				0,
-				1,
-				0.067,
-				0,
-				0.133,
-				0,
-				0.2,
-				0,
-				1,
-				0.278,
-				0,
-				0.356,
-				1,
-				0.433,
-				1,
-				0,
-				4.167,
-				1
-			]
-		},
-		{
-			"Target": "Parameter",
 			"Id": "ParamBodyAngleX",
 			"Segments": [
 				0,

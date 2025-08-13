@@ -142,7 +142,7 @@ class CharacterStateManager:
         """Transform state"""
         self.character.expressions.fadeoutTimer.stop()
         if not self.win.hdd_form:
-            self.character.expressions.set_tranform_to_hdd_expression()
+            self.character.expressions.set_transform_to_hdd_expression()
             self.character.character_text.set_transform_to_hdd_text()
         else:
             self.character.expressions.set_funny_expression(fade_out=14000)
@@ -428,7 +428,7 @@ class CharacterExpressionManager:
         else:
             self._apply_expression("Surprised", fade_out)
 
-    def set_tranform_to_hdd_expression(self, fade_out: int | None = None) -> None:
+    def set_transform_to_hdd_expression(self, fade_out: int | None = None) -> None:
         # Setting the default expression for a regular form
         if self.character.name in ["Neptune", "NepGear"]:
             self._apply_expression("Star", fade_out)
@@ -437,7 +437,7 @@ class CharacterExpressionManager:
         else:
             self._apply_expression("Serious", fade_out)
 
-    def set_tranform_end_expression(self, fade_out: int | None = None) -> None:
+    def set_transform_end_expression(self, fade_out: int | None = None) -> None:
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
         self._apply_expression("Funny", fade_out)
@@ -470,9 +470,24 @@ class CharacterExpressionManager:
             "ClosedEyes": ("ClosedEyes", "(-_-)"),
             "Cry": ("Cry", "(o;TωT)o"),
             "Fear": ("Fear", "(｡ŏ_ŏ)"),
+            "Incredulous":("Incredulous", "(￢_￢)?"),
             "Star": ("Star", "(✩ω✩)"),
             "Surprised": ("Surprised", "(0_0)?"),
             "Funny": ("Funny", "(>_<)"),
+            # Maho Spesial Expressions
+            "Normal_Alt": ("Normal_Maho", "(•ิ_•ิ)?"),
+            "Happy_Alt": ("Happy_Maho", "(￣▽￣*)"),
+            "Angry_Alt": ("Angry_Maho", "(ﾒ｀ﾛ´)/"),
+            "Sad_Alt": ("Sad_Maho", "(；一_一)"),
+            "Smile_Alt": ("Smile_Maho", "（¬‿¬）"),
+            "Tired_Alt": ("Tired_Maho", "(´〜｀*)"),
+            "ClosedEyes_Alt": ("ClosedEyes_Maho", "(￣ー￣)"),
+            "Cry_Alt": ("Cry_Maho", "(╯︵╰,)"),
+            "Fear_Alt": ("Fear_Maho", "(￣へ￣｡)"),
+            "Incredulous_Alt": ("Incredulous_Maho", "(눈_눈)"),
+            "Star_Alt": ("Star_Maho", "(☆^▽^☆)"),
+            "Surprised_Alt": ("Surprised_Maho", "(°ロ°)?"),
+            "Funny_Alt": ("Funny_Maho", "(ﾉ>△<)ﾉ"),
         }
 
         # Special case handling
@@ -500,7 +515,7 @@ class CharacterExpressionManager:
         self.character.kaomoji = kaomoji
 
     def _apply_expression(self, exp_id: str, fade_out: int | None) -> None:
-        # print(exp_id)
+        print(exp_id)
         self.character.model.SetExpression(exp_id)
         if hasattr(self, 'fadeoutTimer') and fade_out is not None:
             self.fadeoutTimer.start(fade_out)

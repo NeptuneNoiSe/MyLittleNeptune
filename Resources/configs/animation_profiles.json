@@ -1670,5 +1670,120 @@
                 "priority": 3
             }
         }
+    },
+    "Maho": {
+        "hit_zones": {
+            "WI-FI": ["Part17"],
+            "SIDE HAIR": ["Part14"],
+            "LEFT HAIR": ["Part15"],
+            "RIGHT HAIR": ["Part16"],
+            "HAIR": ["Part3"],
+            "EYEBROWS": ["Part2"],
+            "LEFT EYE": ["Part5"],
+            "RIGHT EYE": ["Part4"],
+            "MOUTH": ["Part6"],
+            "HEAD": ["Part9"],
+            "HEAD ALT": ["Part8"],
+            "LEFT HAND": ["Part10"],
+            "RIGHT HAND": ["Part12"],
+            "LEGS": ["Part13"]
+        },
+        "animations": {
+            "WI-FI": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "SIDE HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "LEFT HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "EYEBROWS": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "LEFT EYE": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "RIGHT EYE": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "HEAD": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "HEAD ALT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "MOUTH": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "BODY": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [2, 3, 4],
+                "priority": 3
+            },
+            "LEFT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [11, 12, 13],
+                "priority": 3
+            },
+            "RIGHT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [14, 15, 16],
+                "priority": 3
+            },
+            "LEGS": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [17, 18, 19, 20],
+                "priority": 3
+            },
+            "default": {
+                "anim_type": "RandomMotion",
+                "group": "TapBody",
+                "priority": 3
+            }
+        }
     }
 }

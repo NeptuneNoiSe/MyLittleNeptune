@@ -30,6 +30,9 @@ class InputHandler:
         self.drag_threshold = 200  # Minimum distance to start animation
         self.direction_threshold = 10  # The threshold for determining the direction
         self.distance_normalizer = 500  # Divider for intensity
+        self._smooth_pos = QPointF()
+        self._current_pos = QPoint()
+        self.smooth_factor = 0.3
 
         # Input release timer
         self.mouse_input_timer = QTimer()
@@ -76,12 +79,12 @@ class InputHandler:
                     and not self.win.mouse_tracker.is_animating
                     and self.win.tracking_mouse
                     and self.win.tracking_mouse_switch):
-                smooth_pos = self.win.mouse_tracker.get_smoothed_coords()
+                self._smooth_pos = self.win.mouse_tracker.get_smoothed_coords()
                 if self.win.model:
-                    self.win.model.Drag(smooth_pos.x(), smooth_pos.y())
+                    self.win.model.Drag(self._smooth_pos.x(), self._smooth_pos.y())
                     if self.win.mouse_tracking_log:
-                        log_x = int(smooth_pos.x()) if smooth_pos.x().is_integer() else round(smooth_pos.x())
-                        log_y = int(smooth_pos.y()) if smooth_pos.y().is_integer() else round(smooth_pos.y())
+                        log_x = int(self._smooth_pos.x()) if self._smooth_pos.x().is_integer() else round(self._smooth_pos.x())
+                        log_y = int(self._smooth_pos.y()) if self._smooth_pos.y().is_integer() else round(self._smooth_pos.y())
                         print(f"Mouse moving: X={log_x} Y={log_y}")
 
     def handle_mouse_idle(self):
@@ -167,25 +170,25 @@ class InputHandler:
         try:
             # Conversion to integer coordinates
             if hasattr(global_pos, 'toPoint'):
-                current_pos = global_pos.toPoint()
+                self._current_pos = global_pos.toPoint()
             else:
                 try:
                     x = int(round(global_pos.x()))
                     y = int(round(global_pos.y()))
-                    current_pos = QPoint(x, y)
+                    self._current_pos = QPoint(x, y)
                 except (AttributeError, TypeError):
                     print(f"Invalid pos: {global_pos}")
                     return
 
             # The first call is initialization
             if self.last_pos.isNull():
-                self.start_pos = current_pos
-                self.last_pos = current_pos
+                self.start_pos = self._current_pos
+                self.last_pos = self._current_pos
                 return
 
             # Delta calculation with validation
-            distance = (current_pos - self.start_pos).manhattanLength()
-            delta_x = current_pos.x() - self.last_pos.x()
+            distance = (self._current_pos - self.start_pos).manhattanLength()
+            delta_x = self._current_pos.x() - self.last_pos.x()
 
             # Updated trigger threshold
             if abs(delta_x) > self.direction_threshold:
@@ -201,7 +204,7 @@ class InputHandler:
             if distance > self.drag_threshold:
                 self._trigger_drag_animation()
 
-            self.last_pos = current_pos
+            self.last_pos = self._current_pos
 
         except Exception as e:
             print(f"Move error: {type(e).__name__}: {str(e)}")
@@ -247,6 +250,7 @@ class MouseTracker:
         self.adaptive_buffer_size = self._calculate_optimal_buffer()
         self.position_buffer = [QPointF(0, 0)] * self.adaptive_buffer_size
         self.smoothed_position = QPointF(0, 0)
+        self._smoothed_position = QPointF(0, 0)
 
         # Dinamic coef buffer
         self.smooth_factor = 0.3  # The basic coefficient
@@ -304,8 +308,8 @@ class MouseTracker:
                 self.smooth_factor = min(0.4, self.smooth_factor + 0.02)
 
             self.smoothed_position = QPointF(
-                self.smoothed_position.x() * (1 - self.smooth_factor) + avg_x * self.smooth_factor,
-                self.smoothed_position.y() * (1 - self.smooth_factor) + avg_y * self.smooth_factor
+                self._smoothed_position.x() * (1 - self.smooth_factor) + avg_x * self.smooth_factor,
+                self._smoothed_position.y() * (1 - self.smooth_factor) + avg_y * self.smooth_factor
             )
 
             return self.smoothed_position

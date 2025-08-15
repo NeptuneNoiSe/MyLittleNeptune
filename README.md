@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.13-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.3-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.5.4-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.7.0.2-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.7.1-purple" alt="App Version" style="margin: 0 10px;">
 </p>
 
 ## The assistant application on your desktop, which pleases you with its appearance every day:)
@@ -55,40 +55,43 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
  * Motion Callbacks Log: `callbacks_log = False`
 
 ## Models Available:
-<div align="center" style="padding-top: 10px">
-    <img src="./docs/model_preview/neptune.svg" alt="neptune" width="310px" height="310px">
-    <img src="./docs/model_preview/purple_heart.svg" alt="purple_heart" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/neptune.svg" alt="neptune" width="250px" height="100px">
+    <img src="./docs/model_preview/purple_heart.svg" alt="purple_heart" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/noire.svg" alt="noire" width="320px" height="320px">
-    <img src="./docs/model_preview/black_heart.svg" alt="black_heart" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/noire.svg" alt="noire" width="250px" height="100px">
+    <img src="./docs/model_preview/black_heart.svg" alt="black_heart" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/blanc.svg" alt="blanc" width="310px" height="310px">
-    <img src="./docs/model_preview/white_heart.svg" alt="white_heart" width="340px" height="340px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/blanc.svg" alt="blanc" width="250px" height="100px">
+    <img src="./docs/model_preview/white_heart.svg" alt="white_heart" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/vert.svg" alt="vert" width="320px" height="320px">
-    <img src="./docs/model_preview/green_heart.svg" alt="green_heart" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/vert.svg" alt="vert" width="250px" height="100px">
+    <img src="./docs/model_preview/green_heart.svg" alt="green_heart" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/nepgear.svg" alt="nepgear" width="320px" height="320px">
-    <img src="./docs/model_preview/purple_sister.svg" alt="purple_sister" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/nepgear.svg" alt="nepgear" width="250px" height="100px">
+    <img src="./docs/model_preview/purple_sister.svg" alt="purple_sister" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/uni.svg" alt="uni" width="320px" height="320px">
-    <img src="./docs/model_preview/black_sister.svg" alt="black_sister" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/uni.svg" alt="uni" width="250px" height="100px">
+    <img src="./docs/model_preview/black_sister.svg" alt="black_sister" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/rom.svg" alt="rom" width="320px" height="320px">
-    <img src="./docs/model_preview/white_sister_rom.svg" alt="white_sister_rom" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/rom.svg" alt="rom" width="250px" height="100px">
+    <img src="./docs/model_preview/white_sister_rom.svg" alt="white_sister_rom" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/ram.svg" alt="ram" width="320px" height="320px">
-    <img src="./docs/model_preview/white_sister_ram.svg" alt="white_sister_ram" width="330px" height="330px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/ram.svg" alt="rom" width="250px" height="100px">
+    <img src="./docs/model_preview/white_sister_ram.svg" alt="white_sister_rom" width="250px" height="100px">
 </div>
-<div align="center" style="padding-top: 50px">
-    <img src="./docs/model_preview/histoire.svg" alt="ram" width="300px" height="300px">
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/histoire.svg" alt="histoire" width="250px" height="100px">
+</div>
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/maho.svg" alt="maho" width="250px" height="100px">
 </div>
 
 ## Important to read:

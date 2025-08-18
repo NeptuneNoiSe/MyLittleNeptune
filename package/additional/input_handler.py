@@ -193,7 +193,7 @@ class InputHandler:
             # Updated trigger threshold
             if abs(delta_x) > self.direction_threshold:
                 direction = 1 if delta_x > 0 else -1
-                self.drag_direction = 0.7 * self.drag_direction + 0.3 * direction
+                self.drag_direction = round((0.7 * self.drag_direction + 0.3 * direction),2)
 
             # Normalization of intensity with a new divider
             self.drag_intensity = min(distance / self.distance_normalizer, 1.0)
@@ -217,13 +217,15 @@ class InputHandler:
                 self.win.character.state.set_drag_state()
                 if hasattr(self.win.talk_widget, 'dialog_animation'):
                     self.win.talk_widget.dialog_animation = False
-                self.win.animation_manager.update_drag_animation()
+                if self.drag_direction < -0.25 or self.drag_direction > 0.25:
+                    self.win.animation_manager.update_drag_animation()
             except AttributeError as e:
                 print(f"Animation error: {e}")
 
     def reset_drag_state(self):
         """Full reset state"""
         self.win.animation_manager.drag_animator.stop_animation()
+        self.win.animation_manager.drag_animator.stop_drag_animation()
         self.start_pos = QPoint()
         self.last_pos = QPoint()
         self.drag_direction = 0

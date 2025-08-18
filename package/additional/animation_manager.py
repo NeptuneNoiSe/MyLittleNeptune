@@ -675,9 +675,75 @@ class TransformAnimator:
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
+# TODO: [WIP] Класс Аниматор движения частей тела. Требуется тестирование и отладка
+class BodyPartAnimator:
+    def __init__(self, animation_manager):
+        self.animation_manager = animation_manager
+        self.active_parts = {}  # {part_id: {config, current_value, direction}}
+        self.timer = QTimer()
+        self.timer.timeout.connect(self._update_parts)
+        self.timer.setInterval(16)  # 60 FPS
+        #print(f"Timer created: {self.timer.isActive()}")
+
+    @property
+    def win(self):
+        return self.animation_manager.win
+
+    @property
+    def model(self):
+        return self.animation_manager.model
+
+
+    def add_animation(self, part_id, range=(0, 10), speed=0.1, easing='linear'):
+        #print(f"Adding animation for {part_id}")  # <-- Отладочный вывод
+        self.active_parts[part_id] = {
+            'range': range,
+            'speed': speed,
+            'current': range[0],
+            'direction': 1,
+            'easing': easing
+        }
+
+        if not self.timer.isActive():
+            #print("Starting timer")  # <-- Проверка запуска таймера
+            self.timer.start()
+
+
+    def remove_animation(self, part_id):
+        if part_id in self.active_parts:
+            del self.active_parts[part_id]
+            if not self.active_parts:
+                self.timer.stop()
+            self._reset_part(part_id)
+
+    def _update_parts(self):
+        for part_id, config in self.active_parts.items():
+            # Обновляем значение с учетом направления
+            config['current'] += config['direction'] * config['speed']
+
+            # Проверяем границы диапазона
+            if config['current'] >= config['range'][1]:
+                config['current'] = config['range'][1]
+                config['direction'] = -1
+            elif config['current'] <= config['range'][0]:
+                config['current'] = config['range'][0]
+                config['direction'] = 1
+
+            # Применяем к модели
+            self.model.SetParameterValueById(part_id, config['current'], 1.0)
+            #print("parts updated")
+
+    def _reset_part(self, part_id):
+        self.model.SetParameterValueById(part_id, 0, 1.0)  # Или другое значение по умолчанию
+
+    def stop_all(self):
+        for part_id in list(self.active_parts.keys()):
+            self.remove_animation(part_id)
+
 class DragAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
+        self.part_animator = BodyPartAnimator(self)
 
         self.angle = 0.0
         self.max_angle = 15.0
@@ -700,6 +766,51 @@ class DragAnimator:
     def win(self):
         return self.animation_manager.win
 
+    @property
+    def model(self):
+        return self.animation_manager.model
+
+    @property
+    def profiles(self):
+        return self.animation_manager.profiles
+
+    @property
+    def current_character(self):
+        return self.animation_manager._current_character
+
+    @property
+    def _log_callbacks(self):
+        """Access to the logging flag from AnimationManager"""
+        return self.animation_manager._log_callbacks
+
+    # TODO: [WIP] Анимация движения частей тела при перетаскивании. Требуется тестирование и отладка
+    def start_drag_animation(self, direction):
+        #print(f"Current character: {self.current_character}")  # Проверяем выбранного персонажа
+        profile = self.profiles.get(self.current_character, {})
+        #print(f"Profile keys: {profile.keys()}")  # Какие ключи есть в профиле
+
+        drag_config = profile.get('drag_animations', {}).get(direction, {})
+        #print(f"Drag config for {self.drag_direction}: {drag_config}")  # Что содержится в конфиге
+
+        parts_configs = drag_config.get('parts', [])
+        #print(f"Parts to animate: {parts_configs}")  # Проверяем части тела
+
+        for part_config in parts_configs:
+            #print(f"Processing part: {part_config}")  # Вывод текущей конфигурации
+            try:
+                self.part_animator.add_animation(
+                    part_id=part_config['part'],
+                    range=part_config.get('range', [0, 10]),
+                    speed=part_config.get('speed', 0.1)
+                )
+                #print(f"Successfully added animation for {part_config['part']}")
+            except Exception as e:
+                print(f"Error adding animation: {e}")
+        #self.part_animator.add_animation("Param21", [0, 30], 0.07, 'ease_out')
+
+    def stop_drag_animation(self):
+        self.part_animator.stop_all()
+
     def update_angle(self, direction, intensity):
         self.drag_direction = direction
         self.drag_intensity = intensity
@@ -710,6 +821,16 @@ class DragAnimator:
         self.angle = 0.3 * target_angle + 0.7 * self.angle  # Strong smoothing
 
         self.win.model.Rotate(int(self.angle))
+
+        direction = ""
+
+        if self.drag_direction < -0.9:
+            direction = "left"
+        elif self.drag_direction > 0.9:
+            direction = "right"
+
+
+        self.start_drag_animation(direction)
 
         # Restart the delay timer
         self.return_timer.stop()

@@ -515,7 +515,7 @@ class CharacterExpressionManager:
         self.character.kaomoji = kaomoji
 
     def _apply_expression(self, exp_id: str, fade_out: int | None) -> None:
-        print(exp_id)
+        # print(exp_id)
         self.character.model.SetExpression(exp_id)
         if hasattr(self, 'fadeoutTimer') and fade_out is not None:
             self.fadeoutTimer.start(fade_out)

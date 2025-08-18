@@ -1784,6 +1784,20 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+            "left": {
+                "parts": [
+                    {"part": "Param21", "range": [0, 30], "speed": 5.15},
+                    {"part": "Param22", "range": [0, 30], "speed": 5.1}
+                ]
+            },
+            "right": {
+                "parts": [
+                    {"part": "Param21", "range": [0, 30], "speed": 5.15},
+                    {"part": "Param22", "range": [0, 30], "speed": 5.1}
+                ]
+            }
         }
     }
 }

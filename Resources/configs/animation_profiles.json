@@ -1788,14 +1788,62 @@
         "drag_animations": {
             "left": {
                 "parts": [
-                    {"part": "Param21", "range": [0, 30], "speed": 5.15},
-                    {"part": "Param22", "range": [0, 30], "speed": 5.1}
+                    {"part": "ParamHairFront", "range": [0.0, 1.0], "speed": 0.05},
+                    {"part": "ParamHairSide", "range": [0.0, 1.0], "speed": 0.05},
+                    {"part": "ParamHairBack", "range": [0.0, 1.0], "speed": 0.05},
+
+                    {"part": "_Param25", "range": [0, 1]},
+                    {"part": "Param21", "range": [0, 15]},
+                    {"part": "Param22", "range": [0, 15]},
+                    {"part": "Param23", "range": [0, 15]},
+
+                    {"part": "_Param24", "range": [0, 1]},
+                    {"part": "Param27", "range": [0, 15]},
+                    {"part": "Param", "range": [0, 15]},
+                    {"part": "Param2", "range": [0, 15]},
+
+                    {"part": "Param7", "range": [0, 15]},
+                    {"part": "_Param8", "range": [0, 15]},
+                    {"part": "Param9", "range": [0, 30]},
+
+                    {"part": "Param4", "range": [0, 15]}
                 ]
             },
             "right": {
                 "parts": [
-                    {"part": "Param21", "range": [0, 30], "speed": 5.15},
-                    {"part": "Param22", "range": [0, 30], "speed": 5.1}
+                    {"part": "ParamHairFront", "range": [-1.0, 0.0], "speed": 0.05},
+                    {"part": "ParamHairSide", "range": [-1.0, 0.0], "speed": 0.05},
+                    {"part": "ParamHairBack", "range": [-1.0, 0.0], "speed": 0.05},
+
+                    {"part": "_Param25", "range": [0, 1]},
+                    {"part": "Param21", "range": [-15, 0]},
+                    {"part": "Param22", "range": [-15, 0]},
+                    {"part": "Param23", "range": [-15, 0]},
+
+                    {"part": "_Param24", "range": [0, 1]},
+                    {"part": "Param27", "range": [-30, 0]},
+                    {"part": "Param", "range": [-15, 0]},
+                    {"part": "Param2", "range": [-15, 0]},
+
+                    {"part": "Param7", "range": [-15, 0]},
+                    {"part": "_Param8", "range": [-15, 0]},
+                    {"part": "Param9", "range": [-15, 0]},
+
+                    {"part": "Param4", "range": [-15, 0]}
+                ]
+            },
+            "up": {
+                "parts": [
+                    {"part": "Param5", "range": [-30, 0]},
+                    {"part": "Param6", "range": [-30, 0]},
+                    {"part": "Param8", "range": [-30, 0]}
+                ]
+            },
+            "down": {
+                "parts": [
+                    {"part": "Param5", "range": [0, 30]},
+                    {"part": "Param6", "range": [0, 30]},
+                    {"part": "Param8", "range": [0, 30]}
                 ]
             }
         }

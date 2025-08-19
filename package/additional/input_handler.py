@@ -24,7 +24,9 @@ class InputHandler:
 
         self.start_pos = QPoint(0, 0)
         self.last_pos = QPoint(0, 0)
-        self.drag_direction = 0  # -1 left, 0 neutral, 1 right
+        # self.drag_direction = 0  # -1 left, 0 neutral, 1 right
+        self.drag_direction_x = 0
+        self.drag_direction_y = 0
         self.drag_intensity = 0  # drag force (0-1)
         self.angle = 0
         self.drag_threshold = 200  # Minimum distance to start animation
@@ -166,7 +168,7 @@ class InputHandler:
         self.sleep_move = False
 
     def mouse_move_handler(self, global_pos):
-        """Mouse move handler"""
+        """Mouse move handler with X and Y axis support"""
         try:
             # Conversion to integer coordinates
             if hasattr(global_pos, 'toPoint'):
@@ -186,52 +188,86 @@ class InputHandler:
                 self.last_pos = self._current_pos
                 return
 
-            # Delta calculation with validation
+            # Calculate deltas for both axes
             distance = (self._current_pos - self.start_pos).manhattanLength()
             delta_x = self._current_pos.x() - self.last_pos.x()
+            delta_y = self._current_pos.y() - self.last_pos.y()
 
-            # Updated trigger threshold
-            if abs(delta_x) > self.direction_threshold:
+            # Determine primary movement direction
+            abs_delta_x = abs(delta_x)
+            abs_delta_y = abs(delta_y)
+
+            # Horizontal movement (X axis)
+            if abs_delta_x > self.direction_threshold and abs_delta_x > abs_delta_y:
                 direction = 1 if delta_x > 0 else -1
-                self.drag_direction = round((0.7 * self.drag_direction + 0.3 * direction),2)
+                self.drag_direction_x = round((0.7 * self.drag_direction_x + 0.3 * direction), 2)
+                self.drag_direction_y = 0  # Reset vertical direction
 
-            # Normalization of intensity with a new divider
+            # Vertical movement (Y axis)
+            elif abs_delta_y > self.direction_threshold and abs_delta_y > abs_delta_x:
+                direction = 1 if delta_y > 0 else -1
+                self.drag_direction_y = round((0.7 * self.drag_direction_y + 0.3 * direction), 2)
+                self.drag_direction_x = 0  # Reset horizontal direction
+
+
+            # Normalization of intensity
             self.drag_intensity = min(distance / self.distance_normalizer, 1.0)
-
-            self.win.animation_manager.drag_animator.update_angle(self.drag_direction, self.drag_intensity)
 
             # Checking for exceeding the threshold
             if distance > self.drag_threshold:
-                self._trigger_drag_animation()
+                # Horizontal movement - apply tilt and animation
+                if abs(self.drag_direction_x) > 0.25:
+                    self.win.animation_manager.drag_animator.update_angle(
+                        self.drag_direction_x, self.drag_intensity
+                    )
+                    self._trigger_drag_animation(self.drag_direction_x, "horizontal")
+
+                # Vertical movement - only animation, no tilt
+                elif abs(self.drag_direction_y) > 0.1:
+                    self.win.animation_manager.drag_animator.update_vertical_movement(
+                        self.drag_direction_y, self.drag_intensity
+                    )
+                    self._trigger_drag_animation(self.drag_direction_y, "vertical")
 
             self.last_pos = self._current_pos
+            self.win.animation_manager.drag_animator.drag_intensity = self.drag_intensity
 
         except Exception as e:
             print(f"Move error: {type(e).__name__}: {str(e)}")
 
-    def _trigger_drag_animation(self):
-        """Activation of animation with checks"""
-        if (not self.win.character.tired_controller.sleep
-                and not self.input_lock):
+    def _trigger_drag_animation(self, direction_value, axis):
+        """Activation of animation based on movement axis"""
+        if (not self.win.character.tired_controller.sleep and not self.input_lock):
             try:
                 self.win.character.state.set_drag_state()
+
+                # Determine direction key based on axis
+                if axis == "horizontal":
+                    direction_key = "right" if direction_value > 0 else "left"
+                else:  # vertical
+                    direction_key = "down" if direction_value > 0 else "up"
+
                 if hasattr(self.win.talk_widget, 'dialog_animation'):
                     self.win.talk_widget.dialog_animation = False
-                if self.drag_direction < -0.25 or self.drag_direction > 0.25:
+
+                # Update animation only (no tilt for vertical)
+                if axis == "horizontal":
                     self.win.animation_manager.update_drag_animation()
+                self.win.animation_manager.drag_animator.start_drag_animation(direction_key)
+
             except AttributeError as e:
                 print(f"Animation error: {e}")
 
     def reset_drag_state(self):
         """Full reset state"""
         self.win.animation_manager.drag_animator.stop_animation()
-        self.win.animation_manager.drag_animator.stop_drag_animation()
         self.start_pos = QPoint()
         self.last_pos = QPoint()
-        self.drag_direction = 0
+        self.drag_direction_x = 0
+        self.drag_direction_y = 0
         self.drag_intensity = 0
         self.win.animation_manager.drag_animator.angle = 0
-        self.win.animation_manager.drag_animator.apply_rotation()  # Reset angle
+        self.win.animation_manager.drag_animator.apply_rotation()
 
     def takingTalk(self):
         self.place_this = True

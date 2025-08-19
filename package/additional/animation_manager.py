@@ -679,66 +679,131 @@ class TransformAnimator:
 class BodyPartAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
-        self.active_parts = {}  # {part_id: {config, current_value, direction}}
+        self.active_parts = {}
+        self.fadeout_parts = {}
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_parts)
         self.timer.setInterval(16)  # 60 FPS
-        #print(f"Timer created: {self.timer.isActive()}")
-
-    @property
-    def win(self):
-        return self.animation_manager.win
+        self.last_time = time.perf_counter()
 
     @property
     def model(self):
         return self.animation_manager.model
 
+    def add_animation(self, part_id, range=(0, 10), speed=0.1,easing='linear'):
+        # Приводим к правильным типам
+        range = (float(range[0]), float(range[1]))
+        speed = float(speed)
 
-    def add_animation(self, part_id, range=(0, 10), speed=0.1, easing='linear'):
-        #print(f"Adding animation for {part_id}")  # <-- Отладочный вывод
-        self.active_parts[part_id] = {
-            'range': range,
-            'speed': speed,
-            'current': range[0],
-            'direction': 1,
-            'easing': easing
-        }
+        if part_id not in self.active_parts:
+            # Новая анимация
+            self.active_parts[part_id] = {
+                'range': range,
+                'speed': speed,
+                'value': range[0],
+                'direction': 1,
+                'easing': easing,
+                'active': True,
+            }
+        else:
+            # Обновление существующей анимации
+            config = self.active_parts[part_id]
+            config['range'] = range
+            config['speed'] = speed
+            config['active'] = True
+            config['reset_requested'] = False
+
+            # Плавный переход к новым параметрам
+            if config['value'] < range[0]:
+                config['value'] = range[0]
+            elif config['value'] > range[1]:
+                config['value'] = range[1]
 
         if not self.timer.isActive():
-            #print("Starting timer")  # <-- Проверка запуска таймера
+            self.last_time = time.perf_counter()
             self.timer.start()
 
-
-    def remove_animation(self, part_id):
-        if part_id in self.active_parts:
+    def stop_all(self):
+        """Плавный сброс всех анимаций"""
+        for part_id, config in list(self.active_parts.items()):
+            # Переносим в fadeout_parts для плавного затухания
+            self.fadeout_parts[part_id] = {
+                'start_value': config['value'],
+                'current_value': config['value'],
+                'fade_speed': 0.1  # Скорость затухания (можно настраивать)
+            }
             del self.active_parts[part_id]
-            if not self.active_parts:
-                self.timer.stop()
-            self._reset_part(part_id)
+
+        if self.fadeout_parts and not self.timer.isActive():
+            self.last_time = time.perf_counter()
+            self.timer.start()
 
     def _update_parts(self):
+        current_time = time.perf_counter()
+        delta_time = current_time - self.last_time
+        self.last_time = current_time
+
+        # 1. Обновляем активные анимации
+        parts_to_remove = []
         for part_id, config in self.active_parts.items():
-            # Обновляем значение с учетом направления
-            config['current'] += config['direction'] * config['speed']
+            try:
+                if not config['active']:
+                    continue
 
-            # Проверяем границы диапазона
-            if config['current'] >= config['range'][1]:
-                config['current'] = config['range'][1]
-                config['direction'] = -1
-            elif config['current'] <= config['range'][0]:
-                config['current'] = config['range'][0]
-                config['direction'] = 1
+                # Плавное изменение значения
+                new_value = config['value'] + config['direction'] * config['speed'] * delta_time * 60
 
-            # Применяем к модели
-            self.model.SetParameterValueById(part_id, config['current'], 1.0)
-            #print("parts updated")
+                # Ограничение диапазона
+                if new_value >= config['range'][1]:
+                    new_value = config['range'][1]
+                    config['direction'] = -1
+                elif new_value <= config['range'][0]:
+                    new_value = config['range'][0]
+                    config['direction'] = 1
 
-    def _reset_part(self, part_id):
-        self.model.SetParameterValueById(part_id, 0, 1.0)  # Или другое значение по умолчанию
+                self.model.SetParameterValueById(part_id, new_value)
+                config['value'] = new_value
 
-    def stop_all(self):
-        for part_id in list(self.active_parts.keys()):
-            self.remove_animation(part_id)
+            except Exception as e:
+                print(f"Animation error for {part_id}: {e}")
+                parts_to_remove.append(part_id)
+
+        # 2. Обновляем плавное затухание
+        fadeout_to_remove = []
+        for part_id, fade_config in self.fadeout_parts.items():
+            try:
+                # Плавное уменьшение значения к 0
+                fade_config['current_value'] *= (1 - fade_config['fade_speed'] * delta_time * 60)
+
+                if abs(fade_config['current_value']) < 0.01:  # Порог завершения
+                    self.model.SetParameterValueById(part_id, 0)
+                    fadeout_to_remove.append(part_id)
+                else:
+                    self.model.SetParameterValueById(part_id, fade_config['current_value'])
+
+            except Exception as e:
+                print(f"Fadeout error for {part_id}: {e}")
+                fadeout_to_remove.append(part_id)
+
+        # Удаляем завершенные анимации
+        for part_id in parts_to_remove:
+            self._safe_remove_part(part_id)
+        for part_id in fadeout_to_remove:
+            if part_id in self.fadeout_parts:
+                del self.fadeout_parts[part_id]
+
+        # Останавливаем таймер если нет работы
+        if not self.active_parts and not self.fadeout_parts:
+            self.timer.stop()
+
+    def _safe_remove_part(self, part_id):
+        """Безопасное удаление части из active_parts"""
+        if part_id in self.active_parts:
+            try:
+                self.model.SetParameterValueById(part_id, 0)
+            except:
+                pass
+            del self.active_parts[part_id]
 
 class DragAnimator:
     def __init__(self, animation_manager):
@@ -749,9 +814,13 @@ class DragAnimator:
         self.max_angle = 15.0
         self.return_delay = 500  # Delay before return (ms)
         self.return_speed = 0.5  # Return rate (0.1-0.9)
-        self.drag_direction = 0
+        self.drag_direction_x = 0  # Horizontal direction (-1 to 1)
+        self.drag_direction_y = 0  # Vertical direction (-1 to 1)
         self.drag_intensity = 0
         self.max_angle = 10
+
+        self.vertical_intensity = 0.0  # Добавляем отслеживание вертикальной интенсивности
+        self.return_threshold = 0.1    # Порог остановки для всех анимаций
 
         # Таймеры
         self.return_timer = QTimer()
@@ -784,55 +853,43 @@ class DragAnimator:
         return self.animation_manager._log_callbacks
 
     # TODO: [WIP] Анимация движения частей тела при перетаскивании. Требуется тестирование и отладка
-    def start_drag_animation(self, direction):
-        #print(f"Current character: {self.current_character}")  # Проверяем выбранного персонажа
+    def start_drag_animation(self, direction_key):
+        """Start animation for any direction"""
         profile = self.profiles.get(self.current_character, {})
-        #print(f"Profile keys: {profile.keys()}")  # Какие ключи есть в профиле
+        drag_config = profile.get('drag_animations', {}).get(direction_key, {})
 
-        drag_config = profile.get('drag_animations', {}).get(direction, {})
-        #print(f"Drag config for {self.drag_direction}: {drag_config}")  # Что содержится в конфиге
-
-        parts_configs = drag_config.get('parts', [])
-        #print(f"Parts to animate: {parts_configs}")  # Проверяем части тела
-
-        for part_config in parts_configs:
-            #print(f"Processing part: {part_config}")  # Вывод текущей конфигурации
+        for part_config in drag_config.get('parts', []):
             try:
                 self.part_animator.add_animation(
                     part_id=part_config['part'],
                     range=part_config.get('range', [0, 10]),
-                    speed=part_config.get('speed', 0.1)
+                    speed=part_config.get('speed', self.drag_intensity/2)
                 )
-                #print(f"Successfully added animation for {part_config['part']}")
             except Exception as e:
-                print(f"Error adding animation: {e}")
-        #self.part_animator.add_animation("Param21", [0, 30], 0.07, 'ease_out')
+                print(f"Animation error for {part_config['part']}: {e}")
 
     def stop_drag_animation(self):
         self.part_animator.stop_all()
 
     def update_angle(self, direction, intensity):
-        self.drag_direction = direction
+        """Update tilt angle only for horizontal movement"""
+        self.drag_direction_x = direction
         self.drag_intensity = intensity
 
-    def update_drag_animation(self):
-        """Tilt angle update"""
-        target_angle = self.drag_direction * self.drag_intensity * self.max_angle
-        self.angle = 0.3 * target_angle + 0.7 * self.angle  # Strong smoothing
+        # Only apply tilt for horizontal movement
+        target_angle = direction * intensity * self.max_angle
+        self.angle = 0.3 * target_angle + 0.7 * self.angle
 
         self.win.model.Rotate(int(self.angle))
 
-        direction = ""
+    def update_drag_animation(self):
+        """Only for horizontal movement - vertical doesn't tilt"""
+        if abs(self.drag_direction_x) > 0.1:  # Only if significant horizontal movement
+            target_angle = self.drag_direction_x * self.drag_intensity * self.max_angle
+            self.angle = 0.3 * target_angle + 0.7 * self.angle
+            self.win.model.Rotate(int(self.angle))
 
-        if self.drag_direction < -0.9:
-            direction = "left"
-        elif self.drag_direction > 0.9:
-            direction = "right"
-
-
-        self.start_drag_animation(direction)
-
-        # Restart the delay timer
+        # Restart the delay timer for both axes
         self.return_timer.stop()
         self.return_timer.start(self.return_delay)
 
@@ -842,14 +899,43 @@ class DragAnimator:
             self.animation_timer.start()
 
     def _update_return_animation(self):
-        """Updating the frame of the return animation"""
-        if abs(self.angle) < 0.1:  # Completion threshold
+        """Плавный возврат для всех типов анимаций"""
+        # Проверяем ВСЕ условия остановки
+        should_stop = (
+                abs(self.angle) < self.return_threshold and  # Горизонтальный наклон
+                abs(self.drag_direction_y) < self.return_threshold and  # Вертикальное движение
+                self.drag_intensity < self.return_threshold  # Общая интенсивность
+        )
+
+        if should_stop:
+            # Полная остановка только когда ВСЁ завершено
             self.angle = 0
+            self.drag_direction_y = 0
             self.animation_timer.stop()
+            self.part_animator.stop_all()
         else:
-            self.angle *= self.return_speed
+            # Плавный сброс горизонтального наклона
+            if abs(self.angle) > self.return_threshold:
+                progress = abs(self.angle) / self.max_angle
+                slowdown_factor = 0.5 + (1 - progress) * 0.5
+                self.angle *= self.return_speed * slowdown_factor
+
+            # Плавный сброс вертикальной интенсивности
+            if abs(self.drag_direction_y) > self.return_threshold:
+                self.drag_direction_y *= self.return_speed
+
+            # Плавный сброс общей интенсивности
+            if self.drag_intensity > self.return_threshold:
+                self.drag_intensity *= self.return_speed
 
         self.apply_rotation()
+
+
+    def update_vertical_movement(self, direction_y, intensity):
+        """Отдельный метод для вертикального движения"""
+        self.drag_direction_y = direction_y
+        self.drag_intensity = intensity
+        # Для вертикального движения не применяем угол наклона!
 
     def apply_rotation(self):
         """Applies the current angle to the model"""
@@ -860,9 +946,19 @@ class DragAnimator:
             print(f"Rotation error: {e}")
 
     def stop_animation(self):
-        """Stopping all animations"""
-        self.return_timer.stop()
+        """Остановка всех анимаций с приоритетом"""
+        # Сначала плавно сбрасываем параметры
+        self.angle = 0
+        self.drag_direction_y = 0
+        self.drag_intensity = 0
+        self.apply_rotation()
+
+        # Затем останавливаем анимации частей тела
+        self.part_animator.stop_all()
+
+        # Останавливаем таймеры
         self.animation_timer.stop()
+        self.return_timer.stop()
 
 class ColorAnimator(QObject):
     """Color Animation"""

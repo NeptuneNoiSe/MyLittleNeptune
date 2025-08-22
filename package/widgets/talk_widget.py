@@ -60,6 +60,10 @@ class TalkWidget:
         self.grid_layout.addWidget(self.talk_frame, 1, 0, 1, 1)
 
     @property
+    def show_text_in_console(self):
+        return self.win.show_text_in_console
+
+    @property
     def character_name(self):
         return self.win.character_name
 
@@ -223,7 +227,8 @@ class TalkWidget:
 
         self.talk_form_layout.setWidget(0, QFormLayout.LabelRole, self.talk_text_label)
 
-        print(f"{self.name}: {self.text}\n{self.kaomoji}")
+        if self.show_text_in_console:
+            print(f"{self.name}: {self.text}\n{self.kaomoji}")
 
     def _setup_talk_image(self):
         """Adjusts the image in the widget"""

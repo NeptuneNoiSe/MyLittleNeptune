@@ -204,9 +204,9 @@ class InputHandler:
                 self.drag_direction_y = 0  # Reset vertical direction
 
             # Vertical movement (Y axis)
-            elif abs_delta_y > self.direction_threshold and abs_delta_y > abs_delta_x:
+            elif abs_delta_y > (self.direction_threshold/2) and abs_delta_y > abs_delta_x:
                 direction = 1 if delta_y > 0 else -1
-                self.drag_direction_y = round((0.7 * self.drag_direction_y + 0.3 * direction), 2)
+                self.drag_direction_y = round((0.7 * self.drag_direction_y + 0.3 * direction), 4)
                 self.drag_direction_x = 0  # Reset horizontal direction
 
 
@@ -223,7 +223,7 @@ class InputHandler:
                     self._trigger_drag_animation(self.drag_direction_x, "horizontal")
 
                 # Vertical movement - only animation, no tilt
-                elif abs(self.drag_direction_y) > 0.1:
+                elif abs(self.drag_direction_y) > 0.25:
                     self.win.animation_manager.drag_animator.update_vertical_movement(
                         self.drag_direction_y, self.drag_intensity
                     )

@@ -44,6 +44,8 @@ class MainWindow(QOpenGLWidget):
         self.timer_log = False
         # Callbacks Log:
         self.callbacks_log = False
+        # Show Characters Text in Console:
+        self.show_text_in_console = False
 
         # Set False if you want use model.Draw()
         self.canvas_draw = True

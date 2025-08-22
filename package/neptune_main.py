@@ -1338,7 +1338,7 @@ if __name__ == "__main__":
     REQUIRED_FILES = {
         'README.md': PROJECT_ROOT / 'README.md',
         'version.py': PROJECT_ROOT / 'version.py',
-        'resources': PROJECT_ROOT / 'resources'
+        'resource': PROJECT_ROOT / 'resource'
     }
 
     for name, path in REQUIRED_FILES.items():

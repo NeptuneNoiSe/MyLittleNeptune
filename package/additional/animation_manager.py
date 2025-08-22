@@ -682,7 +682,7 @@ class BodyPartAnimator:
         self.active_parts = {}
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_parts)
-        self.timer.setInterval(8)  # 60 FPS
+        self.timer.setInterval(1)  # 60 FPS
         self.last_time = time.perf_counter()
 
     @property
@@ -832,7 +832,7 @@ class DragAnimator:
 
         # Защита от слишком частых перезапусков
         current_time = time.time()
-        if current_time - self.last_animation_time < 1:  # Не чаще 10 раз в секунду
+        if current_time - self.last_animation_time < 0.1:  # Не чаще 10 раз в секунду
             return
 
         self.last_animation_time = current_time

@@ -1763,6 +1763,92 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param10", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param11", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param44", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param45", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param49", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param15", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param16", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param10", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param11", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param44", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param45", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param49", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param15", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param16", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param46", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param47", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param46", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param47", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param51", "range": [-1.0, 0.0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0.0], "speed": 0.05}
+            ]
+          }
         }
     },
     "Purple Sister": {
@@ -1795,6 +1881,105 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param36", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param37", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param45", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh206", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh206", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh206", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh206", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh206", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh206", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh206", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh206", "range": [0, 8], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh206", "range": [0, 9], "speed": 0.13},
+                {"part": "Param_Angle_Rotation_1_ArtMesh150", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh150", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh150", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh150", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh150", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh150", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh150", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh150", "range": [0, 8], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh150", "range": [0, 9], "speed": 0.13},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param36", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param37", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param45", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh206", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh206", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh206", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh206", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh206", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh206", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh206", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh206", "range": [-8, 0], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh206", "range": [-9, 0], "speed": 0.13},
+                {"part": "Param_Angle_Rotation_1_ArtMesh150", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh150", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh150", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh150", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh150", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh150", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh150", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh150", "range": [-8, 0], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh150", "range": [-9, 0], "speed": 0.13},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05}
+
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05}
+            ]
+          }
         }
     },
     "Uni": {
@@ -1883,6 +2068,106 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh330", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh330", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh330", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh330", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh330", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_1_ArtMesh331", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh331", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh331", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh331", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh331", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh331", "range": [0, 6], "speed": 0.10},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param36", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param37", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param44", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param45", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param12", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param13", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param14", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param49", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh330", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh330", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh330", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh330", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh330", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_1_ArtMesh331", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh331", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh331", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh331", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh331", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh331", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param36", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param37", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param44", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param45", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param12", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param13", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param14", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param49", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param21", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param59", "range": [0, 15]}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param21", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param59", "range": [-15, 0]}
+            ]
+          }
         }
     },
     "Black Sister": {
@@ -1957,6 +2242,74 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param36", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param37", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param39", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param40", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param41", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param44", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param45", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param36", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param37", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param39", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param40", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param41", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param44", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param45", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param55", "range": [0.0, 1.0], "speed": 0.01},
+                {"part": "Param59", "range": [0, 15]}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param55", "range": [0.0, 1.0], "speed": 0.01},
+                {"part": "Param59", "range": [-15, 0]}
+            ]
+          }
         }
     },
     "Rom": {
@@ -2059,6 +2412,86 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param18", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param19", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param33", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param34", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param49", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param8", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param9", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param15", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param16", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param22", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param18", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param19", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param33", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param34", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param49", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param8", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param9", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param15", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param16", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param22", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param55", "range": [0.0, 1.0], "speed": 0.01},
+                {"part": "Param59", "range": [0, 15]}
+            ]
+          },
+          "down": {
+            "parts": [
+
+                {"part": "Param55", "range": [0.0, 1.0], "speed": 0.01},
+                {"part": "Param59", "range": [-15, 0]}
+            ]
+          }
         }
     },
     "White Sister Rom": {
@@ -2153,6 +2586,84 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh46", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh46", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh46", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh46", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh46", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh46", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh46", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh46", "range": [0, 8], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh46", "range": [0, 9], "speed": 0.13},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh46", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh46", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh46", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh46", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh46", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh46", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh46", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh46", "range": [-8, 0], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh46", "range": [-9, 0], "speed": 0.13},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05}
+            ]
+          }
         }
     },
     "Ram": {
@@ -2289,6 +2800,107 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param44", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param45", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param18", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param19", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param34", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param49", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param8", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param9", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param15", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param16", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param22", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param44", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param45", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param18", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param19", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param34", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param49", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param8", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param9", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param15", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param16", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param22", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param46", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param47", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05},
+
+                {"part": "Param10", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param11", "range": [0.0, 10.0], "speed": 0.25}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param46", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param47", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05},
+
+                {"part": "Param10", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param11", "range": [-10.0, 0.0], "speed": 0.25}
+            ]
+          }
         }
     },
     "White Sister Ram": {
@@ -2384,6 +2996,84 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh96", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh96", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh96", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh96", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh96", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh96", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh96", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh96", "range": [0, 8], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh96", "range": [0, 9], "speed": 0.13},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh96", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh96", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh96", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh96", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh96", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh96", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh96", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh96", "range": [-8, 0], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh96", "range": [-9, 0], "speed": 0.13},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05}
+            ]
+          }
         }
     },
     "Histoire": {
@@ -2550,6 +3240,240 @@
                 "group": "TapBody",
                 "priority": 3
             }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh289", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh289", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh289", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh289", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh289", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh289", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh289", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh289", "range": [0, 8], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh289", "range": [0, 9], "speed": 0.13},
+                {"part": "Param_Angle_Rotation_1_ArtMesh63", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh63", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh63", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh63", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh63", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh63", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh63", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh331", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh331", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh331", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh331", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh331", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh331", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh331", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh333", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh333", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh333", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh333", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh333", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_1_ArtMesh332", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh332", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh332", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh332", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh332", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh332", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh332", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh334", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh334", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh334", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh334", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh334", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_1_ArtMesh335", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh335", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh335", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh335", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh335", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh335", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh335", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh336", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh336", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh336", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh336", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh336", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh336", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh336", "range": [0, 7], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh337", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh337", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh337", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh337", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh337", "range": [0, 5], "speed": 0.09},
+                {"part": "Param26", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param7", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param42", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param43", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param44", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param45", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param49", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param8", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param15", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param16", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param", "range": [0, 15]},
+                {"part": "Param2", "range": [0, 15]},
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]},
+
+                {"part": "Param37", "range": [0.0, 1.0], "speed": 0.05}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param_Angle_Rotation_1_ArtMesh289", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh289", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh289", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh289", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh289", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh289", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh289", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_8_ArtMesh289", "range": [-8, 0], "speed": 0.12},
+                {"part": "Param_Angle_Rotation_9_ArtMesh289", "range": [-9, 0], "speed": 0.13},
+                {"part": "Param_Angle_Rotation_1_ArtMesh63", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh63", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh63", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh63", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh63", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh63", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh63", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh331", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh331", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh331", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh331", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh331", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh331", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh331", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh333", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh333", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh333", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh333", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh333", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_1_ArtMesh332", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh332", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh332", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh332", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh332", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh332", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh332", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh334", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh334", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh334", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh334", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh334", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_1_ArtMesh335", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh335", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh335", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh335", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh335", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh335", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh335", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh336", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh336", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh336", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh336", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh336", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh336", "range": [-6, 0], "speed": 0.1},
+                {"part": "Param_Angle_Rotation_7_ArtMesh336", "range": [-7, 0], "speed": 0.11},
+                {"part": "Param_Angle_Rotation_1_ArtMesh337", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh337", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh337", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh337", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh337", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param26", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param7", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param42", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param43", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param44", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param45", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param13", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param49", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param8", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param15", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param16", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param", "range": [-15, 0]},
+                {"part": "Param2", "range": [-15, 0]},
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]},
+
+                {"part": "Param37", "range": [-1.0, 0], "speed": 0.05}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param51", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param52", "range": [0.0, 1.0], "speed": 0.05},
+
+                {"part": "Param18", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param19", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param20", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param21", "range": [0.0, 10.0], "speed": 0.25},
+
+                {"part": "Param22", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param23", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param24", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param33", "range": [0.0, 10.0], "speed": 0.25},
+                {"part": "Param35", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param36", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param37", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param38", "range": [0.0, 1.0], "speed": 0.05}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param51", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param52", "range": [-1.0, 0], "speed": 0.05},
+
+                {"part": "Param18", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param19", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param20", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param21", "range": [-10.0, 0.0], "speed": 0.25},
+
+                {"part": "Param22", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param23", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param24", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param33", "range": [-10.0, 0.0], "speed": 0.25},
+                {"part": "Param35", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param36", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param37", "range": [-1.0, 0], "speed": 0.05},
+                {"part": "Param38", "range": [-1.0, 0], "speed": 0.05}
+            ]
+          }
         }
     },
     "Maho": {
@@ -2680,7 +3604,6 @@
               {"part": "Param21", "range": [0, 15]},
               {"part": "Param22", "range": [0, 15]},
               {"part": "Param23", "range": [0, 15]},
-
               {"part": "Param27", "range": [0, 15]},
               {"part": "Param", "range": [0, 15]},
               {"part": "Param2", "range": [0, 15]},
@@ -2716,18 +3639,23 @@
           },
           "up": {
             "parts": [
-              {"part": "Param24", "range": [0, 1], "speed": 0.005},
-              {"part": "Param25", "range": [0, 1], "speed": 0.005},
-              {"part": "Param5", "range": [-30, 0]},
-              {"part": "Param6", "range": [-30, 0]},
-              {"part": "Param8", "range": [-30, 0]}
+                {"part": "Param24", "range": [0, 1], "speed": 0.005},
+                {"part": "Param25", "range": [0, 1], "speed": 0.005},
+
+                {"part": "Param3", "range": [0, 15]},
+                {"part": "Param4", "range": [0, 15]},
+                {"part": "Param5", "range": [0, 15]},
+                {"part": "Param6", "range": [0, 15]},
+                {"part": "Param8", "range": [0, 15]}
             ]
           },
           "down": {
             "parts": [
-              {"part": "Param5", "range": [0, 30]},
-              {"part": "Param6", "range": [0, 30]},
-              {"part": "Param8", "range": [0, 30]}
+                {"part": "Param3", "range": [-15, 0]},
+                {"part": "Param4", "range": [-15, 0]},
+                {"part": "Param5", "range": [-15, 0]},
+                {"part": "Param6", "range": [-15, 0]},
+                {"part": "Param8", "range": [-15, 0]}
             ]
           }
         }

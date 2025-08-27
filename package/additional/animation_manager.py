@@ -680,14 +680,18 @@ class BodyPartAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
         self.active_parts = {}
-        self.timer = QTimer()
-        self.timer.timeout.connect(self._update_parts)
-        self.timer.setInterval(1)  # 60 FPS
+        self.body_part_timer = QTimer()
+        self.body_part_timer.timeout.connect(self._update_parts)
+        self.body_part_timer.setInterval(1)
         self.last_time = time.perf_counter()
 
     @property
     def model(self):
         return self.animation_manager.model
+
+    @property
+    def target_fps(self):
+        return self.animation_manager.target_fps
 
     def add_animation(self, part_id, range=(0, 10), speed=0.1,easing='linear'):
         # Приводим к правильным типам
@@ -718,22 +722,28 @@ class BodyPartAnimator:
             elif config['value'] > range[1]:
                 config['value'] = range[1]
 
-        if not self.timer.isActive():
+        if not self.body_part_timer.isActive():
             self.last_time = time.perf_counter()
-            self.timer.start()
+            self.body_part_timer.start()
 
     def stop_all(self):
         """Мгновенная остановка (использовать только при необходимости)"""
         for part_id in list(self.active_parts.keys()):
             self.model.SetParameterValueById(part_id, 0)
         self.active_parts.clear()
-        self.timer.stop()
-
+        self.body_part_timer.stop()
 
     def _update_parts(self):
         current_time = time.perf_counter()
         delta_time = current_time - self.last_time
         self.last_time = current_time
+
+        # ЗАЩИТА ОТ АНОМАЛИЙ:
+        delta_time = min(delta_time, 0.1)  # Максимум 100ms (если окно было свёрнуто)
+        delta_time = max(delta_time, 0.001)  # Минимум 1ms (защита от ошибок)
+
+        # Нормализация под целевой FPS
+        normalized_delta = delta_time * self.target_fps
 
         # 1. Обновляем активные анимации
         parts_to_remove = []
@@ -743,7 +753,7 @@ class BodyPartAnimator:
                     continue
 
                 # Плавное изменение значения
-                new_value = config['value'] + config['direction'] * config['speed'] * delta_time * 60
+                new_value = config['value'] + config['direction'] * config['speed'] * normalized_delta
 
                 # Ограничение диапазона
                 if new_value >= config['range'][1]:
@@ -765,7 +775,7 @@ class BodyPartAnimator:
             self._safe_remove_part(part_id)
 
         if not self.active_parts:
-            self.timer.stop()
+            self.body_part_timer.stop()
 
     def _safe_remove_part(self, part_id):
         """Безопасное удаление части из active_parts"""
@@ -779,7 +789,7 @@ class BodyPartAnimator:
 class DragAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
-        self.part_animator = BodyPartAnimator(self)
+        self.part_animator = BodyPartAnimator(animation_manager)
 
         self.angle = 0.0
         self.max_angle = 15.0
@@ -801,7 +811,6 @@ class DragAnimator:
 
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._update_return_animation)
-        self.animation_timer.setInterval(16)  # 60 FPS
 
     @property
     def win(self):
@@ -820,6 +829,10 @@ class DragAnimator:
         return self.animation_manager._current_character
 
     @property
+    def frame_delay(self):
+        return self.animation_manager.frame_delay
+
+    @property
     def _log_callbacks(self):
         """Access to the logging flag from AnimationManager"""
         return self.animation_manager._log_callbacks
@@ -827,18 +840,9 @@ class DragAnimator:
     # TODO: [WIP] Анимация движения частей тела при перетаскивании. Требуется тестирование и отладка
     def start_drag_animation(self, direction_key):
         """Start animation for any direction"""
-        if not hasattr(self, 'last_animation_time'):
-            self.last_animation_time = 0
-
-        # Защита от слишком частых перезапусков
-        current_time = time.time()
-        if current_time - self.last_animation_time < 0.1:  # Не чаще 10 раз в секунду
-            return
-
-        self.last_animation_time = current_time
-
         profile = self.profiles.get(self.current_character, {})
         drag_config = profile.get('drag_animations', {}).get(direction_key, {})
+        animation_speed = round((self.drag_intensity/4),2)
         # print(f"Drag config for {direction_key}: {drag_config}")  # Что содержится в конфиге
 
         for part_config in drag_config.get('parts', []):
@@ -847,7 +851,7 @@ class DragAnimator:
                 self.part_animator.add_animation(
                     part_id=part_config['part'],
                     range=part_config.get('range', [0, 10]),
-                    speed=part_config.get('speed', self.drag_intensity/2)
+                    speed=part_config.get('speed', animation_speed)
                 )
             except Exception as e:
                 print(f"Animation error for {part_config['part']}: {e}")
@@ -888,6 +892,7 @@ class DragAnimator:
     def start_return_animation(self):
         """Starting the return animation"""
         if not self.animation_timer.isActive():
+            self.animation_timer.setInterval(self.frame_delay)
             self.animation_timer.start()
 
     def _update_return_animation(self):
@@ -950,8 +955,8 @@ class ColorAnimator(QObject):
     def __init__(self, animation_manager):
         super().__init__()
         self.animation_manager = animation_manager
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_colors)
+        self.color_timer = QTimer()
+        self.color_timer.timeout.connect(self.update_colors)
 
         # Animation Settings
         self.speed = 1.0
@@ -963,6 +968,10 @@ class ColorAnimator(QObject):
     def win(self):
         """Actual window link"""
         return self.animation_manager.win
+
+    @property
+    def frame_delay(self):
+        return self.animation_manager.frame_delay
 
     @property
     def red(self):
@@ -992,7 +1001,7 @@ class ColorAnimator(QObject):
         """Starting the animation at the specified speed"""
         self.speed = max(0.1, min(5.0, speed))  # Speed limit
         self.is_running = True
-        self.timer.start(16)  # ~60 FPS
+        self.color_timer.start(self.frame_delay)  # ~60 FPS
 
     def stop(self, smooth=True):
         """Stop animation"""
@@ -1000,7 +1009,7 @@ class ColorAnimator(QObject):
         self.target_rgb = (0.0, 0.0, 0.0)
         if not smooth:
             self._reset_colors()
-            self.timer.stop()
+            self.color_timer.stop()
 
     def update_colors(self):
         """Updating color values"""
@@ -1017,7 +1026,7 @@ class ColorAnimator(QObject):
         # Checking animation completion
         if not self.is_running and all(c < 0.01 for c in (self.win.b_red, self.win.b_green, self.win.b_blue)):
             self._reset_colors()
-            self.timer.stop()
+            self.color_timer.stop()
 
     def _reset_colors(self):
         """Reset colors to 0"""
@@ -1123,11 +1132,11 @@ class ColorAnimator(QObject):
                 self.win.b_green *= pulse_val
                 self.win.b_blue *= pulse_val
 
-            self.color_animator.timer.timeout.disconnect()
-            self.color_animator.timer.timeout.connect(pulse_update)
+            self.color_animator.color_timer.timeout.disconnect()
+            self.color_animator.color_timer.timeout.connect(pulse_update)
         else:
-            self.color_animator.timer.timeout.disconnect()
-            self.color_animator.timer.timeout.connect(self.color_animator.update_colors)
+            self.color_animator.color_timer.timeout.disconnect()
+            self.color_animator.color_timer.timeout.connect(self.color_animator.update_colors)
 
     def enable_glow(self, intensity=0.3):
         """Adds a soft glow effect"""

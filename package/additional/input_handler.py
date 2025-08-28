@@ -24,7 +24,6 @@ class InputHandler:
 
         self.start_pos = QPoint(0, 0)
         self.last_pos = QPoint(0, 0)
-        # self.drag_direction = 0  # -1 left, 0 neutral, 1 right
         self.drag_direction_x = 0
         self.drag_direction_y = 0
         self.drag_intensity = 0  # drag force (0-1)
@@ -45,11 +44,6 @@ class InputHandler:
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_mouse_tracking)
         self.update_timer.start(10)  # Update every 10 ms
-
-        # Talk Delay timer
-        self.talkDelayTimer = QTimer()
-        self.talkDelayTimer.setSingleShot(True)
-        self.talkDelayTimer.timeout.connect(self.takingTalk)
 
         # Sleep Move timer
         self.sleepInputTimer = QTimer()
@@ -111,9 +105,9 @@ class InputHandler:
     def mouse_press_handler(self):
         """Mouse press handler"""
         if not self.win.character.tired_controller.sleep and not self.input_lock:
+            self.win.model.ResetExpressions()
             self.mouse_press_timer.start()
             self.hold_timer.start(1500)  # 3 секунды
-            self.talkDelayTimer.start(500)
 
         if self.win.character.tired_controller.sleep and not self.input_lock:
             self.sleepInputTimer.start(500)
@@ -128,7 +122,6 @@ class InputHandler:
         # Main Reset
         self.win.clickInLA = False
         self.win.tap_body_anim = True
-        self.talkDelayTimer.stop()
         self.sleepInputTimer.stop()
         self.reset_drag_state()
 
@@ -240,6 +233,7 @@ class InputHandler:
         if (not self.win.character.tired_controller.sleep and not self.input_lock):
             try:
                 self.win.character.state.set_drag_state()
+                self.place_this = True
 
                 # Determine direction key based on axis
                 if axis == "horizontal":
@@ -268,10 +262,6 @@ class InputHandler:
         self.drag_intensity = 0
         self.win.animation_manager.drag_animator.angle = 0
         self.win.animation_manager.drag_animator.apply_rotation()
-
-    def takingTalk(self):
-        self.place_this = True
-        self.talkDelayTimer.stop()
 
     def takingSleep(self):
         self.sleep_move = True

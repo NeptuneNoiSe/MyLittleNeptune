@@ -694,12 +694,12 @@ class BodyPartAnimator:
         return self.animation_manager.target_fps
 
     def add_animation(self, part_id, range=(0, 10), speed=0.1,easing='linear'):
-        # Приводим к правильным типам
+        # Leading to the correct types
         range = (float(range[0]), float(range[1]))
         speed = float(speed)
 
         if part_id not in self.active_parts:
-            # Новая анимация
+            # New Animation
             self.active_parts[part_id] = {
                 'range': range,
                 'speed': speed,
@@ -709,14 +709,14 @@ class BodyPartAnimator:
                 'active': True,
             }
         else:
-            # Обновление существующей анимации
+            # Update current Animation
             config = self.active_parts[part_id]
             config['range'] = range
             config['speed'] = speed
             config['active'] = True
             config['reset_requested'] = False
 
-            # Плавный переход к новым параметрам
+            # Smooth transition to new parameters
             if config['value'] < range[0]:
                 config['value'] = range[0]
             elif config['value'] > range[1]:
@@ -727,7 +727,7 @@ class BodyPartAnimator:
             self.body_part_timer.start()
 
     def stop_all(self):
-        """Мгновенная остановка (использовать только при необходимости)"""
+        """Stop Animation"""
         for part_id in list(self.active_parts.keys()):
             self.model.SetParameterValueById(part_id, 0)
         self.active_parts.clear()
@@ -738,24 +738,24 @@ class BodyPartAnimator:
         delta_time = current_time - self.last_time
         self.last_time = current_time
 
-        # ЗАЩИТА ОТ АНОМАЛИЙ:
-        delta_time = min(delta_time, 0.1)  # Максимум 100ms (если окно было свёрнуто)
-        delta_time = max(delta_time, 0.001)  # Минимум 1ms (защита от ошибок)
+        # ANOMALY PROTECTION:
+        delta_time = min(delta_time, 0.1)  # Max 100ms (if the window was minimized)
+        delta_time = max(delta_time, 0.001)  # Minimum 1ms (error protection)
 
-        # Нормализация под целевой FPS
+        # Normalization to target FPS
         normalized_delta = delta_time * self.target_fps
 
-        # 1. Обновляем активные анимации
+        # Update active animations
         parts_to_remove = []
         for part_id, config in self.active_parts.items():
             try:
                 if not config['active']:
                     continue
 
-                # Плавное изменение значения
+                # Smooth value change
                 new_value = config['value'] + config['direction'] * config['speed'] * normalized_delta
 
-                # Ограничение диапазона
+                # Range limitation
                 if new_value >= config['range'][1]:
                     new_value = config['range'][1]
                     config['direction'] = -1
@@ -770,7 +770,7 @@ class BodyPartAnimator:
                 print(f"Animation error for {part_id}: {e}")
                 parts_to_remove.append(part_id)
 
-        # Удаляем завершенные анимации
+        # Deleting completed animations
         for part_id in parts_to_remove:
             self._safe_remove_part(part_id)
 
@@ -778,7 +778,7 @@ class BodyPartAnimator:
             self.body_part_timer.stop()
 
     def _safe_remove_part(self, part_id):
-        """Безопасное удаление части из active_parts"""
+        """Safely deleting a part from active_parts"""
         if part_id in self.active_parts:
             try:
                 self.model.SetParameterValueById(part_id, 0)
@@ -801,8 +801,8 @@ class DragAnimator:
         self.max_angle = 10
         self.last_animation_time = 0
 
-        self.vertical_intensity = 0.0  # Добавляем отслеживание вертикальной интенсивности
-        self.return_threshold = 0.1    # Порог остановки для всех анимаций
+        self.vertical_intensity = 0.0  # Adding vertical intensity tracking
+        self.return_threshold = 0.1    # Stop threshold for all animations
 
         # Таймеры
         self.return_timer = QTimer()
@@ -832,21 +832,16 @@ class DragAnimator:
     def frame_delay(self):
         return self.animation_manager.frame_delay
 
-    @property
-    def _log_callbacks(self):
-        """Access to the logging flag from AnimationManager"""
-        return self.animation_manager._log_callbacks
-
     # TODO: [WIP] Анимация движения частей тела при перетаскивании. Требуется тестирование и отладка
     def start_drag_animation(self, direction_key):
         """Start animation for any direction"""
         profile = self.profiles.get(self.current_character, {})
         drag_config = profile.get('drag_animations', {}).get(direction_key, {})
         animation_speed = round((self.drag_intensity/4),2)
-        # print(f"Drag config for {direction_key}: {drag_config}")  # Что содержится в конфиге
+        # print(f"Drag config for {direction_key}: {drag_config}")  # What is contained in the config
 
         for part_config in drag_config.get('parts', []):
-            # print(f"Drag config for {direction_key}, Processing part: {part_config}")  # Вывод текущей конфигурации
+            # print(f"Drag config for {direction_key}, Processing part: {part_config}")  # Output of the current configuration
             try:
                 self.part_animator.add_animation(
                     part_id=part_config['part'],
@@ -860,10 +855,10 @@ class DragAnimator:
         self.part_animator.stop_all()
 
     def update_vertical_movement(self, direction_y, intensity):
-        """Отдельный метод для вертикального движения"""
+        """A separate method for vertical movement"""
         self.drag_direction_y = direction_y
         self.drag_intensity = intensity
-        # Для вертикального движения не применяем угол наклона!
+        # We do not use the tilt angle for vertical movement!
         self.return_timer.stop()
         self.return_timer.start(self.return_delay)
 
@@ -896,32 +891,32 @@ class DragAnimator:
             self.animation_timer.start()
 
     def _update_return_animation(self):
-        """Плавный возврат для всех типов анимаций"""
-        # Проверяем ВСЕ условия остановки
+        """Smooth return for all types of animations"""
+        # Checking ALL the stop conditions
         should_stop = (
-                abs(self.angle) < self.return_threshold and  # Горизонтальный наклон
-                abs(self.drag_direction_y) < self.return_threshold and  # Вертикальное движение
-                self.drag_intensity < self.return_threshold  # Общая интенсивность
+                abs(self.angle) < self.return_threshold and  # Horizontal tilt
+                abs(self.drag_direction_y) < self.return_threshold and  # Vertical movement
+                self.drag_intensity < self.return_threshold  # Overall intensity
         )
 
         if should_stop:
-            # Полная остановка только когда ВСЁ завершено
+            # Full stop only when EVERYTHING is completed
             self.angle = 0
             self.drag_direction_y = 0
             self.animation_timer.stop()
             self.part_animator.stop_all()
         else:
-            # Плавный сброс горизонтального наклона
+            # Smooth horizontal tilt reset
             if abs(self.angle) > self.return_threshold:
                 progress = abs(self.angle) / self.max_angle
                 slowdown_factor = 0.5 + (1 - progress) * 0.5
                 self.angle *= self.return_speed * slowdown_factor
 
-            # Плавный сброс вертикальной интенсивности
+            # Smooth reset of vertical intensity
             if abs(self.drag_direction_y) > self.return_threshold:
                 self.drag_direction_y *= self.return_speed
 
-            # Плавный сброс общей интенсивности
+            # Smooth relief of overall intensity
             if self.drag_intensity > self.return_threshold:
                 self.drag_intensity *= self.return_speed
 
@@ -936,17 +931,17 @@ class DragAnimator:
             print(f"Rotation error: {e}")
 
     def stop_animation(self):
-        """Остановка всех анимаций с приоритетом"""
-        # Сначала плавно сбрасываем параметры
+        """Stopping all animations with priority"""
+        # First, smoothly reset the parameters
         self.angle = 0
         self.drag_direction_y = 0
         self.drag_intensity = 0
         self.apply_rotation()
 
-        # Затем останавливаем анимации частей тела
+        # Then we stop animations of body parts
         self.part_animator.stop_all()
 
-        # Останавливаем таймеры
+        # Stop the timers
         self.animation_timer.stop()
         self.return_timer.stop()
 

@@ -659,6 +659,9 @@ class MainWindow(QOpenGLWidget):
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
+                # Get Params from model
+                #partIds = self.model.GetParameterIds()
+                #print(partIds)
                 self.input_handler.mouse_press_handler()
                 if self.mouse_click_log:
                     print("Left Button Pressed")

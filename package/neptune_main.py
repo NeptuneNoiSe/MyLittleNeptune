@@ -433,7 +433,7 @@ class MainWindow(QOpenGLWidget):
         self.model = self.resource_manager.get_model(self.character_name)
         self.apply_character_config(self.character_name)
         self.canvas = Canvas()
-        self.target_fps = 60  # Сохраняем значение FPS
+        self.target_fps = 30  # Сохраняем значение FPS
         self.startTimer(int(1000 / self.target_fps))
         self.functions.setLanguage()
         self.model.CreateRenderer(2)
@@ -660,8 +660,8 @@ class MainWindow(QOpenGLWidget):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
                 # Get Params from model
-                #partIds = self.model.GetParameterIds()
-                #print(partIds)
+                # partIds = self.model.GetParameterIds()
+                # print(partIds)
                 self.input_handler.mouse_press_handler()
                 if self.mouse_click_log:
                     print("Left Button Pressed")

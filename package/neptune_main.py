@@ -433,7 +433,7 @@ class MainWindow(QOpenGLWidget):
         self.model = self.resource_manager.get_model(self.character_name)
         self.apply_character_config(self.character_name)
         self.canvas = Canvas()
-        self.target_fps = 30  # Сохраняем значение FPS
+        self.target_fps = 60  # Сохраняем значение FPS
         self.startTimer(int(1000 / self.target_fps))
         self.functions.setLanguage()
         self.model.CreateRenderer(2)
@@ -908,7 +908,7 @@ class MainWindow(QOpenGLWidget):
 
     def closeEvent(self, event):
         """Close Event"""
-        self.character.expressions.set_cry_expression()
+        self.character.state.set_crying_state()
         settings.close()
         if self.character.tired_state.condition == "Sleep":
             self.character.tired_controller.wake_up_function()

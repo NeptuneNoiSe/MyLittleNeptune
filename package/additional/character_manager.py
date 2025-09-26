@@ -68,6 +68,11 @@ class CharacterStateManager:
             easing="out_quad",
             on_finished= self._after_animation_fade_out_callback)
 
+    def alredy_changed_character(self):
+        self.character.movements.set_motion(group_name="Special", id=3)
+        self.character.expressions.set_smile_expression(fade_out=7000)
+        self.character.character_text.set_already_changed_text()
+
     def _after_animation_fade_out_callback(self):
         """Runs after the animation is completed"""
         if hasattr(self.win, 'models_manager'):
@@ -80,6 +85,7 @@ class CharacterStateManager:
         Args:
             is_first_run: If True, the callback is not called (for the first character display).
         """
+        self.character.movements.set_motion(group_name="Special", id=19)
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_greeting_text()
         self.win.animation_manager.opacity_animator.animate_opacity(
@@ -99,6 +105,7 @@ class CharacterStateManager:
     def set_goodbye_state(self):
         """Character say goodbye"""
         self.goodByeTimer.start(3000)
+        self.character.movements.set_motion(group_name="Special", id=1)
         self.character.character_text.set_goodbye_text()
 
         # WakeUp if character sleep
@@ -115,11 +122,13 @@ class CharacterStateManager:
     def set_stay_state(self):
         """Set stay state"""
         self.character.model.ResetExpressions()
+        self.character.movements.set_motion(group_name="Special", id=13)
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_stay_text()
 
     def set_lost_state(self):
         """Set lost state"""
+        self.character.movements.set_motion(group_name="Special", id=14)
         self.character.expressions.set_lost_expression(fade_out=7000)
         self.character.character_text.set_lost_text()
 
@@ -129,6 +138,7 @@ class CharacterStateManager:
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
         self.character.tired_controller.wake_up_function()
+        self.character.movements.set_motion(group_name="Special", id=14)
         self.character.expressions.set_surprised_expression(fade_out=10000)
         self.character.character_text.set_woke_up_text()
 
@@ -151,6 +161,7 @@ class CharacterStateManager:
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
         self.character.expressions.fadeoutTimer.stop()
+        self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_sad_expression(fade_out=10000)
         self.character.character_text.set_transform_failure_text()
 
@@ -169,6 +180,7 @@ class CharacterStateManager:
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
         """Update Settings state"""
+        self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
 
     def set_quit_state(self, quit: str):
@@ -177,6 +189,7 @@ class CharacterStateManager:
             self.character.expressions.set_cry_expression()
             self.character.character_text.set_quit_text()
             self.win.talk_widget.is_quitting = True
+            self.character.movements.set_motion(group_name="Special", id=1)
             QTimer.singleShot(3000, lambda: (
                 self.win.talk_widget.close_dialog(),
                 self.win.animation_manager.opacity_animator.animate_opacity(
@@ -188,11 +201,13 @@ class CharacterStateManager:
                     on_finished=lambda: exit(0))))
 
         elif quit == 'No':
+            self.character.movements.set_motion(group_name="Special", id=19)
             self.character.expressions.set_happy_expression(fade_out=5000)
             self.character.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
 
     def set_crying_state(self):
         """Set crying state"""
+        self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_cry_expression()
 
 class CharacterTiredController:
@@ -346,16 +361,19 @@ class CharacterTiredStateManager:
 
     def set_sad_state(self):
         self.condition = "Sad"
+        self.character.movements.set_motion(group_name="Special", id=8)
         self.character.expressions.set_sad_expression()
         self.character.character_text.set_sad_text()
 
     def set_tired_state(self):
         self.condition = "Tired"
+        self.character.movements.set_yawn_motion()
         self.character.expressions.set_tired_expression()
         self.character.character_text.set_tired_text()
 
     def set_sleep_state(self):
         self.condition = "Sleep"
+        self.character.movements.set_sleep_motion()
         if self.character.tracking_mouse_switch:
             self.character.tracking_mouse = False
             self.character.win.input_handler.handle_mouse_idle()
@@ -364,6 +382,7 @@ class CharacterTiredStateManager:
 
     def set_wake_up_state(self):
         self.character.tired_controller.wake_up_function()
+        self.character.movements.set_motion(group_name="Special", id=19)
         self.character.expressions.set_wake_up_expression(fade_out=10000)
         self.character.character_text.set_wake_up_text()
 
@@ -561,6 +580,11 @@ class CharacterTextManager:
         self.kaomoji = kaomoji
         self.update()
 
+    def set_already_changed_text(self):
+        self.text = ['Talk', 'Already']
+        self.kaomoji = "(^~^)"
+        self.update()
+
     def set_settings_text(self, text_key):
         self.text = ['MiscellaneousTalk', text_key]
         self.kaomoji = "(⌐■_■)"
@@ -652,6 +676,31 @@ class CharacterTextManager:
 class CharacterMovementsManager:
     def __init__(self, character):
         self.character = character
+
+    @property
+    def model(self):
+        """Always returns the current model"""
+        return self.character.win.model
+
+    def set_motion(self,
+                   group_name: str | None = None,
+                   id: int | None = None) -> None:
+
+        self.character.win.animation_manager.play_animation(
+            model=self.model,
+            anim_type='Motion',
+            group_or_id=group_name,
+            no=id,
+            priority="FORCE",
+        )
+
+    def set_sleep_motion(self):
+        sleep_motion_id = random.choice([9, 10, 11, 12])
+        self.set_motion(group_name="Special", id=sleep_motion_id)
+
+    def set_yawn_motion(self):
+        yawn_motion_id = random.choice([17, 18])
+        self.set_motion(group_name="Special", id=yawn_motion_id)
 
     def process_body_hit(self):
         """Processing interactions with body parts"""

@@ -97,6 +97,14 @@ class AnimationsManager:
         """
         Proxy-Method for AnimationPlayer.play_animation
         """
+        if isinstance(priority, str):
+            PRIORITY_MAP = {
+                "FORCE": live2d.MotionPriority.FORCE,
+                "NORMAL": live2d.MotionPriority.NORMAL,
+                "IDLE": live2d.MotionPriority.IDLE
+            }
+            priority = PRIORITY_MAP.get(priority.upper(), priority)
+
         return self.animation_player.play_animation(
             model=model,
             anim_type=anim_type,
@@ -219,8 +227,16 @@ class AnimationPlayer:
     def _handle_motion_start(self, group, no):
         """Callback with Animation Start"""
         if self._log_callbacks:
-            print(f"Animation {group} {no} start - blink off")
-        self.animation_manager.blink_animator.set_blink_enabled(False)  # Using our previously created method
+            # For Special animations, replace no with "id + name"
+            if group == "Special":
+                anim_name = self._get_special_animation_name(no)
+                display_no = f"{no} ({anim_name})"
+            else:
+                display_no = no
+
+            print(f"Animation {group} {display_no} start - blink off")
+
+        self.animation_manager.blink_animator.set_blink_enabled(False)
 
     def _handle_motion_finish(self, group, no):
         """Callback with Animation Finish"""
@@ -230,12 +246,28 @@ class AnimationPlayer:
             self._reset_idle_state()
             self.animation_manager.blink_animator.set_blink_enabled(True)
         if self._log_callbacks:
-            print(f"Animation {group} {no} finish - blink on")
+            # For Special animations, replace no with "id + name"
+            if group == "Special":
+                anim_name = self._get_special_animation_name(no)
+                display_no = f"{no} ({anim_name})"
+            else:
+                display_no = no
+            print(f"Animation {group} {display_no} finish - blink on")
 
         # Additionally: reset the eyes to the open state
         #self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
         #self.model.SetParameterValueById("ParamEyeROpen", 1.0)
         #self.model.SetParameterValueById("ParamMouthOpenY", 0)
+
+    def _get_special_animation_name(self, no: int) -> str:
+        """Get Special animation name by number"""
+        special_animations = {
+            0: "Aah", 1: "Bye", 2: "Fun", 3: "Joy", 4: "Love", 5: "Menace",
+            6: "Muscle", 7: "Sad", 8: "Sigh", 9: "Sleep", 10: "Sleepy",
+            11: "Sleepy Alt", 12: "Sleepy Talk", 13: "Stagger", 14: "Surprised",
+            15: "Walk", 16: "What", 17: "Yawn", 18: "Yawn Alt", 19: "Yeah"
+        }
+        return special_animations.get(no, f"Unknown")
 
     def _random_delay(self):
         """Generate Random Interval"""
@@ -627,7 +659,7 @@ class TransformAnimator:
                 anim_type='Motion',
                 group_or_id="Unique",
                 no=0,
-                priority=live2d.MotionPriority.FORCE,
+                priority="FORCE",
             )
 
     def _calculate_animation_size(self):

@@ -34,6 +34,10 @@ class ActionHandler:
 
     # Characters Actions
     def _change_character(self, character_name):
+        # Check if the current name matches the selected one
+        if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
+            self.win.character.state.alredy_changed_character()
+            return  # Interrupt the function because the character has already been selected
         self.win.talk_widget.talk_update = False
         if not self.win.transform:
             self.win.model_move = True

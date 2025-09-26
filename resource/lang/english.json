@@ -83,7 +83,8 @@
     "TransformNot": "I'm Can't Transform",
     "Quit": "Do you really want to leave?",
     "QuitAlt": "GoodBye! See you again!",
-    "Taking": "Hey, where are you taking me?"
+    "Taking": "Hey, where are you taking me?",
+    "Already": "Hey, is that me?!"
   },
   "MiscellaneousTalk": {
     "SettingsApplied": "The settings are applied",

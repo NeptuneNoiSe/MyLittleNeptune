@@ -11,8 +11,8 @@ from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
 from live2d.utils.canvas import Canvas
+from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
-# from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 import resources
 from widgets.talk_widget import TalkWidget
@@ -25,6 +25,7 @@ from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_manager import ResourceManager
 from package.additional.animation_manager import AnimationsManager
+from package.additional.audio_manager import AudioManager
 
 class MainWindow(QOpenGLWidget):
     def __init__(self) -> None:
@@ -232,6 +233,7 @@ class MainWindow(QOpenGLWidget):
         self.talk_update = None
         self.models_manager = ModelsManager(
             resources_dir=resources.RESOURCES_DIRECTORY)
+        self.audio_manager = AudioManager(self, resources_dir=resources.RESOURCES_DIRECTORY)
         # Mouse Tracker Init
         self.mouse_tracker = MouseTracker(self)
         # Mouse tracking timer
@@ -354,8 +356,8 @@ class MainWindow(QOpenGLWidget):
 
     def _init_sound(self):
         """Initialize sound"""
-        #self.wavHandler = WavHandler()
-        #self.lipSyncN = 2.5
+        self.wavHandler = WavHandler()
+        self.lipSyncN = 3
         #self.audioPlayed = False
         pass
 
@@ -509,6 +511,9 @@ class MainWindow(QOpenGLWidget):
             self.model.UpdatePhysics(delta_secs)
             self.model.UpdatePose(delta_secs)
 
+            if self.wavHandler.Update():  # Get next audio frame, returns False when audio ends Apply mouth animation based on audio volume
+                self.model.SetParameterValueById("ParamMouthOpenY", self.wavHandler.GetRms() * self.lipSyncN)
+
             self.set_app_title()
 
         except Exception as e:
@@ -659,6 +664,7 @@ class MainWindow(QOpenGLWidget):
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
+                self.audio_manager.play_audio("Neptune", "default", True)
                 # Get Params from model
                 # partIds = self.model.GetParameterIds()
                 # print(partIds)

@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import QSize
 
@@ -19,6 +19,8 @@ class ResourceManager:
         self.extra_motions: Dict[str, str] = {}
         self._talk_images: Dict[str, str] = {}
         self._mirrored_talk_images: Dict[str, str] = {}
+        self._audio_files: Dict[str, str] = {}
+        self.audio_files = None
 
     def _load_character_configs(self) -> Dict[str, Dict]:
         """Loads character configs from a JSON file"""
@@ -157,3 +159,142 @@ class ResourceManager:
         """Clears all cached resources"""
         self.loaded_models.clear()
         self.ui_labels.clear()
+
+    def load_audio_files(self) -> Dict[str, Dict[str, str]]:
+        """Loads all audio files with fallback to root audio folder"""
+        if not self._audio_files:
+            audio_dir = os.path.join(self.resources_dir, "audio")
+
+            audio_structure = {
+                "Neptune": {
+                    "greeting": "hello.wav",
+                    "sleep": "sleep.wav",
+                    "default": "default.wav"
+                },
+                "Purple Heart": {
+                    "greeting": "hello.wav",
+                    "sleep": "sleep.wav",
+                    "default": "default.wav"
+                },
+                "Black Heart": {
+                    "greeting": "hello.wav",
+                    "sleep": "sleep.wav",
+                    "default": "default.wav"
+                },
+                "White Heart": {
+                    "greeting": "hello.wav",
+                    "sleep": "sleep.wav",
+                    "default": "default.wav"
+                },
+                "default": {
+                    "greeting": "hello.wav",
+                    "sleep": "sleep.wav",
+                    "default": "nep_nep.wav"
+                }
+            }
+
+            self._audio_files = {}
+
+            for character_name, audio in audio_structure.items():
+                # Преобразуем имя в папку
+                folder_name = self._character_to_folder_name(character_name)
+                character_dir = os.path.join(audio_dir, folder_name)
+
+                character_dict = {}
+                for sound_type, filename in audio.items():
+                    # 1. Пытаемся найти в папке персонажа
+                    character_file = os.path.join(character_dir, filename)
+
+                    if os.path.exists(character_file):
+                        character_dict[sound_type] = character_file
+                    else:
+                        # 2. Fallback: ищем в корне audio
+                        root_file = os.path.join(audio_dir, filename)
+                        if os.path.exists(root_file):
+                            character_dict[sound_type] = root_file
+                        else:
+                            # 3. Final fallback: используем nep_nep.wav из корня
+                            nep_nep_root = os.path.join(audio_dir, "nep_nep.wav")
+                            if os.path.exists(nep_nep_root):
+                                character_dict[sound_type] = nep_nep_root
+                            else:
+                                # 4. Ultimate fallback: оставляем путь, но файла нет
+                                character_dict[sound_type] = character_file
+
+                self._audio_files[character_name] = character_dict
+            # Audio System Diagnostic
+            self.debug_audio_structure()
+            print(f"✅ Audio files loaded with root fallback: {list(self._audio_files.keys())}")
+
+        return self._audio_files
+
+    def _character_to_folder_name(self, character_name: str) -> str:
+        """Преобразует имя персонажа в имя папки (удаляет пробелы)"""
+        return character_name.replace(" ", "")
+
+    def get_audio(self, character_name: str, audio_type: str = "default") -> Optional[str]:
+        audio_files = self.load_audio_files()
+
+        search_paths = [
+            (character_name, audio_type),
+            (character_name, "default"),
+            ("default", audio_type),
+            ("default", "default")
+        ]
+
+        for search_char, search_type in search_paths:  # ← Более понятные имена
+            if search_char in audio_files and search_type in audio_files[search_char]:
+                audio_file = audio_files[search_char][search_type]
+                if os.path.exists(audio_file):
+                    if search_char == character_name and search_type == audio_type:
+                        print(f"✓ Exact match: {character_name} - {audio_type}")
+                    else:
+                        print(f"⚠ Fallback: {search_char} - {search_type} for {character_name} - {audio_type}")
+                    return audio_file
+
+        print(f"✗ No audio found for {character_name} - {audio_type}")
+        return None
+
+    def debug_audio_structure(self):
+        """Детальная диагностика аудио системы"""
+        print("\n" + "=" * 50)
+        print("AUDIO SYSTEM DEBUG")
+        print("=" * 50)
+
+        # 1. Проверяем базовые пути
+        audio_dir = os.path.join(self.resources_dir, "audio")
+        print(f"1. Resources dir: {self.resources_dir}")
+        print(f"2. audio dir: {audio_dir}")
+        print(f"3. audio dir exists: {os.path.exists(audio_dir)}")
+
+        if os.path.exists(audio_dir):
+            print(f"4. Files in audio directory:")
+            for file in os.listdir(audio_dir):
+                if file.endswith('.wav'):
+                    print(f"   ✓ {file}")
+                else:
+                    print(f"   - {file} (not wav)")
+        else:
+            print("4. ❌ audio directory not found!")
+
+        # 2. Проверяем загрузку аудио файлов
+        print("\n5. Loading audio files...")
+        audio_files = self.load_audio_files()
+        print(f"6. Audio structure keys: {list(audio_files.keys())}")
+
+        # 3. Детальный просмотр структуры
+        print("\n7. Detailed audio structure:")
+        for character, audio in audio_files.items():
+            print(f"   {character}:")
+            for sound_type, filepath in audio.items():
+                exists = "✓" if os.path.exists(filepath) else "❌"
+                print(f"     {sound_type}: {exists} {filepath}")
+
+        # 4. Тестируем поиск для Maho
+        #print(f"\n8. Testing get_audio for Maho:")
+        #result = self.get_audio("Maho", "default")
+        #print(f"   Result: {result}")
+        #if result:
+        #    print(f"   File exists: {os.path.exists(result)}")
+
+        print("=" * 50)

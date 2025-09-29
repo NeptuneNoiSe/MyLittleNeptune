@@ -664,7 +664,7 @@ class MainWindow(QOpenGLWidget):
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
-                self.audio_manager.play_audio("Neptune", "default", True)
+                #self.audio_manager.play_audio("Neptune", "default", True)
                 # Get Params from model
                 # partIds = self.model.GetParameterIds()
                 # print(partIds)

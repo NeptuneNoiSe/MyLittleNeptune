@@ -8,12 +8,14 @@ class CharacterManager:
         self.kaomoji = None
         self.transform_text_show = False
         self.transform_exp_show = False
+        self.play_drag_audio = False
         self.state = CharacterStateManager(self)
         self.tired_controller = CharacterTiredController(self)
         self.tired_state = CharacterTiredStateManager(self)
         self.expressions = CharacterExpressionManager(self)
         self.character_text = CharacterTextManager(self)
         self.movements = CharacterMovementsManager(self)
+        self.audio = CharacterAudioManager(self)
 
     @property
     def model(self):
@@ -85,6 +87,7 @@ class CharacterStateManager:
         Args:
             is_first_run: If True, the callback is not called (for the first character display).
         """
+        self.character.audio.set_greeting_audio()
         self.character.movements.set_motion(group_name="Special", id=19)
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_greeting_text()
@@ -105,6 +108,7 @@ class CharacterStateManager:
     def set_goodbye_state(self):
         """Character say goodbye"""
         self.goodByeTimer.start(3000)
+        self.character.audio.set_goodbye_audio()
         self.character.movements.set_motion(group_name="Special", id=1)
         self.character.character_text.set_goodbye_text()
 
@@ -116,18 +120,21 @@ class CharacterStateManager:
 
     def set_drag_state(self):
         """Set drag state"""
+        self.character.audio.set_drag_audio()
         self.character.expressions.set_drag_expression()
         self.character.character_text.set_drag_text()
 
     def set_stay_state(self):
         """Set stay state"""
         self.character.model.ResetExpressions()
+        self.character.audio.set_stay_audio()
         self.character.movements.set_motion(group_name="Special", id=13)
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_stay_text()
 
     def set_lost_state(self):
         """Set lost state"""
+        self.character.audio.set_lost_audio()
         self.character.movements.set_motion(group_name="Special", id=14)
         self.character.expressions.set_lost_expression(fade_out=7000)
         self.character.character_text.set_lost_text()
@@ -138,6 +145,7 @@ class CharacterStateManager:
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
         self.character.tired_controller.wake_up_function()
+        self.character.audio.set_woke_audio()
         self.character.movements.set_motion(group_name="Special", id=14)
         self.character.expressions.set_surprised_expression(fade_out=10000)
         self.character.character_text.set_woke_up_text()
@@ -151,6 +159,7 @@ class CharacterStateManager:
     def set_transform_state(self):
         """Transform state"""
         self.character.expressions.fadeoutTimer.stop()
+        self.character.audio.set_transform_audio()
         if not self.win.hdd_form:
             self.character.expressions.set_transform_to_hdd_expression()
             self.character.character_text.set_transform_to_hdd_text()
@@ -161,6 +170,7 @@ class CharacterStateManager:
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
         self.character.expressions.fadeoutTimer.stop()
+        self.character.audio.set_transform_failure_audio()
         self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_sad_expression(fade_out=10000)
         self.character.character_text.set_transform_failure_text()
@@ -174,18 +184,21 @@ class CharacterStateManager:
             if self.win.hdd_form:
                 self.character.character_text.set_transformed_hdd_text()
             else:
+                self.character.audio.set_transformed_audio()
                 self.character.character_text.set_transformed_normal_text()
             self.character.transform_text_show = False
             self.character.transform_exp_show = False
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
         """Update Settings state"""
+        self.character.audio.set_settings_audio()
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
 
     def set_quit_state(self, quit: str):
         """Quiting state"""
         if quit == 'Yes':
+            self.character.audio.set_quit_audio()
             self.character.expressions.set_cry_expression()
             self.character.character_text.set_quit_text()
             self.win.talk_widget.is_quitting = True
@@ -201,6 +214,7 @@ class CharacterStateManager:
                     on_finished=lambda: exit(0))))
 
         elif quit == 'No':
+            self.character.audio.set_happy_audio()
             self.character.movements.set_motion(group_name="Special", id=19)
             self.character.expressions.set_happy_expression(fade_out=5000)
             self.character.character_text.set_aux_text(group_name='Talk',text_key='Happy',kaomoji=":(^~^):")
@@ -715,3 +729,49 @@ class CharacterMovementsManager:
 
         #if not self.tired_anim.sleep and not self.character.win.input_lock:
         #    self._update_character_expression()
+
+class CharacterAudioManager:
+    def __init__(self, character):
+        self.character = character
+
+    @property
+    def audio_manager(self):
+        return self.character.win.audio_manager
+
+    def set_greeting_audio(self):
+        self.audio_manager.play_audio(self.character.name, "greeting", True)
+
+    def set_goodbye_audio(self):
+        self.audio_manager.play_audio(self.character.name, "goodbye", True)
+
+    def set_drag_audio(self):
+        if self.character.play_drag_audio:
+            self.audio_manager.play_audio(self.character.name, "drag", True)
+            self.character.play_drag_audio = False
+
+    def set_stay_audio(self):
+        self.audio_manager.play_audio(self.character.name, "stay", True)
+
+    def set_lost_audio(self):
+        self.audio_manager.play_audio(self.character.name, "lost", True)
+
+    def set_woke_audio(self):
+        self.audio_manager.play_audio(self.character.name, "woke", True)
+
+    def set_transform_audio(self):
+        self.audio_manager.play_audio(self.character.name, "transform", True)
+
+    def set_transformed_audio(self):
+        self.audio_manager.play_audio(self.character.name, "transformed", True)
+
+    def set_transform_failure_audio(self):
+        self.audio_manager.play_audio(self.character.name, "transform_fail", True)
+
+    def set_settings_audio(self):
+        self.audio_manager.play_audio(self.character.name, "settings", True)
+
+    def set_happy_audio(self):
+        self.audio_manager.play_audio(self.character.name, "happy", True)
+
+    def set_quit_audio(self):
+        self.audio_manager.play_audio(self.character.name, "quit", True)

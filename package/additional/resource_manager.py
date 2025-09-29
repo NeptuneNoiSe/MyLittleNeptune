@@ -168,7 +168,18 @@ class ResourceManager:
             audio_structure = {
                 "Neptune": {
                     "greeting": "hello.wav",
+                    "goodbye": "goodbye.wav",
+                    "drag": "drag.wav",
+                    "stay": "stay.wav",
+                    "lost": "lost.wav",
+                    "transform": "transform.wav",
+                    "transformed": "transformed.wav",
+                    "transform_fail": "transform_fail.wav",
+                    "woke": "woke.wav",
                     "sleep": "sleep.wav",
+                    "settings": "settings.wav",
+                    "happy": "happy.wav",
+                    "quit": "quit.wav",
                     "default": "default.wav"
                 },
                 "Purple Heart": {
@@ -214,7 +225,7 @@ class ResourceManager:
                             character_dict[sound_type] = root_file
                         else:
                             # 3. Final fallback: используем nep_nep.wav из корня
-                            nep_nep_root = os.path.join(audio_dir, "nep_nep.wav")
+                            nep_nep_root = os.path.join(audio_dir, "nep.wav")
                             if os.path.exists(nep_nep_root):
                                 character_dict[sound_type] = nep_nep_root
                             else:
@@ -239,7 +250,7 @@ class ResourceManager:
             (character_name, audio_type),
             (character_name, "default"),
             ("default", audio_type),
-            ("default", "default")
+            # ("default", "default")
         ]
 
         for search_char, search_type in search_paths:  # ← Более понятные имена

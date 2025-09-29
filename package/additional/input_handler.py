@@ -107,6 +107,7 @@ class InputHandler:
         if not self.win.character.tired_controller.sleep and not self.input_lock:
             self.win.model.ResetExpressions()
             self.mouse_press_timer.start()
+            self.win.character.play_drag_audio = True
             self.hold_timer.start(1500)  # 3 секунды
 
         if self.win.character.tired_controller.sleep and not self.input_lock:

@@ -664,7 +664,7 @@ class MainWindow(QOpenGLWidget):
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y
-                #self.audio_manager.play_audio("Neptune", "default", True)
+                # self.audio_manager.play_audio("Neptune", "default", True)
                 # Get Params from model
                 # partIds = self.model.GetParameterIds()
                 # print(partIds)
@@ -915,6 +915,7 @@ class MainWindow(QOpenGLWidget):
     def closeEvent(self, event):
         """Close Event"""
         self.character.state.set_crying_state()
+        self.character.audio.set_really_quit_audio()
         settings.close()
         if self.character.tired_state.condition == "Sleep":
             self.character.tired_controller.wake_up_function()

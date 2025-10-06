@@ -205,6 +205,7 @@ class ActionHandler:
             self.win.character.tired_controller.wake_up_function()
 
         self.win.character.expressions.set_cry_expression()
+        self.win.character.audio.set_really_quit_audio()
         self.win.kaomoji = "(o;TωT)o"
 
         answer = QMessageBox.question(

@@ -5,6 +5,7 @@ class CharacterManager:
     def __init__(self, win):
         self.win = win
         self.text_key = None
+        self.audio_key = None
         self.kaomoji = None
         self.transform_text_show = False
         self.transform_exp_show = False
@@ -74,6 +75,7 @@ class CharacterStateManager:
         self.character.movements.set_motion(group_name="Special", id=3)
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_already_changed_text()
+        self.character.audio.set_current_character_audio()
 
     def _after_animation_fade_out_callback(self):
         """Runs after the animation is completed"""
@@ -178,13 +180,13 @@ class CharacterStateManager:
     def set_transformed_state(self):
         """Transformed State"""
         if self.character.transform_exp_show:
+            self.character.audio.set_transformed_audio()
             self.character.expressions.set_funny_expression(fade_out=7000)
 
         if self.character.transform_text_show:
             if self.win.hdd_form:
                 self.character.character_text.set_transformed_hdd_text()
             else:
-                self.character.audio.set_transformed_audio()
                 self.character.character_text.set_transformed_normal_text()
             self.character.transform_text_show = False
             self.character.transform_exp_show = False
@@ -345,6 +347,7 @@ class CharacterTiredController:
         self.idle_anim = False
         self.wake_up = False
         self.sleep = True
+        self.character.audio.set_sleep_audio()
         self.character.expressions.set_sleep_expression()
         self.character.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
         self.character.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
@@ -375,18 +378,21 @@ class CharacterTiredStateManager:
 
     def set_sad_state(self):
         self.condition = "Sad"
+        self.character.audio.set_sad_audio()
         self.character.movements.set_motion(group_name="Special", id=8)
         self.character.expressions.set_sad_expression()
         self.character.character_text.set_sad_text()
 
     def set_tired_state(self):
         self.condition = "Tired"
+        self.character.audio.set_tired_audio()
         self.character.movements.set_yawn_motion()
         self.character.expressions.set_tired_expression()
         self.character.character_text.set_tired_text()
 
     def set_sleep_state(self):
         self.condition = "Sleep"
+        self.character.audio.set_pre_sleep_audio()
         self.character.movements.set_sleep_motion()
         if self.character.tracking_mouse_switch:
             self.character.tracking_mouse = False
@@ -396,6 +402,7 @@ class CharacterTiredStateManager:
 
     def set_wake_up_state(self):
         self.character.tired_controller.wake_up_function()
+        self.character.audio.set_wake_up_audio()
         self.character.movements.set_motion(group_name="Special", id=19)
         self.character.expressions.set_wake_up_expression(fade_out=10000)
         self.character.character_text.set_wake_up_text()
@@ -544,6 +551,7 @@ class CharacterExpressionManager:
             )
 
         self._apply_expression(text_key, fade_out)
+        self.character.audio.set_aux_audio(text_key)
         self.character.text_key = text_key
         self.character.kaomoji = kaomoji
 
@@ -738,11 +746,18 @@ class CharacterAudioManager:
     def audio_manager(self):
         return self.character.win.audio_manager
 
+    def set_aux_audio(self, audio_key: str | None = None) -> None:
+        audio_key_lower = audio_key.lower() if audio_key else None
+        self.audio_manager.play_audio(self.character.name, audio_key_lower, True)
+
     def set_greeting_audio(self):
         self.audio_manager.play_audio(self.character.name, "greeting", True)
 
     def set_goodbye_audio(self):
         self.audio_manager.play_audio(self.character.name, "goodbye", True)
+
+    def set_current_character_audio(self):
+        self.audio_manager.play_audio(self.character.name, "me", True)
 
     def set_drag_audio(self):
         if self.character.play_drag_audio:
@@ -758,6 +773,9 @@ class CharacterAudioManager:
     def set_woke_audio(self):
         self.audio_manager.play_audio(self.character.name, "woke", True)
 
+    def set_wake_up_audio(self):
+        self.audio_manager.play_audio(self.character.name, "wake_up", True)
+
     def set_transform_audio(self):
         self.audio_manager.play_audio(self.character.name, "transform", True)
 
@@ -772,6 +790,21 @@ class CharacterAudioManager:
 
     def set_happy_audio(self):
         self.audio_manager.play_audio(self.character.name, "happy", True)
+
+    def set_sad_audio(self):
+        self.audio_manager.play_audio(self.character.name, "sad", True)
+
+    def set_tired_audio(self):
+        self.audio_manager.play_audio(self.character.name, "tired", True)
+
+    def set_pre_sleep_audio(self):
+        self.audio_manager.play_audio(self.character.name, "pre_sleep", True)
+
+    def set_sleep_audio(self):
+        self.audio_manager.play_audio(self.character.name, "sleep", True)
+
+    def set_really_quit_audio(self):
+        self.audio_manager.play_audio(self.character.name, "really_quit", True)
 
     def set_quit_audio(self):
         self.audio_manager.play_audio(self.character.name, "quit", True)

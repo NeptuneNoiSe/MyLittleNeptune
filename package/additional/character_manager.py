@@ -507,6 +507,7 @@ class CharacterExpressionManager:
             "Sad": ("Sad", "(´•ω•̥`)"),
             "Smile": ("Smile", "(^~^)"),
             "Serious": ("Serious", "(一‸一)"),
+            "Horny": ("Horny", "(￣‿¡￣)"),
             "Tired": ("Tired", "(๑•﹏•)"),
             "ClosedEyes": ("ClosedEyes", "(-_-)"),
             "Cry": ("Cry", "(o;TωT)o"),

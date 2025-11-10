@@ -524,6 +524,35 @@ class ResourceManager:
                     "normal": "normal.wav",
                     "default": "default.wav"
                 },
+                "Rom": {
+                    "greeting": "hello.wav",
+                    "goodbye": "goodbye.wav",
+                    "me": "me.wav",
+                    "drag": "drag.wav",
+                    "stay": "stay.wav",
+                    "lost": "lost.wav",
+                    "transform": "transform.wav",
+                    "transformed": "transformed.wav",
+                    "transform_fail": "transform_fail.wav",
+                    "woke": "woke.wav",
+                    "wake_up": "wake_up.wav",
+                    "pre_sleep": "pre_sleep.wav",
+                    "sleep": "sleep.wav",
+                    "settings": "settings.wav",
+                    "happy": "happy.wav",
+                    "angry": "angry.wav",
+                    "sad": "sad.wav",
+                    "smile": "smile.wav",
+                    "tired": "tired.wav",
+                    "closedeyes": "closed_eyes.wav",
+                    "cry": "cry.wav",
+                    "surprised": "surprised.wav",
+                    "funny": "funny.wav",
+                    "really_quit": "really_quit.wav",
+                    "quit": "quit.wav",
+                    "normal": "normal.wav",
+                    "default": "default.wav"
+                },
                 "default": {
                     "default": "nep_nep.wav"
                 }

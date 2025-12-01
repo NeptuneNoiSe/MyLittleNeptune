@@ -45,6 +45,10 @@ class MainWindow(QOpenGLWidget):
         self.timer_log = False
         # Callbacks Log:
         self.callbacks_log = False
+        # Debug Audio System Log:
+        self.debug_audio_system_log = False
+        # Show Playing Audio Log:
+        self.playing_audio_log = False
         # Show Characters Text in Console:
         self.show_text_in_console = False
 
@@ -450,9 +454,10 @@ class MainWindow(QOpenGLWidget):
     def init_classes(self):
         """Initialize classes"""
         self.animation_manager = AnimationsManager(self, self.model)
-        self.animation_manager.set_target_fps(self.target_fps)  # Передаем в менеджер
+        self.animation_manager.set_target_fps(self.target_fps)
         self.change_character(self.character_name)
         self.animation_manager.set_logging(self.callbacks_log)
+        self.resource_manager.set_debug_audio_system_logging(self.debug_audio_system_log)
 
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""

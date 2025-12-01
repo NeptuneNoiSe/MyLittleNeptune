@@ -88,10 +88,8 @@ class CharacterStateManager:
         """Starts the animation of the character's appearance with a callback only for repeated launches.
         Args:
             is_first_run: If True, the callback is not called (for the first character display).
+            example: on_finished=None if is_first_run else self._after_animation_fade_in_callback
         """
-        self.character.audio.set_greeting_audio()
-        self.character.movements.set_motion(group_name="Special", id=19)
-        self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_greeting_text()
         self.win.animation_manager.opacity_animator.animate_opacity(
             win=self.win,
@@ -99,13 +97,13 @@ class CharacterStateManager:
             end=1.0,
             duration=1500,
             easing="in_quad",
-            on_finished=None) # None if is_first_run else self._after_animation_fade_in_callback
-
+            on_finished=self._after_animation_fade_in_callback)
 
     def _after_animation_fade_in_callback(self):
         """Runs after the animation is completed"""
+        self.character.audio.set_greeting_audio()
         self.character.expressions.set_smile_expression(fade_out=7000)
-        self.character.character_text.set_greeting_text()
+        self.character.movements.set_motion(group_name="Special", id=19)
 
     def set_goodbye_state(self):
         """Character say goodbye"""
@@ -780,9 +778,12 @@ class CharacterAudioManager:
 
     def set_transform_audio(self):
         self.audio_manager.play_audio(self.character.name, "transform", True)
+        self.audio_manager.play_audio("Effects", "transform_start", False)
 
     def set_transformed_audio(self):
         self.audio_manager.play_audio(self.character.name, "transformed", True)
+        self.audio_manager.stop_audio("Effects", "transform_start")
+        self.audio_manager.play_audio("Effects", "transform_finish", False)
 
     def set_transform_failure_audio(self):
         self.audio_manager.play_audio(self.character.name, "transform_fail", True)

@@ -445,6 +445,7 @@ class MainWindow(QOpenGLWidget):
         self.model.CreateRenderer(2)
         self.canvas.SetOutputOpacity(0)
         self.init_classes()
+        self.init_logs()
         self.last_update_time = time.time()
         self.character = CharacterManager(self)
         self.talk_widget = TalkWidget(self)
@@ -456,7 +457,11 @@ class MainWindow(QOpenGLWidget):
         self.animation_manager = AnimationsManager(self, self.model)
         self.animation_manager.set_target_fps(self.target_fps)
         self.change_character(self.character_name)
+
+    def init_logs(self):
+        """Initialize logs"""
         self.animation_manager.set_logging(self.callbacks_log)
+        self.mouse_tracker.set_perfomance_logging(self.mouse_tracking_log)
         self.resource_manager.set_debug_audio_system_logging(self.debug_audio_system_log)
 
     def resizeGL(self, w: int, h: int) -> None:

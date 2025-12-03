@@ -172,6 +172,8 @@ class CharacterStateManager:
         self.character.expressions.fadeoutTimer.stop()
         self.character.audio.set_transform_failure_audio()
         self.character.movements.set_motion(group_name="Special", id=7)
+        self.win.animation_manager.play_random_flicker_shape(stop_after_ms=3000)
+        # self.win.animation_manager.play_color_pulse(r=255, g=0, b=0, pulse_shape="broken_bulb",stop_after_ms=7000)
         self.character.expressions.set_sad_expression(fade_out=10000)
         self.character.character_text.set_transform_failure_text()
 
@@ -748,66 +750,87 @@ class CharacterAudioManager:
 
     def set_aux_audio(self, audio_key: str | None = None) -> None:
         audio_key_lower = audio_key.lower() if audio_key else None
-        self.audio_manager.play_audio(self.character.name, audio_key_lower, True)
+        self.audio_manager.play_audio(self.character.name, audio_key_lower, enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_greeting_audio(self):
-        self.audio_manager.play_audio(self.character.name, "greeting", True)
+        self.audio_manager.play_audio(self.character.name, "greeting", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_goodbye_audio(self):
-        self.audio_manager.play_audio(self.character.name, "goodbye", True)
+        self.audio_manager.play_audio(self.character.name, "goodbye", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_current_character_audio(self):
-        self.audio_manager.play_audio(self.character.name, "me", True)
+        self.audio_manager.play_audio(self.character.name, "me", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_drag_audio(self):
         if self.character.play_drag_audio:
-            self.audio_manager.play_audio(self.character.name, "drag", True)
+            self.audio_manager.play_audio(self.character.name, "drag", enable_lipsync=True, category="voice",
+                              stop_audio=True)
             self.character.play_drag_audio = False
 
     def set_stay_audio(self):
-        self.audio_manager.play_audio(self.character.name, "stay", True)
+        self.audio_manager.play_audio(self.character.name, "stay", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_lost_audio(self):
-        self.audio_manager.play_audio(self.character.name, "lost", True)
+        self.audio_manager.play_audio(self.character.name, "lost", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_woke_audio(self):
-        self.audio_manager.play_audio(self.character.name, "woke", True)
+        self.audio_manager.play_audio(self.character.name, "woke", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_wake_up_audio(self):
-        self.audio_manager.play_audio(self.character.name, "wake_up", True)
+        self.audio_manager.play_audio(self.character.name, "wake_up", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_transform_audio(self):
-        self.audio_manager.play_audio(self.character.name, "transform", True)
-        self.audio_manager.play_audio("Effects", "transform_start", False)
+        self.audio_manager.play_audio(self.character.name, "transform", enable_lipsync=True, category="voice",
+                              stop_audio=True)
+        self.audio_manager.play_audio("Effects", "transform_start", enable_lipsync=False, category="sfx",
+                              stop_audio=False)
 
     def set_transformed_audio(self):
-        self.audio_manager.play_audio(self.character.name, "transformed", True)
+        self.audio_manager.play_audio(self.character.name, "transformed", enable_lipsync=True, category="voice",
+                              stop_audio=True)
         self.audio_manager.stop_audio("Effects", "transform_start")
         self.audio_manager.play_audio("Effects", "transform_finish", False)
 
     def set_transform_failure_audio(self):
-        self.audio_manager.play_audio(self.character.name, "transform_fail", True)
+        self.audio_manager.play_audio(self.character.name, "transform_fail", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_settings_audio(self):
-        self.audio_manager.play_audio(self.character.name, "settings", True)
+        self.audio_manager.play_audio(self.character.name, "settings", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_happy_audio(self):
-        self.audio_manager.play_audio(self.character.name, "happy", True)
+        self.audio_manager.play_audio(self.character.name, "happy", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_sad_audio(self):
-        self.audio_manager.play_audio(self.character.name, "sad", True)
+        self.audio_manager.play_audio(self.character.name, "sad", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_tired_audio(self):
-        self.audio_manager.play_audio(self.character.name, "tired", True)
+        self.audio_manager.play_audio(self.character.name, "tired", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_pre_sleep_audio(self):
-        self.audio_manager.play_audio(self.character.name, "pre_sleep", True)
+        self.audio_manager.play_audio(self.character.name, "pre_sleep", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_sleep_audio(self):
-        self.audio_manager.play_audio(self.character.name, "sleep", True)
+        self.audio_manager.play_audio(self.character.name, "sleep", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_really_quit_audio(self):
-        self.audio_manager.play_audio(self.character.name, "really_quit", True)
+        self.audio_manager.play_audio(self.character.name, "really_quit", enable_lipsync=True, category="voice",
+                              stop_audio=True)
 
     def set_quit_audio(self):
-        self.audio_manager.play_audio(self.character.name, "quit", True)
+        self.audio_manager.play_audio(self.character.name, "quit", enable_lipsync=True, category="voice",
+                              stop_audio=True)

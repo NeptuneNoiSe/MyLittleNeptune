@@ -156,6 +156,89 @@ class AnimationsManager:
         """Start fade to color backlight effect"""
         self.color_animator.fade_to_color(r,g,b,duration)
 
+    def play_random_flicker_shape(self, stop_after_ms=7000):
+        """Случайный режим пульсации со случайными цветами"""
+        random_shape = self.color_animator.get_random_flicker_shape()
+        self.color_animator.set_pulsating_color(
+            r=random.randint(100, 255),
+            g=random.randint(100, 255),
+            b=random.randint(100, 255),
+            pulse_shape=random_shape,
+            pulse_duration=random.randint(1000, 4000),
+            stop_after_ms=stop_after_ms,
+            unique_id=f"random_flicker_{int(time.time())}"
+        )
+
+    def play_color_pulse(self, r, g, b,
+                         pulse_duration=2000,
+                         min_brightness=0.3,
+                         max_brightness=1.0,
+                         pulse_shape="sine",
+                         fade_in_duration=500,
+                         infinite=True,
+                         pulse_count=None,
+                         stop_after_ms=None,
+                         stop_fade_out=True,
+                         stop_fade_duration=500,
+                         unique_id=None,
+                         **extra_kwargs):  # Для совместимости с будущими параметрами
+        """
+            Прокси-метод для set_pulsating_color.
+
+            Все параметры передаются в color_animator.set_pulsating_color()
+
+            Args:
+                r, g, b: Базовый цвет RGB (0-255 или 0.0-1.0)
+                pulse_duration: Длительность одного цикла пульсации в мс
+                min_brightness: Минимальная яркость цвета (0.0 - 1.0)
+                max_brightness: Максимальная яркость цвета (0.0 - 1.0)
+                pulse_shape: Форма пульсации
+                fade_in_duration: Плавное начало пульсации (0 для мгновенного)
+                infinite: Бесконечная пульсация
+                pulse_count: Количество пульсаций (если не infinite)
+                stop_after_ms: Автоматически остановить через X миллисекунд
+                stop_fade_out: Плавная остановка при автостопе
+                stop_fade_duration: Длительность затухания при автостопе
+                unique_id: Уникальный идентификатор для управления
+            """
+
+        # Объединяем все параметры
+        params = {
+            'r': r, 'g': g, 'b': b,
+            'pulse_duration': pulse_duration,
+            'min_brightness': min_brightness,
+            'max_brightness': max_brightness,
+            'pulse_shape': pulse_shape,
+            'fade_in_duration': fade_in_duration,
+            'infinite': infinite,
+            'pulse_count': pulse_count,
+            'stop_after_ms': stop_after_ms,
+            'stop_fade_out': stop_fade_out,
+            'stop_fade_duration': stop_fade_duration,
+            'unique_id': unique_id,
+            **extra_kwargs
+        }
+
+        return self.color_animator.set_pulsating_color(**params)
+
+    def modify_color_pulse(self, pulse_id, pulse_duration=500, pulse_shape="triangle", max_brightness=1.0):
+        """Изменение параметров пульсации на лету"""
+        self.color_animator.modify_pulse(
+            pulse_id=pulse_id,
+            pulse_duration=pulse_duration, # Ускорить пульсацию
+            pulse_shape=pulse_shape, # Изменить форму
+            max_brightness=max_brightness) # Увеличить максимальную яркость
+
+    def stop_color_pulse(self):
+        """Остановка пульсации"""
+        self.color_animator.stop_pulse()  # Остановить все
+
+    def stop_specific_color_pulse(self, pulse_id, fade_out=True, fade_duration=1000):
+        """Остановка конкретной пульсации по id"""
+        self.color_animator.stop_pulse(pulse_id=pulse_id,
+                                       fade_out=fade_out,
+                                       fade_duration=fade_duration)
+
 class AnimationPlayer:
     """Animation Player"""
     def __init__(self, animation_manager):
@@ -991,6 +1074,17 @@ class ColorAnimator(QObject):
         self.current_hue = random.uniform(0, 360)  # 0-360 degress
         self.target_rgb = (0.0, 0.0, 0.0)  # Color range 0-1
 
+        # Pulse Vars
+        self.pulse_animations = {}  # Словарь для хранения активных пульсаций
+        self.pulse_timers = {}  # Для отслеживания времени
+        self.pulse_counter = 0  # Счетчик для уникальных ID
+
+        # Таймер для очистки старых пульсаций
+        self.cleanup_timer = QTimer()
+        self.cleanup_timer.setInterval(60000)  # Раз в минуту
+        self.cleanup_timer.timeout.connect(self._cleanup_old_pulses)
+        self.cleanup_timer.start()
+
     @property
     def win(self):
         """Actual window link"""
@@ -1089,6 +1183,563 @@ class ColorAnimator(QObject):
         """Linear interpolation for values 0-1"""
         return a + (b - a) * t
 
+    def _cleanup_old_pulses(self):
+        """Очистка пульсаций, которые висят слишком долго"""
+        current_time = time.time()
+        pulses_to_remove = []
+
+        for pulse_id, pulse_data in self.pulse_animations.items():
+            # Если пульсация висит больше 5 минут - убиваем
+            if current_time - pulse_data['start_time'] > 300:  # 300 секунд = 5 минут
+                pulses_to_remove.append(pulse_id)
+                print(f"⚠️ Очистка зависшей пульсации: {pulse_id}")
+
+        for pulse_id in pulses_to_remove:
+            self.stop_pulse(pulse_id, fade_out=False)
+
+    def set_pulsating_color(self, r, g, b,
+                            pulse_duration=2000,  # Длительность одного цикла в мс
+                            min_brightness=0.3,  # Минимальная яркость (0.0-1.0)
+                            max_brightness=1.0,  # Максимальная яркость (0.0-1.0)
+                            pulse_shape="sine",  # Форма пульсации
+                            fade_in_duration=500,  # Постепенное начало пульсации
+                            infinite=True,  # Бесконечная пульсация
+                            pulse_count=None,  # Количество пульсаций
+                            stop_after_ms=None,  # Автоостановка через X мс
+                            stop_fade_out=True,  # Плавная остановка
+                            stop_fade_duration=500,  # Длительность затухания
+                            unique_id=None):
+        """Установка пульсирующего цвета"""
+
+        # Конвертируем цвет в 0.0-1.0 если нужно
+        if isinstance(r, int):
+            r = r / 255.0
+            g = g / 255.0
+            b = b / 255.0
+
+        # Генерируем уникальный ID если не предоставлен
+        if unique_id is None:
+            unique_id = f"pulse_{self.pulse_counter}"
+            self.pulse_counter += 1
+
+        # Останавливаем предыдущую пульсацию с таким же ID если есть
+        if unique_id in self.pulse_animations:
+            self.stop_pulse(unique_id, fade_out=False)
+
+        # Сохраняем параметры пульсации
+        pulse_data = {
+            'base_r': r,
+            'base_g': g,
+            'base_b': b,
+            'pulse_duration': pulse_duration,
+            'min_brightness': min_brightness,
+            'max_brightness': max_brightness,
+            'pulse_shape': pulse_shape,
+            'start_time': time.time(),
+            'pulse_count': pulse_count,
+            'current_pulse': 0,
+            'fade_in_progress': fade_in_duration > 0,
+            'fade_in_duration': fade_in_duration,
+            'fade_in_start': time.time(),
+            'infinite': infinite,
+            'stop_after_ms': stop_after_ms,
+            'stop_fade_out': stop_fade_out,
+            'stop_fade_duration': stop_fade_duration,
+            'stop_timer': None  # Для таймера автоостановки
+        }
+
+        # Создаем таймер для обновления пульсации
+        timer = QTimer()
+        timer.timeout.connect(lambda: self._update_pulse(unique_id))
+        timer.start(16)  # ~60 FPS
+
+        # Если указано время автоостановки, создаем таймер
+        if stop_after_ms and stop_after_ms > 0:
+            stop_timer = QTimer()
+            stop_timer.setSingleShot(True)
+            stop_timer.setInterval(stop_after_ms)
+            stop_timer.timeout.connect(lambda: self._auto_stop_pulse(unique_id))
+            stop_timer.start()
+            pulse_data['stop_timer'] = stop_timer
+
+        self.pulse_timers[unique_id] = timer
+        self.pulse_animations[unique_id] = pulse_data
+
+        # Если нужно плавное начало
+        if fade_in_duration > 0:
+            self.win.b_red = 0
+            self.win.b_green = 0
+            self.win.b_blue = 0
+        else:
+            # Устанавливаем начальный цвет
+            self._apply_pulse_color(unique_id, 0)
+
+        return unique_id
+
+    def _update_pulse(self, pulse_id):
+        """Обновление цвета для пульсации"""
+        if pulse_id not in self.pulse_animations:
+            return
+
+        pulse_data = self.pulse_animations[pulse_id]
+        current_time = time.time()
+        elapsed = current_time - pulse_data['start_time']
+
+        # Проверяем плавное начало
+        if pulse_data['fade_in_progress']:
+            fade_elapsed = current_time - pulse_data['fade_in_start']
+            fade_progress = min(1.0, fade_elapsed * 1000 / pulse_data['fade_in_duration'])
+
+            if fade_progress >= 1.0:
+                pulse_data['fade_in_progress'] = False
+                fade_factor = 1.0
+            else:
+                # Плавное нарастание амплитуды
+                fade_factor = fade_progress
+        else:
+            fade_factor = 1.0
+
+        # Рассчитываем прогресс в текущем цикле
+        cycle_progress = (elapsed * 1000) % pulse_data['pulse_duration']
+        normalized_progress = cycle_progress / pulse_data['pulse_duration']
+
+        # Получаем значение пульсации в зависимости от формы
+        pulse_value = self._get_pulse_value(normalized_progress, pulse_data['pulse_shape'])
+
+        # Применяем плавное начало если нужно
+        if pulse_data['fade_in_progress']:
+            pulse_value *= fade_factor
+
+        # Применяем цвет
+        self._apply_pulse_color(pulse_id, pulse_value)
+
+        # Проверяем количество пульсаций (если не бесконечно)
+        if not pulse_data['infinite'] and pulse_data['pulse_count'] is not None:
+            completed_cycles = int(elapsed * 1000 // pulse_data['pulse_duration'])
+            if completed_cycles >= pulse_data['pulse_count']:
+                self.stop_pulse(pulse_id, fade_out=True)
+
+    def _get_pulse_value(self, progress, shape):
+        """Возвращает значение пульсации (0.0-1.0) для заданной формы"""
+        if shape == "sine":
+            # Синусоида: плавное нарастание и спад
+            return (math.sin(progress * 2 * math.pi - math.pi / 2) + 1) / 2
+
+        elif shape == "triangle":
+            # Треугольная: линейное нарастание и спад
+            if progress < 0.5:
+                return progress * 2  # Нарастание
+            else:
+                return 2 - progress * 2  # Спад
+
+        elif shape == "sawtooth":
+            # Пилообразная: линейный рост, резкий спад
+            return progress
+
+        elif shape == "reverse_sawtooth":
+            # Обратная пила: резкий рост, линейный спад
+            return 1 - progress
+
+        elif shape == "heartbeat":
+            # Сердцебиение: два быстрых удара
+            if progress < 0.25:
+                return progress * 4  # Первый удар
+            elif progress < 0.3:
+                return 1.0  # Пауза
+            elif progress < 0.55:
+                return (progress - 0.3) * 4  # Второй удар
+            else:
+                return max(0, 1 - (progress - 0.55) * 2.2)  # Длинная пауза
+
+        elif shape == "breath":
+            # Дыхание: медленный вдох, быстрый выдох
+            if progress < 0.7:
+                return progress / 0.7  # Медленный вдох
+            else:
+                return 1 - (progress - 0.7) / 0.3  # Быстрый выдох
+
+        elif shape == "flicker":
+            # Эффект мерцающей лампы
+            flicker = math.sin(progress * 20 * math.pi) * 0.1 + 0.9
+            noise = (math.sin(progress * 37 * math.pi) + 1) * 0.05
+            return max(0.3, min(1.0, flicker + noise))
+
+        elif shape == "flicker_zero":
+            # Эффект мерцания с полным затуханием в 0
+            import random
+
+            # Частота мерцания (чем больше, тем чаще)
+            frequency = 15
+
+            # Базовое синусоидальное мерцание
+            base = math.sin(progress * frequency * math.pi) * 0.5 + 0.5
+
+            # Случайные "провалы" до 0
+            if random.random() < 0.15:  # 15% шанс провала
+                # Длительность провала
+                if progress % 0.1 < 0.02:  # Провал длится ~2% от цикла
+                    return 0.0
+
+            # Немного шума
+            noise = random.uniform(-0.1, 0.1)
+
+            return max(0.0, min(1.0, base + noise))
+
+        elif shape == "dip_flicker":
+            # Детерминированный фликер с регулярными провалами (без random)
+
+            # Основная частота
+            base = math.sin(progress * 10 * math.pi) * 0.2 + 0.7
+
+            # Регулярные провалы каждый 0.2 прогресса
+            dip_frequency = 5  # 5 провалов за цикл
+            dip_pos = (progress * dip_frequency) % 1.0
+
+            # Форма провала - плавное затухание и восстановление
+            if dip_pos < 0.3:
+                # Плавное затухание
+                fade = 1.0 - (dip_pos / 0.3)
+                return base * fade * 0.3
+            elif dip_pos < 0.6:
+                # На дне провала
+                return 0.0
+            else:
+                # Восстановление
+                recovery = (dip_pos - 0.6) / 0.4
+                return base * recovery
+
+            return max(0.0, min(1.0, base))
+
+        elif shape == "sync_flicker":
+            # Синхронизированный фликер с контролируемыми провалами
+            import random
+
+            # Делим прогресс на сегменты
+            segment_count = 8
+            segment = int(progress * segment_count)
+            segment_progress = (progress * segment_count) % 1.0
+
+            # Предсказуемый seed для сегмента
+            segment_seed = hash(f"{segment}_{int(progress * 10)}") % 1000
+            random.seed(segment_seed)
+
+            # Решаем для этого сегмента: будет ли провал?
+            has_dip = random.random() < 0.25  # 25% сегментов имеют провал
+
+            if has_dip:
+                # В этом сегменте есть провал
+                dip_position = random.uniform(0.2, 0.8)  # Где в сегменте произойдет провал
+                dip_width = random.uniform(0.05, 0.2)  # Ширина провала
+
+                if abs(segment_progress - dip_position) < dip_width / 2:
+                    # Мы внутри провала
+                    dip_depth = 1.0 - (abs(segment_progress - dip_position) * 2 / dip_width)
+                    return dip_depth * random.uniform(0.0, 0.3)  # Уходим почти в 0
+                else:
+                    # Вне провала - нормальное свечение
+                    base = math.sin(progress * 15 * math.pi) * 0.1 + 0.8
+                    return max(0.5, min(1.0, base))
+            else:
+                # Обычное мерцание без провалов
+                base = math.sin(progress * 12 * math.pi) * 0.15 + 0.8
+                noise = random.uniform(-0.1, 0.1)
+                return max(0.6, min(1.0, base + noise))
+
+        elif shape == "wave":
+            # Волнообразная пульсация
+            wave1 = math.sin(progress * 2 * math.pi) * 0.5 + 0.5
+            wave2 = math.sin(progress * 4 * math.pi + math.pi / 3) * 0.3
+            return max(0.0, min(1.0, wave1 + wave2))
+
+        elif shape == "torch":
+            # Эффект пламени/факела с резкими падениями
+            import random
+
+            # Основная частота пульсации
+            base_freq = progress * 8 * math.pi
+            base_value = (math.sin(base_freq) + 1) * 0.3
+
+            # Высокочастотное дрожание
+            high_freq = progress * 50 * math.pi
+            high_value = math.sin(high_freq) * 0.2
+
+            # Случайные всплески
+            spike_chance = math.sin(progress * 6 * math.pi) * 0.5 + 0.5
+            if random.random() < spike_chance * 0.3:
+                spike = random.uniform(0.5, 1.0)
+                # Быстрый всплеск и спад
+                spike_duration = 0.05
+                local_progress = (progress % spike_duration) / spike_duration
+                spike_value = spike * (1 - abs(local_progress - 0.5) * 2)
+                high_value += spike_value
+
+            # Иногда полное затухание
+            if random.random() < 0.08:  # 8% шанс
+                fade_duration = 0.03
+                if (progress * 100) % 1 < fade_duration:
+                    return 0.0
+
+            result = base_value + high_value
+            return max(0.0, min(1.0, result))
+
+        elif shape == "broken_bulb":
+            # Эффект неисправной лампочки
+            import random
+            import time
+
+            # Используем время для более предсказуемого "случайного" поведения
+            time_seed = int(time.time() * 10)
+            random.seed(time_seed + int(progress * 1000))
+
+            # Основное состояние: 0 - выкл, 1 - вкл, 2 - мерцание
+            state_progress = progress * 3  # 3 секунды на полный цикл состояний
+
+            if state_progress < 1.0:
+                # Нормальное горение с легким мерцанием
+                flicker = math.sin(progress * 30 * math.pi) * 0.05 + 0.9
+                return max(0.8, min(1.0, flicker))
+
+            elif state_progress < 1.5:
+                # Начинаем мерцать
+                if random.random() < 0.7:  # 70% времени горим
+                    flicker = random.uniform(0.6, 1.0)
+                    # Быстрое мерцание
+                    if int(progress * 100) % 2 == 0:
+                        return flicker
+                    else:
+                        return flicker * 0.3
+                else:
+                    return 0.0  # Полное выключение
+
+            else:
+                # Серия быстрых мерцаний и полное выключение
+                rapid_flicker = int(progress * 50) % 10
+                if rapid_flicker < 6:
+                    return random.uniform(0.2, 0.8)
+                elif rapid_flicker < 8:
+                    return 0.0  # Выключение
+                else:
+                    return 0.1  # Еле заметное свечение
+
+        elif shape == "broken_bulb_enhanced":
+            """Улучшенная версия broken_bulb с более плавными переходами"""
+            import random
+            import time
+
+            # Используем синус для плавных переходов между состояниями
+            time_factor = time.time() * 0.5  # Медленное изменение со временем
+
+            # Плавное переключение между режимами
+            mode_blend = (math.sin(time_factor) + 1) * 0.5  # 0.0-1.0
+
+            if mode_blend < 0.3:
+                # Режим 1: Нормальное горение с легким мерцанием
+                base = 0.85 + math.sin(progress * 25 * math.pi) * 0.1
+                # Случайные микро-провалы
+                if random.random() < 0.1:
+                    micro_dip = math.sin(progress * 100 * math.pi) * 0.3
+                    base = max(0.7, base + micro_dip)
+                return base
+
+            elif mode_blend < 0.7:
+                # Режим 2: Активное мерцание
+                flicker_speed = 40 + math.sin(time_factor * 2) * 20
+                flicker = math.sin(progress * flicker_speed * math.pi) * 0.4 + 0.5
+
+                # Периодические глубокие провалы
+                deep_dip_freq = progress * 5  # 5 глубоких провалов за цикл
+                if (deep_dip_freq % 1.0) < 0.1:  # 10% времени в глубоком провале
+                    dip_depth = 1.0 - ((deep_dip_freq % 1.0) * 10)  # 1.0 -> 0.0
+                    return flicker * dip_depth * 0.3
+
+                return flicker
+
+            else:
+                # Режим 3: Агония лампочки (быстрые вспышки)
+                rapid = int(progress * 60) % 15  # 4 вспышки в секунду
+
+                if rapid < 3:
+                    # Короткая яркая вспышка
+                    flash_progress = rapid / 3.0
+                    brightness = 1.0 - abs(flash_progress - 0.5) * 2  # Пирамида
+                    return brightness * 0.9 + 0.1
+                elif rapid < 5:
+                    # Средняя вспышка
+                    return random.uniform(0.3, 0.6)
+                elif rapid < 7:
+                    # Слабая вспышка
+                    return random.uniform(0.1, 0.3)
+                else:
+                    # Темнота
+                    return 0.0
+
+        elif shape == "old_tv":
+            # Эффект старого телевизора/рации
+            import random
+
+            # Статические шумы
+            static = random.uniform(-0.2, 0.2)
+
+            # Периодические "провалы сигнала"
+            signal_fade = math.sin(progress * 3 * math.pi)  # Медленные затухания
+
+            # Быстрые помехи
+            fast_noise = math.sin(progress * 50 * math.pi) * 0.1
+
+            # Внезапные полные отключения
+            if random.random() < 0.05:  # 5% шанс
+                # Отключение на короткое время
+                if (progress * 100) % 1 < 0.1:
+                    return 0.0
+
+            # Базовый уровень сигнала
+            base = 0.7 + signal_fade * 0.2
+
+            result = base + static + fast_noise
+            return max(0.0, min(1.0, result))
+
+        elif shape == "breath_with_gaps":
+            """Дыхание с периодическими задержками/пропусками"""
+            import random
+
+            # Основное дыхание
+            breath = (math.sin(progress * 2 * math.pi - math.pi / 2) + 1) / 2
+
+            # Иногда "забываем" вдохнуть
+            skip_chance = 0.15  # 15% шанс пропустить цикл
+            cycle_num = int(progress * 2)  # Каждые 0.5 прогресса - новый цикл
+
+            random.seed(cycle_num)  # Для предсказуемости
+            if random.random() < skip_chance:
+                # Пропускаем этот цикл - остаемся на выдохе
+                return 0.0
+            else:
+                # Нормальное дыхание
+                return breath
+
+        elif shape == "random":
+            # Случайная пульсация (для эффекта мерцания)
+            import random
+            return random.uniform(0.3, 1.0)
+
+        else:
+            return (math.sin(progress * 2 * math.pi - math.pi / 2) + 1) / 2  # По умолчанию синус
+
+    def get_random_flicker_shape(self):
+        """Возвращает случайную форму фликера"""
+        flicker_shapes = [
+            "flicker_zero",
+            "broken_bulb",
+            "broken_bulb_enhanced"
+            "sync_flicker",
+            "dip_flicker",
+            "old_tv"
+        ]
+        import random
+        return random.choice(flicker_shapes)
+
+    def _apply_pulse_color(self, pulse_id, pulse_value):
+        """Применяет цвет с учетом пульсации"""
+        pulse_data = self.pulse_animations[pulse_id]
+
+        # Интерполируем яркость
+        brightness_range = pulse_data['max_brightness'] - pulse_data['min_brightness']
+        current_brightness = pulse_data['min_brightness'] + pulse_value * brightness_range
+
+        # Применяем цвет
+        self.win.b_red = pulse_data['base_r'] * current_brightness
+        self.win.b_green = pulse_data['base_g'] * current_brightness
+        self.win.b_blue = pulse_data['base_b'] * current_brightness
+
+    def _auto_stop_pulse(self, pulse_id):
+        """Автоматическая остановка пульсации по таймеру"""
+        if pulse_id in self.pulse_animations:
+            pulse_data = self.pulse_animations[pulse_id]
+            self.stop_pulse(
+                pulse_id,
+                fade_out=pulse_data['stop_fade_out'],
+                fade_duration=pulse_data['stop_fade_duration']
+            )
+
+    def stop_pulse(self, pulse_id=None, fade_out=True, fade_duration=500):
+        """Остановка пульсации с возможностью отключения таймера автоостановки"""
+        if pulse_id is None:
+            # Останавливаем все пульсации
+            for pid in list(self.pulse_timers.keys()):
+                self._stop_single_pulse(pid, fade_out, fade_duration)
+        elif pulse_id in self.pulse_timers:
+            self._stop_single_pulse(pulse_id, fade_out, fade_duration)
+
+    def _stop_single_pulse(self, pulse_id, fade_out, fade_duration):
+        """Остановка одной пульсации"""
+        # Останавливаем таймер автоостановки если он есть
+        if pulse_id in self.pulse_animations:
+            pulse_data = self.pulse_animations[pulse_id]
+            if pulse_data.get('stop_timer'):
+                pulse_data['stop_timer'].stop()
+
+        if fade_out and fade_duration > 0:
+            # Плавное затухание
+            current_r = self.win.b_red
+            current_g = self.win.b_green
+            current_b = self.win.b_blue
+
+            # Создаем анимацию затухания
+            fade_anim = QVariantAnimation()
+            fade_anim.setDuration(fade_duration)
+            fade_anim.setStartValue(1.0)
+            fade_anim.setEndValue(0.0)
+
+            def update_fade(value):
+                self.win.b_red = current_r * value
+                self.win.b_green = current_g * value
+                self.win.b_blue = current_b * value
+
+            fade_anim.valueChanged.connect(update_fade)
+
+            def cleanup():
+                fade_anim.stop()
+                self._cleanup_pulse(pulse_id)
+
+            fade_anim.finished.connect(cleanup)
+            fade_anim.start()
+        else:
+            # Мгновенная остановка
+            self._cleanup_pulse(pulse_id)
+
+    def _cleanup_pulse(self, pulse_id):
+        """Очистка ресурсов пульсации"""
+        if pulse_id in self.pulse_timers:
+            self.pulse_timers[pulse_id].stop()
+            del self.pulse_timers[pulse_id]
+
+        if pulse_id in self.pulse_animations:
+            # Останавливаем таймер автоостановки
+            pulse_data = self.pulse_animations[pulse_id]
+            if pulse_data.get('stop_timer'):
+                pulse_data['stop_timer'].stop()
+            del self.pulse_animations[pulse_id]
+
+    def modify_pulse(self, pulse_id, **kwargs):
+        """Изменение параметров существующей пульсации"""
+        if pulse_id in self.pulse_animations:
+            pulse_data = self.pulse_animations[pulse_id]
+
+            # Обновляем только переданные параметры
+            for key, value in kwargs.items():
+                if key in pulse_data:
+                    pulse_data[key] = value
+
+            # Сбрасываем время для плавного перехода
+            if 'pulse_duration' in kwargs or 'pulse_shape' in kwargs:
+                pulse_data['start_time'] = time.time()
+
+    def get_pulse_info(self, pulse_id):
+        """Получить информацию о пульсации"""
+        if pulse_id in self.pulse_animations:
+            return self.pulse_animations[pulse_id].copy()
+        return None
+
     def set_solid_color(self, r, g, b, fade_duration=0):
         """Color setting with optional smooth transition"""
         if fade_duration > 0:
@@ -1149,21 +1800,6 @@ class ColorAnimator(QObject):
             self.anim_group.addAnimation(anim)
 
         self.anim_group.start()
-
-    def enable_pulse(self, enable=True, speed=5):
-        """Switching on/off the pulse"""
-        if enable:
-            def pulse_update():
-                pulse_val = (math.sin(time.time() * speed) + 1) / 2  # 0-1
-                self.win.b_red *= pulse_val
-                self.win.b_green *= pulse_val
-                self.win.b_blue *= pulse_val
-
-            self.color_animator.color_timer.timeout.disconnect()
-            self.color_animator.color_timer.timeout.connect(pulse_update)
-        else:
-            self.color_animator.color_timer.timeout.disconnect()
-            self.color_animator.color_timer.timeout.connect(self.color_animator.update_colors)
 
     def enable_glow(self, intensity=0.3):
         """Adds a soft glow effect"""

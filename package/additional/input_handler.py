@@ -274,6 +274,7 @@ class MouseTracker:
         self.last_position = QCursor.pos()
         self.mouse_move = False
         self._sleep_mode = False
+        self.performance_log = False
 
         # Adaptive buffer
         self.adaptive_buffer_size = self._calculate_optimal_buffer()
@@ -281,9 +282,17 @@ class MouseTracker:
         self.smoothed_position = QPointF(0, 0)
         self._smoothed_position = QPointF(0, 0)
 
-        # Dinamic coef buffer
-        self.smooth_factor = 0.3  # The basic coefficient
-        self.high_perf_threshold = 0.1  # The threshold for powerful PCs
+        # Измеряем начальную производительность
+        self._initial_performance = self._measure_performance()
+
+        # Статический коэффициент сглаживания
+        self.smooth_factor = self._calculate_optimal_smooth_factor(self._initial_performance)
+
+        # Таймер для редких проверок производительности
+        self.performance_timer = QTimer()
+        self.performance_timer.setInterval(10000)  # Проверяем раз в 10 секунд
+        self.performance_timer.timeout.connect(self._update_performance_settings)
+        self.performance_timer.start()
 
         self.idle_timer = QTimer()
         self.idle_timer.setInterval(5000)
@@ -294,66 +303,140 @@ class MouseTracker:
         self.animation.setEasingCurve(QEasingCurve.OutQuad)
         self.is_animating = False
 
+    def set_perfomance_logging(self, enabled: bool):
+        self.performance_log = enabled
+
+        if self.performance_log:
+            print(f"🔧 Initial Performance: {self._initial_performance:.0f}мкс"
+                  f" -> smooth={self.smooth_factor},"
+                  f"buffer={self.adaptive_buffer_size}")
+
     def get_local_coords(self):
         """Calculates the local coordinates relative to the widget"""
         global_pos = QCursor.pos()
         return self.widget.mapFromGlobal(global_pos)
 
-    def _calculate_optimal_buffer(self):
-        """Automatic buffer size selection based on performance"""
-        test_cycles = 10000
-        start = time.perf_counter()
-
-        for _ in range(test_cycles):
-            QPointF(0, 0).x()
-
-        elapsed = (time.perf_counter() - start) * 1000  # ms
-
-        # The logic of choosing the size
-        if elapsed < 0.5:  # Power PCs
-            return 15
-        elif elapsed < 2.0:  # Medium PCs
-            return 10
-        else:  # Low PCs
-            return 5
-
-    def get_smoothed_coords(self):
-        try:
-            current_pos = self.widget.mapFromGlobal(QCursor.pos())
-
-            # Update buffer
-            self.position_buffer.pop(0)
-            self.position_buffer.append(current_pos)
-
-            # Adaptive avg
-            avg_x = sum(p.x() for p in self.position_buffer) / self.adaptive_buffer_size
-            avg_y = sum(p.y() for p in self.position_buffer) / self.adaptive_buffer_size
-
-            # Dynamic smoothing
-            if self._is_high_performance():
-                # for Power PC - Agressive smooting
-                self.smooth_factor = max(0.1, self.smooth_factor - 0.02)
-            else:
-                self.smooth_factor = min(0.4, self.smooth_factor + 0.02)
-
-            self.smoothed_position = QPointF(
-                self._smoothed_position.x() * (1 - self.smooth_factor) + avg_x * self.smooth_factor,
-                self._smoothed_position.y() * (1 - self.smooth_factor) + avg_y * self.smooth_factor
-            )
-
-            return self.smoothed_position
-        except AttributeError as e:
-            pass
-
-    def _is_high_performance(self):
-        """Determines high performance in terms of processing time"""
+    def _measure_performance(self):
+        """Измеряет производительность в микросекундах"""
         test_cycles = 1000
         start = time.perf_counter()
 
         for _ in range(test_cycles):
             QPointF(0, 0).x()
 
-        return (time.perf_counter() - start) * 1000000 < 500  # мкс
+        return (time.perf_counter() - start) * 1000000  # мкс
+
+    def _calculate_optimal_smooth_factor(self, elapsed_us):
+        """КОМПЕНСАЦИЯ: чем мощнее ПК, тем МЕНЬШЕ коэффициент (БОЛЬШЕ сглаживания)"""
+        if elapsed_us < 200:  # СУПЕР мощные ПК
+            return 0.15  # Очень сильное сглаживание (компенсируем высокую частоту)
+        elif elapsed_us < 400:  # Мощные ПК
+            return 0.2  # Сильное сглаживание
+        elif elapsed_us < 600:  # Средние ПК
+            return 0.25  # Умеренное сглаживание
+        elif elapsed_us < 800:  # Слабые ПК
+            return 0.3  # Слабое сглаживание
+        else:  # Очень слабые ПК
+            return 0.035  # Минимальное сглаживание (чтобы не лагало)
+
+    def _calculate_optimal_buffer(self):
+        """Automatic buffer size selection based on performance"""
+        # Используем измерение производительности
+        elapsed_us = self._measure_performance()
+
+        if elapsed_us < 150:
+            return 25    # Максимальный буфер для супер ПК
+        elif elapsed_us < 300:
+            return 15    # Большой буфер для мощных ПК
+        elif elapsed_us < 500:
+            return 10    # Средний буфер
+        elif elapsed_us < 700:
+            return 8     # Маленький буфер для слабых ПК
+        else:
+            return 5     # Минимальный буфер для очень слабых
+
+    def get_smoothed_coords(self):
+        """Получить сглаженные координаты с КОМПЕНСАЦИЕЙ"""
+        try:
+            current_pos = self.widget.mapFromGlobal(QCursor.pos())
+
+            # Обновляем буфер
+            self.position_buffer.pop(0)
+            self.position_buffer.append(current_pos)
+
+            # Взвешенное среднее (больший вес у последних позиций)
+            weights = list(range(1, len(self.position_buffer) + 1))
+            total_weight = sum(weights)
+
+            weighted_x = sum(p.x() * w for p, w in zip(self.position_buffer, weights)) / total_weight
+            weighted_y = sum(p.y() * w for p, w in zip(self.position_buffer, weights)) / total_weight
+
+            # Экспоненциальное сглаживание
+            self.smoothed_position = QPointF(
+                self.smoothed_position.x() * (1 - self.smooth_factor) + weighted_x * self.smooth_factor,
+                self.smoothed_position.y() * (1 - self.smooth_factor) + weighted_y * self.smooth_factor
+            )
+
+            return self.smoothed_position
+        except Exception:
+            return QPointF(0, 0)
+
+    def _update_performance_settings(self):
+        """Редкое обновление настроек производительности"""
+
+        # Измеряем текущую производительность
+        current_performance = self._measure_performance()
+
+        if self.performance_log:
+            print(f"🔧 Current Performance: {current_performance:.0f}мкс "
+                  f"-> smooth={self.smooth_factor}, "
+                  f"buffer={self.adaptive_buffer_size}")
+
+        # Только если производительность сильно изменилась
+        current_category = self._get_performance_category(current_performance)
+        initial_category = self._get_performance_category(self._initial_performance)
+
+        if current_category != initial_category:
+            # Мягко адаптируем коэффициент
+            target_factor = self._get_target_smooth_factor(current_category)
+            self.smooth_factor = target_factor
+
+            # Можно также обновить размер буфера
+            self.adaptive_buffer_size = self._get_target_buffer_size(current_category)
+            # Обновляем буфер
+            while len(self.position_buffer) < self.adaptive_buffer_size:
+                self.position_buffer.append(QPointF(0, 0))
+            while len(self.position_buffer) > self.adaptive_buffer_size:
+                self.position_buffer.pop(0)
+
+    def _get_performance_category(self, elapsed_us):
+        """Определяет категорию производительности"""
+        if elapsed_us < 200:
+            return "ultra"
+        elif elapsed_us < 300:
+            return "high"
+        elif elapsed_us < 500:
+            return "medium"
+        else:
+            return "low"
+
+    def _get_target_smooth_factor(self, category):
+        """Возвращает коэффициент сглаживания для категории"""
+        return {
+            "ultra": 0.15,
+            "high": 0.2,
+            "medium": 0.25,
+            "low": 0.3
+        }[category]
+
+    def _get_target_buffer_size(self, category):
+        """Возвращает размер буфера для категории"""
+        return {
+            "ultra": 25,
+            "high": 15,
+            "medium": 10,
+            "low": 5
+        }[category]
 
     def update_state(self):
         """Updates the mouse state and returns True if there was movement"""

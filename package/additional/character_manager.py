@@ -104,9 +104,11 @@ class CharacterStateManager:
         self.character.audio.set_greeting_audio()
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.movements.set_motion(group_name="Special", id=19)
+        self.win.input_handler.input_lock = False
 
     def set_goodbye_state(self):
         """Character say goodbye"""
+        self.win.input_handler.input_lock = True
         self.goodByeTimer.start(3000)
         self.character.audio.set_goodbye_audio()
         self.character.movements.set_motion(group_name="Special", id=1)

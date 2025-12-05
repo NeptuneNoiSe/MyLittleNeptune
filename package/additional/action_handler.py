@@ -218,6 +218,7 @@ class ActionHandler:
 
         if answer == QMessageBox.StandardButton.Yes:
             self.win.character.state.set_quit_state(quit='Yes')
+            self.win.input_handler.input_lock = True
         else:
             self.win.character.tired_controller.timer_count = 1
             self.win.character.state.set_quit_state(quit='No')

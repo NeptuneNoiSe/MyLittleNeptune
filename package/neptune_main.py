@@ -6,7 +6,7 @@ from PySide6.QtCore import QTimerEvent, Qt, Slot, QSize
 from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction, QIcon, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
-    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory
+    QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory, QTabWidget, QDialogButtonBox
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -451,6 +451,7 @@ class MainWindow(QOpenGLWidget):
         self.talk_widget = TalkWidget(self)
         self.talk_widget.show_talk()
         self.character.state.set_greeting_state(is_first_run=True)
+        self.input_handler.input_lock = True
 
     def init_classes(self):
         """Initialize classes"""
@@ -943,7 +944,6 @@ class MainWindow(QOpenGLWidget):
             self.character.state.set_quit_state(quit='No')
             event.ignore()
 
-
 class SettingsWindow(QWidget):
     """Settings Window Class"""
     def __init__(self, pythonic_window_registration: bool = False):
@@ -951,13 +951,18 @@ class SettingsWindow(QWidget):
         self.pythonic_reg = pythonic_window_registration
         self.mainWindow = MainWindow()
         self.app_config = self.mainWindow.app_config
+        self.settings_log= False
+
+        # Флаг для отслеживания изменений
+        self.unsaved_changes = False
 
         self.available_styles = self.get_available_styles()
 
         # Set fixed window size
-        self.setMinimumHeight(175)
-        self.setMaximumHeight(175)
-        self.setMaximumWidth(915)
+        self.setMinimumHeight(300)
+        self.setMaximumHeight(300)
+        self.setMinimumWidth(600)
+        self.setMaximumWidth(600)
 
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
@@ -984,22 +989,36 @@ class SettingsWindow(QWidget):
         self.language_set = None
         self.language_get = None
 
-        #Create Groups
-        self.createHintsGroupBox()
-        self.createScaleGroupBox()
-        self.createOtherGroupBox()
+        # СОХРАНЯЕМ НАЧАЛЬНЫЕ ЗНАЧЕНИЯ ПЕРВЫМ ДЕЛОМ
+        self.save_initial_values()
 
-        # Windows Flags Control
-        self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
-        self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
+        # БЛОКИРУЕМ сигналы при создании элементов
+        self.block_signals_during_init = True
 
-        # Settings Control
-        self.colorIconsCheckBox.setChecked(self.color_icons)
-        self.autoScaleCheckBox.setChecked(self.auto_scale)
-        self.autoBlinkCheckBox.setChecked(self.auto_blink)
-        self.autoBreathCheckBox.setChecked(self.auto_breath)
-        self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
-        self.sleepCheckBox.setChecked(self.sleep)
+        # СОЗДАЕМ КНОПКИ ДО СОЗДАНИЯ ВКЛАДОК
+        self.create_buttons()
+
+        # Создаем главный layout
+        mainLayout = QHBoxLayout()
+
+        # Создаем виджет вкладок
+        self.tab_widget = QTabWidget()
+
+        # Создаем и добавляем вкладки
+        self.create_appearance_tab()  # Вкладка внешнего вида
+        self.create_scale_tab()       # Вкладка масштабирования
+        self.create_behavior_tab()    # Вкладка поведения
+        # self.create_other_tab()       # Вкладка прочего
+
+        # Добавляем вкладки в основной layout
+        mainLayout.addWidget(self.tab_widget)
+
+        # Создаем GroupBox для правой панели
+        self.right_group = QGroupBox("Controls")
+        self.right_group.setFixedWidth(170)
+        self.right_group.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        right_panel = QVBoxLayout(self.right_group)
 
         self.nepMainImage = os.path.join(
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")
@@ -1007,41 +1026,444 @@ class SettingsWindow(QWidget):
             resources.RESOURCES_DIRECTORY, "images/nep_logo.svg")
 
         self.nepImageLabel = QLabel()
-        self.nepImageLabel.setPixmap(QPixmap(self.nepMainImage).scaled(QSize(75, 75),
+        self.nepImageLabel.setPixmap(QPixmap(self.nepMainImage).scaled(QSize(150, 150),
                                                                        Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.nepImageLabel.setAlignment(Qt.AlignCenter)
 
-        self.quitButton = QPushButton("&Quit")
-        self.quitButton.clicked.connect(
-            qApp.quit)  # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+        # Делаем кнопки одинаковой ширины
+        button_width = 150
 
-        self.resetPosButton = QPushButton("&Reset Position")
-        self.resetPosButton.clicked.connect(self.reset_position)
+        self.resetPosButton.setFixedWidth(button_width)
+        self.quitButton.setFixedWidth(button_width)
 
-        bottomLayout = QVBoxLayout()
-        #bottomLayout.addStretch()
-        bottomLayout.addWidget(self.nepImageLabel)
-        bottomLayout.addWidget(self.resetPosButton)
-        bottomLayout.addWidget(self.quitButton)
-        bottomLayout.setAlignment(Qt.AlignCenter)
+        # Настраиваем button_box
+        self.button_box.setFixedWidth(button_width)
+        self.button_box.setContentsMargins(0, 0, 0, 0)
 
-        mainLayout = QHBoxLayout()
-        mainLayout.addWidget(self.hintsGroupBox)
-        mainLayout.addWidget(self.scaleGroupBox)
-        mainLayout.addWidget(self.otherGroupBox)
+        right_panel.addWidget(self.nepImageLabel, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
 
-        mainLayout.addLayout(bottomLayout)
+        # Растягиваемое пространство (пустота между изображением и кнопками)
+        right_panel.addStretch(1)
+
+        # Контейнер для кнопок (для группировки)
+        buttons_container = QWidget()
+        buttons_layout = QVBoxLayout(buttons_container)
+        buttons_layout.setSpacing(8)  # Расстояние между кнопками
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+
+        buttons_layout.addWidget(self.resetPosButton)
+        buttons_layout.addWidget(self.button_box)
+        buttons_layout.addWidget(self.quitButton)
+
+        # Добавляем контейнер с кнопками
+        right_panel.addWidget(buttons_container)
+
+        # Небольшой отступ снизу
+        right_panel.addSpacing(10)
+
+        mainLayout.addWidget(self.right_group)
+
         self.setLayout(mainLayout)
         self.setWindowTitle("Settings")
         self.mainWindow.set_app_title()
         self.updateMainWindow()
+        # РАЗБЛОКИРОВЫВАЕМ сигналы после инициализации
+        self.block_signals_during_init = False
 
     @property
     def icon_color_folder(self):
         return self.mainWindow.ICON_COLOR_FOLDER
 
+    def save_initial_values(self):
+        """Сохраняет начальные значения настроек"""
+        self.initial_values = {
+            'frameless_window': self.getWindowFlag_FramelessWindowHint,
+            'stays_on_top': self.getWindowFlag_WindowStaysOnTopHint,
+            'color_icons': self.color_icons,
+            'language': self.language,
+            'theme': self.theme,
+            'auto_scale': self.auto_scale,
+            'models_scale': self.models_scale,
+            'auto_blink': self.auto_blink,
+            'auto_breath': self.auto_breath,
+            'tracking_mouse': self.tracking_mouse,
+            'sleep': self.sleep
+        }
+
+    def get_current_settings(self):
+        """Возвращает текущие значения настроек"""
+        return {
+            'frameless_window': self.framelessWindowCheckBox.isChecked(),
+            'stays_on_top': self.windowStaysOnTopCheckBox.isChecked(),
+            'color_icons': self.colorIconsCheckBox.isChecked(),
+            'language': self.langComboBox.currentText(),
+            'theme': self.themeComboBox.currentText(),
+            'auto_scale': self.autoScaleCheckBox.isChecked(),
+            'models_scale': self.modelScaleBox.value(),
+            'auto_blink': self.autoBlinkCheckBox.isChecked(),
+            'auto_breath': self.autoBreathCheckBox.isChecked(),
+            'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
+            'sleep': self.sleepCheckBox.isChecked()
+        }
+
+    # Create Tabs
+
+    def create_appearance_tab(self):
+        """Создает вкладку настроек внешнего вида"""
+        tab = QWidget()
+        layout = QGridLayout()
+
+        # Window Flags
+        self.framelessWindowCheckBox = QCheckBox("Frameless window")
+        self.windowStaysOnTopCheckBox = QCheckBox("Window stays on top")
+
+        # Appearance
+        self.langText = QLabel("Language:")
+
+
+        self.langComboBox = QComboBox()
+        self.langComboBox.addItems(["English", "Русский"])
+        self.setLanguageName()
+        self.langComboBox.setCurrentText(self.language_set)
+
+        self.themeText = QLabel("Theme:")
+        self.themeComboBox = QComboBox()
+        self.themeComboBox.addItems(self.available_styles)
+        self.themeComboBox.setCurrentText(self.theme)
+
+        self.colorIconsCheckBox = QCheckBox("Color icons")
+
+        # Размещаем элементы
+        layout.addWidget(self.framelessWindowCheckBox, 0, 0, 1, 2)
+        layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0, 1, 2)
+        layout.addWidget(self.langText, 2, 0)
+        layout.addWidget(self.langComboBox, 2, 1)
+        layout.addWidget(self.themeText, 3, 0)
+        layout.addWidget(self.themeComboBox, 3, 1)
+        layout.addWidget(self.colorIconsCheckBox, 4, 0, 1, 2)
+
+        # Подключаем сигналы изменений
+        self.framelessWindowCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.windowStaysOnTopCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.langComboBox.currentTextChanged.connect(self.on_setting_changed)
+        self.themeComboBox.currentTextChanged.connect(self.on_setting_changed)
+        self.colorIconsCheckBox.stateChanged.connect(self.on_setting_changed)
+
+        # Устанавливаем значения
+        self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
+        self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
+        self.colorIconsCheckBox.setChecked(self.color_icons)
+
+        tab.setLayout(layout)
+        self.tab_widget.addTab(tab, "Appearance")
+
+    def create_scale_tab(self):
+        """Создает вкладку настроек масштабирования"""
+        tab = QWidget()
+        layout = QGridLayout()
+
+        self.modelScaleBox = QDoubleSpinBox()
+        self.sc_mult_text = QLabel("Scale multiplier:")
+        self.modelScaleBox.setMinimum(0.5)
+        self.modelScaleBox.setMaximum(5)
+        self.modelScaleBox.setSingleStep(0.5)
+        self.modelScaleBox.setValue(self.models_scale)
+
+        self.autoScaleCheckBox = QCheckBox("AutoScale")
+        self.autoScaleCheckBox.setChecked(self.auto_scale)
+
+        # Устанавливаем начальное состояние с учетом стилей
+        self.sync_scale_box_with_checkbox()
+
+        layout.addWidget(self.autoScaleCheckBox, 1, 0, 1, 2)
+        layout.addWidget(self.sc_mult_text, 0, 0)
+        layout.addWidget(self.modelScaleBox, 0, 1)
+
+        # Подключаем сигнал
+        self.autoScaleCheckBox.toggled.connect(self.sync_scale_box_with_checkbox)
+        self.modelScaleBox.valueChanged.connect(self.on_setting_changed)
+
+        tab.setLayout(layout)
+        self.tab_widget.addTab(tab, "Scale")
+
+    def sync_scale_box_with_checkbox(self):
+        """Синхронизирует состояние spinbox с чекбоксом"""
+        is_auto_scale = self.autoScaleCheckBox.isChecked()
+
+        # Блокируем сигналы, чтобы setValue не вызвал on_setting_changed
+        self.modelScaleBox.blockSignals(True)
+
+        if is_auto_scale:
+            # Если включен автоскейл
+            self.modelScaleBox.setReadOnly(True)
+            self.modelScaleBox.setValue(1.0)
+
+            # Применяем стиль для недоступного поля
+            if hasattr(self, 'mainWindow') and hasattr(self.mainWindow, 'theme'):
+                if self.mainWindow.theme.lower() == 'fusion' or 'dark' in self.mainWindow.theme.lower():
+                    # Темная тема
+                    self.modelScaleBox.setStyleSheet("""
+                        QDoubleSpinBox:read-only {
+                            background-color: #3a3a3a;
+                            color: #888888;
+                            border: 1px solid #555555;
+                            border-radius: 3px;
+                            padding: 2px;
+                        }
+                        QDoubleSpinBox::up-button:read-only, 
+                        QDoubleSpinBox::down-button:read-only {
+                            background-color: #3a3a3a;
+                            border: 1px solid #555555;
+                        }
+                    """)
+                else:
+                    # Светлая тема
+                    self.modelScaleBox.setStyleSheet("""
+                        QDoubleSpinBox:read-only {
+                            background-color: #f5f5f5;
+                            color: #888888;
+                            border: 1px solid #cccccc;
+                            border-radius: 3px;
+                            padding: 2px;
+                        }
+                        QDoubleSpinBox::up-button:read-only, 
+                        QDoubleSpinBox::down-button:read-only {
+                            background-color: #f5f5f5;
+                            border: 1px solid #cccccc;
+                        }
+                    """)
+        else:
+            # Если выключен автоскейл
+            self.modelScaleBox.setReadOnly(False)
+            # Сбрасываем стиль
+            self.modelScaleBox.setStyleSheet("")
+
+        # Разблокируем сигналы
+        self.modelScaleBox.blockSignals(False)
+
+        self.on_setting_changed()
+
+    def create_behavior_tab(self):
+        """Создает вкладку настроек поведения"""
+        tab = QWidget()
+        layout = QGridLayout()
+
+        self.autoBlinkCheckBox = QCheckBox("Auto Blink")
+        self.autoBreathCheckBox = QCheckBox("Auto Breath")
+        self.trackingMouseCheckBox = QCheckBox("Tracking Mouse Position")
+        self.sleepCheckBox = QCheckBox("Sleep")
+
+        # Устанавливаем значения
+        self.autoBlinkCheckBox.setChecked(self.auto_blink)
+        self.autoBreathCheckBox.setChecked(self.auto_breath)
+        self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
+        self.sleepCheckBox.setChecked(self.sleep)
+
+        # Подключаем сигналы изменений
+        self.autoBlinkCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.autoBreathCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.trackingMouseCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.sleepCheckBox.stateChanged.connect(self.on_setting_changed)
+
+        layout.addWidget(self.autoBlinkCheckBox, 0, 0)
+        layout.addWidget(self.autoBreathCheckBox, 1, 0)
+        layout.addWidget(self.trackingMouseCheckBox, 2, 0)
+        layout.addWidget(self.sleepCheckBox, 3, 0)
+
+        # Добавляем иконки
+        self.update_icons()
+
+        tab.setLayout(layout)
+        self.tab_widget.addTab(tab, "Behavior")
+
+    def create_other_tab(self):
+        """Создает вкладку дополнительных настроек"""
+        tab = QWidget()
+        layout = QVBoxLayout()
+
+        # Здесь можно добавить дополнительные настройки
+        # Например, кэширование, логирование и т.д.
+        info_label = QLabel("Additional settings will be added here.")
+        info_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(info_label)
+
+        tab.setLayout(layout)
+        self.tab_widget.addTab(tab, "Other")
+
+    # Create Buttons
+
+    def create_buttons(self):
+        """Создает кнопки окна настроек"""
+        # Создаем кнопки
+        self.resetPosButton = QPushButton("&Reset Position")
+        self.resetPosButton.clicked.connect(self.reset_position)
+
+        self.quitButton = QPushButton("&Quit")
+        self.quitButton.clicked.connect(self.force_quit_app)
+        # self.quitButton.clicked.connect(qApp.quit)  # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
+
+        # Создаем кнопки Apply/OK/Cancel
+        self.button_box = QDialogButtonBox()
+        self.apply_button = QPushButton("Apply")
+        self.ok_button = QPushButton("OK")
+        self.cancel_button = QPushButton("Cancel")
+
+        # Изначально кнопки Apply и Cancel отключены
+        self.apply_button.setEnabled(False)
+        self.cancel_button.setEnabled(False)
+
+        # Добавляем кнопки в button box
+        self.button_box.addButton(self.apply_button, QDialogButtonBox.ButtonRole.ApplyRole)
+        self.button_box.addButton(self.ok_button, QDialogButtonBox.ButtonRole.AcceptRole)
+        self.button_box.addButton(self.cancel_button, QDialogButtonBox.ButtonRole.RejectRole)
+
+        # Подключаем сигналы
+        self.apply_button.clicked.connect(self.apply_settings)
+        self.ok_button.clicked.connect(self.ok_pressed)
+        self.cancel_button.clicked.connect(self.cancel_pressed)
+
+    def ok_pressed(self):
+        """Обработчик кнопки OK"""
+        if self.unsaved_changes:
+            self.apply_settings()
+        self.close()
+
+    def cancel_pressed(self):
+        """Обработчик кнопки Cancel"""
+        if self.unsaved_changes:
+            reply = QMessageBox.question(
+                self, self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
+                self.mainWindow.lang['Settings']['DiscardChanges'],
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.revert_to_initial_values()
+                self.close()
+        else:
+            self.close()
+
+    def on_setting_changed(self, *args):
+        """Вызывается при изменении любой настройки"""
+        # Игнорируем изменения во время инициализации
+        if hasattr(self, 'block_signals_during_init') and self.block_signals_during_init:
+            return
+
+        # Проверяем, что кнопки уже созданы
+        if hasattr(self, 'apply_button'):
+            self.unsaved_changes = True
+            self.apply_button.setEnabled(True)
+            self.cancel_button.setEnabled(True)
+
+    def apply_settings(self):
+        """Применяет текущие настройки"""
+        try:
+            # Собираем текущие значения
+            current_settings = {
+                'frameless_window': self.framelessWindowCheckBox.isChecked(),
+                'stays_on_top': self.windowStaysOnTopCheckBox.isChecked(),
+                'color_icons': self.colorIconsCheckBox.isChecked(),
+                'language': self.langComboBox.currentText(),
+                'theme': self.themeComboBox.currentText(),
+                'auto_scale': self.autoScaleCheckBox.isChecked(),
+                'models_scale': self.modelScaleBox.value(),
+                'auto_blink': self.autoBlinkCheckBox.isChecked(),
+                'auto_breath': self.autoBreathCheckBox.isChecked(),
+                'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
+                'sleep': self.sleepCheckBox.isChecked()
+            }
+
+            # Применяем настройки оконных флагов
+            flags = Qt.WindowType()
+
+            if current_settings['frameless_window']:
+                flags = flags | Qt.WindowType.FramelessWindowHint
+                self.app_config.FramelessWindowHint = True
+            else:
+                self.app_config.FramelessWindowHint = False
+
+            if current_settings['stays_on_top']:
+                flags = flags | Qt.WindowType.WindowStaysOnTopHint
+                self.app_config.WindowStaysOnTopHint = True
+            else:
+                self.app_config.WindowStaysOnTopHint = False
+
+            # Применяем остальные настройки
+            self.set_setting('color_icons', current_settings['color_icons'])
+            self.set_setting('auto_scale', current_settings['auto_scale'])
+            self.set_setting('models_scale', current_settings['models_scale'])
+            self.set_setting('auto_blink', current_settings['auto_blink'])
+            self.set_setting('auto_breath', current_settings['auto_breath'])
+            self.set_setting('tracking_mouse_switch', current_settings['tracking_mouse'])
+            self.set_setting('sleep_switch', current_settings['sleep'])
+
+            # Язык и тема
+            self.language_org = current_settings['language']
+            self.getLanguageName()
+            self.theme = current_settings['theme']
+            self.set_setting('language', str(self.language_get))
+            self.set_setting('theme', str(self.theme))
+
+            # Обновляем главное окно
+            self.mainWindow.setSettings(flags)
+            self.mainWindow.show()
+            self.mainWindow.model_move = True
+
+            # Обновляем иконки
+            self.update_icons()
+
+            # Сохраняем примененные значения как новые начальные
+            self.initial_values = current_settings.copy()
+
+            # Сбрасываем флаг изменений
+            self.unsaved_changes = False
+            self.apply_button.setEnabled(False)
+            self.cancel_button.setEnabled(False)
+
+            if self.settings_log:
+                print("Settings applied successfully!")
+
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Failed to apply settings: {str(e)}")
+
+    def revert_to_initial_values(self):
+        """Возвращает настройки к начальным значениям"""
+        self.framelessWindowCheckBox.setChecked(self.initial_values['frameless_window'])
+        self.windowStaysOnTopCheckBox.setChecked(self.initial_values['stays_on_top'])
+        self.colorIconsCheckBox.setChecked(self.initial_values['color_icons'])
+
+        # Язык
+        if self.initial_values['language'] == "Русский":
+            self.language_set = "Русский"
+        else:
+            self.language_set = "English"
+        self.langComboBox.setCurrentText(self.language_set)
+
+        self.themeComboBox.setCurrentText(self.initial_values['theme'])
+        self.autoScaleCheckBox.setChecked(self.initial_values['auto_scale'])
+        self.modelScaleBox.setValue(self.initial_values['models_scale'])
+        self.autoBlinkCheckBox.setChecked(self.initial_values['auto_blink'])
+        self.autoBreathCheckBox.setChecked(self.initial_values['auto_breath'])
+        self.trackingMouseCheckBox.setChecked(self.initial_values['tracking_mouse'])
+        self.sleepCheckBox.setChecked(self.initial_values['sleep'])
+
+        self.unsaved_changes = False
+        self.apply_button.setEnabled(False)
+        self.cancel_button.setEnabled(False)
+
+    # Обновляем метод update_icons
     def update_icons(self):
         """Update icons color in real time"""
+        # Appearance
+        self.framelessWindowCheckBox.setIcon(self.mainWindow.get_icon("frameless_window"))
+        self.windowStaysOnTopCheckBox.setIcon(self.mainWindow.get_icon("stay_on_top"))
+        self.colorIconsCheckBox.setIcon(self.mainWindow.get_icon("color"))
+
+        # Scale
+        self.autoScaleCheckBox.setIcon(self.mainWindow.get_icon("auto_scale"))
+
+        #Behavior
         self.autoBlinkCheckBox.setIcon(self.mainWindow.get_icon("eye_closed"))
         self.autoBreathCheckBox.setIcon(self.mainWindow.get_icon("breath"))
         self.trackingMouseCheckBox.setIcon(self.mainWindow.get_icon("mouse"))
@@ -1105,28 +1527,37 @@ class SettingsWindow(QWidget):
         setattr(self, key, value)
 
     def updateSettings(self):
-        """Update main window settings"""
+        # Обновляем названия вкладок
+        self.tab_widget.setTabText(0, self.mainWindow.lang['Settings']['Appearance'])
+        self.tab_widget.setTabText(1, self.mainWindow.lang['Settings']['ScaleTitle'])
+        self.tab_widget.setTabText(2, self.mainWindow.lang['Settings']['Behavior'])
+        self.tab_widget.setTabText(3, self.mainWindow.lang['Settings']['OtherTitle'])
+
+        if hasattr(self, 'right_group'):
+            self.right_group.setTitle(self.mainWindow.lang['Settings']['Controls'])
+
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
         self.resetPosButton.setText(self.mainWindow.lang['Settings']['ResetPosition'])
         self.quitButton.setText(self.mainWindow.lang['Settings']['Quit'])
-        # Window Box
-        self.hintsGroupBox.setTitle(self.mainWindow.lang['Settings']['WindowTitle'])
+
+        # Appearance Tab
         self.framelessWindowCheckBox.setText(self.mainWindow.lang['Settings']['FramelessWindow'])
         self.windowStaysOnTopCheckBox.setText(self.mainWindow.lang['Settings']['StaysOnTop'])
         self.langText.setText(self.mainWindow.lang['Settings']['Language'])
         self.colorIconsCheckBox.setText(self.mainWindow.lang['Settings']['ColorIcons'])
         self.themeText.setText(self.mainWindow.lang['Settings']['Theme'])
-        # Scale Box
-        self.scaleGroupBox.setTitle(self.mainWindow.lang['Settings']['ScaleTitle'])
+
+        # Scale Tab
         self.autoScaleCheckBox.setText(self.mainWindow.lang['Settings']['AutoScale'])
         self.sc_mult_text.setText(self.mainWindow.lang['Settings']['ScaleMultiplier'])
-        # Other Box
-        self.otherGroupBox.setTitle(self.mainWindow.lang['Settings']['OtherTitle'])
+
+        # Behavior Tab
         self.autoBlinkCheckBox.setText(self.mainWindow.lang['Settings']['AutoBlink'])
         self.autoBreathCheckBox.setText(self.mainWindow.lang['Settings']['AutoBreath'])
         self.trackingMouseCheckBox.setText(self.mainWindow.lang['Settings']['TrackingMouse'])
         self.sleepCheckBox.setText(self.mainWindow.lang['Settings']['Sleep'])
+
         # Update icons
         self.update_icons()
 
@@ -1341,6 +1772,38 @@ class SettingsWindow(QWidget):
             self.language_set = "Русский"
         else:
             self.language_set = "English"
+
+    def closeEvent(self, event):
+        """Обработчик закрытия окна через крестик - не мешает кнопке Quit"""
+
+        if self.unsaved_changes:
+            reply = QMessageBox.question(
+                self, self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
+                self.mainWindow.lang['Settings']['ApplyBeforeClosing'],
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Yes
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.apply_settings()
+                event.accept()
+            elif reply == QMessageBox.StandardButton.No:
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+
+    def force_quit_app(self):
+        """Принудительно закрывает приложение без вопросов"""
+        # Сохраняем текущее состояние окна настроек
+        self.unsaved_changes = False
+
+        # Закрываем окно настроек
+        self.close()
+
+        # Принудительно закрываем всё приложение
+        os._exit(0)
 
 if __name__ == "__main__":
     import sys

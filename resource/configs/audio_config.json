@@ -28,6 +28,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Purple Heart": {
@@ -58,6 +60,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Noire": {
@@ -89,6 +93,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Black Heart": {
@@ -119,6 +125,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Blanc": {
@@ -150,6 +158,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "White Heart": {
@@ -180,6 +190,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Vert": {
@@ -210,6 +222,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Green Heart": {
@@ -238,6 +252,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "NepGear": {
@@ -269,6 +285,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Purple Sister": {
@@ -298,6 +316,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Uni": {
@@ -327,6 +347,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Black Sister": {
@@ -355,6 +377,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Rom": {
@@ -384,6 +408,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "White Sister Rom": {
@@ -413,6 +439,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Ram": {
@@ -442,6 +470,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "White Sister Ram": {
@@ -471,6 +501,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Histoire": {
@@ -500,6 +532,8 @@
     "really_quit": "really_quit.wav",
     "quit": "quit.wav",
     "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
   "Maho": {
@@ -545,6 +579,8 @@
     "quit": "quit.wav",
     "normal": "normal.wav",
     "normal_maho": "normal_alt.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
     "default": "default.wav"
   },
     "Effects": {

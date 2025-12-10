@@ -83,6 +83,14 @@ class AppConfig(QObject):
                 'auto_breath': 'True',
                 'tracking_mouse': 'True',
                 'sleep': 'True'
+            },
+            'Audio': {
+                'audio_system': 'True',
+                'master': '100',
+                'voice': '100',
+                'sfx': '100',
+                'bgm': '70',
+                'ambient': '50'
             }
         }
 
@@ -441,6 +449,59 @@ class AppConfig(QObject):
         self._config.set('Settings', 'auto_breath', str(value))
         self._save_and_notify('Settings', 'auto_breath', str(value))
 
+    @property
+    def audio_system(self) -> bool:
+        return self._config.getboolean('Audio', 'audio_system')
+
+    @audio_system.setter
+    def audio_system(self, value: bool):
+        self._config.set('Audio', 'audio_system', str(value))
+        self._save_and_notify('Audio', 'audio_system', str(value))
+
+    @property
+    def master(self) -> int:
+        return self._config.getint('Audio', 'master')
+
+    @master.setter
+    def master(self, value: int):
+        self._config.set('Audio', 'master', str(value))
+        self._save_and_notify('Audio', 'master', str(value))
+
+    @property
+    def voice(self) -> int:
+        return self._config.getint('Audio', 'voice')
+
+    @voice.setter
+    def voice(self, value: int):
+        self._config.set('Audio', 'voice', str(value))
+        self._save_and_notify('Audio', 'voice', str(value))
+
+    @property
+    def sfx(self) -> float:
+        return self._config.getint('Audio', 'sfx')
+
+    @sfx.setter
+    def sfx(self, value: int):
+        self._config.set('Audio', 'sfx', str(value))
+        self._save_and_notify('Audio', 'sfx', str(value))
+
+    @property
+    def bgm(self) -> float:
+        return self._config.getint('Audio', 'bgm')
+
+    @bgm.setter
+    def bgm(self, value: int):
+        self._config.set('Audio', 'bgm', str(value))
+        self._save_and_notify('Audio', 'bgm', str(value))
+
+    @property
+    def ambient(self) -> int:
+        return self._config.getint('Audio', 'ambient')
+
+    @ambient.setter
+    def ambient(self, value: int):
+        self._config.set('Audio', 'ambient', str(value))
+        self._save_and_notify('Audio', 'ambient', str(value))
 
     # Save configs
     def _save_and_notify(self, section: str, key: str, value: str):

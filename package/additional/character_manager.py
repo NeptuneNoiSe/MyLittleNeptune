@@ -199,6 +199,12 @@ class CharacterStateManager:
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
 
+    def set_character_lock_state(self):
+        self.character.expressions.set_sad_expression()
+        self.character.character_text.set_character_lock_text()
+        self.character.movements.set_no_motion()
+        self.character.audio.set_no_audio()
+
     def set_quit_state(self, quit: str):
         """Quiting state"""
         if quit == 'Yes':
@@ -611,6 +617,11 @@ class CharacterTextManager:
         self.kaomoji = "(^~^)"
         self.update()
 
+    def set_character_lock_text(self):
+        self.text = ['Talk', 'Cant_now']
+        self.kaomoji = "(´•ω•̥`)"
+        self.update()
+
     def set_settings_text(self, text_key):
         self.text = ['MiscellaneousTalk', text_key]
         self.kaomoji = "(⌐■_■)"
@@ -728,6 +739,10 @@ class CharacterMovementsManager:
         yawn_motion_id = random.choice([17, 18])
         self.set_motion(group_name="Special", id=yawn_motion_id)
 
+    def set_no_motion(self):
+        no_motion_id = random.randint(0, 7)
+        self.set_motion(group_name="No", id=no_motion_id)
+
     def process_body_hit(self):
         """Processing interactions with body parts"""
         #self.model.ResetExpressions()
@@ -767,6 +782,14 @@ class CharacterAudioManager:
         self.audio_manager.play_audio(self.character.name, "me", enable_lipsync=True, category="voice",
                               stop_audio=True)
 
+    def set_no_audio(self):
+        self.audio_manager.play_audio(self.character.name, "no", enable_lipsync=True, category="voice",
+                              stop_audio=True)
+
+    def set_yes_audio(self):
+        self.audio_manager.play_audio(self.character.name, "yes", enable_lipsync=True, category="voice",
+                              stop_audio=True)
+
     def set_drag_audio(self):
         if self.character.play_drag_audio:
             self.audio_manager.play_audio(self.character.name, "drag", enable_lipsync=True, category="voice",
@@ -799,7 +822,9 @@ class CharacterAudioManager:
         self.audio_manager.play_audio(self.character.name, "transformed", enable_lipsync=True, category="voice",
                               stop_audio=True)
         self.audio_manager.stop_audio("Effects", "transform_start")
-        self.audio_manager.play_audio("Effects", "transform_finish", False)
+
+        self.audio_manager.play_audio("Effects", "transform_finish", enable_lipsync=False, category="sfx",
+                              stop_audio=False)
 
     def set_transform_failure_audio(self):
         self.audio_manager.play_audio(self.character.name, "transform_fail", enable_lipsync=True, category="voice",

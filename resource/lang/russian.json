@@ -86,7 +86,8 @@
     "Quit": "Ты и вправду хочешь уйти?",
     "QuitAlt": "Пока! Увидимся Снова!",
     "Taking": "Эй, Куда ты меня тащишь?",
-    "Already": "Эй это-же я?!"
+    "Already": "Эй это-же я?!",
+    "Cant_now": "Я не могу сейчас"
   },
   "MiscellaneousTalk": {
     "SettingsApplied": "Настройки применены",
@@ -124,12 +125,12 @@
     "Apply": "Применить",
     "OK": "ОК",
     "Cancel": "Отмена",
-    "Appearance": "Внешний вид",
-    "Behavior": "Поведение",
+    "Error": "Ошибка",
     "UnsavedChangesTitle": "Hесохранённые изменения",
     "UnsavedChanges": "Вы имеете несохранённые изменения",
     "DiscardChanges": "Вы имеете несохранённые изменения. Отменить изменения?",
     "ApplyBeforeClosing": "Вы имеете несохранённые изменения. Вы хотите применить их перед закрытием?",
+    "Appearance": "Внешний вид",
     "FramelessWindow": "Окно без рамки",
     "StaysOnTop": "Окно поверх других приложений",
     "Language": "Язык:",
@@ -138,10 +139,25 @@
     "ScaleTitle": "Масштаб",
     "AutoScale": "Авто Масштаб",
     "ScaleMultiplier": "Множитель масштаба:",
-    "OtherTitle": "Разное",
+    "Behavior": "Поведение",
     "AutoBlink": "Авто Моргание",
     "AutoBreath": "Авто Дыхание",
     "TrackingMouse": "Слежение за Мышью",
-    "Sleep": "Сон"
+    "Sleep": "Сон",
+    "AudioTitle": "Звук",
+    "AudioSystemON": "Аудио Система: ВКЛЮЧЕНА",
+    "AudioSystemOFF": "Аудио Система: ВЫКЛЮЧЕНА",
+    "Master": "МАСТЕР",
+    "Voice": "Голос",
+    "BGM": "Музыка",
+    "SFX": "Эффекты",
+    "Ambient": "Окружение",
+    "TestSound": "Тест Звука",
+    "TestSoundInfo": "Тестовый звук воспроизведен успешно!",
+    "TestSoundError": "Не удалось воспроизвести тестовый звук: ",
+    "ResetSound": "Сброс",
+    "Mute": "Отключить Всё",
+    "Unmute": "Включить Всё",
+    "OtherTitle": "Разное"
   }
 }

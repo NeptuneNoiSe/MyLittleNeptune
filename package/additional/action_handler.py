@@ -19,7 +19,7 @@ class ActionHandler:
     # Context Menu Actions
     def on_action_transform(self):
         self.win.model_move = False
-        if not self.win.can_transform:
+        if not self.win.can_transform or self.win.settings_lock:
             if self.win.character.tired_state.condition != "Sleep":
                 self.win.character.state.set_transform_failure_state()
             return
@@ -35,6 +35,9 @@ class ActionHandler:
     # Characters Actions
     def _change_character(self, character_name):
         # Check if the current name matches the selected one
+        if self.win.settings_lock:
+            self.win.character.state.set_character_lock_state()
+            return
         if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
             self.win.character.state.alredy_changed_character()
             return  # Interrupt the function because the character has already been selected

@@ -86,7 +86,8 @@
     "Quit": "Do you really want to leave?",
     "QuitAlt": "GoodBye! See you again!",
     "Taking": "Hey, where are you taking me?",
-    "Already": "Hey, is that me?!"
+    "Already": "Hey, is that me?!",
+    "Cant_now": "I can't now"
   },
   "MiscellaneousTalk": {
     "SettingsApplied": "The settings are applied",
@@ -124,12 +125,12 @@
     "Apply": "Apply",
     "OK": "OK",
     "Cancel": "Cancel",
-    "Appearance": "Appearance",
-    "Behavior": "Behavior",
+    "Error": "Error",
     "UnsavedChangesTitle": "Unsaved changes",
     "UnsavedChanges": "You have unsaved changes",
     "DiscardChanges": "You have unsaved changes. Discard them?",
     "ApplyBeforeClosing": "You have unsaved changes. Do you want to apply them before closing?",
+    "Appearance": "Appearance",
     "FramelessWindow": "Frameless window",
     "StaysOnTop": "Window stays on top",
     "Language": "Language:",
@@ -138,10 +139,25 @@
     "ScaleTitle": "Scale",
     "AutoScale": "AutoScale",
     "ScaleMultiplier": "Scale multiplier:",
-    "OtherTitle": "Other",
+    "Behavior": "Behavior",
     "AutoBlink": "Auto Blink",
     "AutoBreath": "Auto Breath",
     "TrackingMouse": "Tracking Mouse Position",
-    "Sleep": "Sleep"
+    "Sleep": "Sleep",
+    "AudioTitle": "Audio",
+    "AudioSystemON": "Audio System: ON",
+    "AudioSystemOFF": "Audio System: OFF",
+    "Master": "MASTER",
+    "Voice": "Voice",
+    "BGM": "BGM",
+    "SFX": "SFX",
+    "Ambient": "Ambient",
+    "TestSound": "Test Sound",
+    "TestSoundInfo": "Test sound played successfully!",
+    "TestSoundError": "Failed to play test sound: ",
+    "ResetSound": "Reset",
+    "Mute": "Mute All",
+    "Unmute": "Unmute All",
+    "OtherTitle": "Other"
   }
 }

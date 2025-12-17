@@ -134,6 +134,7 @@
     "FramelessWindow": "Frameless window",
     "StaysOnTop": "Window stays on top",
     "Language": "Language:",
+    "Background": "Background image",
     "ColorIcons": "Color icons",
     "Theme": "Theme:",
     "ScaleTitle": "Scale",
@@ -159,5 +160,15 @@
     "Mute": "Mute All",
     "Unmute": "Unmute All",
     "OtherTitle": "Other"
+  },
+  "NewYearEvent": {
+    "Until": "Until the New Year:",
+    "UntilNext": "Until next New Year:",
+    "Days": "d.",
+    "Hours": "h.",
+    "Minutes": "min.",
+    "Seconds": "sec.",
+    "Congratulation": "Happy New Year!",
+    "Holidays": "New Year's holidays, Day:"
   }
 }

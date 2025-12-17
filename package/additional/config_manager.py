@@ -36,6 +36,7 @@ class AppConfig(QObject):
             config.add_section('Main')
             config.set('Main', 'language', 'English')
             config.set('Main', 'color_icons', 'False')
+            config.set('Main', 'background', 'True')
             config.set('Main', 'theme', '')
             config.set('Main', 'screen_width', '0')
             config.set('Main', 'screen_height', '0')
@@ -233,6 +234,15 @@ class AppConfig(QObject):
     def color_icons(self, value: bool):
         self._config.set('Main', 'color_icons', str(value))
         self._save_and_notify('Main', 'color_icons', str(value))
+
+    @property
+    def background(self) -> bool:
+        return self._config.getboolean('Main', 'background')
+
+    @background.setter
+    def background(self, value: bool):
+        self._config.set('Main', 'background', str(value))
+        self._save_and_notify('Main', 'background', str(value))
 
     # Theme config
     @property

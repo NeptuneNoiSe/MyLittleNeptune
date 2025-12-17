@@ -15,6 +15,7 @@ class ResourceManager:
         self.ui_labels: Dict[str, QLabel] = {}
         self.character_configs: Dict[str, Dict] = self._load_character_configs()
         self.languages: Dict[str, Dict] = {}
+        self.background_images: Dict[str, str] = {}
         self.animation_files: Dict[str, str] = {}
         self.extra_motions: Dict[str, str] = {}
         self._talk_images: Dict[str, str] = {}
@@ -42,6 +43,13 @@ class ResourceManager:
             with open(lang_path, encoding="utf-8") as f:
                 self.languages[language] = json.load(f)
         return self.languages[language]
+
+    def load_background_image(self, image_name: str)-> str:
+        if image_name not in self.background_images:
+            self.background_images[image_name] = os.path.join(
+                self.resources_dir, f"images/bgs/{image_name}.png"
+            )
+        return self.background_images[image_name]
 
     def load_animation(self, anim_name: str) -> str:
         """Returns animation path"""

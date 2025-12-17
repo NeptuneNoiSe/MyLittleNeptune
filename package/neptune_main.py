@@ -15,7 +15,7 @@ from live2d.utils.canvas import Canvas
 from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
-import resources
+
 from widgets.talk_widget import TalkWidget
 from additional.config_manager import AppConfig
 from additional.models_manager import ModelsManager
@@ -26,6 +26,8 @@ from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_manager import ResourceManager
 from package.additional.animation_manager import AnimationsManager
+from package.additional.image_manager import ImageManager
+from package.additional.event_manager import EventManager
 from package.additional.audio_manager import AudioManager
 
 class MainWindow(QOpenGLWidget):
@@ -193,6 +195,7 @@ class MainWindow(QOpenGLWidget):
         self.kaomoji = "(^~^)/"
         self.screenSide = "Right"
         self.talkFontSize = 10
+        self.background_name = ""
 
         # Status flags
         self.tracking_mouse = True
@@ -208,6 +211,8 @@ class MainWindow(QOpenGLWidget):
         self.model_move = False
         self.talk = True
         self.reset_expression = True
+        self.frameless = False
+        self.background = False
 
         # Mouse position
         self.clickX = -1
@@ -235,6 +240,8 @@ class MainWindow(QOpenGLWidget):
         self.functions = Functions(self, self.model)
         self.input_handler = InputHandler(self, self.model)
         self.animation_manager = None
+        self.image_manager = None
+        self.event_manager = None
         self.lang = None
         self.talk_update = None
         self.models_manager = ModelsManager(
@@ -321,8 +328,13 @@ class MainWindow(QOpenGLWidget):
         if (window_width <= screen_geom.width() and
                 window_height <= screen_geom.height()):
 
-            self.frmX = (self.SrcSize.width() - window_width) - self.w_correction
+            if self.frameless:
+                self.frmX = (self.SrcSize.width() - window_width) - self.w_correction
+            else:
+                self.frmX = (self.SrcSize.width() - window_width)
+
             self.frmY = (self.SrcSize.height() - window_height) - self.h_correction
+
             self.move(int(self.frmX), int(self.frmY))
 
         else:
@@ -458,8 +470,10 @@ class MainWindow(QOpenGLWidget):
     def init_classes(self):
         """Initialize classes"""
         self.animation_manager = AnimationsManager(self, self.model)
+        self.image_manager = ImageManager(self)
         self.animation_manager.set_target_fps(self.target_fps)
         self.change_character(self.character_name)
+        self.event_manager = EventManager(self)
 
     def init_logs(self):
         """Initialize logs"""
@@ -476,7 +490,11 @@ class MainWindow(QOpenGLWidget):
     def on_draw(self):
         """Canvas draw method"""
         live2d.clearBuffer(self.b_red, self.b_green, self.b_blue, self.b_alpha)
+        if self.background:
+            self.image_manager.set_background_image(self.background_name, 0.9)
         self.model.Draw()
+        if self.background:
+            self.event_manager.draw_text_on_model()
 
     def paintGL(self) -> None:
         """Paint GL"""
@@ -980,6 +998,7 @@ class SettingsWindow(QWidget):
         self.language = self.app_config.language
         self.color_icons = self.app_config.color_icons
         self.theme = self.app_config.theme
+        self.background = self.app_config.background
         self.auto_scale = self.app_config.auto_scale
         self.models_scale = self.app_config.models_scale
         self.auto_blink = self.app_config.auto_blink
@@ -1091,6 +1110,7 @@ class SettingsWindow(QWidget):
             'frameless_window': self.getWindowFlag_FramelessWindowHint,
             'stays_on_top': self.getWindowFlag_WindowStaysOnTopHint,
             'color_icons': self.color_icons,
+            'background': self.background,
             'language': self.language,
             'theme': self.theme,
             'auto_scale': self.auto_scale,
@@ -1121,6 +1141,7 @@ class SettingsWindow(QWidget):
             'frameless_window': self.framelessWindowCheckBox.isChecked(),
             'stays_on_top': self.windowStaysOnTopCheckBox.isChecked(),
             'color_icons': self.colorIconsCheckBox.isChecked(),
+            'background': self.backgroundImageCheckBox.isChecked(),
             'language': self.langComboBox.currentText(),
             'theme': self.themeComboBox.currentText(),
             'auto_scale': self.autoScaleCheckBox.isChecked(),
@@ -1163,6 +1184,8 @@ class SettingsWindow(QWidget):
 
         self.colorIconsCheckBox = QCheckBox("Color icons")
 
+        self.backgroundImageCheckBox = QCheckBox("Background image")
+
         # Размещаем элементы
         layout.addWidget(self.framelessWindowCheckBox, 0, 0, 1, 2)
         layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0, 1, 2)
@@ -1171,6 +1194,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.themeText, 3, 0)
         layout.addWidget(self.themeComboBox, 3, 1)
         layout.addWidget(self.colorIconsCheckBox, 4, 0, 1, 2)
+        layout.addWidget(self.backgroundImageCheckBox, 5, 0, 1, 2)
 
         # Подключаем сигналы изменений
         self.framelessWindowCheckBox.stateChanged.connect(self.on_setting_changed)
@@ -1178,11 +1202,13 @@ class SettingsWindow(QWidget):
         self.langComboBox.currentTextChanged.connect(self.on_setting_changed)
         self.themeComboBox.currentTextChanged.connect(self.on_setting_changed)
         self.colorIconsCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.backgroundImageCheckBox.stateChanged.connect(self.on_setting_changed)
 
         # Устанавливаем значения
         self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
         self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
         self.colorIconsCheckBox.setChecked(self.color_icons)
+        self.backgroundImageCheckBox.setChecked(self.background)
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Appearance")
@@ -2115,6 +2141,7 @@ class SettingsWindow(QWidget):
                 'frameless_window': self.framelessWindowCheckBox.isChecked(),
                 'stays_on_top': self.windowStaysOnTopCheckBox.isChecked(),
                 'color_icons': self.colorIconsCheckBox.isChecked(),
+                'background': self.backgroundImageCheckBox.isChecked(),
                 'language': self.langComboBox.currentText(),
                 'theme': self.themeComboBox.currentText(),
                 'auto_scale': self.autoScaleCheckBox.isChecked(),
@@ -2137,8 +2164,10 @@ class SettingsWindow(QWidget):
             if current_settings['frameless_window']:
                 flags = flags | Qt.WindowType.FramelessWindowHint
                 self.app_config.FramelessWindowHint = True
+                self.mainWindow.frameless = True
             else:
                 self.app_config.FramelessWindowHint = False
+                self.mainWindow.frameless = False
 
             if current_settings['stays_on_top']:
                 flags = flags | Qt.WindowType.WindowStaysOnTopHint
@@ -2148,6 +2177,7 @@ class SettingsWindow(QWidget):
 
             # Применяем остальные настройки
             self.set_setting('color_icons', current_settings['color_icons'])
+            self.set_setting('background', current_settings['background'])
             self.set_setting('auto_scale', current_settings['auto_scale'])
             self.set_setting('models_scale', current_settings['models_scale'])
             self.set_setting('auto_blink', current_settings['auto_blink'])
@@ -2230,6 +2260,7 @@ class SettingsWindow(QWidget):
         self.framelessWindowCheckBox.setChecked(self.initial_values['frameless_window'])
         self.windowStaysOnTopCheckBox.setChecked(self.initial_values['stays_on_top'])
         self.colorIconsCheckBox.setChecked(self.initial_values['color_icons'])
+        self.backgroundImageCheckBox.setChecked(self.initial_values['background'])
 
         # Язык
         if self.initial_values['language'] == "Русский":
@@ -2277,6 +2308,7 @@ class SettingsWindow(QWidget):
         self.framelessWindowCheckBox.setIcon(self.mainWindow.get_icon("frameless_window"))
         self.windowStaysOnTopCheckBox.setIcon(self.mainWindow.get_icon("stay_on_top"))
         self.colorIconsCheckBox.setIcon(self.mainWindow.get_icon("color"))
+        self.backgroundImageCheckBox.setIcon(self.mainWindow.get_icon("background"))
 
         # Scale
         self.autoScaleCheckBox.setIcon(self.mainWindow.get_icon("auto_scale"))
@@ -2382,6 +2414,7 @@ class SettingsWindow(QWidget):
         self.windowStaysOnTopCheckBox.setText(self.mainWindow.lang['Settings']['StaysOnTop'])
         self.langText.setText(self.mainWindow.lang['Settings']['Language'])
         self.colorIconsCheckBox.setText(self.mainWindow.lang['Settings']['ColorIcons'])
+        self.backgroundImageCheckBox.setText(self.mainWindow.lang['Settings']['Background'])
         self.themeText.setText(self.mainWindow.lang['Settings']['Theme'])
 
         # Scale Tab
@@ -2445,9 +2478,11 @@ class SettingsWindow(QWidget):
             if self.framelessWindowCheckBox.isChecked():
                 flags = flags | Qt.WindowType.FramelessWindowHint
                 self.app_config.FramelessWindowHint = True
+                self.mainWindow.frameless = True
                 self.framelessWindowCheckBox.setChecked(True)
             else:
                 self.app_config.FramelessWindowHint = False
+                self.mainWindow.frameless = False
                 self.framelessWindowCheckBox.setChecked(False)
 
             if self.windowStaysOnTopCheckBox.isChecked():
@@ -2465,6 +2500,13 @@ class SettingsWindow(QWidget):
             else:
                 self.set_setting('color_icons', False)
                 self.colorIconsCheckBox.setChecked(False)
+
+            if self.backgroundImageCheckBox.isChecked():
+                self.set_setting('background', True)
+                self.backgroundImageCheckBox.setChecked(True)
+            else:
+                self.set_setting('background', False)
+                self.backgroundImageCheckBox.setChecked(False)
 
             if self.autoScaleCheckBox.isChecked():
                 self.autoScaleCheckBox.setChecked(True)
@@ -2546,6 +2588,7 @@ class SettingsWindow(QWidget):
             self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
             self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
             self.colorIconsCheckBox = self.createCheckBox("Color icons")
+            self.backgroundImageCheckBox = self.createCheckBox("Background image")
             self.langText = QLabel("Language:")
             self.langComboBox = QComboBox()
             self.langComboBox.addItems(["English", "Русский"])
@@ -2564,6 +2607,7 @@ class SettingsWindow(QWidget):
             layout.addWidget(self.langText, 3, 0)
             layout.addWidget(self.langComboBox, 4, 0)
             layout.addWidget(self.colorIconsCheckBox, 1, 1)
+            layout.addWidget(self.backgroundImageCheckBox, 2, 0)
             layout.addWidget(self.themeText, 3, 1)
             layout.addWidget(self.themeComboBox, 4, 1)
             self.langComboBox.currentTextChanged.connect(self.updateMainWindow)

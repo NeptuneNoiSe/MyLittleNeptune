@@ -30,6 +30,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "Purple Heart": {
@@ -95,6 +98,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "Black Heart": {
@@ -160,6 +166,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "White Heart": {
@@ -224,6 +233,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "Green Heart": {
@@ -287,6 +299,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "Purple Sister": {
@@ -349,6 +364,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "Black Sister": {
@@ -410,6 +428,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "White Sister Rom": {
@@ -472,6 +493,9 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "new_year_greeting_today": "new_year_day.wav",
+    "new_year_congratulation": "new_year.wav",
+    "new_year_xmas": "christmas.wav",
     "default": "default.wav"
   },
   "White Sister Ram": {
@@ -583,9 +607,18 @@
     "yes": "yes.wav",
     "default": "default.wav"
   },
-    "Effects": {
-      "transform_start": "transform_start.wav",
-      "transform_finish": "transform_finish.wav"
+  "Effects": {
+    "transform_start": "transform_start.wav",
+    "transform_finish": "transform_finish.wav",
+    "new_year_fanfare": "new_year_fanfare.wav"
+  },
+  "BGM": {
+    "new_year_song": "new_year_song.wav",
+    "christmas_song": "christmas_song.wav",
+    "holidays_song": "holidays_song.wav"
+  },
+  "Songs": {
+    "padoru": "padoru.wav"
   },
   "default": {
     "default": "nep_nep.wav"

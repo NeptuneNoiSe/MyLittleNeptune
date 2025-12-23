@@ -17,6 +17,9 @@ class ActionHandler:
         self.win.showMaximized()
 
     # Context Menu Actions
+    def on_action_sing_song(self):
+        self.win.character.state.sing_song_state()
+
     def on_action_transform(self):
         self.win.model_move = False
         if not self.win.can_transform or self.win.settings_lock:

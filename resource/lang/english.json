@@ -103,6 +103,7 @@
     "Window": "&Window",
     "Minimize": "&Minimize",
     "Normal": "&Normal",
+    "SingSong": "&Sing Song",
     "Transform": "&Transform",
     "Characters": "&Characters",
     "Animations": "&Animations",
@@ -162,6 +163,9 @@
     "OtherTitle": "Other"
   },
   "NewYearEvent": {
+    "Greeting": "Hi! The New Year is coming soon",
+    "GreetingToday": "Hi! Today is the New Year",
+    "GreetingHolidays": "Hi! How are you spending your holidays?",
     "Until": "Until the New Year:",
     "UntilNext": "Until next New Year:",
     "Days": "d.",
@@ -169,6 +173,7 @@
     "Minutes": "min.",
     "Seconds": "sec.",
     "Congratulation": "Happy New Year!",
-    "Holidays": "New Year's holidays, Day:"
+    "Holidays": "New Year's holidays, Day:",
+    "Xmas": "Merry Christmas!"
   }
 }

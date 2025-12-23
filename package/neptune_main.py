@@ -195,7 +195,13 @@ class MainWindow(QOpenGLWidget):
         self.kaomoji = "(^~^)/"
         self.screenSide = "Right"
         self.talkFontSize = 10
-        self.background_name = ""
+        self.background_name = None
+
+        # Audio Main Vars
+        self.bgm_name = None
+        self.bgm_group = "BGM"
+        self.current_sing_song = None
+        self.song_duration = 0
 
         # Status flags
         self.tracking_mouse = True
@@ -328,7 +334,7 @@ class MainWindow(QOpenGLWidget):
         if (window_width <= screen_geom.width() and
                 window_height <= screen_geom.height()):
 
-            if self.frameless:
+            if self.frameless and not self.background:
                 self.frmX = (self.SrcSize.width() - window_width) - self.w_correction
             else:
                 self.frmX = (self.SrcSize.width() - window_width)
@@ -377,7 +383,6 @@ class MainWindow(QOpenGLWidget):
         self.wavHandler = WavHandler()
         self.lipSyncN = 3
         #self.audioPlayed = False
-        pass
 
     def change_character(self, name: str):
         """Set character name in Animation Manager """
@@ -469,11 +474,11 @@ class MainWindow(QOpenGLWidget):
 
     def init_classes(self):
         """Initialize classes"""
+        self.event_manager = EventManager(self)
         self.animation_manager = AnimationsManager(self, self.model)
         self.image_manager = ImageManager(self)
         self.animation_manager.set_target_fps(self.target_fps)
         self.change_character(self.character_name)
-        self.event_manager = EventManager(self)
 
     def init_logs(self):
         """Initialize logs"""
@@ -781,6 +786,14 @@ class MainWindow(QOpenGLWidget):
         action_normal.triggered.connect(self.action_handler.on_action_normal)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
+
+        # Sing Song Action
+        sing_song_action = QAction(self.get_icon("song"), self.lang['Actions']['SingSong'], self)
+        if not self.input_handler.input_lock:
+            sing_song_action.triggered.connect(self.action_handler.on_action_sing_song)
+        if self.current_sing_song:
+            context_menu.addAction(sing_song_action)
+            context_menu.addSeparator()
 
         # Transform Action
         transform_action = QAction(self.get_icon("transform"), self.lang['Actions']['Transform'], self)
@@ -2384,6 +2397,11 @@ class SettingsWindow(QWidget):
 
                 if key == 'audio_system':
                     self.mainWindow.audio_manager.audio_switch = value
+                    if value == False:
+                        self.mainWindow.audio_manager.stop_audio()
+                        self.mainWindow.audio_manager.stop_category("bgm")
+                    else:
+                        self.mainWindow.audio_manager.play_bg_music()
 
                 if key == 'master':
                     self.mainWindow.audio_manager.set_master_volume(audio_value)

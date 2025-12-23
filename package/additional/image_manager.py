@@ -58,10 +58,7 @@ class BackgroundImage:
 
         # Создаем путь со скругленными углами
         path = QPainterPath()
-        if self.win.frameless:
-            rect = QRectF(0, 0, self.win.width() + (self.win.w_correction), self.win.height())
-        else:
-            rect = QRectF(0, 0, self.win.width(), self.win.height())
+        rect = QRectF(0, 0, self.win.width(), self.win.height())
         path.addRoundedRect(rect, self.corner_radius, self.corner_radius)
 
         # Обрезаем painter по этому пути

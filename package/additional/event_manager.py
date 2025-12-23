@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta
+from os.path import split
 from typing import Dict, Optional
 
 from PySide6.QtGui import QFont, QPainter, QColor, QFontMetrics
@@ -10,6 +11,7 @@ class EventManager:
         self.win = win
         self.event_instance = None
         self.event_log = False
+        self.special_stage = None
         self.event_time_manager = EventTimeManager(self)
 
         # 1. Получаем текущее событие
@@ -17,6 +19,20 @@ class EventManager:
 
         # 2. Запускаем проверку
         self.check_events()  # Этот метод теперь создает event_instance
+
+        self.set_stage()
+
+    @property
+    def bgm_name(self):
+        return self.win.bgm_name
+
+    @bgm_name.setter
+    def bgm_name(self, value):
+        self.win.bgm_name = value
+
+    def set_stage(self):
+        if self.event_instance:
+            self.special_stage = self.event_instance.get_special_stage()
 
     def check_events(self):
         """Проверяет и создает событие"""
@@ -31,7 +47,6 @@ class EventManager:
                 self.event_instance = None
         else:
             self.event_instance = None
-
 
     def draw_event_text(self, painter):
         if self.event_instance:
@@ -53,16 +68,27 @@ class EventTimeManager:
 
         self._event_schedule = self._load_schedule()
 
+        self._special_event_schedule = self._load_special_day_schedule()
+
     def _load_schedule(self) -> Dict:
         """Загружает расписание событий"""
         return {
             "New Year": {
                 "start": {"month": 12, "day": 17},
-                "end": {"month": 1, "day": 10}
+                "end": {"month": 1, "day": 11}
             }
             # Можно добавить другие события:
             # "Halloween": {"start": {"month": 10, "day": 28}, "end": {"month": 11, "day": 2}},
             # "Birthday": {"start": {"month": 1, "day": 15}, "end": {"month": 1, "day": 15}},
+        }
+
+    def _load_special_day_schedule(self) -> Dict:
+        """Загружает расписание событий"""
+        return {
+            "New Year Day": {
+                "start": {"month": 12, "day": 31},
+                "end": {"month": 1, "day": 1}
+            }
         }
 
     def get_current_event(self) -> Optional[str]:
@@ -76,6 +102,20 @@ class EventTimeManager:
             # Проверяем, попадает ли сегодня в период события
             if self._is_date_in_period(today, start, end):
                 return event_name
+
+        return None
+
+    def get_special_event(self) -> Optional[str]:
+        """Определяет текущее активное событие"""
+        today = date.today()
+
+        for special_event_name, schedule in self._special_event_schedule.items():
+            start = schedule["start"]
+            end = schedule["end"]
+
+            # Проверяем, попадает ли сегодня в период события
+            if self._is_date_in_period(today, start, end):
+                return special_event_name
 
         return None
 
@@ -124,6 +164,8 @@ class NewYearEvent:
         self.triggered = False
         self.new_year_triggered = False  # Новый год наступил (00:00 1 января)
         self.holidays_triggered = False  # Начались каникулы (08:00 1 января)
+        self.christmas_triggered = False  # Рождество (25 и 7)
+        self.event_end_triggered = False # Окончание Ивента
 
         # Новогодние переменные
         self.new_year_event = False
@@ -133,6 +175,7 @@ class NewYearEvent:
         self.text_color = QColor(255, 215, 0)  # Золотой цвет
         self.text_shadow_color = QColor(139, 0, 0)  # Темно-красный для тени
         self.text_font = QFont("Arial", 10 * self.win.models_scale, QFont.Bold)
+        self.win.current_sing_song = "padoru"
 
         # Инициализация новогоднего статуса
         self.update_new_year_status()
@@ -146,9 +189,52 @@ class NewYearEvent:
         """Actual window link"""
         return self.event_manager.win
 
+    def get_special_stage(self):
+        now = datetime.now()
+
+        # ПРОВЕРКА ПО ПРИОРИТЕТУ (от более специфичных к общим):
+
+        # 1. Самый высокий приоритет: Новый год 1 января утром
+        if now.month == 1 and now.day == 1 and now.hour < 8:
+            return "Congratulation"
+
+        # 2. Рождество (зависит от языка)
+        if now.month == 12 and now.day == 25 and self.win.language == "English":
+            return "Xmas"
+        if now.month == 1 and now.day == 7 and self.win.language == "Russian":
+            return "Xmas"
+
+        # 3. Канун Нового года
+        if now.month == 12 and now.day == 31:
+            return "Greeting Today"
+
+        # 4. Новогодние каникулы (1 января после 8 утра и 2-10 января)
+        if now.month == 1:
+            if now.day == 1 and now.hour >= 8:
+                return "Greeting Holidays"
+            elif 2 <= now.day <= 11:
+                return "Greeting Holidays"
+
+        return None  # Не праздничный период
+
+    def get_song_name(self):
+        song_name = None
+        if self.christmas_triggered:
+            song_name = "christmas_song"
+        elif self.holidays_triggered:
+            song_name = "holidays_song"
+        elif self.event_end_triggered:
+            song_name = None
+        else:
+            song_name = "new_year_song"
+        return song_name
+
     def check_initial_status(self):
         """Проверяет и устанавливает начальный статус при запуске"""
         now = datetime.now()
+
+        if (now.month == 12 and now.day == 31):
+            self.on_new_year_day_arrival()
 
         # Если уже 1 января
         if now.month == 1 and now.day == 1:
@@ -159,9 +245,15 @@ class NewYearEvent:
                 self.holidays_triggered = True
 
         # Если уже после 1 января (но в пределах новогоднего периода)
-        elif now.month == 1 and 1 < now.day <= 10:
+        elif now.month == 1 and 1 < now.day <= 11:
             self.new_year_triggered = True
             self.holidays_triggered = True
+
+        elif (now.month == 12 and now.day == 25 and self.win.language == "English"):
+            self.christmas_triggered = True
+
+        elif (now.month == 1 and now.day == 7 and self.win.language == "Russian"):
+            self.christmas_triggered = True
 
         if self.event_manager.event_log:
             print(f"Initial status: new_year_triggered={self.new_year_triggered}, holidays_triggered={self.holidays_triggered}")
@@ -172,6 +264,12 @@ class NewYearEvent:
 
         if now.second == 0 and self.event_manager.event_log:  # Логируем каждую минуту
             print(f"Debug: {now} | new_year_triggered={self.new_year_triggered} | holidays_triggered={self.holidays_triggered}")
+
+        if (now.month == 1 and now.day == 12
+              and now.hour == 0 and now.minute == 0 and now.second == 0):
+            self.event_end_triggered = True
+            self.holidays_triggered = False
+            self.event_end()
 
         # 1. Триггер Нового года (1 января 00:00)
         if (now.month == 1 and now.day == 1 and
@@ -188,15 +286,49 @@ class NewYearEvent:
                 self._on_holidays_start()
 
         # 3. Если уже после 1 января, автоматически включаем каникулы
-        elif now.month == 1 and now.day > 1 and not self.holidays_triggered:
+        elif now.month == 1 and now.day > 1 and now.day <= 11 and not self.holidays_triggered:
             self.holidays_triggered = True
+
+        elif (now.month == 12 and now.day == 25 and self.win.language == "English"):
+            self.christmas_triggered = True
+            if (now.hour == 0 and now.minute == 0 and now.second == 0):
+                self._on_christmas_arrival()
+
+        elif (now.month == 12 and now.day == 26
+              and now.hour == 0 and now.minute == 0 and now.second == 0
+              and self.win.language == "English" ):
+            self.christmas_triggered = False
+
+        elif (now.month == 1 and now.day == 7 and self.win.language == "Russian"):
+            self.christmas_triggered = True
+            if (now.hour == 0 and now.minute == 0 and now.second == 0):
+                self._on_christmas_arrival()
+
+        elif (now.month == 1 and now.day == 8
+              and now.hour == 0 and now.minute == 0 and now.second == 0
+              and self.win.language == "Russian" ):
+            self.christmas_triggered = False
+
+        self.event_manager.bgm_name = self.get_song_name()
 
         # Обновляем текст
         self._update_text()
 
+    def on_new_year_day_arrival(self):
+        """Триггер наступления Нового года (00:00 1 января)"""
+        #self.new_year_triggered = True
+        if self.event_manager.event_log:
+            print("🎉 31 Декабря 🎉")
+
+        self.event_manager.special_event = "New Year Day"
+
     def _on_new_year_arrival(self):
         """Триггер наступления Нового года (00:00 1 января)"""
         self.new_year_triggered = True
+        self.win.character.state.set_event_congratulation_state(event_name=self.event_manager.current_event,
+                                                                event_key="Congratulation")
+        self.win.audio_manager.play_audio("Effects", "new_year_fanfare", enable_lipsync=False, category="sfx",
+                                      stop_audio=False)
         if self.event_manager.event_log:
             print("🎉🎉🎉 С НОВЫМ ГОДОМ! 🎉🎉🎉")
 
@@ -211,11 +343,29 @@ class NewYearEvent:
         self.holidays_timer.setSingleShot(True)
         self.holidays_timer.start(8 * 60 * 60 * 1000)  # 8 часов в миллисекундах
 
+    def _on_christmas_arrival(self):
+        """Триггер наступления Нового года (00:00 1 января)"""
+        self.christmas_triggered = True
+        self.win.character.state.set_event_congratulation_state(event_name=self.event_manager.current_event,
+                                                                event_key="Xmas")
+        if self.event_manager.event_log:
+            print("🎅🎄 Счастливого Рождества! 🎄🎅")
+
+        # Здесь можно запустить праздничные эффекты:
+        # self._start_fireworks()
+        # self._play_new_year_sound()
+        # self._show_confetti()
+
+        self.holidays_timer = QTimer()
+        self.holidays_timer.timeout.connect(self._force_holidays_start)
+        self.holidays_timer.setSingleShot(True)
+        self.holidays_timer.start(8 * 60 * 60 * 1000)  # 8 часов в миллисекундах
+
     def _on_holidays_start(self):
         """Триггер начала новогодних каникул (08:00 1 января)"""
         self.holidays_triggered = True
         if self.event_manager.event_log:
-            print("🎅🎄 Начались новогодние каникулы! 🎄🎅")
+            print("🎅 Начались новогодние каникулы! 🎅")
 
         # Здесь можно запустить эффекты для каникул:
         # self._change_holiday_theme()
@@ -234,8 +384,12 @@ class NewYearEvent:
 
     def get_new_year_info(self) -> str:
         """Возвращает информацию в зависимости от этапа"""
-        now = datetime.now()  # Используем datetime вместо date
-        today = now.date()  # Получаем только дату для сравнений
+        now = datetime.now()
+        today = now.date()
+
+        # ПЕРВЫЙ ПРИОРИТЕТ: Рождество (7 января)
+        if now.month == 1 and now.day == 7 and self.win.language == "Russian":
+            return f"🎅🎄 {self.win.lang['NewYearEvent']['Xmas']} 🎄🎅"
 
         # Этап 1: Обратный отсчет до Нового года (до 31 декабря)
         if today.month == 12:
@@ -244,23 +398,27 @@ class NewYearEvent:
         # Этап 2: Новый год только что наступил (1 января 00:00-08:00)
         elif today.month == 1 and today.day == 1 and not self.holidays_triggered:
             if self.new_year_triggered:
-                # Показываем сколько прошло времени после Нового года
                 time_since = self._get_time_since_new_year()
                 hours = time_since.seconds // 3600
-                minutes = (time_since.seconds % 3600) // 60
 
-                if now.hour < 8:  # Используем now.hour вместо today.hour
+                if now.hour < 8:
                     return f"🎉🎉🎉 {self.win.lang['NewYearEvent']['Congratulation']} 🎉🎉🎉"
                 else:
                     return f"🎅 {self.win.lang['NewYearEvent']['Holidays']} 1"
             else:
-                # Если почему-то не сработал триггер, но уже 1 января
                 return f"🎉🎉🎉 {self.win.lang['NewYearEvent']['Congratulation']} 🎉🎉🎉"
 
-        # Этап 3: Новогодние каникулы (1-10 января)
-        elif today.month == 1 and today.day <= 10:
+        # Этап 3: Новогодние каникулы (1-11 января)
+        elif today.month == 1 and today.day <= 11:
             days_passed = (today - date(today.year, 1, 1)).days
-            return f"🎅 {self.win.lang['NewYearEvent']['Holidays']} {days_passed + 1}"
+
+            # 8 января (день после Рождества) - возвращаемся к каникулам
+            if now.day == 8:
+                return f"🎅 {self.win.lang['NewYearEvent']['Holidays']} {days_passed + 1}"
+            # 7 января - Рождество (уже обработано выше)
+            # 1-6, 9-10 января - обычные каникулы
+            else:
+                return f"🎅 {self.win.lang['NewYearEvent']['Holidays']} {days_passed + 1}"
 
         # Этап 4: Вне новогоднего периода
         else:
@@ -272,25 +430,28 @@ class NewYearEvent:
         new_year = datetime(now.year + 1, 1, 1, 0, 0, 0)
         time_left = new_year - now
 
-        if time_left.days > 0:
-            return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {time_left.days}"
-                    f" {self.win.lang['NewYearEvent']['Days']}")
-        elif time_left.seconds >= 3600:
-            hours = time_left.seconds // 3600
-            minutes = (time_left.seconds % 3600) // 60
-            seconds = time_left.seconds % 60
-            return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {hours:02d}"
-                    f" {self.win.lang['NewYearEvent']['Hours']} {minutes:02d}"
-                    f" {self.win.lang['NewYearEvent']['Minutes']}")
-        elif time_left.seconds >= 60:
-            minutes = time_left.seconds // 60
-            seconds = time_left.seconds % 60
-            return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {minutes:02d}"
-                    f" {self.win.lang['NewYearEvent']['Minutes']} {seconds:02d}"
-                    f" {self.win.lang['NewYearEvent']['Seconds']}")
+        if not self.christmas_triggered:
+            if time_left.days > 0:
+                return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {time_left.days}"
+                        f" {self.win.lang['NewYearEvent']['Days']}")
+            elif time_left.seconds >= 3600:
+                hours = time_left.seconds // 3600
+                minutes = (time_left.seconds % 3600) // 60
+                seconds = time_left.seconds % 60
+                return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {hours:02d}"
+                        f" {self.win.lang['NewYearEvent']['Hours']} {minutes:02d}"
+                        f" {self.win.lang['NewYearEvent']['Minutes']}")
+            elif time_left.seconds >= 60:
+                minutes = time_left.seconds // 60
+                seconds = time_left.seconds % 60
+                return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {minutes:02d}"
+                        f" {self.win.lang['NewYearEvent']['Minutes']} {seconds:02d}"
+                        f" {self.win.lang['NewYearEvent']['Seconds']}")
+            else:
+                return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {time_left.seconds:02d}"
+                        f" {self.win.lang['NewYearEvent']['Seconds']}")
         else:
-            return (f"🎄 {self.win.lang['NewYearEvent']['Until']} {time_left.seconds:02d}"
-                    f" {self.win.lang['NewYearEvent']['Seconds']}")
+            return f"🎅🎄 {self.win.lang['NewYearEvent']['Xmas']} 🎄🎅"
 
     def _get_time_since_new_year(self) -> timedelta:
         """Сколько времени прошло с Нового года"""
@@ -484,4 +645,10 @@ class NewYearEvent:
             self.draw_new_year_text(painter2)
             painter2.end()
 
-
+    def event_end(self):
+        self.holidays_triggered = False
+        self.new_year_event = False
+        self.event_manager.bgm_name = None
+        self.win.background_name = None
+        self.win.background = False
+        self.win.current_sing_song = None

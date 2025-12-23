@@ -45,6 +45,18 @@ class CharacterManager:
     def tracking_mouse(self, value: bool) -> None:
         self.win.tracking_mouse = value
 
+    @property
+    def current_event(self):
+        if hasattr(self.win, 'event_manager') and self.win.event_manager:
+            return self.win.event_manager.current_event
+        return None  # или "default"
+
+    @property
+    def special_stage(self):
+        if hasattr(self.win, 'event_manager') and self.win.event_manager:
+            return self.win.event_manager.special_stage
+        return None  # или "default"
+
 class CharacterStateManager:
     def __init__(self, character):
         self.character = character
@@ -90,7 +102,16 @@ class CharacterStateManager:
             is_first_run: If True, the callback is not called (for the first character display).
             example: on_finished=None if is_first_run else self._after_animation_fade_in_callback
         """
-        self.character.character_text.set_greeting_text()
+        if self.character.current_event:
+            current_event_group = self.character.current_event.replace(" ", "") + "Event"
+            if self.character.special_stage:
+                key = self.character.special_stage.replace(" ", "")
+            else:
+                key = "Greeting"
+            self.character.character_text.set_event_greeting_text(group_name=current_event_group, text_key=key)
+        else:
+            self.character.character_text.set_greeting_text()
+
         self.win.animation_manager.opacity_animator.animate_opacity(
             win=self.win,
             start=0.0,
@@ -101,7 +122,17 @@ class CharacterStateManager:
 
     def _after_animation_fade_in_callback(self):
         """Runs after the animation is completed"""
-        self.character.audio.set_greeting_audio()
+        if self.character.current_event:
+            if self.character.special_stage:
+                key = self.character.special_stage.replace(" ", "_")
+            else:
+                key = "Greeting"
+            format_key = self.character.current_event.replace(" ", "_") + "_" + key
+            print(format_key)
+            #self.character.audio.set_event_background_audio()
+            self.character.audio.set_event_greeting_audio(audio_key = format_key)
+        else:
+            self.character.audio.set_greeting_audio()
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.movements.set_motion(group_name="Special", id=19)
         self.win.input_handler.input_lock = False
@@ -233,6 +264,24 @@ class CharacterStateManager:
         """Set crying state"""
         self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_cry_expression()
+
+    def set_event_congratulation_state(self, event_name: str | None = None,
+                                     event_key: str | None = None) -> None:
+        """Character say goodbye"""
+        audio_key = event_name.replace(" ", "_") + "_" + event_key
+        self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
+        self.character.expressions.set_happy_expression(fade_out=7000)
+        self.character.expressions.set_star_expression(fade_out=7000)
+        self.character.movements.set_motion(group_name="Special", id=3)
+        text_group = event_name.replace(" ", "") + "Event"
+        self.character.character_text.set_event_congratulation_text(group_name=text_group,text_key=event_key)
+
+    def sing_song_state(self):
+        """Character sings a song"""
+        self.win.audio_manager.play_song()
+        self.character.movements.set_motion(group_name="Special", id=3)
+        self.character.expressions.set_smile_expression(fade_out=self.win.song_duration)
+        self.character.character_text.set_sing_song_text()
 
 class CharacterTiredController:
     def __init__(self, character):
@@ -435,6 +484,9 @@ class CharacterExpressionManager:
     def set_happy_expression(self, fade_out: int | None = None) -> None:
         self._apply_expression("Happy", fade_out)
 
+    def set_star_expression(self, fade_out: int | None = None) -> None:
+        self._apply_expression("Star", fade_out)
+
     def set_sad_expression(self, fade_out: int | None = None) -> None:
         self._apply_expression("Sad", fade_out)
 
@@ -632,6 +684,16 @@ class CharacterTextManager:
         self.kaomoji = "(^~^)/"
         self.update()
 
+    def set_event_greeting_text(self, group_name, text_key = "Greeting", kaomoji = "*(^.^)*"):
+        self.text = [group_name, text_key]
+        self.kaomoji = kaomoji
+        self.update()
+
+    def set_event_congratulation_text(self, group_name, text_key = "Greeting", kaomoji = "★~(◠‿◕✿)"):
+        self.text = [group_name, text_key]
+        self.kaomoji = kaomoji
+        self.update()
+
     def set_goodbye_text(self):
         self.text = ['Talk', 'Goodbye']
         self.kaomoji = "(-_-)>"
@@ -707,6 +769,11 @@ class CharacterTextManager:
         self.kaomoji = "(^3^)"
         self.update()
 
+    def set_sing_song_text(self):
+        self.text = "♫♫♫"
+        self.kaomoji = "ヽ(⌒▽⌒)ﾉ ♪"
+        self.update()
+
     def update(self):
         self.character.win.talk_widget.show_talk()
 
@@ -769,6 +836,37 @@ class CharacterAudioManager:
         audio_key_lower = audio_key.lower() if audio_key else None
         self.audio_manager.play_audio(self.character.name, audio_key_lower, enable_lipsync=True, category="voice",
                               stop_audio=True)
+
+    def set_event_greeting_audio(self, audio_key= "greeting"):
+        audio_key_lower = audio_key.lower()
+        # Пробуем воспроизвести аудио
+        success = self.audio_manager.play_audio(
+            self.character.name,
+            audio_key_lower,
+            enable_lipsync=True,
+            category="voice",
+            stop_audio=True
+        )
+
+        if not success:
+            self.set_greeting_audio()
+
+    def set_event_congratulation_audio(self, audio_key= "happy"):
+        audio_key_lower = audio_key.lower()
+        # Пробуем воспроизвести аудио
+        success = self.audio_manager.play_audio(
+            self.character.name,
+            audio_key_lower,
+            enable_lipsync=True,
+            category="voice",
+            stop_audio=True
+        )
+
+        if not success:
+            self.set_happy_audio()
+
+    def set_sing_song_audio(self):
+        self.audio_manager.play_song()
 
     def set_greeting_audio(self):
         self.audio_manager.play_audio(self.character.name, "greeting", enable_lipsync=True, category="voice",

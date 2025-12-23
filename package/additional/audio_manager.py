@@ -1,5 +1,8 @@
 import os
 
+from PySide6.QtCore import QTimer, QDateTime
+
+
 class AudioManager:
     def __init__(self, win, resources_dir: str):
         self.win = win
@@ -22,6 +25,48 @@ class AudioManager:
         self.sound_categories = {}  # Для группировки звуков по категориям
         self.category_volumes = {}
         self.load_config()
+
+        self.previous_bgm_name = ""  # Храним предыдущее значение
+
+        self.bg_music_timer = QTimer()
+        self.bg_music_timer.timeout.connect(self.check_bgm_change)
+        self.bg_music_timer.start(1000)  # Проверяем каждую секунду
+
+    @property
+    def bgm_name(self):
+        return self.win.bgm_name
+
+    @property
+    def bgm_group(self):
+        return self.win.bgm_group
+
+    @property
+    def current_sing_song(self):
+        return self.win.current_sing_song
+
+    @property
+    def song_duration(self):
+       return self.win.song_duration
+
+    @song_duration.setter
+    def song_duration(self, value: int):
+        self.win.song_duration = value
+
+    def check_bgm_change(self):
+        """Проверяем изменение bgm_name каждую секунду"""
+        if self.previous_bgm_name != self.bgm_name:
+            # print(f"🎵 BGM изменилось: {self.previous_bgm_name} -> {self.bgm_name}")
+            self.previous_bgm_name = self.bgm_name
+            if not self.bgm_name:
+                self.stop_category("bgm")
+            else:
+                self.play_bg_music()
+
+    def set_bgm_name(self, value):
+        """Метод для установки bgm_name"""
+        self.bgm_name = value
+        # Не ждем таймер - запускаем сразу
+        self.play_bg_music()
 
     def load_config(self):
         """Загружает или перезагружает настройки из конфига"""
@@ -121,6 +166,69 @@ class AudioManager:
         self.play_audio(self.win.character_name, "default", enable_lipsync=True,
                                       stop_audio=True)
 
+    def play_song(self):
+        """Воспроизведение песни с автоматическим понижением фоновой музыки"""
+        # Получаем файл песни
+        self.win.input_handler.input_lock = True
+        song_name = self.current_sing_song
+
+        # Сохраняем текущую громкость BGM
+        self.original_bgm_volume = self.get_category_volume("bgm")
+
+        # Уменьшаем громкость BGM (не до 0, а например до 20%)
+        self.set_category_volume("bgm", 0.1, update_existing=True)
+
+        # Воспроизводим песню
+        sound_id = self.play_audio(
+            "Songs", song_name,
+            category="voice",
+            enable_lipsync=True,
+            stop_audio=True,
+            sound_id=f"song_{song_name}"  # Уникальный ID для управления
+        )
+
+        if sound_id:
+            # Создаем таймер для восстановления громкости
+            self.resume_bgm_timer = QTimer()
+            self.resume_bgm_timer.setSingleShot(True)
+            self.resume_bgm_timer.timeout.connect(self.restore_bgm_volume)
+            self.resume_bgm_timer.start(self.song_duration)
+
+            # Сохраняем информацию о текущей песне
+            duration = self.song_duration
+            self.current_sing_song_save = {
+                'id': sound_id,
+                'name': song_name,
+                'duration': duration,
+                'start_time': QDateTime.currentDateTime()
+            }
+
+            return True
+
+        return False
+
+    def restore_bgm_volume(self):
+        """Восстанавливает оригинальную громкость BGM"""
+        self.win.input_handler.input_lock = False
+        if hasattr(self, 'original_bgm_volume'):
+            self.set_category_volume("bgm", self.original_bgm_volume, update_existing=True)
+            delattr(self, 'original_bgm_volume')
+
+        if hasattr(self, 'resume_bgm_timer'):
+            self.resume_bgm_timer.stop()
+            delattr(self, 'resume_bgm_timer')
+
+
+    def play_bg_music(self):
+        if not self.bgm_name:
+            return
+        if self.bgm_group:
+            audio_source = self.bgm_group
+        #else:
+        #    audio_source = self.win.character_name
+
+        self.play_audio(audio_source, self.bgm_name, category="bgm", stop_audio=True)
+
 
     def play_audio(self, character_name: str, audio_source: str = None,
                    enable_lipsync: bool = False,
@@ -180,6 +288,18 @@ class AudioManager:
 
             # Создаем Sound объект
             sound = pygame.mixer.Sound(audio_file)
+
+            self.song_duration = int(sound.get_length() * 1000)
+
+            # Воспроизводим с учетом категории
+            if category == "bgm":
+                # Фоновая музыка - воспроизводим на бесконечном повторе
+                channel = sound.play(loops=-1)
+                loop_info = " (BGM, зациклено)"
+            else:
+                # Обычный звук - воспроизводим один раз
+                channel = sound.play()
+                loop_info = ""
 
             # Устанавливаем громкость
             if volume_override is not None:

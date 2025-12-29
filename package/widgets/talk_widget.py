@@ -20,16 +20,16 @@ class TalkWidget:
 
     # Dialog close timer
     def dialog_timer(self, interval: int | None = None) -> None:
-        """Запускает/обновляет таймер закрытия диалога"""
-        # Стандартный интервал по умолчанию
+        """Starts/updates the timer for closing the dialog"""
+        # The default time interval is
         std_interval = 7000
-        # Создаём таймер только если его нет
+        # Create a timer only if there is none.
         if not hasattr(self, 'dialogCloseTimer'):
             self.dialogCloseTimer = QTimer()
             self.dialogCloseTimer.setSingleShot(True)
             self.dialogCloseTimer.timeout.connect(self.close_dialog)
 
-        # Определяем актуальный интервал
+        # Determine the current interval
         if interval == None:
             current_interval = self.exp_fade_out_var if self.exp_fade_out_var != std_interval else std_interval
         elif self.is_quitting:
@@ -37,11 +37,10 @@ class TalkWidget:
         else:
             current_interval = interval
 
-        # Останавливаем и перезапускаем с новым интервалом
+        # Stop and restart with a new interval
         self.dialogCloseTimer.stop()
         self.dialogCloseTimer.start(int(current_interval))
 
-        # Для отладки
         # Logging
         if self.win.timer_log:
             print(f"[Timer] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")
@@ -58,6 +57,10 @@ class TalkWidget:
         self.talk_text_label = QLabel()
 
         self.grid_layout.addWidget(self.talk_frame, 1, 0, 1, 1)
+
+    @property
+    def show_text_in_console(self):
+        return self.win.show_text_in_console
 
     @property
     def character_name(self):
@@ -223,7 +226,8 @@ class TalkWidget:
 
         self.talk_form_layout.setWidget(0, QFormLayout.LabelRole, self.talk_text_label)
 
-        print(f"{self.name}: {self.text}\n{self.kaomoji}")
+        if self.show_text_in_console:
+            print(f"{self.name}: {self.text}\n{self.kaomoji}")
 
     def _setup_talk_image(self):
         """Adjusts the image in the widget"""

@@ -4,6 +4,7 @@ from PySide6.QtGui import QMovie, Qt
 from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
 
 from package import resources
+import warnings
 import random
 import time
 import math
@@ -97,6 +98,14 @@ class AnimationsManager:
         """
         Proxy-Method for AnimationPlayer.play_animation
         """
+        if isinstance(priority, str):
+            PRIORITY_MAP = {
+                "FORCE": live2d.MotionPriority.FORCE,
+                "NORMAL": live2d.MotionPriority.NORMAL,
+                "IDLE": live2d.MotionPriority.IDLE
+            }
+            priority = PRIORITY_MAP.get(priority.upper(), priority)
+
         return self.animation_player.play_animation(
             model=model,
             anim_type=anim_type,
@@ -147,6 +156,88 @@ class AnimationsManager:
                            duration: int | None = 1000) -> None:
         """Start fade to color backlight effect"""
         self.color_animator.fade_to_color(r,g,b,duration)
+
+    def play_random_flicker_shape(self, stop_after_ms=7000):
+        """Случайный режим пульсации со случайными цветами"""
+        random_shape = self.color_animator.get_random_flicker_shape()
+        self.color_animator.set_pulsating_color(
+            r=random.randint(100, 255),
+            g=random.randint(100, 255),
+            b=random.randint(100, 255),
+            pulse_shape=random_shape,
+            pulse_duration=random.randint(1000, 4000),
+            stop_after_ms=stop_after_ms,
+            unique_id=f"random_flicker_{int(time.time())}"
+        )
+
+    def play_color_pulse(self, r, g, b,
+                         pulse_duration=2000,
+                         min_brightness=0.3,
+                         max_brightness=1.0,
+                         pulse_shape="sine",
+                         fade_in_duration=500,
+                         infinite=True,
+                         pulse_count=None,
+                         stop_after_ms=None,
+                         stop_fade_out=True,
+                         stop_fade_duration=500,
+                         unique_id=None,
+                         **extra_kwargs):  # Для совместимости с будущими параметрами
+        """
+            Proxy method for set_pulsating_color.
+
+            All parameters are passed to color_animator.set_pulsating_color()
+
+            Args:
+                r, g, b: RGB base color (0-255 or 0.0-1.0)
+                pulse_duration: Duration of one pulsation cycle in ms
+                min_brightness: Minimum color brightness (0.0 - 1.0)
+                max_brightness: Maximum color brightness (0.0 - 1.0)
+                pulse_shape: Pulse shape
+                fade_in_duration: Smooth start of pulse (0 for instant)
+                infinite: Endless ripple
+                pulse_count: Number of pulse (if not infinite)
+                stop_after_ms: Automatically stop after X milliseconds
+                stop_fade_out: Smooth stop when autostop
+                stop_fade_duration: Duration of attenuation when autostop
+                unique_id: A unique identifier for management
+            """
+
+        params = {
+            'r': r, 'g': g, 'b': b,
+            'pulse_duration': pulse_duration,
+            'min_brightness': min_brightness,
+            'max_brightness': max_brightness,
+            'pulse_shape': pulse_shape,
+            'fade_in_duration': fade_in_duration,
+            'infinite': infinite,
+            'pulse_count': pulse_count,
+            'stop_after_ms': stop_after_ms,
+            'stop_fade_out': stop_fade_out,
+            'stop_fade_duration': stop_fade_duration,
+            'unique_id': unique_id,
+            **extra_kwargs
+        }
+
+        return self.color_animator.set_pulsating_color(**params)
+
+    def modify_color_pulse(self, pulse_id, pulse_duration=500, pulse_shape="triangle", max_brightness=1.0):
+        """Change color pulse Params"""
+        self.color_animator.modify_pulse(
+            pulse_id=pulse_id,
+            pulse_duration=pulse_duration, # Ускорить пульсацию
+            pulse_shape=pulse_shape, # Изменить форму
+            max_brightness=max_brightness) # Увеличить максимальную яркость
+
+    def stop_color_pulse(self):
+        """Stop color pulse"""
+        self.color_animator.stop_pulse()  # Остановить все
+
+    def stop_specific_color_pulse(self, pulse_id, fade_out=True, fade_duration=1000):
+        """Stop specific color pulse on id"""
+        self.color_animator.stop_pulse(pulse_id=pulse_id,
+                                       fade_out=fade_out,
+                                       fade_duration=fade_duration)
 
 class AnimationPlayer:
     """Animation Player"""
@@ -219,8 +310,16 @@ class AnimationPlayer:
     def _handle_motion_start(self, group, no):
         """Callback with Animation Start"""
         if self._log_callbacks:
-            print(f"Animation {group} {no} start - blink off")
-        self.animation_manager.blink_animator.set_blink_enabled(False)  # Using our previously created method
+            # For Special animations, replace no with "id + name"
+            if group == "Special":
+                anim_name = self._get_special_animation_name(no)
+                display_no = f"{no} ({anim_name})"
+            else:
+                display_no = no
+
+            print(f"Animation {group} {display_no} start - blink off")
+
+        self.animation_manager.blink_animator.set_blink_enabled(False)
 
     def _handle_motion_finish(self, group, no):
         """Callback with Animation Finish"""
@@ -230,12 +329,28 @@ class AnimationPlayer:
             self._reset_idle_state()
             self.animation_manager.blink_animator.set_blink_enabled(True)
         if self._log_callbacks:
-            print(f"Animation {group} {no} finish - blink on")
+            # For Special animations, replace no with "id + name"
+            if group == "Special":
+                anim_name = self._get_special_animation_name(no)
+                display_no = f"{no} ({anim_name})"
+            else:
+                display_no = no
+            print(f"Animation {group} {display_no} finish - blink on")
 
         # Additionally: reset the eyes to the open state
         #self.model.SetParameterValueById("ParamEyeLOpen", 1.0)
         #self.model.SetParameterValueById("ParamEyeROpen", 1.0)
         #self.model.SetParameterValueById("ParamMouthOpenY", 0)
+
+    def _get_special_animation_name(self, no: int) -> str:
+        """Get Special animation name by number"""
+        special_animations = {
+            0: "Aah", 1: "Bye", 2: "Fun", 3: "Joy", 4: "Love", 5: "Menace",
+            6: "Muscle", 7: "Sad", 8: "Sigh", 9: "Sleep", 10: "Sleepy",
+            11: "Sleepy Alt", 12: "Sleepy Talk", 13: "Stagger", 14: "Surprised",
+            15: "Walk", 16: "What", 17: "Yawn", 18: "Yawn Alt", 19: "Yeah"
+        }
+        return special_animations.get(no, f"Unknown")
 
     def _random_delay(self):
         """Generate Random Interval"""
@@ -415,19 +530,37 @@ class OpacityAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
 
-        self.anim = QVariantAnimation()
+        self.animations = {}
 
     @property
     def win(self):
         """Actual window link"""
         return self.animation_manager.win
 
-    def animate_opacity(self, win, start, end, duration=500, easing="linear", on_finished=None):
+    def get_anim_for_object(self, obj):
+        """Возвращает уникальный аниматор для объекта"""
+        obj_id = id(obj)
+        if obj_id not in self.animations:
+            self.animations[obj_id] = QVariantAnimation()
+        return self.animations[obj_id]
+
+    def animate_opacity(self, source, start, end, duration=500, easing="linear", on_finished=None):
         """Animation of character transparency via QVariantAnimation"""
         # Set base params
+        self.anim = self.get_anim_for_object(source)
+        self.anim.stop()
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            try:
+                self.anim.valueChanged.disconnect()
+            except RuntimeError:
+                pass
+
         self.anim.setDuration(duration)
         self.anim.setStartValue(float(start))
         self.anim.setEndValue(float(end))
+        self.anim.valueChanged.connect(source.SetOutputOpacity)
 
         # Process easing curve
         if not hasattr(self, 'EASING_TYPES'):
@@ -441,14 +574,17 @@ class OpacityAnimator:
         easing_curve = self.EASING_TYPES.get(easing, QEasingCurve.Linear)
 
         # Set Var SetOutputOpacity
-        self.anim.valueChanged.connect(win.canvas.SetOutputOpacity)
+        # win.canvas.SetOutputOpacity
+        self.anim.valueChanged.connect(source.SetOutputOpacity)
 
         #  on_finished connect
-        if hasattr(self, "_last_finished_slot"):
-            try:
-                self.anim.finished.disconnect(self._last_finished_slot)
-            except RuntimeError:
-                pass
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            if hasattr(self, "_last_finished_slot"):
+                try:
+                    self.anim.finished.disconnect(self._last_finished_slot)
+                except RuntimeError:
+                    pass
 
         if callable(on_finished):
             self.anim.finished.connect(on_finished)
@@ -627,7 +763,7 @@ class TransformAnimator:
                 anim_type='Motion',
                 group_or_id="Unique",
                 no=0,
-                priority=live2d.MotionPriority.FORCE,
+                priority="FORCE",
             )
 
     def _calculate_animation_size(self):
@@ -675,17 +811,135 @@ class TransformAnimator:
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
+class BodyPartAnimator:
+    def __init__(self, animation_manager):
+        self.animation_manager = animation_manager
+        self.active_parts = {}
+        self.body_part_timer = QTimer()
+        self.body_part_timer.timeout.connect(self._update_parts)
+        self.body_part_timer.setInterval(1)
+        self.last_time = time.perf_counter()
+
+    @property
+    def model(self):
+        return self.animation_manager.model
+
+    @property
+    def target_fps(self):
+        return self.animation_manager.target_fps
+
+    def add_animation(self, part_id, range=(0, 10), speed=0.1,easing='linear'):
+        """Add Body Animation"""
+        # Leading to the correct types
+        range = (float(range[0]), float(range[1]))
+        speed = float(speed)
+
+        if part_id not in self.active_parts:
+            # New Animation
+            self.active_parts[part_id] = {
+                'range': range,
+                'speed': speed,
+                'value': range[0],
+                'direction': 1,
+                'easing': easing,
+                'active': True,
+            }
+        else:
+            # Update current Animation
+            config = self.active_parts[part_id]
+            config['range'] = range
+            config['speed'] = speed
+            config['active'] = True
+            config['reset_requested'] = False
+
+            # Smooth transition to new parameters
+            if config['value'] < range[0]:
+                config['value'] = range[0]
+            elif config['value'] > range[1]:
+                config['value'] = range[1]
+
+        if not self.body_part_timer.isActive():
+            self.last_time = time.perf_counter()
+            self.body_part_timer.start()
+
+    def stop_all(self):
+        """Stop Animation"""
+        for part_id in list(self.active_parts.keys()):
+            self.model.SetParameterValueById(part_id, 0)
+        self.active_parts.clear()
+        self.body_part_timer.stop()
+
+    def _update_parts(self):
+        """Update Part Values"""
+        current_time = time.perf_counter()
+        delta_time = current_time - self.last_time
+        self.last_time = current_time
+
+        # ANOMALY PROTECTION:
+        delta_time = min(delta_time, 0.1)  # Max 100ms (if the window was minimized)
+        delta_time = max(delta_time, 0.001)  # Minimum 1ms (error protection)
+
+        # Normalization to target FPS
+        normalized_delta = delta_time * self.target_fps
+
+        # Update active animations
+        parts_to_remove = []
+        for part_id, config in self.active_parts.items():
+            try:
+                if not config['active']:
+                    continue
+
+                # Smooth value change
+                new_value = config['value'] + config['direction'] * config['speed'] * normalized_delta
+
+                # Range limitation
+                if new_value >= config['range'][1]:
+                    new_value = config['range'][1]
+                    config['direction'] = -1
+                elif new_value <= config['range'][0]:
+                    new_value = config['range'][0]
+                    config['direction'] = 1
+
+                self.model.SetParameterValueById(part_id, new_value)
+                config['value'] = new_value
+
+            except Exception as e:
+                print(f"Animation error for {part_id}: {e}")
+                parts_to_remove.append(part_id)
+
+        # Deleting completed animations
+        for part_id in parts_to_remove:
+            self._safe_remove_part(part_id)
+
+        if not self.active_parts:
+            self.body_part_timer.stop()
+
+    def _safe_remove_part(self, part_id):
+        """Safely deleting a part from active_parts"""
+        if part_id in self.active_parts:
+            try:
+                self.model.SetParameterValueById(part_id, 0)
+            except:
+                pass
+            del self.active_parts[part_id]
+
 class DragAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
+        self.part_animator = BodyPartAnimator(animation_manager)
 
         self.angle = 0.0
         self.max_angle = 15.0
         self.return_delay = 500  # Delay before return (ms)
         self.return_speed = 0.5  # Return rate (0.1-0.9)
-        self.drag_direction = 0
+        self.drag_direction_x = 0  # Horizontal direction (-1 to 1)
+        self.drag_direction_y = 0  # Vertical direction (-1 to 1)
         self.drag_intensity = 0
         self.max_angle = 10
+        self.last_animation_time = 0
+
+        self.vertical_intensity = 0.0  # Adding vertical intensity tracking
+        self.return_threshold = 0.1    # Stop threshold for all animations
 
         # Таймеры
         self.return_timer = QTimer()
@@ -694,39 +948,114 @@ class DragAnimator:
 
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._update_return_animation)
-        self.animation_timer.setInterval(16)  # 60 FPS
 
     @property
     def win(self):
         return self.animation_manager.win
 
+    @property
+    def model(self):
+        return self.animation_manager.model
+
+    @property
+    def profiles(self):
+        return self.animation_manager.profiles
+
+    @property
+    def current_character(self):
+        return self.animation_manager._current_character
+
+    @property
+    def frame_delay(self):
+        return self.animation_manager.frame_delay
+
+    def start_drag_animation(self, direction_key):
+        """Start animation for any direction"""
+        profile = self.profiles.get(self.current_character, {})
+        drag_config = profile.get('drag_animations', {}).get(direction_key, {})
+        animation_speed = round((self.drag_intensity/4),2)
+        # print(f"Drag config for {direction_key}: {drag_config}")  # What is contained in the config
+
+        for part_config in drag_config.get('parts', []):
+            # print(f"Drag config for {direction_key}, Processing part: {part_config}")  # Output of the current configuration
+            try:
+                self.part_animator.add_animation(
+                    part_id=part_config['part'],
+                    range=part_config.get('range', [0, 10]),
+                    speed=part_config.get('speed', animation_speed)
+                )
+            except Exception as e:
+                print(f"Animation error for {part_config['part']}: {e}")
+
+    def stop_drag_animation(self):
+        """Stop all animations"""
+        self.part_animator.stop_all()
+
+    def update_vertical_movement(self, direction_y, intensity):
+        """A separate method for vertical movement"""
+        self.drag_direction_y = direction_y
+        self.drag_intensity = intensity
+        # We do not use the tilt angle for vertical movement!
+        self.return_timer.stop()
+        self.return_timer.start(self.return_delay)
+
     def update_angle(self, direction, intensity):
-        self.drag_direction = direction
+        """Update tilt angle only for horizontal movement"""
+        self.drag_direction_x = direction
         self.drag_intensity = intensity
 
+        # Only apply tilt for horizontal movement
+        target_angle = direction * intensity * self.max_angle
+        self.angle = 0.3 * target_angle + 0.7 * self.angle
+
+        # self.win.model.Rotate(int(self.angle))
+
     def update_drag_animation(self):
-        """Tilt angle update"""
-        target_angle = self.drag_direction * self.drag_intensity * self.max_angle
-        self.angle = 0.3 * target_angle + 0.7 * self.angle  # Strong smoothing
+        """Only for horizontal movement - vertical doesn't tilt"""
+        if abs(self.drag_direction_x) > 0.1:  # Only if significant horizontal movement
+            target_angle = self.drag_direction_x * self.drag_intensity * self.max_angle
+            self.angle = 0.3 * target_angle + 0.7 * self.angle
+            self.win.model.Rotate(int(self.angle))
 
-        self.win.model.Rotate(int(self.angle))
-
-        # Restart the delay timer
+        # Restart the delay timer for both axes
         self.return_timer.stop()
         self.return_timer.start(self.return_delay)
 
     def start_return_animation(self):
         """Starting the return animation"""
         if not self.animation_timer.isActive():
+            self.animation_timer.setInterval(self.frame_delay)
             self.animation_timer.start()
 
     def _update_return_animation(self):
-        """Updating the frame of the return animation"""
-        if abs(self.angle) < 0.1:  # Completion threshold
+        """Smooth return for all types of animations"""
+        # Checking ALL the stop conditions
+        should_stop = (
+                abs(self.angle) < self.return_threshold and  # Horizontal tilt
+                abs(self.drag_direction_y) < self.return_threshold and  # Vertical movement
+                self.drag_intensity < self.return_threshold  # Overall intensity
+        )
+
+        if should_stop:
+            # Full stop only when EVERYTHING is completed
             self.angle = 0
+            self.drag_direction_y = 0
             self.animation_timer.stop()
+            self.part_animator.stop_all()
         else:
-            self.angle *= self.return_speed
+            # Smooth horizontal tilt reset
+            if abs(self.angle) > self.return_threshold:
+                progress = abs(self.angle) / self.max_angle
+                slowdown_factor = 0.5 + (1 - progress) * 0.5
+                self.angle *= self.return_speed * slowdown_factor
+
+            # Smooth reset of vertical intensity
+            if abs(self.drag_direction_y) > self.return_threshold:
+                self.drag_direction_y *= self.return_speed
+
+            # Smooth relief of overall intensity
+            if self.drag_intensity > self.return_threshold:
+                self.drag_intensity *= self.return_speed
 
         self.apply_rotation()
 
@@ -739,17 +1068,27 @@ class DragAnimator:
             print(f"Rotation error: {e}")
 
     def stop_animation(self):
-        """Stopping all animations"""
-        self.return_timer.stop()
+        """Stopping all animations with priority"""
+        # First, smoothly reset the parameters
+        self.angle = 0
+        self.drag_direction_y = 0
+        self.drag_intensity = 0
+        self.apply_rotation()
+
+        # Then we stop animations of body parts
+        self.part_animator.stop_all()
+
+        # Stop the timers
         self.animation_timer.stop()
+        self.return_timer.stop()
 
 class ColorAnimator(QObject):
     """Color Animation"""
     def __init__(self, animation_manager):
         super().__init__()
         self.animation_manager = animation_manager
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.update_colors)
+        self.color_timer = QTimer()
+        self.color_timer.timeout.connect(self.update_colors)
 
         # Animation Settings
         self.speed = 1.0
@@ -757,10 +1096,25 @@ class ColorAnimator(QObject):
         self.current_hue = random.uniform(0, 360)  # 0-360 degress
         self.target_rgb = (0.0, 0.0, 0.0)  # Color range 0-1
 
+        # Pulse Vars
+        self.pulse_animations = {}  # Dictionary for storing active pulsations
+        self.pulse_timers = {}  # To track the time
+        self.pulse_counter = 0  # Counter for unique IDs
+
+        # Timer for cleaning old pulsations
+        self.cleanup_timer = QTimer()
+        self.cleanup_timer.setInterval(60000)  # Once a minute
+        self.cleanup_timer.timeout.connect(self._cleanup_old_pulses)
+        self.cleanup_timer.start()
+
     @property
     def win(self):
         """Actual window link"""
         return self.animation_manager.win
+
+    @property
+    def frame_delay(self):
+        return self.animation_manager.frame_delay
 
     @property
     def red(self):
@@ -790,7 +1144,7 @@ class ColorAnimator(QObject):
         """Starting the animation at the specified speed"""
         self.speed = max(0.1, min(5.0, speed))  # Speed limit
         self.is_running = True
-        self.timer.start(16)  # ~60 FPS
+        self.color_timer.start(self.frame_delay)  # ~60 FPS
 
     def stop(self, smooth=True):
         """Stop animation"""
@@ -798,7 +1152,7 @@ class ColorAnimator(QObject):
         self.target_rgb = (0.0, 0.0, 0.0)
         if not smooth:
             self._reset_colors()
-            self.timer.stop()
+            self.color_timer.stop()
 
     def update_colors(self):
         """Updating color values"""
@@ -815,7 +1169,7 @@ class ColorAnimator(QObject):
         # Checking animation completion
         if not self.is_running and all(c < 0.01 for c in (self.win.b_red, self.win.b_green, self.win.b_blue)):
             self._reset_colors()
-            self.timer.stop()
+            self.color_timer.stop()
 
     def _reset_colors(self):
         """Reset colors to 0"""
@@ -850,6 +1204,563 @@ class ColorAnimator(QObject):
     def lerp(a, b, t):
         """Linear interpolation for values 0-1"""
         return a + (b - a) * t
+
+    def _cleanup_old_pulses(self):
+        """Clearing pulse that have been hanging for too long"""
+        current_time = time.time()
+        pulses_to_remove = []
+
+        for pulse_id, pulse_data in self.pulse_animations.items():
+            # If the pulsation is hanging for more than 5 minutes, we kill it.
+            if current_time - pulse_data['start_time'] > 300:  # 300 sec = 5 min.
+                pulses_to_remove.append(pulse_id)
+                print(f"⚠️ Clean old pulse complette: {pulse_id}")
+
+        for pulse_id in pulses_to_remove:
+            self.stop_pulse(pulse_id, fade_out=False)
+
+    def set_pulsating_color(self, r, g, b,
+                            pulse_duration=2000,    # Duration of one cycle in ms
+                            min_brightness=0.3,     # Minimum brightness (0.0-1.0)
+                            max_brightness=1.0,     # Maximum brightness (0.0-1.0)
+                            pulse_shape="sine",     # Pulse shape
+                            fade_in_duration=500,   # Gradual onset of pulsation
+                            infinite=True,          # Infinite pulsation
+                            pulse_count=None,       # Number of pulsations
+                            stop_after_ms=None,     # Auto-stop after X ms
+                            stop_fade_out=True,     # Smooth stop
+                            stop_fade_duration=500, # Attenuation duration
+                            unique_id=None):
+        """Set pulse collor"""
+
+        # Convert color in 0.0-1.0
+        if isinstance(r, int):
+            r = r / 255.0
+            g = g / 255.0
+            b = b / 255.0
+
+        # Generate Unical ID if None
+        if unique_id is None:
+            unique_id = f"pulse_{self.pulse_counter}"
+            self.pulse_counter += 1
+
+        # Stop the previous pulsation with the same ID if there is
+        if unique_id in self.pulse_animations:
+            self.stop_pulse(unique_id, fade_out=False)
+
+        # Save pulse params
+        pulse_data = {
+            'base_r': r,
+            'base_g': g,
+            'base_b': b,
+            'pulse_duration': pulse_duration,
+            'min_brightness': min_brightness,
+            'max_brightness': max_brightness,
+            'pulse_shape': pulse_shape,
+            'start_time': time.time(),
+            'pulse_count': pulse_count,
+            'current_pulse': 0,
+            'fade_in_progress': fade_in_duration > 0,
+            'fade_in_duration': fade_in_duration,
+            'fade_in_start': time.time(),
+            'infinite': infinite,
+            'stop_after_ms': stop_after_ms,
+            'stop_fade_out': stop_fade_out,
+            'stop_fade_duration': stop_fade_duration,
+            'stop_timer': None  # For AutoStop Timer
+        }
+
+        # Creating a timer to update the pulse
+        timer = QTimer()
+        timer.timeout.connect(lambda: self._update_pulse(unique_id))
+        timer.start(16)  # ~60 FPS
+
+        # If the auto-stop time is specified, create a timer
+        if stop_after_ms and stop_after_ms > 0:
+            stop_timer = QTimer()
+            stop_timer.setSingleShot(True)
+            stop_timer.setInterval(stop_after_ms)
+            stop_timer.timeout.connect(lambda: self._auto_stop_pulse(unique_id))
+            stop_timer.start()
+            pulse_data['stop_timer'] = stop_timer
+
+        self.pulse_timers[unique_id] = timer
+        self.pulse_animations[unique_id] = pulse_data
+
+        # If need smooth init
+        if fade_in_duration > 0:
+            self.win.b_red = 0
+            self.win.b_green = 0
+            self.win.b_blue = 0
+        else:
+            # Set initial color
+            self._apply_pulse_color(unique_id, 0)
+
+        return unique_id
+
+    def _update_pulse(self, pulse_id):
+        """Update color pulse"""
+        if pulse_id not in self.pulse_animations:
+            return
+
+        pulse_data = self.pulse_animations[pulse_id]
+        current_time = time.time()
+        elapsed = current_time - pulse_data['start_time']
+
+        # Check smooth start
+        if pulse_data['fade_in_progress']:
+            fade_elapsed = current_time - pulse_data['fade_in_start']
+            fade_progress = min(1.0, fade_elapsed * 1000 / pulse_data['fade_in_duration'])
+
+            if fade_progress >= 1.0:
+                pulse_data['fade_in_progress'] = False
+                fade_factor = 1.0
+            else:
+                # Smooth increase in amplitude
+                fade_factor = fade_progress
+        else:
+            fade_factor = 1.0
+
+        # Calculating the progress in the current cycle
+        cycle_progress = (elapsed * 1000) % pulse_data['pulse_duration']
+        normalized_progress = cycle_progress / pulse_data['pulse_duration']
+
+        # Get the pulse value depending on the shape
+        pulse_value = self._get_pulse_value(normalized_progress, pulse_data['pulse_shape'])
+
+        # Check smooth start if need
+        if pulse_data['fade_in_progress']:
+            pulse_value *= fade_factor
+
+        # Apply collor
+        self._apply_pulse_color(pulse_id, pulse_value)
+
+        # We check the number of pulsations (if not infinite)
+        if not pulse_data['infinite'] and pulse_data['pulse_count'] is not None:
+            completed_cycles = int(elapsed * 1000 // pulse_data['pulse_duration'])
+            if completed_cycles >= pulse_data['pulse_count']:
+                self.stop_pulse(pulse_id, fade_out=True)
+
+    def _get_pulse_value(self, progress, shape):
+        """Return Pulse Value (0.0-1.0) for current form"""
+        if shape == "sine":
+            # Sinusoid: smooth rise and fall
+            return (math.sin(progress * 2 * math.pi - math.pi / 2) + 1) / 2
+
+        elif shape == "triangle":
+            # Triangular: linear rise and fall
+            if progress < 0.5:
+                return progress * 2  # Rise
+            else:
+                return 2 - progress * 2  # Fall
+
+        elif shape == "sawtooth":
+            # Sawtooth: linear growth, sharp decline
+            return progress
+
+        elif shape == "reverse_sawtooth":
+            # Reverse saw: sharp rise, linear decline
+            return 1 - progress
+
+        elif shape == "heartbeat":
+            # Heartbeat: two quick beats
+            if progress < 0.25:
+                return progress * 4  # First beat
+            elif progress < 0.3:
+                return 1.0  # Pause
+            elif progress < 0.55:
+                return (progress - 0.3) * 4  # Second beat
+            else:
+                return max(0, 1 - (progress - 0.55) * 2.2)  # Long Pause
+
+        elif shape == "breath":
+            # Breathing: slow inhale, quick exhale
+            if progress < 0.7:
+                return progress / 0.7  # Slow inhale
+            else:
+                return 1 - (progress - 0.7) / 0.3  # Qick exhale
+
+        elif shape == "flicker":
+            # Flickering lamp effect
+            flicker = math.sin(progress * 20 * math.pi) * 0.1 + 0.9
+            noise = (math.sin(progress * 37 * math.pi) + 1) * 0.05
+            return max(0.3, min(1.0, flicker + noise))
+
+        elif shape == "flicker_zero":
+            # Flicker effect with full fade at 0
+            import random
+
+            # The frequency of flickering (the more, the more often)
+            frequency = 15
+
+            # Basic sinusoidal flicker
+            base = math.sin(progress * frequency * math.pi) * 0.5 + 0.5
+
+            # Random "falls" to 0
+            if random.random() < 0.15:  # 15% dip change
+                # Duration of the dip
+                if progress % 0.1 < 0.02:  # dip duration ~2% of the cycle
+                    return 0.0
+
+            # Little noise
+            noise = random.uniform(-0.1, 0.1)
+
+            return max(0.0, min(1.0, base + noise))
+
+        elif shape == "dip_flicker":
+            # Deterministic flicker with regular dips (without random)
+
+            # Main frequency
+            base = math.sin(progress * 10 * math.pi) * 0.2 + 0.7
+
+            # Regular dips every 0.2 progress
+            dip_frequency = 5  # 5 failures per cycle
+            dip_pos = (progress * dip_frequency) % 1.0
+
+            # Form of dip - smooth attenuation and recovery
+            if dip_pos < 0.3:
+                # Smooth fade
+                fade = 1.0 - (dip_pos / 0.3)
+                return base * fade * 0.3
+            elif dip_pos < 0.6:
+                # At the bottom of the dip
+                return 0.0
+            else:
+                # Restore
+                recovery = (dip_pos - 0.6) / 0.4
+                return base * recovery
+
+            return max(0.0, min(1.0, base))
+
+        elif shape == "sync_flicker":
+            # Synchronized flicker with controlled dips
+            import random
+
+            # Divide the progress into segments
+            segment_count = 8
+            segment = int(progress * segment_count)
+            segment_progress = (progress * segment_count) % 1.0
+
+            # Predictable seed for the segment
+            segment_seed = hash(f"{segment}_{int(progress * 10)}") % 1000
+            random.seed(segment_seed)
+
+            # Decide for this segment: will there be a dip?
+            has_dip = random.random() < 0.25  # 25% of segments have a dip
+
+            if has_dip:
+                # There is a dip in this segment
+                dip_position = random.uniform(0.2, 0.8)  # Where in the segment will the dip occur
+                dip_width = random.uniform(0.05, 0.2)  # dip width
+
+                if abs(segment_progress - dip_position) < dip_width / 2:
+                    # In dip
+                    dip_depth = 1.0 - (abs(segment_progress - dip_position) * 2 / dip_width)
+                    return dip_depth * random.uniform(0.0, 0.3)  # get to 0
+                else:
+                    # Outside the gap, there is a normal glow.
+                    base = math.sin(progress * 15 * math.pi) * 0.1 + 0.8
+                    return max(0.5, min(1.0, base))
+            else:
+                # The usual flicker without dips
+                base = math.sin(progress * 12 * math.pi) * 0.15 + 0.8
+                noise = random.uniform(-0.1, 0.1)
+                return max(0.6, min(1.0, base + noise))
+
+        elif shape == "wave":
+            # Wave Pulse
+            wave1 = math.sin(progress * 2 * math.pi) * 0.5 + 0.5
+            wave2 = math.sin(progress * 4 * math.pi + math.pi / 3) * 0.3
+            return max(0.0, min(1.0, wave1 + wave2))
+
+        elif shape == "torch":
+            # Flame/torch effect with sudden drops
+            import random
+
+            # The main pulsation frequency
+            base_freq = progress * 8 * math.pi
+            base_value = (math.sin(base_freq) + 1) * 0.3
+
+            # The main pulsation frequency
+            high_freq = progress * 50 * math.pi
+            high_value = math.sin(high_freq) * 0.2
+
+            # Random bursts
+            spike_chance = math.sin(progress * 6 * math.pi) * 0.5 + 0.5
+            if random.random() < spike_chance * 0.3:
+                spike = random.uniform(0.5, 1.0)
+                # Rapid rise and fall
+                spike_duration = 0.05
+                local_progress = (progress % spike_duration) / spike_duration
+                spike_value = spike * (1 - abs(local_progress - 0.5) * 2)
+                high_value += spike_value
+
+            # Sometimes complete fading
+            if random.random() < 0.08:  # 8% chance
+                fade_duration = 0.03
+                if (progress * 100) % 1 < fade_duration:
+                    return 0.0
+
+            result = base_value + high_value
+            return max(0.0, min(1.0, result))
+
+        elif shape == "broken_bulb":
+            # The effect of a faulty light bulb
+            import random
+            import time
+
+            # Use time for more predictable "random" behavior.
+            time_seed = int(time.time() * 10)
+            random.seed(time_seed + int(progress * 1000))
+
+            # Basic state: 0 - off, 1 - on, 2 - flicker
+            state_progress = progress * 3  # 3 seconds for a full cycle of states
+
+            if state_progress < 1.0:
+                # Normal gorenje with slight flicker
+                flicker = math.sin(progress * 30 * math.pi) * 0.05 + 0.9
+                return max(0.8, min(1.0, flicker))
+
+            elif state_progress < 1.5:
+                # Begin to flicker
+                if random.random() < 0.7:  # Burn 70% of the time
+                    flicker = random.uniform(0.6, 1.0)
+                    # A quick flicker
+                    if int(progress * 100) % 2 == 0:
+                        return flicker
+                    else:
+                        return flicker * 0.3
+                else:
+                    return 0.0  # Complete shutdown
+
+            else:
+                # A series of rapid flickers and a complete shutdown
+                rapid_flicker = int(progress * 50) % 10
+                if rapid_flicker < 6:
+                    return random.uniform(0.2, 0.8)
+                elif rapid_flicker < 8:
+                    return 0.0  # Shutdown
+                else:
+                    return 0.1  # A barely noticeable glow
+
+        elif shape == "broken_bulb_enhanced":
+            # Improved version of broken_bulb with smoother transitions
+            import random
+            import time
+
+            # Use a sine for smooth transitions between states.
+            time_factor = time.time() * 0.5  # Slow change over time
+
+            # Smooth switching between modes
+            mode_blend = (math.sin(time_factor) + 1) * 0.5  # 0.0-1.0
+
+            if mode_blend < 0.3:
+                # Mode 1: Normal gorenje with a slight flicker
+                base = 0.85 + math.sin(progress * 25 * math.pi) * 0.1
+                # Random micro-dip
+                if random.random() < 0.1:
+                    micro_dip = math.sin(progress * 100 * math.pi) * 0.3
+                    base = max(0.7, base + micro_dip)
+                return base
+
+            elif mode_blend < 0.7:
+                # Mode 2: Active flicker
+                flicker_speed = 40 + math.sin(time_factor * 2) * 20
+                flicker = math.sin(progress * flicker_speed * math.pi) * 0.4 + 0.5
+
+                # Periodic deep dips
+                deep_dip_freq = progress * 5  # 5 deep dips per cycle
+                if (deep_dip_freq % 1.0) < 0.1:  # 10% of the time in deep failure
+                    dip_depth = 1.0 - ((deep_dip_freq % 1.0) * 10)  # 1.0 -> 0.0
+                    return flicker * dip_depth * 0.3
+
+                return flicker
+
+            else:
+                # Mode 3: Light bulb Agony (rapid flashes)
+                rapid = int(progress * 60) % 15  # 4 вспышки в секунду
+
+                if rapid < 3:
+                    # A short bright flash
+                    flash_progress = rapid / 3.0
+                    brightness = 1.0 - abs(flash_progress - 0.5) * 2  # Пирамида
+                    return brightness * 0.9 + 0.1
+                elif rapid < 5:
+                    # Medium flash
+                    return random.uniform(0.3, 0.6)
+                elif rapid < 7:
+                    # low flash
+                    return random.uniform(0.1, 0.3)
+                else:
+                    # Dark
+                    return 0.0
+
+        elif shape == "old_tv":
+            # The effect of an old TV/walkie-talkie
+            import random
+
+            # Static Noises
+            static = random.uniform(-0.2, 0.2)
+
+            # Periodic "signal fades"
+            signal_fade = math.sin(progress * 3 * math.pi)  # Slow Noises
+
+            # Fast Noise
+            fast_noise = math.sin(progress * 50 * math.pi) * 0.1
+
+            # Sudden complete shutdowns
+            if random.random() < 0.05:  # 5% chance
+                # Shutdown for a short time
+                if (progress * 100) % 1 < 0.1:
+                    return 0.0
+
+            # Basic signal level
+            base = 0.7 + signal_fade * 0.2
+
+            result = base + static + fast_noise
+            return max(0.0, min(1.0, result))
+
+        elif shape == "breath_with_gaps":
+            # Breathing with periodic delays/skips
+            import random
+
+            # Main Breath
+            breath = (math.sin(progress * 2 * math.pi - math.pi / 2) + 1) / 2
+
+            # Sometimes we "forget" to inhale
+            skip_chance = 0.15  # 15% chance of missing a cycle
+            cycle_num = int(progress * 2)  # Every 0.5 progress is a new cycle
+
+            random.seed(cycle_num)  # For predictability
+            if random.random() < skip_chance:
+                # Skip this cycle and stay on the exhale.
+                return 0.0
+            else:
+                # Normal breathing
+                return breath
+
+        elif shape == "random":
+            # Random pulse (for the flicker effect)
+            import random
+            return random.uniform(0.3, 1.0)
+
+        else:
+            return (math.sin(progress * 2 * math.pi - math.pi / 2) + 1) / 2  # Sinus as default
+
+    def get_random_flicker_shape(self):
+        """Returns a random flicker shape"""
+        flicker_shapes = [
+            "flicker_zero",
+            "broken_bulb",
+            "broken_bulb_enhanced"
+            "sync_flicker",
+            "dip_flicker",
+            "old_tv"
+        ]
+        import random
+        return random.choice(flicker_shapes)
+
+    def _apply_pulse_color(self, pulse_id, pulse_value):
+        """Applies color based on ripple"""
+        pulse_data = self.pulse_animations[pulse_id]
+
+        # Interpolate the brightness
+        brightness_range = pulse_data['max_brightness'] - pulse_data['min_brightness']
+        current_brightness = pulse_data['min_brightness'] + pulse_value * brightness_range
+
+        # Apply color
+        self.win.b_red = pulse_data['base_r'] * current_brightness
+        self.win.b_green = pulse_data['base_g'] * current_brightness
+        self.win.b_blue = pulse_data['base_b'] * current_brightness
+
+    def _auto_stop_pulse(self, pulse_id):
+        """Automatic timer pulse stop"""
+        if pulse_id in self.pulse_animations:
+            pulse_data = self.pulse_animations[pulse_id]
+            self.stop_pulse(
+                pulse_id,
+                fade_out=pulse_data['stop_fade_out'],
+                fade_duration=pulse_data['stop_fade_duration']
+            )
+
+    def stop_pulse(self, pulse_id=None, fade_out=True, fade_duration=500):
+        """Stopping the pulsation with the ability to turn off the auto-stop timer"""
+        if pulse_id is None:
+            # Stop all pulse
+            for pid in list(self.pulse_timers.keys()):
+                self._stop_single_pulse(pid, fade_out, fade_duration)
+        elif pulse_id in self.pulse_timers:
+            self._stop_single_pulse(pulse_id, fade_out, fade_duration)
+
+    def _stop_single_pulse(self, pulse_id, fade_out, fade_duration):
+        """Stop single pulse"""
+        # Stop the auto-stop timer if there is one
+        if pulse_id in self.pulse_animations:
+            pulse_data = self.pulse_animations[pulse_id]
+            if pulse_data.get('stop_timer'):
+                pulse_data['stop_timer'].stop()
+
+        if fade_out and fade_duration > 0:
+            # Smooth fade
+            current_r = self.win.b_red
+            current_g = self.win.b_green
+            current_b = self.win.b_blue
+
+            # Create fade animation
+            fade_anim = QVariantAnimation()
+            fade_anim.setDuration(fade_duration)
+            fade_anim.setStartValue(1.0)
+            fade_anim.setEndValue(0.0)
+
+            def update_fade(value):
+                self.win.b_red = current_r * value
+                self.win.b_green = current_g * value
+                self.win.b_blue = current_b * value
+
+            fade_anim.valueChanged.connect(update_fade)
+
+            def cleanup():
+                fade_anim.stop()
+                self._cleanup_pulse(pulse_id)
+
+            fade_anim.finished.connect(cleanup)
+            fade_anim.start()
+        else:
+            # Force stop
+            self._cleanup_pulse(pulse_id)
+
+    def _cleanup_pulse(self, pulse_id):
+        """Clean pulse resource"""
+        if pulse_id in self.pulse_timers:
+            self.pulse_timers[pulse_id].stop()
+            del self.pulse_timers[pulse_id]
+
+        if pulse_id in self.pulse_animations:
+            # Stop the auto-stop timer
+            pulse_data = self.pulse_animations[pulse_id]
+            if pulse_data.get('stop_timer'):
+                pulse_data['stop_timer'].stop()
+            del self.pulse_animations[pulse_id]
+
+    def modify_pulse(self, pulse_id, **kwargs):
+        """Modify the parameters of an existing pulse"""
+        if pulse_id in self.pulse_animations:
+            pulse_data = self.pulse_animations[pulse_id]
+
+            # Updating only the transmitted parameters
+            for key, value in kwargs.items():
+                if key in pulse_data:
+                    pulse_data[key] = value
+
+            # Resetting the time for a smooth transition
+            if 'pulse_duration' in kwargs or 'pulse_shape' in kwargs:
+                pulse_data['start_time'] = time.time()
+
+    def get_pulse_info(self, pulse_id):
+        """Get pulse info"""
+        if pulse_id in self.pulse_animations:
+            return self.pulse_animations[pulse_id].copy()
+        return None
 
     def set_solid_color(self, r, g, b, fade_duration=0):
         """Color setting with optional smooth transition"""
@@ -911,21 +1822,6 @@ class ColorAnimator(QObject):
             self.anim_group.addAnimation(anim)
 
         self.anim_group.start()
-
-    def enable_pulse(self, enable=True, speed=5):
-        """Switching on/off the pulse"""
-        if enable:
-            def pulse_update():
-                pulse_val = (math.sin(time.time() * speed) + 1) / 2  # 0-1
-                self.win.b_red *= pulse_val
-                self.win.b_green *= pulse_val
-                self.win.b_blue *= pulse_val
-
-            self.color_animator.timer.timeout.disconnect()
-            self.color_animator.timer.timeout.connect(pulse_update)
-        else:
-            self.color_animator.timer.timeout.disconnect()
-            self.color_animator.timer.timeout.connect(self.color_animator.update_colors)
 
     def enable_glow(self, intensity=0.3):
         """Adds a soft glow effect"""

@@ -17,9 +17,12 @@ class ActionHandler:
         self.win.showMaximized()
 
     # Context Menu Actions
+    def on_action_sing_song(self):
+        self.win.character.state.set_sing_song_state()
+
     def on_action_transform(self):
         self.win.model_move = False
-        if not self.win.can_transform:
+        if not self.win.can_transform or self.win.settings_lock:
             if self.win.character.tired_state.condition != "Sleep":
                 self.win.character.state.set_transform_failure_state()
             return
@@ -34,6 +37,13 @@ class ActionHandler:
 
     # Characters Actions
     def _change_character(self, character_name):
+        # Check if the current name matches the selected one
+        if self.win.settings_lock:
+            self.win.character.state.set_character_lock_state()
+            return
+        if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
+            self.win.character.state.already_changed_character()
+            return  # Interrupt the function because the character has already been selected
         self.win.talk_widget.talk_update = False
         if not self.win.transform:
             self.win.model_move = True
@@ -93,10 +103,13 @@ class ActionHandler:
     def on_action_histoire(self):
         self._change_character("Histoire")
 
+    def on_action_maho(self):
+        self._change_character("Maho")
+
     # Animations Actions
     def _toggle_animation_setting(self, config_key, switch_attr, anim_attr,
                                   enabled_text_key, disabled_text_key, enabled):
-        # Обновляем конфиг (новое добавление)
+
         setattr(self.win.app_config, switch_attr, enabled)
 
         if self.win.character.tired_state.condition != "Sleep":
@@ -198,6 +211,7 @@ class ActionHandler:
             self.win.character.tired_controller.wake_up_function()
 
         self.win.character.expressions.set_cry_expression()
+        self.win.character.audio.set_really_quit_audio()
         self.win.kaomoji = "(o;TωT)o"
 
         answer = QMessageBox.question(
@@ -210,6 +224,7 @@ class ActionHandler:
 
         if answer == QMessageBox.StandardButton.Yes:
             self.win.character.state.set_quit_state(quit='Yes')
+            self.win.input_handler.input_lock = True
         else:
             self.win.character.tired_controller.timer_count = 1
             self.win.character.state.set_quit_state(quit='No')

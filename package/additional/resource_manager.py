@@ -195,29 +195,29 @@ class ResourceManager:
             self._audio_files = {}
 
             for character_name, audio in audio_structure.items():
-                # Преобразуем имя в папку
+                # Convert the name to a folder
                 folder_name = self._character_to_folder_name(character_name)
                 character_dir = os.path.join(audio_dir, folder_name)
 
                 character_dict = {}
                 for sound_type, filename in audio.items():
-                    # 1. Пытаемся найти в папке персонажа
+                    # Try to find a character in the folder
                     character_file = os.path.join(character_dir, filename)
 
                     if os.path.exists(character_file):
                         character_dict[sound_type] = character_file
                     else:
-                        # 2. Fallback: ищем в корне audio
+                        # Fallback: search for audio at the root
                         root_file = os.path.join(audio_dir, filename)
                         if os.path.exists(root_file):
                             character_dict[sound_type] = root_file
                         else:
-                            # 3. Final fallback: используем nep_nep.wav из корня
+                            # Final fallback: use nep_nep.wav from the root
                             nep_nep_root = os.path.join(audio_dir, "nep.wav")
                             if os.path.exists(nep_nep_root):
                                 character_dict[sound_type] = nep_nep_root
                             else:
-                                # 4. Ultimate fallback: оставляем путь, но файла нет
+                                # Ultimate fallback: leave the path, but there is no file
                                 character_dict[sound_type] = character_file
 
                 self._audio_files[character_name] = character_dict
@@ -229,10 +229,11 @@ class ResourceManager:
         return self._audio_files
 
     def _character_to_folder_name(self, character_name: str) -> str:
-        """Преобразует имя персонажа в имя папки (удаляет пробелы)"""
+        """Converts the character's name to a folder name (removes spaces)"""
         return character_name.replace(" ", "")
 
     def get_audio(self, character_name: str, audio_type: str = "default") -> Optional[str]:
+        """Gets audio file"""
         audio_files = self.load_audio_files()
 
         search_paths = [
@@ -259,12 +260,12 @@ class ResourceManager:
         return None
 
     def debug_audio_structure(self):
-        """Детальная диагностика аудио системы"""
+        """Detailed audio system diagnostics"""
         print("\n" + "=" * 50)
         print("AUDIO SYSTEM DEBUG")
         print("=" * 50)
 
-        # 1. Проверяем базовые пути
+        # Check the basic paths
         audio_dir = os.path.join(self.resources_dir, "audio")
         print(f"1. Resources dir: {self.resources_dir}")
         print(f"2. audio dir: {audio_dir}")
@@ -280,12 +281,12 @@ class ResourceManager:
         else:
             print("4. ❌ audio directory not found!")
 
-        # 2. Проверяем загрузку аудио файлов
+        # Check the download of audio files
         print("\n5. Loading audio files...")
         audio_files = self.load_audio_files()
         print(f"6. Audio structure keys: {list(audio_files.keys())}")
 
-        # 3. Детальный просмотр структуры
+        # Detailed view of the structure
         print("\n7. Detailed audio structure:")
         for character, audio in audio_files.items():
             print(f"   {character}:")
@@ -293,7 +294,7 @@ class ResourceManager:
                 exists = "✓" if os.path.exists(filepath) else "❌"
                 print(f"     {sound_type}: {exists} {filepath}")
 
-        # 4. Тестируем поиск для Maho
+        # 4. Test Search for Maho
         #print(f"\n8. Testing get_audio for Maho:")
         #result = self.get_audio("Maho", "default")
         #print(f"   Result: {result}")

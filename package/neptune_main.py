@@ -35,7 +35,7 @@ class MainWindow(QOpenGLWidget):
         super().__init__()
         # LOGS:
         # l2d-py Main Log:
-        live2d.setLogEnable(False)
+        live2d.enableLog(False)
         # Models Log
         self.models_log = False
         # l2d-py Area Log:
@@ -219,6 +219,8 @@ class MainWindow(QOpenGLWidget):
         self.reset_expression = True
         self.frameless = False
         self.background = False
+        self.background_available = False
+        self.first_run=True
 
         # Mouse position
         self.clickX = -1
@@ -471,6 +473,7 @@ class MainWindow(QOpenGLWidget):
         self.talk_widget.show_talk()
         self.character.state.set_greeting_state(is_first_run=True)
         self.input_handler.input_lock = True
+        self.first_run = False
 
     def init_classes(self):
         """Initialize classes"""
@@ -496,7 +499,7 @@ class MainWindow(QOpenGLWidget):
         """Canvas draw method"""
         live2d.clearBuffer(self.b_red, self.b_green, self.b_blue, self.b_alpha)
         if self.background:
-            self.image_manager.set_background_image(self.background_name, 0.9)
+            self.image_manager.set_background_image(self.background_name)
         self.model.Draw()
         if self.background:
             self.event_manager.draw_text_on_model()
@@ -570,14 +573,15 @@ class MainWindow(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
 
     def set_theme(self):
-        #app.setStyle(self.theme if self.theme != "Default" else "")  # Default = пустая строка
-        style_key = self.display_to_style.get(self.theme, "")  # Если темы нет в словаре → Default ("")
+        """Set app theme"""
+        #app.setStyle(self.theme if self.theme != "Default" else "")  # Default = empty line
+        style_key = self.display_to_style.get(self.theme, "")  # if theme on a dictionary → Default ("")
 
-        # 2. Устанавливаем стиль
+        # 2. Set Style
         if style_key:
-            app.setStyle(QStyleFactory.create(style_key))  # Для Windows 11, Fusion и др.
+            app.setStyle(QStyleFactory.create(style_key))  # For Windows 11, Fusion and more.
         else:
-            app.setStyle("")  # Системный стиль (Default)
+            app.setStyle("")  # System Style (Default)
 
     def get_system_theme(self):
         """
@@ -986,7 +990,7 @@ class SettingsWindow(QWidget):
         self.app_config = self.mainWindow.app_config
         self.settings_log= False
 
-        # Флаг для отслеживания изменений
+        # Flag for tracking changes
         self.unsaved_changes = False
 
         self.available_styles = self.get_available_styles()
@@ -1029,32 +1033,32 @@ class SettingsWindow(QWidget):
         self.language_set = None
         self.language_get = None
 
-        # СОХРАНЯЕМ НАЧАЛЬНЫЕ ЗНАЧЕНИЯ ПЕРВЫМ ДЕЛОМ
+        # Save initial vars
         self.save_initial_values()
 
-        # БЛОКИРУЕМ сигналы при создании элементов
+        # BLOCKING signals when creating elements
         self.block_signals_during_init = True
 
-        # СОЗДАЕМ КНОПКИ ДО СОЗДАНИЯ ВКЛАДОК
+        # Creating buttons before creating tabs
         self.create_buttons()
 
-        # Создаем главный layout
+        # Create main layout
         mainLayout = QHBoxLayout()
 
-        # Создаем виджет вкладок
+        # Create Tab Widget
         self.tab_widget = QTabWidget()
 
-        # Создаем и добавляем вкладки
-        self.create_appearance_tab()  # Вкладка внешнего вида
-        self.create_scale_tab()       # Вкладка масштабирования
-        self.create_behavior_tab()    # Вкладка поведения
-        self.create_audio_tab()       # Вкладка звука
-        # self.create_other_tab()     # Вкладка прочего
+        # Create and Add Tabs
+        self.create_appearance_tab()
+        self.create_scale_tab()
+        self.create_behavior_tab()
+        self.create_audio_tab()
+        # self.create_other_tab()
 
-        # Добавляем вкладки в основной layout
+        # Add tabs in layout
         mainLayout.addWidget(self.tab_widget)
 
-        # Создаем GroupBox для правой панели
+        # Create GroupBox for right panel
         self.right_group = QGroupBox("Controls")
         self.right_group.setFixedWidth(170)
         self.right_group.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1071,26 +1075,26 @@ class SettingsWindow(QWidget):
                                                                        Qt.KeepAspectRatio, Qt.SmoothTransformation))
         self.nepImageLabel.setAlignment(Qt.AlignCenter)
 
-        # Делаем кнопки одинаковой ширины
+        # Button fixed size
         button_width = 150
 
         self.resetPosButton.setFixedWidth(button_width)
         self.quitButton.setFixedWidth(button_width)
         self.apply_button.setFixedWidth(button_width)
 
-        # Настраиваем button_box
+        # Setting button_box
         self.button_box.setFixedWidth(button_width)
         self.button_box.setContentsMargins(0, 0, 0, 0)
 
         right_panel.addWidget(self.nepImageLabel, 0, Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
 
-        # Растягиваемое пространство (пустота между изображением и кнопками)
+        # Stretchable space (the void between the image and the buttons)
         right_panel.addStretch(1)
 
-        # Контейнер для кнопок (для группировки)
+        # Container for buttons (for grouping)
         buttons_container = QWidget()
         buttons_layout = QVBoxLayout(buttons_container)
-        buttons_layout.setSpacing(8)  # Расстояние между кнопками
+        buttons_layout.setSpacing(8)  # The distance between the buttons
         buttons_layout.setContentsMargins(0, 0, 0, 0)
 
         buttons_layout.addWidget(self.resetPosButton)
@@ -1098,10 +1102,10 @@ class SettingsWindow(QWidget):
         buttons_layout.addWidget(self.apply_button)
         buttons_layout.addWidget(self.quitButton)
 
-        # Добавляем контейнер с кнопками
+        # Add button Container
         right_panel.addWidget(buttons_container)
 
-        # Небольшой отступ снизу
+        # A small indentation from the bottom
         right_panel.addSpacing(10)
 
         mainLayout.addWidget(self.right_group)
@@ -1110,7 +1114,7 @@ class SettingsWindow(QWidget):
         self.setWindowTitle("Settings")
         self.mainWindow.set_app_title()
         self.updateMainWindow()
-        # РАЗБЛОКИРОВЫВАЕМ сигналы после инициализации
+        # UNBLOCKING the signals after initialization
         self.block_signals_during_init = False
 
     @property
@@ -1118,7 +1122,7 @@ class SettingsWindow(QWidget):
         return self.mainWindow.ICON_COLOR_FOLDER
 
     def save_initial_values(self):
-        """Сохраняет начальные значения настроек"""
+        """Saves the initial settings values"""
         self.initial_values = {
             'frameless_window': self.getWindowFlag_FramelessWindowHint,
             'stays_on_top': self.getWindowFlag_WindowStaysOnTopHint,
@@ -1141,10 +1145,10 @@ class SettingsWindow(QWidget):
         }
 
     def get_current_settings(self):
-        """Возвращает текущие значения настроек"""
+        """Return the initial settings values"""
 
-        # Вспомогательная функция для получения значения диска
         def get_dial_value(category):
+            """Auxiliary function for getting the disk value"""
             dial_attr = f"{category}_dial"
             if hasattr(self, dial_attr):
                 return getattr(self, dial_attr).value()
@@ -1173,7 +1177,7 @@ class SettingsWindow(QWidget):
 
     # Create Tabs
     def create_appearance_tab(self):
-        """Создает вкладку настроек внешнего вида"""
+        """Creates an appearance settings tab"""
         tab = QWidget()
         layout = QGridLayout()
 
@@ -1199,7 +1203,7 @@ class SettingsWindow(QWidget):
 
         self.backgroundImageCheckBox = QCheckBox("Background image")
 
-        # Размещаем элементы
+        # Placing the elements
         layout.addWidget(self.framelessWindowCheckBox, 0, 0, 1, 2)
         layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0, 1, 2)
         layout.addWidget(self.langText, 2, 0)
@@ -1209,7 +1213,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.colorIconsCheckBox, 4, 0, 1, 2)
         layout.addWidget(self.backgroundImageCheckBox, 5, 0, 1, 2)
 
-        # Подключаем сигналы изменений
+        # Connecting change signals
         self.framelessWindowCheckBox.stateChanged.connect(self.on_setting_changed)
         self.windowStaysOnTopCheckBox.stateChanged.connect(self.on_setting_changed)
         self.langComboBox.currentTextChanged.connect(self.on_setting_changed)
@@ -1217,17 +1221,18 @@ class SettingsWindow(QWidget):
         self.colorIconsCheckBox.stateChanged.connect(self.on_setting_changed)
         self.backgroundImageCheckBox.stateChanged.connect(self.on_setting_changed)
 
-        # Устанавливаем значения
+        # Setting the values
         self.framelessWindowCheckBox.setChecked(self.getWindowFlag_FramelessWindowHint)
         self.windowStaysOnTopCheckBox.setChecked(self.getWindowFlag_WindowStaysOnTopHint)
         self.colorIconsCheckBox.setChecked(self.color_icons)
         self.backgroundImageCheckBox.setChecked(self.background)
+        self.backgroundImageCheckBox.setEnabled(self.mainWindow.background_available)
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Appearance")
 
     def create_scale_tab(self):
-        """Создает вкладку настроек масштабирования"""
+        """Creates a scale settings tab"""
         tab = QWidget()
         layout = QGridLayout()
 
@@ -1235,20 +1240,20 @@ class SettingsWindow(QWidget):
         self.sc_mult_text = QLabel("Scale multiplier:")
         self.modelScaleBox.setMinimum(0.5)
         self.modelScaleBox.setMaximum(5)
-        self.modelScaleBox.setSingleStep(0.5)
+        self.modelScaleBox.setSingleStep(0.25)
         self.modelScaleBox.setValue(self.models_scale)
 
         self.autoScaleCheckBox = QCheckBox("AutoScale")
         self.autoScaleCheckBox.setChecked(self.auto_scale)
 
-        # Устанавливаем начальное состояние с учетом стилей
+        # Setting the initial state based on styles
         self.sync_scale_box_with_checkbox()
 
         layout.addWidget(self.autoScaleCheckBox, 1, 0, 1, 2)
         layout.addWidget(self.sc_mult_text, 0, 0)
         layout.addWidget(self.modelScaleBox, 0, 1)
 
-        # Подключаем сигнал
+        # Connecting signals
         self.autoScaleCheckBox.toggled.connect(self.sync_scale_box_with_checkbox)
         self.modelScaleBox.valueChanged.connect(self.on_setting_changed)
 
@@ -1256,21 +1261,21 @@ class SettingsWindow(QWidget):
         self.tab_widget.addTab(tab, "Scale")
 
     def sync_scale_box_with_checkbox(self):
-        """Синхронизирует состояние spinbox с чекбоксом"""
+        """Synchronizes the state of the spinbox with the checkbox"""
         is_auto_scale = self.autoScaleCheckBox.isChecked()
 
-        # Блокируем сигналы, чтобы setValue не вызвал on_setting_changed
+        # Blocking the signals so that setValue does not trigger on_setting_changed
         self.modelScaleBox.blockSignals(True)
 
         if is_auto_scale:
-            # Если включен автоскейл
+            # if auto scale on
             self.modelScaleBox.setReadOnly(True)
             self.modelScaleBox.setValue(1.0)
 
-            # Применяем стиль для недоступного поля
+            # Applying a style to an inaccessible field
             if hasattr(self, 'mainWindow') and hasattr(self.mainWindow, 'theme'):
                 if self.mainWindow.theme.lower() == 'fusion' or 'dark' in self.mainWindow.theme.lower():
-                    # Темная тема
+                    # Dark Theme
                     self.modelScaleBox.setStyleSheet("""
                         QDoubleSpinBox:read-only {
                             background-color: #3a3a3a;
@@ -1286,7 +1291,7 @@ class SettingsWindow(QWidget):
                         }
                     """)
                 else:
-                    # Светлая тема
+                    # Light Theme
                     self.modelScaleBox.setStyleSheet("""
                         QDoubleSpinBox:read-only {
                             background-color: #f5f5f5;
@@ -1302,18 +1307,18 @@ class SettingsWindow(QWidget):
                         }
                     """)
         else:
-            # Если выключен автоскейл
+            # If auto scale on
             self.modelScaleBox.setReadOnly(False)
-            # Сбрасываем стиль
+            # Reset Style
             self.modelScaleBox.setStyleSheet("")
 
-        # Разблокируем сигналы
+        # Unblocking Signals
         self.modelScaleBox.blockSignals(False)
 
         self.on_setting_changed()
 
     def create_behavior_tab(self):
-        """Создает вкладку настроек поведения"""
+        """Creates a behavior settings tab"""
         tab = QWidget()
         layout = QGridLayout()
 
@@ -1322,13 +1327,13 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox = QCheckBox("Tracking Mouse Position")
         self.sleepCheckBox = QCheckBox("Sleep")
 
-        # Устанавливаем значения
+        # Settings the values
         self.autoBlinkCheckBox.setChecked(self.auto_blink)
         self.autoBreathCheckBox.setChecked(self.auto_breath)
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
 
-        # Подключаем сигналы изменений
+        # Connect change signals
         self.autoBlinkCheckBox.stateChanged.connect(self.on_setting_changed)
         self.autoBreathCheckBox.stateChanged.connect(self.on_setting_changed)
         self.trackingMouseCheckBox.stateChanged.connect(self.on_setting_changed)
@@ -1339,21 +1344,21 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.trackingMouseCheckBox, 2, 0)
         layout.addWidget(self.sleepCheckBox, 3, 0)
 
-        # Добавляем иконки
+        # Add icons
         self.update_icons()
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Behavior")
 
     def create_audio_tab(self):
-        """Создает вкладку управления звуком с QDial"""
+        """Creates a sound management tab with QDial"""
         tab = QWidget()
-        # Основной layout с минимальными отступами
+        # Basic layout with minimal margins
         main_layout = QVBoxLayout(tab)
         main_layout.setSpacing(2)
         main_layout.setContentsMargins(5, 5, 5, 5)
 
-        # === CHECKBOX ДЛЯ ПОЛНОГО ОТКЛЮЧЕНИЯ АУДИО СИСТЕМЫ ===
+        # CheckBox for disabling the audio system
         self.audioSystemCheckBox = QCheckBox("Enable Audio System")
         self.audioSystemCheckBox.setChecked(self.audio_system)
         self.audioSystemCheckBox.setStyleSheet("""
@@ -1378,10 +1383,9 @@ class SettingsWindow(QWidget):
             }
         """)
 
-        # Убираем контейнер для центрирования, добавляем напрямую
         main_layout.addWidget(self.audioSystemCheckBox, 0, Qt.AlignLeft)
 
-        # Добавляем разделитель под checkbox
+        # Add separator bottom checkbox
         separator1 = QFrame()
         separator1.setFrameShape(QFrame.Shape.HLine)
         separator1.setFrameShadow(QFrame.Shadow.Sunken)
@@ -1392,34 +1396,34 @@ class SettingsWindow(QWidget):
         """)
         main_layout.addWidget(separator1)
 
-        # === ОСНОВНОЙ КОНТЕЙНЕР С 5 ДИСКАМИ ===
+        # Main Dial Container with 5 Dials
         self.dials_container = QWidget()
         dials_layout = QHBoxLayout(self.dials_container)
         dials_layout.setSpacing(0)
         dials_layout.setContentsMargins(0, 0, 0, 0)
 
-        # === ЛЕВАЯ ПАНЕЛЬ: 2 диска (Voice, BGM) ===
+        # Left Panel (Voice, BGM)
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         left_layout.setSpacing(1)
         left_layout.setAlignment(Qt.AlignCenter)
 
-        # Voice диск
+        # Voice Dial
         voice_widget = self.create_category_dial("voice", 'Voice', 1.0)
         left_layout.addWidget(voice_widget)
 
-        # BGM диск
+        # BGM Dial
         bgm_widget = self.create_category_dial("bgm", 'BGM', 0.6)
         left_layout.addWidget(bgm_widget)
 
-        # === ЦЕНТРАЛЬНАЯ ПАНЕЛЬ: Большой Master диск ===
+        # Center Panel Master Dial
         center_panel = QWidget()
         center_layout = QVBoxLayout(center_panel)
         center_layout.setSpacing(4)
         center_layout.setAlignment(Qt.AlignCenter)
         center_layout.setContentsMargins(0, 5, 0, 5)
 
-        # Большой QDial для основной громкости
+        # Main QDial for master volume
         self.master_dial = QDial()
         self.master_dial.setMinimum(0)
         self.master_dial.setMaximum(100)
@@ -1429,10 +1433,9 @@ class SettingsWindow(QWidget):
         self.master_dial.setWrapping(False)
         self.master_dial.setFixedSize(100, 100)
 
-        # Стилизация большого диска
+        # Stylize Main QDial
         self.update_dial_color(self.master_dial, self.master)
 
-        # Метка "MASTER" - ТЕПЕРЬ ВВЕРХУ
         self.master_label = QLabel("MASTER")
         self.master_label.setAlignment(Qt.AlignCenter)
         master_label_font = QFont()
@@ -1441,8 +1444,7 @@ class SettingsWindow(QWidget):
         self.master_label.setFont(master_label_font)
         self.master_label.setStyleSheet("color: #2c5aa0;")
 
-
-        # Текущее значение - ОСТАЕТСЯ ВНИЗУ
+        # Current Value
         self.master_value_label = QLabel(f"{str(self.master)}%")
         self.master_value_label.setAlignment(Qt.AlignCenter)
         master_value_font = QFont()
@@ -1451,48 +1453,44 @@ class SettingsWindow(QWidget):
         self.master_value_label.setFont(master_value_font)
         self.master_value_label.setStyleSheet("color: #4a86e8;")
 
-        # === ИЗМЕНЯЕМ ПОРЯДОК ДОБАВЛЕНИЯ ===
-        # 1. Название "MASTER" (вверху)
         center_layout.addWidget(self.master_label, 0, Qt.AlignCenter)
 
-        # 2. Диск (посередине)
         center_layout.addWidget(self.master_dial, 0, Qt.AlignCenter)
 
-        # 3. Проценты (внизу)
         center_layout.addWidget(self.master_value_label, 0, Qt.AlignCenter)
 
-        # === ПРАВАЯ ПАНЕЛЬ: 2 диска (SFX, Ambient) ===
+        # Right Panel (SFX, Ambient)
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         right_layout.setSpacing(1)
         right_layout.setAlignment(Qt.AlignCenter)
 
-        # SFX диск
+        # SFX dial
         sfx_widget = self.create_category_dial("sfx", 'SFX', 0.9)
         right_layout.addWidget(sfx_widget)
 
-        # Ambient диск
+        # Ambient dial
         ambient_widget = self.create_category_dial("ambient", 'Ambient', 0.9)
         right_layout.addWidget(ambient_widget)
 
-        # Добавляем панели в основной контейнер
+        # Add panels in main layout
         dials_layout.addWidget(left_panel)
         dials_layout.addWidget(center_panel)
         dials_layout.addWidget(right_panel)
 
-        # Добавляем контейнер с дисками в основной layout
+        # Add container in layout
         main_layout.addWidget(self.dials_container)
 
-        # Добавляем растягиватель
+        # Add Stretch
         main_layout.addStretch()
 
-        # === КНОПКИ УПРАВЛЕНИЯ ===
+        # Control Buttons
         buttons_container = QWidget()
         buttons_layout = QHBoxLayout(buttons_container)
         buttons_layout.setSpacing(5)
         buttons_layout.setContentsMargins(0, 10, 0, 0)
 
-        # Кнопка теста звука
+        # Test Sound Button
         self.test_audio_button = QPushButton("Test Sound")
         self.test_audio_button.setIcon(self.mainWindow.get_icon("audio_test"))
         self.test_audio_button.setFixedSize(100, 30)
@@ -1513,7 +1511,7 @@ class SettingsWindow(QWidget):
                }
            """)
 
-        # Кнопка сброса
+        # Reset Button
         self.reset_audio_button = QPushButton(" Reset")
         self.reset_audio_button.setIcon(self.mainWindow.get_icon("reset"))
         self.reset_audio_button.setFixedSize(100, 30)
@@ -1524,7 +1522,7 @@ class SettingsWindow(QWidget):
                }
            """)
 
-        # Кнопка mute/unmute всех звуков (НЕ системы!)
+        # Button mute/unmute
         self.mute_button = QPushButton(" Mute All")
         self.mute_button.setIcon(self.mainWindow.get_icon("mute"))
         self.mute_button.setFixedSize(100, 30)
@@ -1536,15 +1534,15 @@ class SettingsWindow(QWidget):
                }
            """)
 
-        # Размещаем кнопки
+        # Placing buttons
         buttons_layout.addStretch()
         buttons_layout.addWidget(self.test_audio_button)
         buttons_layout.addWidget(self.reset_audio_button)
         buttons_layout.addWidget(self.mute_button)
         buttons_layout.addStretch()
 
-        # === СБОРКА ИНТЕРФЕЙСА ===
-        # Разделитель перед кнопками
+        # Interface assembly
+        # Add Separator
         separator2 = QFrame()
         separator2.setFrameShape(QFrame.Shape.HLine)
         separator2.setFrameShadow(QFrame.Shadow.Sunken)
@@ -1562,11 +1560,11 @@ class SettingsWindow(QWidget):
         main_layout.addWidget(separator2)
         main_layout.addWidget(buttons_container)
 
-        # Подключаем сигналы
+        # Connect Signals
         self.connect_audio_signals()
         self.audioSystemCheckBox.stateChanged.connect(self.on_audio_system_toggled)
 
-        # Инициализируем состояние
+        # init State
         self.on_audio_system_toggled(state = True if self.audioSystemCheckBox.isChecked() else False)
 
         self.load_audio_dials()
@@ -1574,13 +1572,13 @@ class SettingsWindow(QWidget):
         self.tab_widget.addTab(tab, "Audio")
 
     def on_audio_system_toggled(self, state):
-        """Включает/выключает аудио систему"""
+        """On/Off audio system"""
         audio_enabled = state
 
-        # Сохраняем состояние
+        # Save State
         self.audio_system_enabled = audio_enabled
 
-        # Обновляем чекбокс текст
+        # Update checkBox text
         if audio_enabled:
             self.audioSystemCheckBox.setText("Audio System: ON")
             self.audioSystemCheckBox.setStyleSheet("""
@@ -1622,7 +1620,7 @@ class SettingsWindow(QWidget):
                 }
             """)
 
-        # Включаем/выключаем все элементы управления
+        # Toggle control elements
         self.dials_container.setEnabled(audio_enabled)
         self.test_audio_button.setEnabled(audio_enabled)
         self.reset_audio_button.setEnabled(audio_enabled)
@@ -1631,27 +1629,25 @@ class SettingsWindow(QWidget):
         self.on_setting_changed()
 
     def on_mute_all_changed(self):
-        """Обработчик кнопки Mute/Unmute (только громкость, не система)"""
+        """Button handler Mute/Unmute (Volume Only)"""
         self.is_muted = not self.is_muted
 
         if self.is_muted:
             self.mute_button.setIcon(self.mainWindow.get_icon("unmute"))
             self.mute_button.setText(" Unmute All")
-            # Устанавливаем громкость на 0
+            # Set Volume: 0
             self.master_dial.setValue(0)
         else:
             self.mute_button.setIcon(self.mainWindow.get_icon("mute"))
             self.mute_button.setText(" Mute All")
-            # Восстанавливаем предыдущую громкость
+            # Return previous volume
             self.master_dial.setValue(self.master)
 
     def create_other_tab(self):
-        """Создает вкладку дополнительных настроек"""
+        """Creates an advanced settings tab"""
         tab = QWidget()
         layout = QVBoxLayout()
 
-        # Здесь можно добавить дополнительные настройки
-        # Например, кэширование, логирование и т.д.
         info_label = QLabel("Additional settings will be added here.")
         info_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(info_label)
@@ -1663,11 +1659,11 @@ class SettingsWindow(QWidget):
         """Создает виджет с QDial для категории звука"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setSpacing(4)  # Уменьшаем отступы
+        layout.setSpacing(4)
         layout.setAlignment(Qt.AlignCenter)
-        layout.setContentsMargins(0, 5, 0, 5)  # Добавляем отступы сверху и снизу
+        layout.setContentsMargins(0, 5, 0, 5)
 
-        # Стилизация в зависимости от категории
+        # Stylization depending on the category
         colors = {
             "voice": "#e84a4a",
             "bgm": "#4ae84a",
@@ -1676,19 +1672,19 @@ class SettingsWindow(QWidget):
         }
         color = colors.get(category, "#4a86e8")
 
-        # ВЕРХНЯЯ ЧАСТЬ: Иконка + Название
+        # UPPER PART: Icon + Name
         top_container = QWidget()
         top_layout = QVBoxLayout(top_container)
         top_layout.setSpacing(2)
         top_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Иконка категории (маленькая)
+        # Category icon (small)
         icon_label = QLabel()
         icon_label.setFixedSize(16, 16)
         icon_label.setObjectName(f"{category}IconLabel")
         setattr(self, f"{category}IconLabel", icon_label)
 
-        # Название категории
+        # Category Name
         text_label = QLabel(label)
         text_label.setAlignment(Qt.AlignCenter)
         text_label.setObjectName(f"{category}TextLabel")
@@ -1702,7 +1698,7 @@ class SettingsWindow(QWidget):
         top_layout.addWidget(icon_label, 0, Qt.AlignCenter)
         top_layout.addWidget(text_label, 0, Qt.AlignCenter)
 
-        # ЦЕНТРАЛЬНАЯ ЧАСТЬ: Диск
+        # CENTRAL PART: Dial
         dial = QDial()
         dial.setMinimum(0)
         dial.setMaximum(100)
@@ -1712,10 +1708,10 @@ class SettingsWindow(QWidget):
         dial.setWrapping(False)
         dial.setFixedSize(60, 60)
 
-        # Сохраняем диск
+        # Save Dial
         setattr(self, f"{category}_dial", dial)
 
-        # НИЖНЯЯ ЧАСТЬ: Проценты
+        # BOTTOM PART: Percentages
         value_label = QLabel(f"{int(default_value * 100)}%")
         value_label.setAlignment(Qt.AlignCenter)
         value_label.setObjectName(f"{category}ValueLabel")
@@ -1726,26 +1722,24 @@ class SettingsWindow(QWidget):
         value_label.setStyleSheet(f"color: {color};")
         setattr(self, f"{category}ValueLabel", value_label)
 
-        # СОБИРАЕМ ВСЕ ВМЕСТЕ
-        layout.addWidget(top_container, 0, Qt.AlignCenter)  # Вверху: иконка + название
-        layout.addWidget(dial, 0, Qt.AlignCenter)  # Посередине: диск
-        layout.addWidget(value_label, 0, Qt.AlignCenter)  # Внизу: проценты
+        # Assembly Parts
+        layout.addWidget(top_container, 0, Qt.AlignCenter)
+        layout.addWidget(dial, 0, Qt.AlignCenter)
+        layout.addWidget(value_label, 0, Qt.AlignCenter)
 
-        # Инициализируем цвет диска
+        # Init dial color
         self.update_dial_color(dial, int(default_value * 100), category)
 
         return widget
 
     def create_audio_control(self, category, label, default_value):
-        """Создает виджет управления для категории звука"""
+        """Creates a control widget for a sound category"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
         layout.setSpacing(5)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        # ... иконка и метка ...
-
-        # Маленький QDial для категории
+        # Small QDial for categories
         dial = QDial()
         dial.setMinimum(0)
         dial.setMaximum(100)
@@ -1754,7 +1748,7 @@ class SettingsWindow(QWidget):
         dial.setWrapping(False)
         dial.setFixedSize(70, 70)
 
-        # Стилизация диска
+        # Stylize Dial
         dial.setStyleSheet(f"""
             QDial {{
                 background-color: #f8f8f8;
@@ -1767,21 +1761,21 @@ class SettingsWindow(QWidget):
             }}
         """)
 
-        # Сохраняем диск
+        # Save Dial
         setattr(self, f"{category}_dial", dial)
 
         return widget
 
     def load_audio_dials(self):
-        """Загружает значения из конфига в диски (если они созданы)"""
+        """Loads values from the config to disks (if they are created)"""
         try:
-            # Мастер громкость
+            # Master Volume
             if hasattr(self, 'master_dial'):
                 self.master_dial.setValue(self.master)
                 if hasattr(self, 'master_value_label'):
                     self.master_value_label.setText(f"{self.master}%")
 
-            # Категории
+            # Categories
             for category in ['voice', 'bgm', 'sfx', 'ambient']:
                 dial_attr = f"{category}_dial"
                 if hasattr(self, dial_attr):
@@ -1789,20 +1783,20 @@ class SettingsWindow(QWidget):
                     value = getattr(self, category)
                     dial.setValue(value)
 
-                    # Обновляем метку
+                    # Update Label
                     label_attr = f"{category}ValueLabel"
                     if hasattr(self, label_attr):
                         value_label = getattr(self, label_attr)
                         value_label.setText(f"{value}%")
 
-                    # Обновляем цвет
+                    # Update Color
                     self.update_dial_color(dial, value, category)
 
         except Exception as e:
             print(f"Error loading audio dials: {e}")
 
     def connect_audio_signals(self):
-        """Подключает сигналы элементов управления звуком"""
+        """Connects the signals of the audio controls"""
         # Master dial
         self.master_dial.valueChanged.connect(self.on_master_volume_changed)
 
@@ -1813,31 +1807,32 @@ class SettingsWindow(QWidget):
                 lambda value, cat=category: self.on_category_volume_changed(cat, value)
             )
 
-        # Кнопки
+        # Buttons
         self.test_audio_button.clicked.connect(self.test_audio)
         self.reset_audio_button.clicked.connect(self.reset_audio_to_default)
         self.mute_button.clicked.connect(self.toggle_mute)
 
     def on_master_volume_changed(self, value):
-        """Обработчик изменения основной громкости"""
-        # Обновляем метку
+        """The main volume change handler"""
+        # Update Label
         if hasattr(self, 'master_value_label'):
             self.master_value_label.setText(f"{value}%")
 
-        # Обновляем цвет
+        # Update Color
         if hasattr(self, 'master_dial'):
             self.update_dial_color(self.master_dial, value)
 
-        # Применяем в audio_manager
+        # Apply in audio_manager
         #if hasattr(self.mainWindow, 'audio_manager'):
         #    self.mainWindow.audio_manager.set_master_volume(value / 100.0)
 
-        # Отмечаем изменение настроек
+        # Set the change in settings
         self.on_setting_changed()
 
+    # Add this feature in future updates:
     def update_dial_color(self, dial, value, category=None):
-        """Динамически обновляет цвет диска в зависимости от значения"""
-        # Определяем базовый цвет
+        """Dynamically updates the disc color depending on the value"""
+        # Defining the base color
         if category:
             colors = {
                 "voice": "#e84a4a",
@@ -1847,33 +1842,33 @@ class SettingsWindow(QWidget):
             }
             base_color = colors.get(category, "#4a86e8")
         else:
-            # Для мастер-громкости
+            # For Master Volume
             if value == 0:
-                base_color = "#a0a0a0"  # Серый для mute
+                base_color = "#a0a0a0"  # Gray for mute
             elif value < 30:
-                base_color = "#ff6666"  # Светло-красный для низкой
+                base_color = "#ff6666"  # Light Red for low
             elif value < 70:
-                base_color = "#ffcc44"  # Оранжево-желтый для средней
+                base_color = "#ffcc44"  # Orange-Yellow for middle
             else:
-                base_color = "#66cc66"  # Светло-зеленый для высокой
+                base_color = "#66cc66"  # Light Green for High
 
-        # Размер диска определяет толщину границы и размер ручки
+        # The size of the disc determines the thickness of the border and the size of the handle
         dial_size = dial.width()
 
-        # Разные параметры для больших и маленьких дисков
-        if dial_size >= 100:  # Большой мастер-диск
+        # Different settings for large and small disks
+        if dial_size >= 100:  # Big Master Dial
             border_width = 3
             handle_size = 18
             handle_radius = 9
-        else:  # Маленькие диски категорий
+        else:  # Small category dials
             border_width = 2
             handle_size = 14
             handle_radius = 7
 
-        # Создаем градиенты
+        # Create Gradients
         dark_color = self.get_darker_color(base_color, 0.6)
 
-        # ПРИМЕНЯЕМ СТИЛЬ - это ключевое!
+        # APPLY Style (IMPORTANT)
         style = f"""
             QDial {{
                 background-color: qradialgradient(
@@ -1911,27 +1906,27 @@ class SettingsWindow(QWidget):
         dial.setStyleSheet(style)
 
     def get_darker_color(self, hex_color, factor=0.6):
-        """Возвращает более темный оттенок цвета"""
+        """Returns a darker shade of the color"""
         from PySide6.QtGui import QColor
 
         color = QColor(hex_color)
 
-        # Преобразуем в HSL для затемнения
+        # Convert in HSL for darker color
         h = color.hue()
         s = color.saturation()
-        l = max(30, color.lightness() * factor)  # Не делаем слишком темным
+        l = max(30, color.lightness() * factor)  # Don't make it too dark
 
         darker = QColor.fromHsl(h, s, int(l))
         return darker.name()
 
     def on_category_volume_changed(self, category, value):
-        """Обработчик изменения громкости категории"""
-        # Обновляем метку значения
+        """Handler for changing the volume of a category"""
+        # Update Text
         if hasattr(self, f"{category}ValueLabel"):
             value_label = getattr(self, f"{category}ValueLabel")
             value_label.setText(f"{value}%")
 
-            # Обновляем цвет текста (если он изменился при mute)
+            # Update Text Color (if change with mute)
             colors = {
                 "voice": "#e84a4a",
                 "bgm": "#4ae84a",
@@ -1941,22 +1936,22 @@ class SettingsWindow(QWidget):
             color = colors.get(category, "#4a86e8")
             value_label.setStyleSheet(f"color: {color};")
 
-        # Обновляем цвет диска
+        # Update color Dial
         if hasattr(self, f"{category}_dial"):
             dial = getattr(self, f"{category}_dial")
             self.update_dial_color(dial, value, category)
 
-        # Только отмечаем изменение
+        # Set value
         self.on_setting_changed()
 
     def test_audio(self):
-        """Тестирует звук"""
+        """Test Sound"""
         try:
             if hasattr(self.mainWindow, 'audio_manager'):
-                # Проигрываем тестовый звук
+                # Play test sound
                 self.mainWindow.audio_manager.play_test_sound()
 
-                # Показываем сообщение
+                # Show Message
                 QMessageBox.information(self, self.mainWindow.lang['Settings']['TestSound'],
                                         self.mainWindow.lang['Settings']['TestSoundInfo'])
         except Exception as e:
@@ -1965,7 +1960,7 @@ class SettingsWindow(QWidget):
             #QMessageBox.warning(self, "Error", f"Failed to play test sound: {str(e)}")
 
     def reset_audio_to_default(self):
-        """Сбрасывает настройки звука к значениям по умолчанию"""
+        """Resets the sound settings to the default values."""
         reply = QMessageBox.question(
             self, "Reset Audio",
             "Reset all audio settings to default values?",
@@ -1974,16 +1969,16 @@ class SettingsWindow(QWidget):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            # Мастер-громкость
-            self.master_dial.setValue(80)
-            self.update_dial_color(self.master_dial, 80)
+            # Master Volume
+            self.master_dial.setValue(100)
+            self.update_dial_color(self.master_dial, 100)
 
-            # Категории
+            # Categories
             default_values = {
                 "voice": 100,
                 "bgm": 60,
                 "sfx": 90,
-                "ambient": 90
+                "ambient": 50
             }
 
             for category, value in default_values.items():
@@ -1992,11 +1987,11 @@ class SettingsWindow(QWidget):
                 dial.setValue(value)
                 dial.blockSignals(False)
 
-                # Обновляем метки
+                # Update label
                 value_label = getattr(self, f"{category}ValueLabel")
                 value_label.setText(f"{value}%")
 
-                # Восстанавливаем цвет текста
+                # Restoring the text color
                 colors = {
                     "voice": "#e84a4a",
                     "bgm": "#4ae84a",
@@ -2006,24 +2001,24 @@ class SettingsWindow(QWidget):
                 color = colors.get(category, "#4a86e8")
                 value_label.setStyleSheet(f"color: {color};")
 
-                # Обновляем цвет диска
+                # Update dial color
                 self.update_dial_color(dial, value, category)
 
-            # Сбрасываем mute состояния
+            # Reset mute state
             if hasattr(self, 'is_muted') and self.is_muted:
                 self.is_muted = False
                 self.mute_button.setText(" Mute All")
                 self.mute_button.setIcon(self.mainWindow.get_icon("mute"))
 
-            # Отмечаем изменения
+            # Set Changes
             self.on_setting_changed()
 
     def toggle_mute(self):
-        """Включает/выключает ВСЕ звуки"""
+        """On/off All Sounds"""
         self.is_muted = not self.is_muted
 
         if self.is_muted:
-            # Сохраняем текущие значения
+            # Save current values
             self.saved_master_volume = self.master_dial.value()
             self.saved_category_volumes = {}
 
@@ -2031,13 +2026,13 @@ class SettingsWindow(QWidget):
                 dial = getattr(self, f"{category}_dial")
                 self.saved_category_volumes[category] = dial.value()
 
-            # Устанавливаем 0 для ВСЕХ дисков
+            # Set 0 for All Dials
             self.master_dial.setValue(0)
             for category in ["voice", "bgm", "sfx", "ambient"]:
                 dial = getattr(self, f"{category}_dial")
                 dial.setValue(0)
 
-            # Обновляем цвета дисков
+            # Update dials color
             self.update_dial_color(self.master_dial, 0)
             for category in ["voice", "bgm", "sfx", "ambient"]:
                 dial = getattr(self, f"{category}_dial")
@@ -2048,7 +2043,7 @@ class SettingsWindow(QWidget):
             self.mute_button.setIcon(self.mainWindow.get_icon("unmute"))
             self.mute_button.setToolTip(self.mainWindow.lang['Settings']['Unmute'])
         else:
-            # Восстанавливаем значения
+            # Restoring Values
             if hasattr(self, 'saved_master_volume'):
                 self.master_dial.setValue(self.saved_master_volume)
                 self.update_dial_color(self.master_dial, self.saved_master_volume)
@@ -2067,24 +2062,23 @@ class SettingsWindow(QWidget):
         self.apply_audio_settings()
 
     def apply_audio_settings(self):
-        """Применяет текущие настройки звука"""
+        """Applies the current sound settings"""
         # Master volume
         master_volume = self.master_dial.value() / 100.0
         if hasattr(self.mainWindow, 'audio_manager'):
             self.mainWindow.audio_manager.set_master_volume(master_volume)
 
-        # Category volumes - ИСПРАВЛЕНО: используем _dial вместо _slider
+        # Category volumes
         for category in ["voice", "bgm", "sfx", "ambient"]:
-            # Получаем dial, а не slider
-            dial = getattr(self, f"{category}_dial")  # ИЗМЕНЕНО
-            category_volume = dial.value() / 100.0  # ИЗМЕНЕНО
+            dial = getattr(self, f"{category}_dial")
+            category_volume = dial.value() / 100.0
             if hasattr(self.mainWindow, 'audio_manager'):
                 self.mainWindow.audio_manager.set_category_volume(category, category_volume)
 
     # Create Buttons
     def create_buttons(self):
-        """Создает кнопки окна настроек"""
-        # Создаем кнопки
+        """Create settings buttons"""
+        # Create Buttons
         self.resetPosButton = QPushButton("&Reset Position")
         self.resetPosButton.clicked.connect(self.reset_position)
 
@@ -2092,34 +2086,34 @@ class SettingsWindow(QWidget):
         self.quitButton.clicked.connect(self.force_quit_app)
         # self.quitButton.clicked.connect(qApp.quit)  # type: ignore[name-defined,attr-defined] # pylint: disable=undefined-variable
 
-        # Создаем кнопки Apply/OK/Cancel
+        # Create Buttons Apply/OK/Cancel
         self.button_box = QDialogButtonBox()
         self.apply_button = QPushButton("Apply")
         self.ok_button = QPushButton("OK")
         self.cancel_button = QPushButton("Cancel")
 
-        # Изначально кнопки Apply и Cancel отключены
+        # Initially, the Apply and Cancel buttons are disabled
         self.apply_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
 
-        # Добавляем кнопки в button box
+        # Add buttons in button box
         #self.button_box.addButton(self.apply_button, QDialogButtonBox.ButtonRole.ApplyRole)
         self.button_box.addButton(self.ok_button, QDialogButtonBox.ButtonRole.AcceptRole)
         self.button_box.addButton(self.cancel_button, QDialogButtonBox.ButtonRole.RejectRole)
 
-        # Подключаем сигналы
+        # Connect signals
         self.apply_button.clicked.connect(self.apply_settings)
         self.ok_button.clicked.connect(self.ok_pressed)
         self.cancel_button.clicked.connect(self.cancel_pressed)
 
     def ok_pressed(self):
-        """Обработчик кнопки OK"""
+        """Handler OK Button"""
         if self.unsaved_changes:
             self.apply_settings()
         self.close()
 
     def cancel_pressed(self):
-        """Обработчик кнопки Cancel"""
+        """Handler Cancel Button"""
         if self.unsaved_changes:
             reply = QMessageBox.question(
                 self, self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
@@ -2134,12 +2128,12 @@ class SettingsWindow(QWidget):
             pass
 
     def on_setting_changed(self, *args):
-        """Вызывается при изменении любой настройки"""
-        # Игнорируем изменения во время инициализации
+        """It is called when any setting is changed."""
+        # Ignoring changes during initialization
         if hasattr(self, 'block_signals_during_init') and self.block_signals_during_init:
             return
 
-        # Проверяем, что кнопки уже созданы
+        # Check create buttons
         if hasattr(self, 'apply_button'):
             self.unsaved_changes = True
             self.mainWindow.settings_lock = True
@@ -2147,9 +2141,9 @@ class SettingsWindow(QWidget):
             self.cancel_button.setEnabled(True)
 
     def apply_settings(self):
-        """Применяет текущие настройки"""
+        """Apply current settings"""
         try:
-            # Собираем текущие значения
+            # Collecting the current values
             current_settings = {
                 'frameless_window': self.framelessWindowCheckBox.isChecked(),
                 'stays_on_top': self.windowStaysOnTopCheckBox.isChecked(),
@@ -2171,7 +2165,7 @@ class SettingsWindow(QWidget):
                 'ambient': getattr(self, 'ambient_dial').value() if hasattr(self, 'ambient_dial') else self.ambient
             }
 
-            # Применяем настройки оконных флагов
+            # Apply window flags settings
             flags = Qt.WindowType()
 
             if current_settings['frameless_window']:
@@ -2188,7 +2182,7 @@ class SettingsWindow(QWidget):
             else:
                 self.app_config.WindowStaysOnTopHint = False
 
-            # Применяем остальные настройки
+            # Apply additional settings
             self.set_setting('color_icons', current_settings['color_icons'])
             self.set_setting('background', current_settings['background'])
             self.set_setting('auto_scale', current_settings['auto_scale'])
@@ -2199,7 +2193,7 @@ class SettingsWindow(QWidget):
             self.set_setting('sleep_switch', current_settings['sleep'])
             self.set_setting('audio_system', current_settings['audio_system'])
 
-            # Аудио настройки
+            # Audio settings
             if not self.is_muted:
                 self.set_setting('master', current_settings['master'])
                 self.set_setting('voice', current_settings['voice'])
@@ -2207,14 +2201,14 @@ class SettingsWindow(QWidget):
                 self.set_setting('sfx', current_settings['sfx'])
                 self.set_setting('ambient', current_settings['ambient'])
 
-            # Язык и тема
+            # Language and theme
             self.language_org = current_settings['language']
             self.getLanguageName()
             self.theme = current_settings['theme']
             self.set_setting('language', str(self.language_get))
             self.set_setting('theme', str(self.theme))
 
-            # Категории звука
+            # Audio categories
             audio_categories = ['voice', 'bgm', 'sfx', 'ambient']
             for category in audio_categories:
                 if not self.is_muted:
@@ -2224,39 +2218,39 @@ class SettingsWindow(QWidget):
 
             if hasattr(self.mainWindow, 'audio_manager'):
                 if self.audio_system_enabled:
-                    # Включаем аудио систему
+                    # ON Audio System
                     # print("✓ Audio system enabled")
                     self.mainWindow.audio_manager.audio_switch = True
                 else:
-                    # Выключаем аудио систему
+                    # OFF Audio System
                     # print("✗ Audio system disabled")
                     self.mainWindow.audio_manager.audio_switch = False
 
-            # Обновляем audio_manager
+            # Update audio_manager
             if hasattr(self.mainWindow, 'audio_manager'):
-                # Мастер громкость
+                # Master Volume
                 master_audio_value = current_settings['master'] / 100.0 if current_settings['master'] > 1.0 else \
                 current_settings['master']
                 self.mainWindow.audio_manager.set_master_volume(master_audio_value)
 
-                # Категории
+                # Categories
                 for category in audio_categories:
                     audio_value = current_settings[category] / 100.0 if current_settings[category] > 1.0 else \
                     current_settings[category]
                     self.mainWindow.audio_manager.set_category_volume(category, audio_value)
 
-            # Обновляем главное окно
+            # Update Main Window
             self.mainWindow.setSettings(flags)
             self.mainWindow.show()
             self.mainWindow.model_move = True
 
-            # Обновляем иконки
+            # Update Icons
             self.update_icons()
 
-            # Сохраняем примененные значения как новые начальные
+            # Saving the applied values as new initial values
             self.initial_values = current_settings.copy()
 
-            # Сбрасываем флаг изменений
+            # Reset changes flags
             self.unsaved_changes = False
             self.mainWindow.settings_lock = False
             self.apply_button.setEnabled(False)
@@ -2269,13 +2263,13 @@ class SettingsWindow(QWidget):
             QMessageBox.warning(self, "Error", f"Failed to apply settings: {str(e)}")
 
     def revert_to_initial_values(self):
-        """Возвращает настройки к начальным значениям"""
+        """Returns the settings to their initial values"""
         self.framelessWindowCheckBox.setChecked(self.initial_values['frameless_window'])
         self.windowStaysOnTopCheckBox.setChecked(self.initial_values['stays_on_top'])
         self.colorIconsCheckBox.setChecked(self.initial_values['color_icons'])
         self.backgroundImageCheckBox.setChecked(self.initial_values['background'])
 
-        # Язык
+        # language
         if self.initial_values['language'] == "Русский":
             self.language_set = "Русский"
         else:
@@ -2294,20 +2288,20 @@ class SettingsWindow(QWidget):
         if hasattr(self, 'master_dial'):
             self.master_dial.setValue(self.initial_values['master'])
 
-            # Категории звука
+            # Audio Category
         for category in ['voice', 'bgm', 'sfx', 'ambient']:
             dial_attr = f"{category}_dial"
             if hasattr(self, dial_attr):
                 dial = getattr(self, dial_attr)
                 dial.setValue(self.initial_values[category])
 
-                # Обновляем метки
+                # Update labels
                 label_attr = f"{category}ValueLabel"
                 if hasattr(self, label_attr):
                     value_label = getattr(self, label_attr)
                     value_label.setText(f"{self.initial_values[category]}%")
 
-                # Обновляем цвет
+                # Update color
                 self.update_dial_color(dial, self.initial_values[category], category)
 
         self.unsaved_changes = False
@@ -2389,10 +2383,10 @@ class SettingsWindow(QWidget):
         setattr(self.mainWindow, key, value)
         setattr(self, key, value)
 
-        # Если это аудио настройка, обновляем audio_manager
+        # IF audio setting: update audio_manager
         if key in ['audio_system', 'master', 'voice', 'bgm', 'sfx', 'ambient']:
             if hasattr(self.mainWindow, 'audio_manager'):
-                # Преобразуем в диапазон 0.0-1.0 если нужно
+                # convert in 0.0-1.0
                 audio_value = value / 100.0 if value > 1.0 else value
 
                 if key == 'audio_system':
@@ -2409,7 +2403,7 @@ class SettingsWindow(QWidget):
                     self.mainWindow.audio_manager.set_category_volume(key, audio_value, True)
 
     def updateSettings(self):
-        # Обновляем названия вкладок
+        # Update tab names
         self.tab_widget.setTabText(0, self.mainWindow.lang['Settings']['Appearance'])
         self.tab_widget.setTabText(1, self.mainWindow.lang['Settings']['ScaleTitle'])
         self.tab_widget.setTabText(2, self.mainWindow.lang['Settings']['Behavior'])
@@ -2433,6 +2427,11 @@ class SettingsWindow(QWidget):
         self.langText.setText(self.mainWindow.lang['Settings']['Language'])
         self.colorIconsCheckBox.setText(self.mainWindow.lang['Settings']['ColorIcons'])
         self.backgroundImageCheckBox.setText(self.mainWindow.lang['Settings']['Background'])
+        self.backgroundImageCheckBox.setEnabled(self.mainWindow.background_available)
+        if not self.mainWindow.background_available:
+            self.block_signals_during_init = True
+            self.backgroundImageCheckBox.setChecked(False)
+            self.block_signals_during_init = False
         self.themeText.setText(self.mainWindow.lang['Settings']['Theme'])
 
         # Scale Tab
@@ -2641,7 +2640,7 @@ class SettingsWindow(QWidget):
         self.sc_mult_text = QLabel("Scale multiplier:")
         self.modelScaleBox.setMinimum(0.5)
         self.modelScaleBox.setMaximum(5)
-        self.modelScaleBox.setSingleStep(0.5)
+        self.modelScaleBox.setSingleStep(0.25)
         self.modelScaleBox.setValue(self.models_scale)
 
         self.modelFlagWidgets.setChecked(True)
@@ -2702,7 +2701,7 @@ class SettingsWindow(QWidget):
             self.language_set = "English"
 
     def closeEvent(self, event):
-        """Обработчик закрытия окна через крестик - не мешает кнопке Quit"""
+        """Close Window Handler"""
 
         if self.unsaved_changes:
             reply = QMessageBox.question(
@@ -2723,7 +2722,7 @@ class SettingsWindow(QWidget):
             event.accept()
 
     def force_quit_app(self):
-        """Принудительно закрывает приложение без вопросов"""
+        """Force Close Window"""
         # Сохраняем текущее состояние окна настроек
         self.unsaved_changes = False
         self.mainWindow.settings_lock = False

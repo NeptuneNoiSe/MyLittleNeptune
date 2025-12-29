@@ -20,16 +20,16 @@ class TalkWidget:
 
     # Dialog close timer
     def dialog_timer(self, interval: int | None = None) -> None:
-        """Запускает/обновляет таймер закрытия диалога"""
-        # Стандартный интервал по умолчанию
+        """Starts/updates the timer for closing the dialog"""
+        # The default time interval is
         std_interval = 7000
-        # Создаём таймер только если его нет
+        # Create a timer only if there is none.
         if not hasattr(self, 'dialogCloseTimer'):
             self.dialogCloseTimer = QTimer()
             self.dialogCloseTimer.setSingleShot(True)
             self.dialogCloseTimer.timeout.connect(self.close_dialog)
 
-        # Определяем актуальный интервал
+        # Determine the current interval
         if interval == None:
             current_interval = self.exp_fade_out_var if self.exp_fade_out_var != std_interval else std_interval
         elif self.is_quitting:
@@ -37,11 +37,10 @@ class TalkWidget:
         else:
             current_interval = interval
 
-        # Останавливаем и перезапускаем с новым интервалом
+        # Stop and restart with a new interval
         self.dialogCloseTimer.stop()
         self.dialogCloseTimer.start(int(current_interval))
 
-        # Для отладки
         # Logging
         if self.win.timer_log:
             print(f"[Timer] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")

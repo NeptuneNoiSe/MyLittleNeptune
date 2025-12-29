@@ -18,7 +18,7 @@ class ActionHandler:
 
     # Context Menu Actions
     def on_action_sing_song(self):
-        self.win.character.state.sing_song_state()
+        self.win.character.state.set_sing_song_state()
 
     def on_action_transform(self):
         self.win.model_move = False
@@ -42,7 +42,7 @@ class ActionHandler:
             self.win.character.state.set_character_lock_state()
             return
         if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
-            self.win.character.state.alredy_changed_character()
+            self.win.character.state.already_changed_character()
             return  # Interrupt the function because the character has already been selected
         self.win.talk_widget.talk_update = False
         if not self.win.transform:
@@ -109,7 +109,7 @@ class ActionHandler:
     # Animations Actions
     def _toggle_animation_setting(self, config_key, switch_attr, anim_attr,
                                   enabled_text_key, disabled_text_key, enabled):
-        # Обновляем конфиг (новое добавление)
+
         setattr(self.win.app_config, switch_attr, enabled)
 
         if self.win.character.tired_state.condition != "Sleep":

@@ -9,28 +9,27 @@ class AudioManager:
         self.resources_dir = resources_dir
         self.audio_switch = True
 
-        # Система громкости
-        # self.master_volume = (self.win.app_config.master/100)  # Общая громкость (0.0 - 1.0)
+        # self.master_volume = (self.win.app_config.master/100)  # Main Volume (0.0 - 1.0)
 
         self._defaults = {
-            'master': 0.8,    # 80%
+            'master': 1.0,    # 100%
             'voice': 1.0,     # 100%
             'sfx': 0.9,       # 90%
             'bgm': 0.6,       # 60%
-            'ambient': 0.9    # 90%
+            'ambient': 0.5    # 50%
         }
 
         self._init_pygame_mixer()
-        self.current_sounds = {}  # Словарь для отслеживания активных звуков
-        self.sound_categories = {}  # Для группировки звуков по категориям
+        self.current_sounds = {}  # Dictionary for tracking active sounds
+        self.sound_categories = {}  # To group sounds by category
         self.category_volumes = {}
         self.load_config()
 
-        self.previous_bgm_name = ""  # Храним предыдущее значение
+        self.previous_bgm_name = ""  # Storing the previous value
 
         self.bg_music_timer = QTimer()
         self.bg_music_timer.timeout.connect(self.check_bgm_change)
-        self.bg_music_timer.start(1000)  # Проверяем каждую секунду
+        self.bg_music_timer.start(1000)  # Check every second
 
     @property
     def bgm_name(self):
@@ -53,9 +52,9 @@ class AudioManager:
         self.win.song_duration = value
 
     def check_bgm_change(self):
-        """Проверяем изменение bgm_name каждую секунду"""
+        """Check the bgm_name change every second"""
         if self.previous_bgm_name != self.bgm_name:
-            # print(f"🎵 BGM изменилось: {self.previous_bgm_name} -> {self.bgm_name}")
+            # print(f"🎵 BGM change: {self.previous_bgm_name} -> {self.bgm_name}")
             self.previous_bgm_name = self.bgm_name
             if not self.bgm_name:
                 self.stop_category("bgm")
@@ -63,17 +62,17 @@ class AudioManager:
                 self.play_bg_music()
 
     def set_bgm_name(self, value):
-        """Метод для установки bgm_name"""
+        """Set bgm_name method"""
         self.bgm_name = value
-        # Не ждем таймер - запускаем сразу
+        # Force Set
         self.play_bg_music()
 
     def load_config(self):
-        """Загружает или перезагружает настройки из конфига"""
-        # Мастер громкость
+        """Loads or reloads the settings from the config"""
+        # Master Volume
         self.master_volume = self._get_config_value('master')
 
-        # Категории
+        # Categories
         self.category_volumes = {
             "voice": self._get_config_value('voice'),
             "sfx": self._get_config_value('sfx'),
@@ -81,14 +80,14 @@ class AudioManager:
             "ambient": self._get_config_value('ambient')
         }
 
-        # Применяем сразу
+        # Force Apply
         #self.apply_all_volumes()
 
     def _get_config_value(self, key):
-        """Безопасно получает значение из конфига"""
+        """Safely gets the value from the config"""
         try:
             value = getattr(self.win.app_config, key, self._defaults[key] * 100)
-            # Если значение > 1, значит это проценты, конвертируем
+            # If value > 1, its percent, convert
             if value > 1.0:
                 return value / 100.0
             return value
@@ -96,65 +95,65 @@ class AudioManager:
             return self._defaults[key]
 
     def reload_config(self):
-        """Публичный метод для перезагрузки конфига"""
+        """Public method for reloading the config"""
         self.load_config()
 
     @property
     def wavHandler(self):
-        """Доступ к wavHandler через главное окно"""
+        """Access to wavHandler through the main window"""
         if self.win and hasattr(self.win, 'wavHandler'):
             return self.win.wavHandler
         return None
 
     def _init_pygame_mixer(self):
-        """Инициализация только звукового модуля pygame"""
+        """Initializing the pygame sound module only"""
         try:
-            # Убираем приветственное сообщение
+            # Remove greeting message
             os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
             import pygame.mixer
 
-            # Инициализируем ТОЛЬКО mixer с большим количеством каналов
-            pygame.mixer.init(frequency=44100, size=-16, channels=16, buffer=512)  # Увеличил channels
+            # Initialize ONLY the mixer with a large number of channels
+            pygame.mixer.init(frequency=44100, size=-16, channels=16, buffer=512)
 
         except ImportError:
             print("✗ Pygame not available")
 
-    # ======================= Volume Control Methods =======================
+    #  Volume Control Methods
     def set_master_volume(self, volume: float, update_existing: bool = True):
-        """Установить общую громкость (0.0 - 1.0)"""
+        """Set Masater Volume (0.0 - 1.0)"""
         self.master_volume = max(0.0, min(1.0, volume))
 
         if update_existing:
-            # Обновляем громкость всех текущих звуков
+            # Update volume
             self._update_all_volumes()
 
     def set_category_volume(self, category: str, volume: float, update_existing: bool = True):
-        """Установить громкость для категории (0.0 - 1.0)"""
+        """Set volume for categories (0.0 - 1.0)"""
         if category in self.category_volumes:
             self.category_volumes[category] = max(0.0, min(1.0, volume))
 
             if update_existing:
-                # Обновляем громкость всех звуков этой категории
+                # Updating the volume of all sounds in this category
                 self._update_category_volumes(category)
 
     def get_category_volume(self, category: str) -> float:
-        """Получить громкость категории"""
+        """Get volume for categories"""
         return self.category_volumes.get(category, 1.0)
 
     def get_effective_volume(self, category: str) -> float:
-        """Получить итоговую громкость для категории с учетом master_volume"""
+        """Get the total volume for a category based on master_volume"""
         category_vol = self.category_volumes.get(category, 1.0)
         return self.master_volume * category_vol
 
     def _update_all_volumes(self):
-        """Обновить громкость всех текущих звуков"""
+        """Update the volume of all current sounds"""
         for sound_id, sound_data in self.current_sounds.items():
             category = sound_data['category']
             effective_volume = self.get_effective_volume(category)
             sound_data['sound'].set_volume(effective_volume)
 
     def _update_category_volumes(self, category: str):
-        """Обновить громкость всех звуков определенной категории"""
+        """Update the volume of all sounds of a certain category"""
         effective_volume = self.get_effective_volume(category)
 
         if category in self.sound_categories:
@@ -167,34 +166,34 @@ class AudioManager:
                                       stop_audio=True)
 
     def play_song(self):
-        """Воспроизведение песни с автоматическим понижением фоновой музыки"""
-        # Получаем файл песни
+        """Playing a song with automatic background music reduction"""
+        # Get audio file
         self.win.input_handler.input_lock = True
         song_name = self.current_sing_song
 
-        # Сохраняем текущую громкость BGM
+        # Save the current BGM volume
         self.original_bgm_volume = self.get_category_volume("bgm")
 
-        # Уменьшаем громкость BGM (не до 0, а например до 20%)
+        # Turn down the BGM volume
         self.set_category_volume("bgm", 0.1, update_existing=True)
 
-        # Воспроизводим песню
+        # Play song
         sound_id = self.play_audio(
             "Songs", song_name,
             category="voice",
             enable_lipsync=True,
             stop_audio=True,
-            sound_id=f"song_{song_name}"  # Уникальный ID для управления
+            sound_id=f"song_{song_name}"  # unique Id
         )
 
         if sound_id:
-            # Создаем таймер для восстановления громкости
+            # Timer to restore volume
             self.resume_bgm_timer = QTimer()
             self.resume_bgm_timer.setSingleShot(True)
             self.resume_bgm_timer.timeout.connect(self.restore_bgm_volume)
             self.resume_bgm_timer.start(self.song_duration)
 
-            # Сохраняем информацию о текущей песне
+            # Save information about the current song
             duration = self.song_duration
             self.current_sing_song_save = {
                 'id': sound_id,
@@ -208,7 +207,7 @@ class AudioManager:
         return False
 
     def restore_bgm_volume(self):
-        """Восстанавливает оригинальную громкость BGM"""
+        """Restores the original BGM volume"""
         self.win.input_handler.input_lock = False
         if hasattr(self, 'original_bgm_volume'):
             self.set_category_volume("bgm", self.original_bgm_volume, update_existing=True)
@@ -220,6 +219,7 @@ class AudioManager:
 
 
     def play_bg_music(self):
+        """Play BG Music """
         if not self.bgm_name:
             return
         if self.bgm_group:
@@ -237,47 +237,47 @@ class AudioManager:
                    category: str = "voice",
                    volume_override: float = None) -> bool:
         """
-        Умное воспроизведение аудио с поддержкой громкости
+        Audio playback with volume support
 
         Args:
-            character_name: имя персонажа или "Effects" для эффектов
-            audio_source: тип аудио или путь к файлу
-            enable_lipsync: включить ли синхронизацию губ
-            stop_audio: останавливает воспроизведение предыдущего аудио файла
-            sound_id: уникальный идентификатор звука (опционально)
-            category: категория звука - "voice" (речь), "sfx" (эффекты),
-            volume_override: Переопределение громкости (0.0-1.0), None - использовать системные настройки
+            character_name: Character name or "Effects" for effects
+            audio_source: Audio type or file path
+            enable_lipsync: Whether to enable lip sync
+            stop_audio: Stops playback of the previous audio file
+            sound_id: unique audio identifier (optional)
+            category: audio category - "voice" (speech), "sfx" (effects),
+            volume_override: Volume override (0.0-1.0), None - use system settings
         """
         if not self.audio_switch:
             return False
 
         if stop_audio:
-            # Останавливаем только звуки определенной категории
+            # Only stop sounds of a certain category.
             self.stop_category(category) #  exclude_categories=["bgm", "sfx"]
 
         try:
             import pygame.mixer
 
-            # Определяем character_name если не указан
+            # Define character_name if not specified
             if character_name is None:
                 character_name = getattr(self.win, 'character_name', "default")
 
-            # Автоматически создаем sound_id если не указан
+            # Automatically create a sound_id if not specified
             if sound_id is None:
                 sound_id = f"{character_name}_{audio_source}"
 
-            # АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ ТИПА
+            # AUTOMATIC TYPE DETECTION
             if (audio_source.endswith('.wav') or
                     audio_source.startswith('audio/') or
                     os.path.isabs(audio_source)):
-                # ЭТО ПУТЬ К ФАЙЛУ
+                # FILE PATH:
                 if not os.path.isabs(audio_source):
                     audio_file = os.path.join(self.resources_dir, audio_source)
                 else:
                     audio_file = audio_source
                 source_info = f"file: {os.path.basename(audio_file)}"
             else:
-                # ЭТО ТИП АУДИО
+                # AUDIO TYPE:
                 audio_file = self.win.resource_manager.get_audio(character_name, audio_source)
                 source_info = f"type: {audio_source} for {character_name}"
 
@@ -286,35 +286,36 @@ class AudioManager:
                     print(f"✗ Audio file not found: {source_info}")
                 return False
 
-            # Создаем Sound объект
+            # Create Sound object
             sound = pygame.mixer.Sound(audio_file)
 
+            # Get audio duration
             self.song_duration = int(sound.get_length() * 1000)
 
-            # Воспроизводим с учетом категории
+            # Play based on the category
             if category == "bgm":
-                # Фоновая музыка - воспроизводим на бесконечном повторе
+                # Background music - play on endless repeat
                 channel = sound.play(loops=-1)
-                loop_info = " (BGM, зациклено)"
+                loop_info = " (BGM, looped)"
             else:
-                # Обычный звук - воспроизводим один раз
+                # Normal sound - play it once
                 channel = sound.play()
                 loop_info = ""
 
-            # Устанавливаем громкость
+            # Set volume
             if volume_override is not None:
-                # Используем переопределение
+                # Use redefinition
                 final_volume = max(0.0, min(1.0, volume_override))
             else:
-                # Используем системные настройки
+                # Use the system settings
                 final_volume = self.get_effective_volume(category)
 
             sound.set_volume(final_volume)
 
-            # Воспроизводим
+            # Play
             channel = sound.play()
 
-            # Сохраняем информацию о звуке
+            # Save info
             sound_data = {
                 'sound': sound,
                 'channel': channel,
@@ -326,12 +327,12 @@ class AudioManager:
 
             self.current_sounds[sound_id] = sound_data
 
-            # Также добавляем в группировку по категориям
+            # Add it to the grouping by category
             if category not in self.sound_categories:
                 self.sound_categories[category] = []
             self.sound_categories[category].append(sound_id)
 
-            # LipSync - только для основного звука персонажа
+            # LipSync
             if enable_lipsync and self.wavHandler:
                 self.wavHandler.Start(audio_file)
 
@@ -346,34 +347,34 @@ class AudioManager:
 
     def stop_audio(self, character_name: str = None, audio_source: str = None,
                    sound_id: str = None, category: str = None):
-        """Остановить звук по различным критериям"""
+        """Stop the sound according to various criteria"""
         import pygame.mixer
 
-        # 1. Остановка по sound_id (высший приоритет)
+        # Stop by sound_id (highest priority)
         if sound_id:
             if sound_id in self.current_sounds:
                 self._stop_sound_by_id(sound_id)
             return
 
-        # 2. Остановка по character_name + audio_source
+        # Stop by character_name + audio_source
         elif character_name and audio_source:
             sound_key = f"{character_name}_{audio_source}"
             if sound_key in self.current_sounds:
                 self._stop_sound_by_id(sound_key)
             return
 
-        # 3. Остановка по категории
+        # 3. Stop by category
         elif category:
             self.stop_category(category)
             return
 
-        # 4. Остановка всего (по умолчанию)
+        # 4. Stop all (as default)
         else:
-            # Останавливаем все звуки кроме музыки
+            # Stop except music
             self.stop_all_except(["bgm"])
 
     def stop_category(self, category: str, exclude_categories: list = None):
-        """Остановить все звуки определенной категории"""
+        """Stop all sounds of a certain category"""
         if exclude_categories is None:
             exclude_categories = []
 
@@ -381,13 +382,13 @@ class AudioManager:
             sound_ids_to_remove = []
             for sound_id in self.sound_categories[category]:
                 if sound_id in self.current_sounds:
-                    # Проверяем, не входит ли звук в исключения
+                    # Check except
                     sound_category = self.current_sounds[sound_id]['category']
                     if sound_category not in exclude_categories:
                         self.current_sounds[sound_id]['sound'].stop()
                         sound_ids_to_remove.append(sound_id)
 
-            # Удаляем остановленные звуки из словарей
+            # Remove stopped sounds from dictionaries
             for sound_id in sound_ids_to_remove:
                 del self.current_sounds[sound_id]
                 self.sound_categories[category].remove(sound_id)
@@ -396,45 +397,45 @@ class AudioManager:
                 del self.sound_categories[category]
 
     def stop_all_except(self, exclude_categories: list = None):
-        """Остановить все звуки кроме указанных категорий"""
+        """Stop all sounds except for the specified categories"""
         if exclude_categories is None:
-            exclude_categories = ["bgm"]  # По умолчанию не останавливаем музыку
+            exclude_categories = ["bgm"]  # As defaault not stop
 
-        # Создаем список звуков для остановки
+        # Create a list of sounds to stop
         sound_ids_to_stop = []
         for sound_id, sound_data in self.current_sounds.items():
             if sound_data['category'] not in exclude_categories:
                 sound_ids_to_stop.append(sound_id)
 
-        # Останавливаем звуки
+        # Stop sounds
         for sound_id in sound_ids_to_stop:
             self._stop_sound_by_id(sound_id)
 
     def _stop_sound_by_id(self, sound_id: str):
-        """Внутренний метод остановки звука по ID"""
+        """Internal method for stopping audio by ID"""
         if sound_id in self.current_sounds:
             sound_data = self.current_sounds[sound_id]
             sound_data['sound'].stop()
 
-            # Удаляем из категорий
+            # Remove it from the categories
             category = sound_data['category']
             if category in self.sound_categories and sound_id in self.sound_categories[category]:
                 self.sound_categories[category].remove(sound_id)
                 if not self.sound_categories[category]:
                     del self.sound_categories[category]
 
-            # Удаляем из текущих звуков
+            # Remove it from the current sounds
             del self.current_sounds[sound_id]
 
     # Additional Methods
     def fade_out(self, sound_id: str = None, category: str = None,
                  duration_ms: int = 1000):
-        """Плавное уменьшение громкости до 0"""
+        """Smooth volume reduction to 0"""
         import pygame.mixer
         from PySide6.QtCore import QTimer, QElapsedTimer
 
         def fade_sound(sound_obj, fade_time):
-            """Плавное затухание одного звука"""
+            """Smooth fading of a single sound"""
             start_volume = sound_obj.get_volume()
             timer = QTimer()
             elapsed = QElapsedTimer()
@@ -455,7 +456,7 @@ class AudioManager:
         if sound_id:
             if sound_id in self.current_sounds:
                 fade_sound(self.current_sounds[sound_id]['sound'], duration_ms)
-                # Удаляем из словарей после завершения
+                # Remove stopped sounds from dictionaries
                 QTimer.singleShot(duration_ms + 100,
                                   lambda: self._stop_sound_by_id(sound_id))
 
@@ -464,23 +465,23 @@ class AudioManager:
                 for sound_id in self.sound_categories[category].copy():
                     if sound_id in self.current_sounds:
                         fade_sound(self.current_sounds[sound_id]['sound'], duration_ms)
-                # Удаляем после завершения
+                # Remove it after completion
                 QTimer.singleShot(duration_ms + 100,
                                   lambda: self.stop_category(category))
 
     def set_sound_volume(self, sound_id: str, volume: float):
-        """Установить громкость конкретного звука"""
+        """Set the volume of a specific sound"""
         if sound_id in self.current_sounds:
             sound_data = self.current_sounds[sound_id]
             final_volume = max(0.0, min(1.0, volume))
             sound_data['sound'].set_volume(final_volume)
             sound_data['volume'] = final_volume
-            sound_data['volume_override'] = volume  # Помечаем как переопределенный
+            sound_data['volume_override'] = volume  # Mark it as redefined
             return True
         return False
 
     def get_sound_info(self, sound_id: str) -> dict:
-        """Получить информацию о звуке"""
+        """Get information about the sound"""
         if sound_id in self.current_sounds:
             data = self.current_sounds[sound_id].copy()
             data['effective_volume'] = data['sound'].get_volume()
@@ -488,7 +489,7 @@ class AudioManager:
         return {}
 
     def get_active_sounds_by_category(self) -> dict:
-        """Получить список активных звуков по категориям"""
+        """Get a list of active sounds by category"""
         result = {}
         for category, sound_ids in self.sound_categories.items():
             result[category] = []

@@ -89,8 +89,8 @@ class AppConfig(QObject):
                 'audio_system': 'True',
                 'master': '100',
                 'voice': '100',
-                'sfx': '100',
-                'bgm': '70',
+                'sfx': '90',
+                'bgm': '60',
                 'ambient': '50'
             }
         }

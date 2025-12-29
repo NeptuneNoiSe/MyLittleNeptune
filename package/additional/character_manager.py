@@ -76,14 +76,22 @@ class CharacterStateManager:
         self.goodByeTimer.stop()
         self.character.win.talk_widget.close_dialog()
         self.win.animation_manager.opacity_animator.animate_opacity(
-            win=self.win,
+            source=self.win.image_manager.background_image,
+            start=0.9,
+            end=0,
+            duration=500,
+            easing="out_quad"),
+
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            source=self.win.canvas,
             start=1.0,
             end=0.0,
             duration=500,
             easing="out_quad",
             on_finished= self._after_animation_fade_out_callback)
 
-    def alredy_changed_character(self):
+    def already_changed_character(self):
+        """Change current character"""
         self.character.movements.set_motion(group_name="Special", id=3)
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.character_text.set_already_changed_text()
@@ -112,8 +120,17 @@ class CharacterStateManager:
         else:
             self.character.character_text.set_greeting_text()
 
+        self.win.image_manager.background_image.background_opacity = 0
+
         self.win.animation_manager.opacity_animator.animate_opacity(
-            win=self.win,
+            source=self.win.image_manager.background_image,
+            start=0,
+            end=0.9,
+            duration=500,
+            easing="in_quad")
+
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            source=self.win.canvas,
             start=0.0,
             end=1.0,
             duration=1500,
@@ -128,7 +145,7 @@ class CharacterStateManager:
             else:
                 key = "Greeting"
             format_key = self.character.current_event.replace(" ", "_") + "_" + key
-            print(format_key)
+            # print(format_key)
             #self.character.audio.set_event_background_audio()
             self.character.audio.set_event_greeting_audio(audio_key = format_key)
         else:
@@ -184,8 +201,9 @@ class CharacterStateManager:
         self.character.character_text.set_woke_up_text()
 
     def set_random_state(self):
-       self.character.expressions.set_random_expression(fade_out=7000)
-       self.character.character_text.set_aux_text(group_name='Talk',
+        """Set random state"""
+        self.character.expressions.set_random_expression(fade_out=7000)
+        self.character.character_text.set_aux_text(group_name='Talk',
                                                   text_key=self.character.text_key,
                                                   kaomoji=self.character.kaomoji)
 
@@ -247,7 +265,14 @@ class CharacterStateManager:
             QTimer.singleShot(3000, lambda: (
                 self.win.talk_widget.close_dialog(),
                 self.win.animation_manager.opacity_animator.animate_opacity(
-                    win=self.win,
+                    source=self.win.image_manager.background_image,
+                    start=0.9,
+                    end=0,
+                    duration=500,
+                    easing="out_quad"),
+
+                self.win.animation_manager.opacity_animator.animate_opacity(
+                    source=self.win.canvas,
                     start=1.0,
                     end=0.0,
                     duration=500,
@@ -276,12 +301,17 @@ class CharacterStateManager:
         text_group = event_name.replace(" ", "") + "Event"
         self.character.character_text.set_event_congratulation_text(group_name=text_group,text_key=event_key)
 
-    def sing_song_state(self):
+    def set_sing_song_state(self):
         """Character sings a song"""
         self.win.audio_manager.play_song()
         self.character.movements.set_motion(group_name="Special", id=3)
         self.character.expressions.set_smile_expression(fade_out=self.win.song_duration)
         self.character.character_text.set_sing_song_text()
+
+    def set_event_hint_state(self, hint_type):
+        event_name = self.character.current_event.replace(" ", "") + "Event"
+        if not self.character.tired_state.condition == "sleep":
+            self.character.character_text.set_event_hint_text(event_name, hint_type)
 
 class CharacterTiredController:
     def __init__(self, character):
@@ -296,7 +326,7 @@ class CharacterTiredController:
         self.wake_up = False
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_state)
-        self._start_timer()
+        self.start_timer()
 
     @property
     def sleep_move(self):
@@ -353,7 +383,7 @@ class CharacterTiredController:
         if self.timer_log:
             print("Timer reset")
 
-    def _start_timer(self):
+    def start_timer(self):
         """Start timer"""
         self.reset_timer()  # Сброс перед запуском
         self.timer.start(int(6000 / self.time_scale))
@@ -396,7 +426,7 @@ class CharacterTiredController:
 
     def reload_timer(self):
         """Timer reload"""
-        self._start_timer()
+        self.start_timer()
 
     def sleep_function(self):
         """Run if character sleep"""
@@ -772,6 +802,11 @@ class CharacterTextManager:
     def set_sing_song_text(self):
         self.text = "♫♫♫"
         self.kaomoji = "ヽ(⌒▽⌒)ﾉ ♪"
+        self.update()
+
+    def set_event_hint_text(self, event_name, hint_type):
+        self.text = [event_name, hint_type]
+        self.kaomoji = "(⌐■_■)"
         self.update()
 
     def update(self):

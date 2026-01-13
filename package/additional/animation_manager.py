@@ -784,6 +784,7 @@ class TransformAnimator:
             "Uni": self.win.action_handler.on_action_black_sister,
             "Rom": self.win.action_handler.on_action_white_sister_rom,
             "Ram": self.win.action_handler.on_action_white_sister_ram,
+            "Maho": self.win.action_handler.on_action_grey_sister
         }
         if self.win.character_name in transformations:
             transformations[self.win.character_name]()
@@ -803,6 +804,7 @@ class TransformAnimator:
             "Black Sister": self.win.action_handler.on_action_uni,
             "White Sister Rom": self.win.action_handler.on_action_rom,
             "White Sister Ram": self.win.action_handler.on_action_ram,
+            "Grey Sister": self.win.action_handler.on_action_maho
         }
         if self.win.character_name in transformations:
             transformations[self.win.character_name]()

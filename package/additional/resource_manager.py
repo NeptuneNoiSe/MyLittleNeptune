@@ -118,6 +118,7 @@ class ResourceManager:
                 "White Sister Ram": "white_sister_ram_talk.svg",
                 "Histoire": "histoire_talk.svg",
                 "Maho": "maho_talk.svg",
+                "Grey Sister": "grey_sister_talk.svg",
                 "default": "talk.svg"
             }
 

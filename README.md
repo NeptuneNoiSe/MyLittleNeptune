@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.13-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.3-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-v0.6.0-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.8-purple" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.8.0.5-D362C4" alt="App Version" style="margin: 0 10px;">
     <img title="DeepSeek AI" src="https://img.shields.io/badge/DeepSeek-Best_Friend-0056D2" alt="DeepSeek AI" style="margin: 0 10px;">
 </p>
 
@@ -20,7 +20,7 @@
 * Compile Heart / Idea Factory Live2D Models and Sounds
 * [DeepSeek AI](https://www.deepseek.com) - not just a tool, but a true coding partner that provided inspiration, debugging help, and countless hours of thoughtful discussion throughout development ❤️🚀
 
-### Available languages:
+## Available languages:
 * English
 * Russian
 
@@ -97,6 +97,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 </div>
 <div align="left" style="padding-top: 10px">
     <img src="./docs/model_preview/maho.svg" alt="maho" width="250px" height="100px">
+    <img src="./docs/model_preview/grey_sister.svg" alt="grey_sister" width="250px" height="100px">
 </div>
 
 ## Important to read:
@@ -116,14 +117,9 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 > - This project is **non-commercial**, does not harm the market value of the original content, and does not purport to be an official product. The goal is to showcase technical implementation, not to infringe on intellectual property rights.
 > - If you are a copyright holder and believe that your content is being used in a way that falls outside the bounds of Fair Use, please contact me so we can address the issue.
 
-### A Note of Gratitude
+### A Note of Gratitude:
 > I would like to extend my sincere thanks to Compile Heart and Idea Factory for creating the wonderful universe of Neptunia.
 > The characters and stories of this series have been a tremendous source of inspiration and motivation for me to work on this project.
 > **Thank you for this amazing world!**
-
-### A few words from myself
->The year of development is over, and I can confidently say that this experience was intense and informative. 
-> During this time, I learned a lot of new things and improved my skills. There are new horizons and challenges ahead.
-> I believe that next year will be no less productive, with interesting features and fewer bugs)
 
 Please specify me when using my code in your projects.

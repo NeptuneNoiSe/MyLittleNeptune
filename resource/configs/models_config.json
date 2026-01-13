@@ -208,11 +208,23 @@
     "name_key": "Maho",
     "models_switch": 17,
     "hdd_form": false,
-    "can_transform": false,
+    "can_transform": true,
     "mx_param": 600,
     "my_param": 600,
     "w_correction": -70,
     "h_correction": 0,
     "posXR": 40
+    },
+    "Grey Sister": {
+    "model_path": "v3/GreySister/GreySister.model3.json",
+    "name_key": "Grey Sister",
+    "models_switch": 18,
+    "hdd_form": true,
+    "can_transform": true,
+    "mx_param": 650,
+    "my_param": 650,
+    "w_correction": -70,
+    "h_correction": 0,
+    "posXR": 65
     }
 }

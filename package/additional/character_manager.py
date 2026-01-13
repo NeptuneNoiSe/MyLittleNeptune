@@ -560,7 +560,7 @@ class CharacterExpressionManager:
 
     def set_transform_to_hdd_expression(self, fade_out: int | None = None) -> None:
         # Setting the default expression for a regular form
-        if self.character.name in ["Neptune", "NepGear"]:
+        if self.character.name in ["Neptune", "NepGear", "Maho"]:
             self._apply_expression("Star", fade_out)
         elif self.character.name in ["Vert"]:
             self._apply_expression("Smile", fade_out)

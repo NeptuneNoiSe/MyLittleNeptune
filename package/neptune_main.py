@@ -1006,8 +1006,8 @@ class SettingsWindow(QWidget):
         # Set fixed window size
         self.setMinimumHeight(440)
         self.setMaximumHeight(440)
-        self.setMinimumWidth(550)
-        self.setMaximumWidth(550)
+        self.setMinimumWidth(600)
+        self.setMaximumWidth(600)
 
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
@@ -1036,6 +1036,9 @@ class SettingsWindow(QWidget):
         self.sfx = self.app_config.sfx
         self.bgm = self.app_config.bgm
         self.ambient = self.app_config.ambient
+        self.show_text_widget = self.app_config.show_text_widget
+        self.show_name = self.app_config.show_name
+        self.show_kaomoji = self.app_config.show_kaomoji
 
         #Init language
         self.language_set = None
@@ -1061,7 +1064,7 @@ class SettingsWindow(QWidget):
         self.create_scale_tab()
         self.create_behavior_tab()
         self.create_audio_tab()
-        # self.create_other_tab()
+        self.create_other_tab()
 
         # Add tabs in layout
         mainLayout.addWidget(self.tab_widget)
@@ -1149,7 +1152,10 @@ class SettingsWindow(QWidget):
             'voice': self.voice,
             'sfx': self.sfx,
             'bgm': self.bgm,
-            'ambient': self.ambient
+            'ambient': self.ambient,
+            'show_text_widget': self.show_text_widget,
+            'show_name': self.show_name,
+            'show_kaomoji': self.show_kaomoji
         }
 
     def get_current_settings(self):
@@ -1180,7 +1186,10 @@ class SettingsWindow(QWidget):
             'voice': get_dial_value('voice'),
             'bgm': get_dial_value('bgm'),
             'sfx': get_dial_value('sfx'),
-            'ambient': get_dial_value('ambient')
+            'ambient': get_dial_value('ambient'),
+            'show_text_widget': self.showTextWidgetCheckBox.isChecked(),
+            'show_name': self.showNameCheckBox.isChecked(),
+            'show_kaomoji': self.showKaomojiCheckBox.isChecked()
         }
 
     # Create Tabs
@@ -1351,9 +1360,6 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.autoBreathCheckBox, 1, 0)
         layout.addWidget(self.trackingMouseCheckBox, 2, 0)
         layout.addWidget(self.sleepCheckBox, 3, 0)
-
-        # Add icons
-        self.update_icons()
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Behavior")
@@ -1579,6 +1585,40 @@ class SettingsWindow(QWidget):
 
         self.tab_widget.addTab(tab, "Audio")
 
+    def create_other_tab(self):
+        """Creates an advanced settings tab"""
+        tab = QWidget()
+        layout = QGridLayout()
+
+        #info_label = QLabel("Additional settings will be added here.")
+        #info_label.setAlignment(Qt.AlignCenter)
+        #layout.addWidget(info_label)
+
+        self.showTextWidgetCheckBox = QCheckBox("Show Text Widget")
+        self.showNameCheckBox = QCheckBox("Show Name")
+        self.showKaomojiCheckBox = QCheckBox("Show Kaomoji")
+
+        self.showTextWidgetCheckBox.setChecked(self.show_text_widget)
+        self.showNameCheckBox.setChecked(self.show_name)
+        self.showNameCheckBox.setEnabled(self.show_text_widget)
+        self.showKaomojiCheckBox.setChecked(self.show_kaomoji)
+        self.showKaomojiCheckBox.setEnabled(self.show_text_widget)
+
+        # Connect change signals
+        self.showTextWidgetCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.showNameCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.showKaomojiCheckBox.stateChanged.connect(self.on_setting_changed)
+
+        layout.addWidget(self.showTextWidgetCheckBox, 0, 0)
+        layout.addWidget(self.showNameCheckBox, 1, 0)
+        layout.addWidget(self.showKaomojiCheckBox, 2, 0)
+
+        # Add icons
+        self.update_icons()
+
+        tab.setLayout(layout)
+        self.tab_widget.addTab(tab, "Other")
+
     def on_audio_system_toggled(self, state):
         """On/Off audio system"""
         audio_enabled = state
@@ -1650,18 +1690,6 @@ class SettingsWindow(QWidget):
             self.mute_button.setText(" Mute All")
             # Return previous volume
             self.master_dial.setValue(self.master)
-
-    def create_other_tab(self):
-        """Creates an advanced settings tab"""
-        tab = QWidget()
-        layout = QVBoxLayout()
-
-        info_label = QLabel("Additional settings will be added here.")
-        info_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(info_label)
-
-        tab.setLayout(layout)
-        self.tab_widget.addTab(tab, "Other")
 
     def create_category_dial(self, category, label, default_value):
         """Создает виджет с QDial для категории звука"""
@@ -2170,7 +2198,10 @@ class SettingsWindow(QWidget):
                 'voice': getattr(self, 'voice_dial').value() if hasattr(self, 'voice_dial') else self.voice,
                 'bgm': getattr(self, 'bgm_dial').value() if hasattr(self, 'bgm_dial') else self.bgm,
                 'sfx': getattr(self, 'sfx_dial').value() if hasattr(self, 'sfx_dial') else self.sfx,
-                'ambient': getattr(self, 'ambient_dial').value() if hasattr(self, 'ambient_dial') else self.ambient
+                'ambient': getattr(self, 'ambient_dial').value() if hasattr(self, 'ambient_dial') else self.ambient,
+                'show_text_widget': self.showTextWidgetCheckBox.isChecked(),
+                'show_name': self.showNameCheckBox.isChecked(),
+                'show_kaomoji': self.showKaomojiCheckBox.isChecked()
             }
 
             # Apply window flags settings
@@ -2200,6 +2231,9 @@ class SettingsWindow(QWidget):
             self.set_setting('tracking_mouse_switch', current_settings['tracking_mouse'])
             self.set_setting('sleep_switch', current_settings['sleep'])
             self.set_setting('audio_system', current_settings['audio_system'])
+            self.set_setting('show_text_widget', current_settings['show_text_widget'])
+            self.set_setting('show_name', current_settings['show_name'])
+            self.set_setting('show_kaomoji', current_settings['show_kaomoji'])
 
             # Audio settings
             if not self.is_muted:
@@ -2312,6 +2346,10 @@ class SettingsWindow(QWidget):
                 # Update color
                 self.update_dial_color(dial, self.initial_values[category], category)
 
+        self.showTextWidgetCheckBox.setChecked(self.initial_values['show_text_widget'])
+        self.showNameCheckBox.setChecked(self.initial_values['show_name'])
+        self.showKaomojiCheckBox.setChecked(self.initial_values['show_kaomoji'])
+
         self.unsaved_changes = False
         self.mainWindow.settings_lock = False
         self.apply_button.setEnabled(False)
@@ -2333,6 +2371,10 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox.setIcon(self.mainWindow.get_icon("breath"))
         self.trackingMouseCheckBox.setIcon(self.mainWindow.get_icon("mouse"))
         self.sleepCheckBox.setIcon(self.mainWindow.get_icon("sleep"))
+
+        self.showTextWidgetCheckBox.setIcon(self.mainWindow.get_icon("text_widget"))
+        self.showNameCheckBox.setIcon(self.mainWindow.get_icon("name"))
+        self.showKaomojiCheckBox.setIcon(self.mainWindow.get_icon("kaomoji"))
 
     def get_available_styles(self):
         """Dynamically loads the icon based on the current theme."""
@@ -2476,6 +2518,13 @@ class SettingsWindow(QWidget):
         else:
             self.mute_button.setText(self.mainWindow.lang['Settings']['Unmute'])
 
+        # Other Tab
+        self.showTextWidgetCheckBox.setText(self.mainWindow.lang['Settings']['ShowTextWidget'])
+        self.showNameCheckBox.setText(self.mainWindow.lang['Settings']['ShowName'])
+        self.showNameCheckBox.setEnabled(self.show_text_widget)
+        self.showKaomojiCheckBox.setText(self.mainWindow.lang['Settings']['ShowKaomoji'])
+        self.showKaomojiCheckBox.setEnabled(self.show_text_widget)
+
         # Update icons
         self.update_icons()
 
@@ -2582,6 +2631,27 @@ class SettingsWindow(QWidget):
             else:
                 self.audioSystemCheckBox.setChecked(False)
                 self.set_setting('audio_system', False)
+
+            if self.showTextWidgetCheckBox.isChecked():
+                self.showTextWidgetCheckBox.setChecked(True)
+                self.set_setting('show_text_widget', True)
+            else:
+                self.showTextWidgetCheckBox.setChecked(False)
+                self.set_setting('show_text_widget', False)
+
+            if self.showNameCheckBox.isChecked():
+                self.showNameCheckBox.setChecked(True)
+                self.set_setting('show_name', True)
+            else:
+                self.showNameCheckBox.setChecked(False)
+                self.set_setting('show_name', False)
+
+            if self.showKaomojiCheckBox.isChecked():
+                self.showKaomojiCheckBox.setChecked(True)
+                self.set_setting('show_kaomoji', True)
+            else:
+                self.showKaomojiCheckBox.setChecked(False)
+                self.set_setting('show_kaomoji', False)
 
             self.language_org = self.langComboBox.currentText()
             self.getLanguageName()

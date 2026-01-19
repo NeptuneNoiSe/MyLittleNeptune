@@ -162,7 +162,10 @@
     "ResetSound": "Reset",
     "Mute": "Mute All",
     "Unmute": "Unmute All",
-    "OtherTitle": "Other"
+    "OtherTitle": "Other",
+    "ShowTextWidget": "Show text widget",
+    "ShowName": "Show character name in widget",
+    "ShowKaomoji": "Show kaomoji in widget"
   },
   "NewYearEvent": {
     "Greeting": "Hi! The New Year is coming soon",

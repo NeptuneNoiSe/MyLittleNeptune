@@ -18,6 +18,8 @@ class TalkWidget:
         self.exp_fade_out_var = 7000
         self.is_quitting = True
 
+
+
     # Dialog close timer
     def dialog_timer(self, interval: int | None = None) -> None:
         """Starts/updates the timer for closing the dialog"""
@@ -47,6 +49,7 @@ class TalkWidget:
 
     def init_ui(self):
         """Initializing UI elements"""
+        self.show_widget = self.win.app_config.show_text_widget
         self.grid_layout = QGridLayout(self.widget)
         self.talk_frame = QFrame(self.widget)
         self.frame_layout = QVBoxLayout(self.talk_frame)
@@ -176,10 +179,12 @@ class TalkWidget:
 
     def show_talk(self):
         """Shows a widget with the text"""
+        if not self.show_widget:
+            return
+
         if not self.talk:
             self.widget.show()
             self.talk = True
-
         self.dialog_timer()
 
         # Get image from ResourceManager
@@ -217,7 +222,15 @@ class TalkWidget:
         talk_font = QFont("Segoe Print", self.talkFontSize * self.a_scale * self.models_scale)
         talk_font.setBold(True)
 
-        self.talk_text_label.setText(f"{self.name}: {self.text}\n{self.kaomoji}")
+        if self.win.app_config.show_name and self.win.app_config.show_kaomoji:
+            self.talk_text_label.setText(f"{self.name}: {self.text}\n{self.kaomoji}")
+        elif not self.win.app_config.show_name and self.win.app_config.show_kaomoji:
+            self.talk_text_label.setText(f"{self.text}\n{self.kaomoji}")
+        elif self.win.app_config.show_name and not self.win.app_config.show_kaomoji:
+            self.talk_text_label.setText(f"{self.name}: {self.text}")
+        else:
+            self.talk_text_label.setText(f"{self.text}")
+
         self.talk_text_label.setFont(talk_font)
         self.talk_text_label.setStyleSheet("color: gray")
         self.talk_text_label.setWordWrap(True)
@@ -362,6 +375,8 @@ class TalkWidget:
 
     def close_dialog(self):
         """Close dialog box with Animation"""
+        if not self.show_widget:
+            return
         self.dialogCloseTimer.stop()
         if self.dialog_animation:
             self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")

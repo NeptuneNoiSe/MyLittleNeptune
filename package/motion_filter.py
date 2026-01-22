@@ -110,7 +110,7 @@ def filter_model_motions(model_name: str, allowed_params: list):
     """
     Фильтрует параметры во всех motion файлах указанной модели
     """
-    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "v3", model_name)
+    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "models", model_name)
     motion_paths = load_all_motion_path_from_model_dir(model_path)
 
     if not motion_paths:
@@ -156,7 +156,7 @@ def find_all_parameters_in_model(model_name: str) -> set:
     """
     Находит все уникальные параметры в motion файлах модели
     """
-    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "v3", model_name)
+    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "models", model_name)
     motion_paths = load_all_motion_path_from_model_dir(model_path)
 
     all_params = set()

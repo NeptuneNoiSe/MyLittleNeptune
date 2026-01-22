@@ -7,12 +7,11 @@ class AppConfig(QObject):
     """A class for managing application settings."""
     config_changed = Signal(str, str, str)  # section, key, value
 
-    # Определяем структуру конфига как константу
     DEFAULT_CONFIG = {
         'Main': {
             'language': 'English',
             'color_icons': 'False',
-            'background': 'True',
+            'background': 'False',
             'theme': '',
             'screen_width': '0',
             'screen_height': '0'
@@ -28,13 +27,12 @@ class AppConfig(QObject):
             'WindowStaysOnTopHint': 'True',
             'WindowStaysOnBottomHint': 'False'
         },
-        'Scale': {
-            'auto_scale': 'True',
-            'models_scale': '1'
-        },
         'Model': {
+            'auto_scale': 'True',
+            'models_scale': '1',
+            'random_character': 'False',
+            'random_character_hdd': 'False',
             'character_name': 'Neptune',
-            'selected_model': '0',
             'x_param': '0',
             'y_param': '0',
             'w_resize': '0',
@@ -47,7 +45,7 @@ class AppConfig(QObject):
             'on_mouse_animation': 'True',
             'tap_body_animation': 'True'
         },
-        'Settings': {
+        'Behavior': {
             'auto_blink': 'True',
             'auto_breath': 'True',
             'tracking_mouse': 'True',
@@ -212,12 +210,12 @@ class AppConfig(QObject):
 
     @property
     def auto_scale(self) -> bool:
-        return self._config.getboolean('Scale', 'auto_scale')
+        return self._config.getboolean('Model', 'auto_scale')
 
     @auto_scale.setter
     def auto_scale(self, value: bool):
-        self._config.set('Scale', 'auto_scale', str(value))
-        self._save_and_notify('Scale', 'auto_scale', str(value))
+        self._config.set('Model', 'auto_scale', str(value))
+        self._save_and_notify('Model', 'auto_scale', str(value))
 
     # Language config
     @property
@@ -261,25 +259,15 @@ class AppConfig(QObject):
     # Models config
     @property
     def models_scale(self) -> float:
-        return self._config.getfloat('Scale', 'models_scale')
+        return self._config.getfloat('Model', 'models_scale')
 
     @models_scale.setter
     def models_scale(self, value: float):
-        self._config.set('Scale', 'models_scale', str(value))
-        self._save_and_notify('Scale', 'models_scale', str(value))
-
-    @property
-    def models_switch(self) -> int:
-        return self._config.getint('Model', 'selected_model')
-
-    @models_switch.setter
-    def models_switch(self, value: int):
-        self._config.set('Model', 'selected_model', str(value))
-        self._save_and_notify('Model', 'selected_model', str(value))
+        self._config.set('Model', 'models_scale', str(value))
+        self._save_and_notify('Model', 'models_scale', str(value))
 
     def update_model_params(
             self,
-            model_id: Optional[int] = None,
             character_name: Optional[str] = None,
             x_param: Optional[int] = None,
             y_param: Optional[int] = None,
@@ -292,8 +280,6 @@ class AppConfig(QObject):
             twm_y: Optional[float] = None
     ):
         """Updates the model parameters (all parameters are optional)"""
-        if model_id is not None:
-            self._config.set('Model', 'selected_model', str(model_id))
         if character_name is not None:
             self._config.set('Model', 'character_name', character_name)
         if x_param is not None:
@@ -399,6 +385,24 @@ class AppConfig(QObject):
         self._config.set('Model', 'character_name', str(value))
         self._save_and_notify('Model', 'character_name', str(value))
 
+    @property
+    def random_character(self) -> bool:
+        return self._config.getboolean('Model', 'random_character')
+
+    @random_character.setter
+    def random_character(self, value: bool):
+        self._config.set('Model', 'random_character', str(value))
+        self._save_and_notify('Model', 'random_character', str(value))
+
+    @property
+    def random_character_hdd(self) -> bool:
+        return self._config.getboolean('Model', 'random_character_hdd')
+
+    @random_character_hdd.setter
+    def random_character_hdd(self, value: bool):
+        self._config.set('Model', 'random_character_hdd', str(value))
+        self._save_and_notify('Model', 'random_character_hdd', str(value))
+
     # Animation switches config
     @property
     def idle_switch(self) -> bool:
@@ -429,39 +433,39 @@ class AppConfig(QObject):
 
     @property
     def sleep_switch(self) -> bool:
-        return self._config.getboolean('Settings', 'sleep')
+        return self._config.getboolean('Behavior', 'sleep')
 
     @sleep_switch.setter
     def sleep_switch(self, value: bool):
-        self._config.set('Settings', 'sleep', str(value))
-        self._save_and_notify('Settings', 'sleep', str(value))
+        self._config.set('Behavior', 'sleep', str(value))
+        self._save_and_notify('Behavior', 'sleep', str(value))
 
     @property
     def tracking_mouse_switch(self) -> bool:
-        return self._config.getboolean('Settings', 'tracking_mouse')
+        return self._config.getboolean('Behavior', 'tracking_mouse')
 
     @tracking_mouse_switch.setter
     def tracking_mouse_switch(self, value: bool):
-        self._config.set('Settings', 'tracking_mouse', str(value))
-        self._save_and_notify('Settings', 'tracking_mouse', str(value))
+        self._config.set('Behavior', 'tracking_mouse', str(value))
+        self._save_and_notify('Behavior', 'tracking_mouse', str(value))
 
     @property
     def auto_blink(self) -> bool:
-        return self._config.getboolean('Settings', 'auto_blink')
+        return self._config.getboolean('Behavior', 'auto_blink')
 
     @auto_blink.setter
     def auto_blink(self, value: bool):
-        self._config.set('Settings', 'auto_blink', str(value))
-        self._save_and_notify('Settings', 'auto_blink', str(value))
+        self._config.set('Behavior', 'auto_blink', str(value))
+        self._save_and_notify('Behavior', 'auto_blink', str(value))
 
     @property
     def auto_breath(self) -> bool:
-        return self._config.getboolean('Settings', 'auto_breath')
+        return self._config.getboolean('Behavior', 'auto_breath')
 
     @auto_breath.setter
     def auto_breath(self, value: bool):
-        self._config.set('Settings', 'auto_breath', str(value))
-        self._save_and_notify('Settings', 'auto_breath', str(value))
+        self._config.set('Behavior', 'auto_breath', str(value))
+        self._save_and_notify('Behavior', 'auto_breath', str(value))
 
     @property
     def audio_system(self) -> bool:

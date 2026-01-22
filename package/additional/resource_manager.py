@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import QSize
 
@@ -14,6 +14,9 @@ class ResourceManager:
         self.loaded_animations: Dict[str, Dict] = {}
         self.ui_labels: Dict[str, QLabel] = {}
         self.character_configs: Dict[str, Dict] = self._load_character_configs()
+        self.base_characters: Dict[str, Dict] = {}
+        self.hdd_characters: Dict[str, Dict] = {}
+        self._categorize_characters()
         self.languages: Dict[str, Dict] = {}
         self.background_images: Dict[str, str] = {}
         self.animation_files: Dict[str, str] = {}
@@ -29,6 +32,27 @@ class ResourceManager:
         self._logging_audio_system = enabled
 
         # self.animation_player._log_callbacks = enabled
+
+    def _categorize_characters(self):
+        """Распределяет персонажей по категориям (base/hdd)"""
+        for char_name, config in self.character_configs.items():
+            # Получаем ключевое имя (используем name_key или оригинальное имя)
+            display_name = config.get('name_key', char_name)
+
+            # Проверяем, является ли персонаж HDD формой
+            is_hdd = config.get('hdd_form', False)
+
+            # Добавляем в соответствующий словарь
+            if is_hdd:
+                self.hdd_characters[display_name] = config
+            else:
+                self.base_characters[display_name] = config
+
+        # Логирование для отладки
+        # print(f"[ResourceManager] Categorized characters:")
+        # print(f"  Base: {list(self.base_characters.keys())}")
+        # print(f"  HDD: {list(self.hdd_characters.keys())}")
+        # print(f"  Total: {len(self.character_configs)} characters")
 
     def _load_character_configs(self) -> Dict[str, Dict]:
         """Loads character configs from a JSON file"""
@@ -62,7 +86,11 @@ class ResourceManager:
     def load_extra_motions(self) -> Dict[str, str]:
         """Loads all extra animations"""
         if not self.extra_motions:
-            motions_dir = os.path.join(self.resources_dir, "v3/external_motions")
+            motions_dir = os.path.join(self.resources_dir, "external_motions")
+            if not os.path.exists(motions_dir):
+                print(f"[Warning] Extra motions directory not found: {motions_dir}")
+                return {}
+
             motion_files = {
                 "drag_down": "drag_down.motion3.json",
                 "side_touch_head": "side_touch_head.motion3.json",
@@ -86,10 +114,13 @@ class ResourceManager:
                 "touch_leg2": "touch_leg2.motion3.json",
                 "touch_leg3": "touch_leg3.motion3.json",
             }
-            self.extra_motions = {
-                name: os.path.join(motions_dir, filename)
-                for name, filename in motion_files.items()
-            }
+            self.extra_motions = {}
+            for name, filename in motion_files.items():
+                full_path = os.path.join(motions_dir, filename)
+                if os.path.exists(full_path):
+                    self.extra_motions[name] = full_path
+                else:
+                    print(f"[Warning] Motion file not found: {full_path}")
         return self.extra_motions
 
     def load_talk_images(self) -> [Dict[str, str], Dict[str, str]]:
@@ -165,6 +196,20 @@ class ResourceManager:
                 label.setFixedSize(size)
             self.ui_labels[label_name] = label
         return self.ui_labels[label_name]
+
+    def get_base_character_names(self) -> List[str]:
+        """Возвращает список имен базовых персонажей"""
+        return list(self.base_characters.keys())
+
+    def get_hdd_character_names(self) -> List[str]:
+        """Возвращает список имен HDD персонажей"""
+        return list(self.hdd_characters.keys())
+
+    def get_all_character_names(self, include_hdd: bool = True) -> List[str]:
+        """Возвращает список всех имен персонажей"""
+        if include_hdd:
+            return self.get_base_character_names() + self.get_hdd_character_names()
+        return self.get_base_character_names()
 
     def unload_model(self, character_name: str) -> None:
         """Unloads the model from memory"""

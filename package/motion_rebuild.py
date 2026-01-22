@@ -127,7 +127,7 @@ def process_model_motions(model_name: str, convert_params: bool = True):
     """
     Обрабатывает все motion файлы для указанной модели
     """
-    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "v3", model_name)
+    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "models", model_name)
     motion_paths = load_all_motion_path_from_model_dir(model_path)
 
     if not motion_paths:
@@ -159,7 +159,7 @@ def preview_model_conversions(model_name: str):
     """
     Предпросмотр преобразований для модели
     """
-    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "v3", model_name)
+    model_path = os.path.join(resources.RESOURCES_DIRECTORY, "models", model_name)
     motion_paths = load_all_motion_path_from_model_dir(model_path)
 
     conversions = set()

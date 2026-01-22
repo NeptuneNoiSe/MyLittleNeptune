@@ -130,9 +130,6 @@ class MainWindow(QOpenGLWidget):
             "CleanLooks": "cleanlooks"
         }
 
-        # Models Switch:
-        self.models_switch = self.app_config.models_switch
-
         # AutoScale: If True, the models is scaled based on the screen size
         self.auto_scale = self.app_config.auto_scale
 
@@ -289,7 +286,7 @@ class MainWindow(QOpenGLWidget):
         self.name = self.character_name
 
         # Set Neptune Default Model parameters
-        if self.models_switch == 0:
+        if self.name == "Neptune":
             self.app_config.update_model_params(
                 x_param=600,
                 y_param=600
@@ -399,66 +396,10 @@ class MainWindow(QOpenGLWidget):
         self.makeCurrent()
         live2d.glInit()
         self.model = live2d.Model()
-        if live2d.LIVE2D_VERSION == 3:
-            if self.models_switch == 0:
-                self.character_name = "Neptune"
 
-            elif self.models_switch == 1:
-                self.character_name = "Purple Heart"
-
-            elif self.models_switch == 2:
-                self.character_name = "Noire"
-
-            elif self.models_switch == 3:
-                self.character_name = "Black Heart"
-
-            elif self.models_switch == 4:
-                self.character_name = "Blanc"
-
-            elif self.models_switch == 5:
-                self.character_name = "White Heart"
-
-            elif self.models_switch == 6:
-                self.character_name = "Vert"
-
-            elif self.models_switch == 7:
-                self.character_name = "Green Heart"
-
-            elif self.models_switch == 8:
-                self.character_name = "NepGear"
-
-            elif self.models_switch == 9:
-                self.character_name = "Purple Sister"
-
-            elif self.models_switch == 10:
-                self.character_name = "Uni"
-
-            elif self.models_switch == 11:
-                self.character_name = "Black Sister"
-
-            elif self.models_switch == 12:
-                self.character_name = "Rom"
-
-            elif self.models_switch == 13:
-                self.character_name = "White Sister Rom"
-
-            elif self.models_switch == 14:
-                self.character_name = "Ram"
-
-            elif self.models_switch == 15:
-                self.character_name = "White Sister Ram"
-
-            elif self.models_switch == 16:
-                self.character_name = "Histoire"
-
-            elif self.models_switch == 16:
-                self.character_name = "Maho"
-
-            elif self.models_switch == 16:
-                self.character_name = "Grey Sister"
-        else:
-            self.model.LoadModelJson(os.path.join(
-                resources.RESOURCES_DIRECTORY, "v2/NeptuneHappinessSanta/neptune_m_model_c031.json"))
+        use_random_character = self.app_config.random_character
+        if use_random_character:
+            self.models_manager.load_random_character(self)
 
         self.model = self.resource_manager.get_model(self.character_name)
         self.apply_character_config(self.character_name)
@@ -1026,6 +967,8 @@ class SettingsWindow(QWidget):
         self.background = self.app_config.background
         self.auto_scale = self.app_config.auto_scale
         self.models_scale = self.app_config.models_scale
+        self.random_character = self.app_config.random_character
+        self.random_character_hdd = self.app_config.random_character_hdd
         self.auto_blink = self.app_config.auto_blink
         self.auto_breath = self.app_config.auto_breath
         self.tracking_mouse = self.app_config.tracking_mouse_switch
@@ -1061,7 +1004,7 @@ class SettingsWindow(QWidget):
 
         # Create and Add Tabs
         self.create_appearance_tab()
-        self.create_scale_tab()
+        self.create_model_tab()
         self.create_behavior_tab()
         self.create_audio_tab()
         self.create_other_tab()
@@ -1143,6 +1086,8 @@ class SettingsWindow(QWidget):
             'theme': self.theme,
             'auto_scale': self.auto_scale,
             'models_scale': self.models_scale,
+            'random_character': self.random_character,
+            'random_character_hdd': self.random_character_hdd,
             'auto_blink': self.auto_blink,
             'auto_breath': self.auto_breath,
             'tracking_mouse': self.tracking_mouse,
@@ -1177,6 +1122,8 @@ class SettingsWindow(QWidget):
             'theme': self.themeComboBox.currentText(),
             'auto_scale': self.autoScaleCheckBox.isChecked(),
             'models_scale': self.modelScaleBox.value(),
+            'random_character': self.randomCharacterCheckBox.isChecked(),
+            'random_character_hdd': self.randomCharacterHDDCheckBox.isChecked(),
             'auto_blink': self.autoBlinkCheckBox.isChecked(),
             'auto_breath': self.autoBreathCheckBox.isChecked(),
             'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
@@ -1248,8 +1195,8 @@ class SettingsWindow(QWidget):
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Appearance")
 
-    def create_scale_tab(self):
-        """Creates a scale settings tab"""
+    def create_model_tab(self):
+        """Creates a model settings tab"""
         tab = QWidget()
         layout = QGridLayout()
 
@@ -1263,19 +1210,40 @@ class SettingsWindow(QWidget):
         self.autoScaleCheckBox = QCheckBox("AutoScale")
         self.autoScaleCheckBox.setChecked(self.auto_scale)
 
+        self.randomCharacterCheckBox = QCheckBox("Random Character")
+        self.randomCharacterCheckBox.setChecked(self.random_character)
+
+        self.randomCharacterHDDCheckBox = QCheckBox("Random Character With HDD")
+        self.randomCharacterHDDCheckBox.setChecked(self.random_character_hdd)
+        self.randomCharacterHDDCheckBox.setEnabled(self.random_character)
+
         # Setting the initial state based on styles
         self.sync_scale_box_with_checkbox()
 
-        layout.addWidget(self.autoScaleCheckBox, 1, 0, 1, 2)
         layout.addWidget(self.sc_mult_text, 0, 0)
         layout.addWidget(self.modelScaleBox, 0, 1)
+        layout.addWidget(self.autoScaleCheckBox, 1, 0, 1, 2)
+        layout.addWidget(self.randomCharacterCheckBox, 2, 0, 1, 2)
+        layout.addWidget(self.randomCharacterHDDCheckBox, 3, 0, 1, 2)
 
         # Connecting signals
         self.autoScaleCheckBox.toggled.connect(self.sync_scale_box_with_checkbox)
         self.modelScaleBox.valueChanged.connect(self.on_setting_changed)
+        self.randomCharacterCheckBox.stateChanged.connect(self.on_random_hdd_toggled)
+        self.randomCharacterHDDCheckBox.toggled.connect(self.on_setting_changed)
 
         tab.setLayout(layout)
-        self.tab_widget.addTab(tab, "Scale")
+        self.tab_widget.addTab(tab, "Model")
+
+    def on_random_hdd_toggled(self):
+        """Toggled Random Character HDD Checkbox"""
+        is_random_character = self.randomCharacterCheckBox.isChecked()
+        if is_random_character:
+            self.randomCharacterHDDCheckBox.setEnabled(True)
+        else:
+            self.randomCharacterHDDCheckBox.setEnabled(False)
+
+        self.on_setting_changed()
 
     def sync_scale_box_with_checkbox(self):
         """Synchronizes the state of the spinbox with the checkbox"""
@@ -1605,7 +1573,7 @@ class SettingsWindow(QWidget):
         self.showKaomojiCheckBox.setEnabled(self.show_text_widget)
 
         # Connect change signals
-        self.showTextWidgetCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.showTextWidgetCheckBox.stateChanged.connect(self.on_text_widget_checkbox_toggled)
         self.showNameCheckBox.stateChanged.connect(self.on_setting_changed)
         self.showKaomojiCheckBox.stateChanged.connect(self.on_setting_changed)
 
@@ -1618,6 +1586,17 @@ class SettingsWindow(QWidget):
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Other")
+
+    def on_text_widget_checkbox_toggled(self):
+        """Toggled Text Widget CheckBoxes"""
+        is_text_widget = self.showTextWidgetCheckBox.isChecked()
+        if is_text_widget:
+            self.showNameCheckBox.setEnabled(True)
+            self.showKaomojiCheckBox.setEnabled(True)
+        else:
+            self.showNameCheckBox.setEnabled(False)
+            self.showKaomojiCheckBox.setEnabled(False)
+        self.on_setting_changed()
 
     def on_audio_system_toggled(self, state):
         """On/Off audio system"""
@@ -2189,6 +2168,8 @@ class SettingsWindow(QWidget):
                 'theme': self.themeComboBox.currentText(),
                 'auto_scale': self.autoScaleCheckBox.isChecked(),
                 'models_scale': self.modelScaleBox.value(),
+                'random_character': self.randomCharacterCheckBox.isChecked(),
+                'random_character_hdd': self.randomCharacterHDDCheckBox.isChecked(),
                 'auto_blink': self.autoBlinkCheckBox.isChecked(),
                 'auto_breath': self.autoBreathCheckBox.isChecked(),
                 'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
@@ -2226,6 +2207,8 @@ class SettingsWindow(QWidget):
             self.set_setting('background', current_settings['background'])
             self.set_setting('auto_scale', current_settings['auto_scale'])
             self.set_setting('models_scale', current_settings['models_scale'])
+            self.set_setting('random_character', current_settings['random_character'])
+            self.set_setting('random_character_hdd', current_settings['random_character_hdd'])
             self.set_setting('auto_blink', current_settings['auto_blink'])
             self.set_setting('auto_breath', current_settings['auto_breath'])
             self.set_setting('tracking_mouse_switch', current_settings['tracking_mouse'])
@@ -2321,6 +2304,8 @@ class SettingsWindow(QWidget):
         self.themeComboBox.setCurrentText(self.initial_values['theme'])
         self.autoScaleCheckBox.setChecked(self.initial_values['auto_scale'])
         self.modelScaleBox.setValue(self.initial_values['models_scale'])
+        self.randomCharacterCheckBox.setChecked(self.initial_values['random_character'])
+        self.randomCharacterHDDCheckBox.setChecked(self.initial_values['random_character_hdd'])
         self.autoBlinkCheckBox.setChecked(self.initial_values['auto_blink'])
         self.autoBreathCheckBox.setChecked(self.initial_values['auto_breath'])
         self.trackingMouseCheckBox.setChecked(self.initial_values['tracking_mouse'])
@@ -2363,8 +2348,10 @@ class SettingsWindow(QWidget):
         self.colorIconsCheckBox.setIcon(self.mainWindow.get_icon("color"))
         self.backgroundImageCheckBox.setIcon(self.mainWindow.get_icon("background"))
 
-        # Scale
+        # Model
         self.autoScaleCheckBox.setIcon(self.mainWindow.get_icon("auto_scale"))
+        self.randomCharacterCheckBox.setIcon(self.mainWindow.get_icon("random_character"))
+        self.randomCharacterHDDCheckBox.setIcon(self.mainWindow.get_icon("random_character_hdd"))
 
         #Behavior
         self.autoBlinkCheckBox.setIcon(self.mainWindow.get_icon("eye_closed"))
@@ -2455,7 +2442,7 @@ class SettingsWindow(QWidget):
     def updateSettings(self):
         # Update tab names
         self.tab_widget.setTabText(0, self.mainWindow.lang['Settings']['Appearance'])
-        self.tab_widget.setTabText(1, self.mainWindow.lang['Settings']['ScaleTitle'])
+        self.tab_widget.setTabText(1, self.mainWindow.lang['Settings']['ModelTitle'])
         self.tab_widget.setTabText(2, self.mainWindow.lang['Settings']['Behavior'])
         self.tab_widget.setTabText(3, self.mainWindow.lang['Settings']['AudioTitle'])
         self.tab_widget.setTabText(4, self.mainWindow.lang['Settings']['OtherTitle'])
@@ -2484,9 +2471,12 @@ class SettingsWindow(QWidget):
             self.block_signals_during_init = False
         self.themeText.setText(self.mainWindow.lang['Settings']['Theme'])
 
-        # Scale Tab
+        # Model Tab
         self.autoScaleCheckBox.setText(self.mainWindow.lang['Settings']['AutoScale'])
         self.sc_mult_text.setText(self.mainWindow.lang['Settings']['ScaleMultiplier'])
+        self.randomCharacterCheckBox.setText(self.mainWindow.lang['Settings']['RandomCharacter'])
+        self.randomCharacterHDDCheckBox.setText(self.mainWindow.lang['Settings']['RandomCharacterHDD'])
+        # self.randomCharacterHDDCheckBox.setEnabled(self.random_character)
 
         # Behavior Tab
         self.autoBlinkCheckBox.setText(self.mainWindow.lang['Settings']['AutoBlink'])
@@ -2521,9 +2511,9 @@ class SettingsWindow(QWidget):
         # Other Tab
         self.showTextWidgetCheckBox.setText(self.mainWindow.lang['Settings']['ShowTextWidget'])
         self.showNameCheckBox.setText(self.mainWindow.lang['Settings']['ShowName'])
-        self.showNameCheckBox.setEnabled(self.show_text_widget)
+        # self.showNameCheckBox.setEnabled(self.show_text_widget)
         self.showKaomojiCheckBox.setText(self.mainWindow.lang['Settings']['ShowKaomoji'])
-        self.showKaomojiCheckBox.setEnabled(self.show_text_widget)
+        # self.showKaomojiCheckBox.setEnabled(self.show_text_widget)
 
         # Update icons
         self.update_icons()
@@ -2597,6 +2587,20 @@ class SettingsWindow(QWidget):
                 self.set_setting('auto_scale', False)
                 self.set_setting('models_scale', scale_value)
 
+            if self.randomCharacterCheckBox.isChecked():
+                self.randomCharacterCheckBox.setChecked(True)
+                self.set_setting('random_character', True)
+            else:
+                self.randomCharacterCheckBox.setChecked(False)
+                self.set_setting('random_character', False)
+
+            if self.randomCharacterHDDCheckBox.isChecked():
+                self.randomCharacterHDDCheckBox.setChecked(True)
+                self.set_setting('random_character_hdd', True)
+            else:
+                self.randomCharacterHDDCheckBox.setChecked(False)
+                self.set_setting('random_character_hdd', False)
+
             if self.autoBlinkCheckBox.isChecked():
                 self.autoBlinkCheckBox.setChecked(True)
                 self.app_config.auto_blink = True
@@ -2663,100 +2667,6 @@ class SettingsWindow(QWidget):
 
         self.mainWindow.setSettings(flags)
         self.mainWindow.show()
-
-    def createHintsGroupBox(self) -> None:
-        """Create Hints GroupBox"""
-        self.hintsGroupBox = QGroupBox("Window")
-        layout = QGridLayout()
-
-        if self.pythonic_reg:
-            self.hintFlagWidgets: list[tuple[QCheckBox, Qt.WindowType]] = [
-                (self.createCheckBox(flag.name), flag) for flag in
-                self.mainWindow.hintFlags
-            ]
-
-            for i, (checkBox, _) in enumerate(self.hintFlagWidgets):
-                layout.addWidget(checkBox, i % 2, int(i / 2))
-
-            self.typeFlagWidgets[0][0].setChecked(True)
-        else:
-            self.framelessWindowCheckBox = self.createCheckBox("Frameless window")
-            self.windowStaysOnTopCheckBox = self.createCheckBox("Window stays on top")
-            self.colorIconsCheckBox = self.createCheckBox("Color icons")
-            self.backgroundImageCheckBox = self.createCheckBox("Background image")
-            self.langText = QLabel("Language:")
-            self.langComboBox = QComboBox()
-            self.langComboBox.addItems(["English", "Русский"])
-            self.setLanguageName()
-            self.langComboBox.setCurrentText(self.language_set)
-
-            self.themeText = QLabel("Theme:")
-            self.themeComboBox = QComboBox()
-            self.themeComboBox.addItems(self.available_styles)
-            #self.setThemeName()
-            self.themeComboBox.setCurrentText(self.theme)
-            self.theme =self.themeComboBox.currentText()
-
-            layout.addWidget(self.framelessWindowCheckBox, 0, 0)
-            layout.addWidget(self.windowStaysOnTopCheckBox, 1, 0)
-            layout.addWidget(self.langText, 3, 0)
-            layout.addWidget(self.langComboBox, 4, 0)
-            layout.addWidget(self.colorIconsCheckBox, 1, 1)
-            layout.addWidget(self.backgroundImageCheckBox, 2, 0)
-            layout.addWidget(self.themeText, 3, 1)
-            layout.addWidget(self.themeComboBox, 4, 1)
-            self.langComboBox.currentTextChanged.connect(self.updateMainWindow)
-            self.themeComboBox.currentTextChanged.connect(self.updateMainWindow)
-        self.hintsGroupBox.setLayout(layout)
-
-    def createScaleGroupBox(self) -> None:
-        """Create Scale GroupBox"""
-        self.scaleGroupBox = QGroupBox("Scale")
-        layout = QGridLayout()
-        self.modelFlagWidgets = QCheckBox()
-        self.modelScaleBox = QDoubleSpinBox()
-        self.sc_mult_text = QLabel("Scale multiplier:")
-        self.modelScaleBox.setMinimum(0.5)
-        self.modelScaleBox.setMaximum(5)
-        self.modelScaleBox.setSingleStep(0.25)
-        self.modelScaleBox.setValue(self.models_scale)
-
-        self.modelFlagWidgets.setChecked(True)
-
-        self.autoScaleCheckBox = self.createCheckBox("AutoScale")
-
-        layout.addWidget(self.autoScaleCheckBox, 0, 0)
-        layout.addWidget(self.sc_mult_text, 1, 0)
-        layout.addWidget(self.modelScaleBox, 1, 1)
-
-        self.modelFlagWidgets.clicked.connect(self.updateMainWindow)
-        self.modelScaleBox.valueChanged.connect(self.updateMainWindow)
-        #if self.mainWindow.settings_state:
-        #    self.modelScaleBox.valueChanged.connect(self.modelMoveOn)
-        #else:
-        #    self.modelScaleBox.valueChanged.connect(self.modelMoveOff)
-        # self.mainWindow.model_move = False
-
-        self.scaleGroupBox.setLayout(layout)
-
-    def createOtherGroupBox(self) -> None:
-        """Create Other GroupBox"""
-        self.otherGroupBox = QGroupBox("Other")
-        layout = QGridLayout()
-        self.otherFlagWidgets = QCheckBox()
-        self.otherFlagWidgets.setChecked(True)
-        self.autoBlinkCheckBox = self.createCheckBox("Auto Blink")
-        self.autoBreathCheckBox = self.createCheckBox("Auto Breath")
-        self.trackingMouseCheckBox = self.createCheckBox("Tracking Mouse Position")
-        self.sleepCheckBox = self.createCheckBox("Sleep")
-
-        layout.addWidget(self.autoBlinkCheckBox)
-        layout.addWidget(self.autoBreathCheckBox)
-        layout.addWidget(self.trackingMouseCheckBox)
-        layout.addWidget(self.sleepCheckBox)
-
-        self.otherFlagWidgets.clicked.connect(self.updateMainWindow)
-        self.otherGroupBox.setLayout(layout)
 
     def createCheckBox(self, text: str) -> QCheckBox:
         """Create CheckBox"""

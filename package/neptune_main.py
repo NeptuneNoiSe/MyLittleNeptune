@@ -22,6 +22,7 @@ from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
 from additional.action_handler import ActionHandler
 from additional.functions import Functions
+from additional.functions import PowerOfTwoSpinBox
 from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_manager import ResourceManager
@@ -57,9 +58,6 @@ class MainWindow(QOpenGLWidget):
 
         # Set False if you want use model.Draw()
         self.canvas_draw = True
-
-        # Sleep Animation Time Scale
-        self.time_scale = 1
 
         # Initialize functions
         self._init_window_flags()
@@ -135,6 +133,9 @@ class MainWindow(QOpenGLWidget):
 
         # Models Scale
         self.models_scale = self.app_config.models_scale
+
+        # Sleep Animation Time Scale
+        self.time_scale = self.app_config.time_scale
 
     def _init_vars(self):
         """Initialize Main Vars"""
@@ -850,45 +851,6 @@ class MainWindow(QOpenGLWidget):
 
         context_menu.addMenu(submenu_character)
 
-        # Animations Submenu
-        submenu_animations = QMenu(self).addMenu(self.get_icon("animation"), self.lang['Actions']['Animations'])
-
-        # Idle Animation CheckBox
-        action_checked_idle = submenu_animations.addAction(self.lang['Actions']['Idle'])
-        action_checked_idle.setCheckable(True)
-        action_checked_idle.setChecked(self.idle_switch)
-        if action_checked_idle.isChecked():
-            action_checked_idle.triggered.connect(self.action_handler.on_action_idle_false)
-        else:
-            action_checked_idle.triggered.connect(self.action_handler.on_action_idle_true)
-
-        # OnMouse Animation CheckBox
-        action_checked_on_mouse = submenu_animations.addAction(self.lang['Actions']['OnMouse'])
-        action_checked_on_mouse.setCheckable(True)
-        action_checked_on_mouse.setChecked(self.on_mouse_switch)
-        if action_checked_on_mouse.isChecked():
-            action_checked_on_mouse.triggered.connect(self.action_handler.on_action_on_mouse_false)
-        else:
-            action_checked_on_mouse.triggered.connect(self.action_handler.on_action_on_mouse_true)
-
-        # Tap Body Animation CheckBox
-        action_checked_tap_body = submenu_animations.addAction(self.lang['Actions']['TapBody'])
-        action_checked_tap_body.setCheckable(True)
-        action_checked_tap_body.setChecked(self.tap_body_switch)
-        if action_checked_tap_body.isChecked():
-            action_checked_tap_body.triggered.connect(self.action_handler.on_action_tap_body_false)
-        else:
-            action_checked_tap_body.triggered.connect(self.action_handler.on_action_tap_body_true)
-
-        # Stop All Motions
-        submenu_animations.addSeparator()
-        action_stop_all_motions = submenu_animations.addAction(self.get_icon("stop"),
-                                                               self.lang['Actions']['StopMotions'])
-        action_stop_all_motions.triggered.connect(self.action_handler.on_action_stop_all_motions)
-
-        context_menu.addMenu(submenu_animations)
-        context_menu.addSeparator()
-
         # Settings Action
         settings_action = QAction(self.get_icon("settings"), self.lang['Actions']['Settings'], self)
         if not self.input_handler.input_lock:
@@ -973,6 +935,10 @@ class SettingsWindow(QWidget):
         self.auto_breath = self.app_config.auto_breath
         self.tracking_mouse = self.app_config.tracking_mouse_switch
         self.sleep = self.app_config.sleep_switch
+        self.time_scale = self.app_config.time_scale
+        self.idle = self.app_config.idle_switch
+        self.on_mouse = self.app_config.on_mouse_switch
+        self.tap_body = self.app_config.tap_body_switch
         self.audio_system = self.app_config.audio_system
         self.master = self.app_config.master
         self.voice = self.app_config.voice
@@ -1092,6 +1058,10 @@ class SettingsWindow(QWidget):
             'auto_breath': self.auto_breath,
             'tracking_mouse': self.tracking_mouse,
             'sleep': self.sleep,
+            'time_scale': self.time_scale,
+            'idle': self.idle,
+            'on_mouse': self.on_mouse,
+            'tap_body': self.tap_body,
             'audio_system': self.audio_system,
             'master': self.master,
             'voice': self.voice,
@@ -1128,6 +1098,10 @@ class SettingsWindow(QWidget):
             'auto_breath': self.autoBreathCheckBox.isChecked(),
             'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
             'sleep': self.sleepCheckBox.isChecked(),
+            'time_scale': self.timeScaleBox.value(),
+            'idle': self.idleCheckBox.isChecked(),
+            'on_mouse': self.onMouseCheckBox.isChecked(),
+            'tap_body': self.tapBodyCheckBox.isChecked(),
             'audio_system': self.audioSystemCheckBox.isChecked(),
             'master': get_dial_value('master'),
             'voice': get_dial_value('voice'),
@@ -1312,25 +1286,106 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox = QCheckBox("Tracking Mouse Position")
         self.sleepCheckBox = QCheckBox("Sleep")
 
+        self.timeScaleBox = PowerOfTwoSpinBox()
+        self.sc_time_text = QLabel("Time Scale:")
+        self.timeScaleBox.setValue(self.time_scale)
+
+        self.idleCheckBox = QCheckBox("Idle")
+        self.onMouseCheckBox = QCheckBox("On Mouse")
+        self.tapBodyCheckBox = QCheckBox("Tap Body")
+
         # Settings the values
         self.autoBlinkCheckBox.setChecked(self.auto_blink)
         self.autoBreathCheckBox.setChecked(self.auto_breath)
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
+        self.idleCheckBox.setChecked(self.idle)
+        self.onMouseCheckBox.setChecked(self.on_mouse)
+        self.tapBodyCheckBox.setChecked(self.tap_body)
 
         # Connect change signals
         self.autoBlinkCheckBox.stateChanged.connect(self.on_setting_changed)
         self.autoBreathCheckBox.stateChanged.connect(self.on_setting_changed)
         self.trackingMouseCheckBox.stateChanged.connect(self.on_setting_changed)
-        self.sleepCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.sleepCheckBox.stateChanged.connect(self.sync_time_scale_box_with_checkbox)
+        self.timeScaleBox.valueChanged.connect(self.on_setting_changed)
+        self.idleCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.onMouseCheckBox.stateChanged.connect(self.on_setting_changed)
+        self.tapBodyCheckBox.stateChanged.connect(self.on_setting_changed)
+
+        # Setting the initial state based on styles
+        self.sync_time_scale_box_with_checkbox()
 
         layout.addWidget(self.autoBlinkCheckBox, 0, 0)
         layout.addWidget(self.autoBreathCheckBox, 1, 0)
         layout.addWidget(self.trackingMouseCheckBox, 2, 0)
         layout.addWidget(self.sleepCheckBox, 3, 0)
+        layout.addWidget(self.sc_time_text, 3, 1)
+        layout.addWidget(self.timeScaleBox, 3, 2)
+        layout.addWidget(self.idleCheckBox, 4, 0)
+        layout.addWidget(self.onMouseCheckBox, 5, 0)
+        layout.addWidget(self.tapBodyCheckBox, 6, 0)
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Behavior")
+
+    def sync_time_scale_box_with_checkbox(self):
+        """Synchronizes the state of the spinbox with the checkbox"""
+        is_sleep = self.sleepCheckBox.isChecked()
+
+        # Blocking the signals so that setValue does not trigger on_setting_changed
+        self.timeScaleBox.blockSignals(True)
+
+        if is_sleep:
+            # If sleep on
+            self.timeScaleBox.setReadOnly(False)
+            # Reset Style
+            self.timeScaleBox.setStyleSheet("")
+        else:
+            # if sleep of
+            self.timeScaleBox.setReadOnly(True)
+            self.timeScaleBox.setValue(1.0)
+
+            # Applying a style to an inaccessible field
+            if hasattr(self, 'mainWindow') and hasattr(self.mainWindow, 'theme'):
+                if self.mainWindow.theme.lower() == 'fusion' or 'dark' in self.mainWindow.theme.lower():
+                    # Dark Theme
+                    self.timeScaleBox.setStyleSheet("""
+                                    QDoubleSpinBox:read-only {
+                                        background-color: #3a3a3a;
+                                        color: #888888;
+                                        border: 1px solid #555555;
+                                        border-radius: 3px;
+                                        padding: 2px;
+                                    }
+                                    QDoubleSpinBox::up-button:read-only, 
+                                    QDoubleSpinBox::down-button:read-only {
+                                        background-color: #3a3a3a;
+                                        border: 1px solid #555555;
+                                    }
+                                """)
+                else:
+                    # Light Theme
+                    self.timeScaleBox.setStyleSheet("""
+                                    QDoubleSpinBox:read-only {
+                                        background-color: #f5f5f5;
+                                        color: #888888;
+                                        border: 1px solid #cccccc;
+                                        border-radius: 3px;
+                                        padding: 2px;
+                                    }
+                                    QDoubleSpinBox::up-button:read-only, 
+                                    QDoubleSpinBox::down-button:read-only {
+                                        background-color: #f5f5f5;
+                                        border: 1px solid #cccccc;
+                                    }
+                                """)
+
+
+        # Unblocking Signals
+        self.timeScaleBox.blockSignals(False)
+
+        self.on_setting_changed()
 
     def create_audio_tab(self):
         """Creates a sound management tab with QDial"""
@@ -2174,6 +2229,10 @@ class SettingsWindow(QWidget):
                 'auto_breath': self.autoBreathCheckBox.isChecked(),
                 'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
                 'sleep': self.sleepCheckBox.isChecked(),
+                'time_scale': self.timeScaleBox.value(),
+                'idle': self.idleCheckBox.isChecked(),
+                'on_mouse': self.onMouseCheckBox.isChecked(),
+                'tap_body': self.tapBodyCheckBox.isChecked(),
                 'audio_system': self.audioSystemCheckBox.isChecked(),
                 'master': self.master_dial.value(),
                 'voice': getattr(self, 'voice_dial').value() if hasattr(self, 'voice_dial') else self.voice,
@@ -2213,6 +2272,10 @@ class SettingsWindow(QWidget):
             self.set_setting('auto_breath', current_settings['auto_breath'])
             self.set_setting('tracking_mouse_switch', current_settings['tracking_mouse'])
             self.set_setting('sleep_switch', current_settings['sleep'])
+            self.set_setting('time_scale', current_settings['time_scale'])
+            self.set_setting('idle_switch', current_settings['idle'])
+            self.set_setting('on_mouse_switch', current_settings['on_mouse'])
+            self.set_setting('tap_body_switch', current_settings['tap_body'])
             self.set_setting('audio_system', current_settings['audio_system'])
             self.set_setting('show_text_widget', current_settings['show_text_widget'])
             self.set_setting('show_name', current_settings['show_name'])
@@ -2310,6 +2373,10 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox.setChecked(self.initial_values['auto_breath'])
         self.trackingMouseCheckBox.setChecked(self.initial_values['tracking_mouse'])
         self.sleepCheckBox.setChecked(self.initial_values['sleep'])
+        self.timeScaleBox.setValue(self.initial_values['time_scale'])
+        self.idleCheckBox.setChecked(self.initial_values['idle'])
+        self.onMouseCheckBox.setChecked(self.initial_values['on_mouse'])
+        self.tapBodyCheckBox.setChecked(self.initial_values['tap_body'])
         self.audioSystemCheckBox.setChecked(self.initial_values['audio_system'])
 
         if hasattr(self, 'master_dial'):
@@ -2356,8 +2423,11 @@ class SettingsWindow(QWidget):
         #Behavior
         self.autoBlinkCheckBox.setIcon(self.mainWindow.get_icon("eye_closed"))
         self.autoBreathCheckBox.setIcon(self.mainWindow.get_icon("breath"))
-        self.trackingMouseCheckBox.setIcon(self.mainWindow.get_icon("mouse"))
+        self.trackingMouseCheckBox.setIcon(self.mainWindow.get_icon("pointer"))
         self.sleepCheckBox.setIcon(self.mainWindow.get_icon("sleep"))
+        self.idleCheckBox.setIcon(self.mainWindow.get_icon("idle_w"))
+        self.onMouseCheckBox.setIcon(self.mainWindow.get_icon("mouse"))
+        self.tapBodyCheckBox.setIcon(self.mainWindow.get_icon("tap"))
 
         self.showTextWidgetCheckBox.setIcon(self.mainWindow.get_icon("text_widget"))
         self.showNameCheckBox.setIcon(self.mainWindow.get_icon("name"))
@@ -2483,6 +2553,10 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox.setText(self.mainWindow.lang['Settings']['AutoBreath'])
         self.trackingMouseCheckBox.setText(self.mainWindow.lang['Settings']['TrackingMouse'])
         self.sleepCheckBox.setText(self.mainWindow.lang['Settings']['Sleep'])
+        self.sc_time_text.setText(self.mainWindow.lang['Settings']['TimeScale'])
+        self.idleCheckBox.setText(self.mainWindow.lang['Settings']['Idle'])
+        self.onMouseCheckBox.setText(self.mainWindow.lang['Settings']['OnMouse'])
+        self.tapBodyCheckBox.setText(self.mainWindow.lang['Settings']['TapBody'])
 
         # Audio Tab
         self.test_audio_button.setText(self.mainWindow.lang['Settings']['TestSound'])
@@ -2625,9 +2699,37 @@ class SettingsWindow(QWidget):
             if self.sleepCheckBox.isChecked():
                 self.sleepCheckBox.setChecked(True)
                 self.set_setting('sleep_switch', True)
+                self.timeScaleBox.setReadOnly(False)
+                scale_value = self.timeScaleBox.value()
+                self.set_setting('time_scale', scale_value)
+
             else:
                 self.sleepCheckBox.setChecked(False)
                 self.set_setting('sleep_switch', False)
+                self.timeScaleBox.setReadOnly(True)
+                self.set_setting('time_scale', 1)
+                self.timeScaleBox.setValue(1)
+
+            if self.idleCheckBox.isChecked():
+                self.idleCheckBox.setChecked(True)
+                self.set_setting('idle_switch', True)
+            else:
+                self.idleCheckBox.setChecked(False)
+                self.set_setting('idle_switch', False)
+
+            if self.onMouseCheckBox.isChecked():
+                self.onMouseCheckBox.setChecked(True)
+                self.set_setting('on_mouse_switch', True)
+            else:
+                self.onMouseCheckBox.setChecked(False)
+                self.set_setting('on_mouse_switch', False)
+
+            if self.tapBodyCheckBox.isChecked():
+                self.tapBodyCheckBox.setChecked(True)
+                self.set_setting('tap_body_switch', True)
+            else:
+                self.tapBodyCheckBox.setChecked(False)
+                self.set_setting('tap_body_switch', False)
 
             if self.audioSystemCheckBox.isChecked():
                 self.audioSystemCheckBox.setChecked(True)
@@ -2720,6 +2822,9 @@ class SettingsWindow(QWidget):
 
         # Принудительно закрываем всё приложение
         os._exit(0)
+
+# Additional classes
+
 
 if __name__ == "__main__":
     import sys

@@ -40,16 +40,15 @@ class AppConfig(QObject):
             'w_correction': '0',
             'h_correction': '0'
         },
-        'Animations': {
-            'idle_animation': 'True',
-            'on_mouse_animation': 'True',
-            'tap_body_animation': 'True'
-        },
         'Behavior': {
             'auto_blink': 'True',
             'auto_breath': 'True',
             'tracking_mouse': 'True',
-            'sleep': 'True'
+            'sleep': 'True',
+            'time_scale': '1',
+            'idle_animation': 'True',
+            'on_mouse_animation': 'True',
+            'tap_body_animation': 'True'
         },
         'Audio': {
             'audio_system': 'True',
@@ -406,30 +405,30 @@ class AppConfig(QObject):
     # Animation switches config
     @property
     def idle_switch(self) -> bool:
-        return self._config.getboolean('Animations', 'idle_animation')
+        return self._config.getboolean('Behavior', 'idle_animation')
 
     @idle_switch.setter
     def idle_switch(self, value: bool):
-        self._config.set('Animations', 'idle_animation', str(value))
-        self._save_and_notify('Animations', 'idle_animation', str(value))
+        self._config.set('Behavior', 'idle_animation', str(value))
+        self._save_and_notify('Behavior', 'idle_animation', str(value))
 
     @property
     def on_mouse_switch(self) -> bool:
-        return self._config.getboolean('Animations', 'on_mouse_animation')
+        return self._config.getboolean('Behavior', 'on_mouse_animation')
 
     @on_mouse_switch.setter
     def on_mouse_switch(self, value: bool):
-        self._config.set('Animations', 'on_mouse_animation', str(value))
-        self._save_and_notify('Animations', 'on_mouse_animation', str(value))
+        self._config.set('Behavior', 'on_mouse_animation', str(value))
+        self._save_and_notify('Behavior', 'on_mouse_animation', str(value))
 
     @property
     def tap_body_switch(self) -> bool:
-        return self._config.getboolean('Animations', 'tap_body_animation')
+        return self._config.getboolean('Behavior', 'tap_body_animation')
 
     @tap_body_switch.setter
     def tap_body_switch(self, value: bool):
-        self._config.set('Animations', 'tap_body_animation', str(value))
-        self._save_and_notify('Animations', 'tap_body_animation', str(value))
+        self._config.set('Behavior', 'tap_body_animation', str(value))
+        self._save_and_notify('Behavior', 'tap_body_animation', str(value))
 
     @property
     def sleep_switch(self) -> bool:
@@ -439,6 +438,15 @@ class AppConfig(QObject):
     def sleep_switch(self, value: bool):
         self._config.set('Behavior', 'sleep', str(value))
         self._save_and_notify('Behavior', 'sleep', str(value))
+
+    @property
+    def time_scale(self) -> float:
+        return self._config.getfloat('Behavior', 'time_scale')
+
+    @time_scale.setter
+    def time_scale(self, value: float):
+        self._config.set('Behavior', 'time_scale', str(value))
+        self._save_and_notify('Behavior', 'time_scale', str(value))
 
     @property
     def tracking_mouse_switch(self) -> bool:

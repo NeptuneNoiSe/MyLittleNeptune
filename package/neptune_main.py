@@ -17,12 +17,13 @@ from live2d.utils.lipsync import WavHandler
 # import live2d.v2 as live2d
 
 from widgets.talk_widget import TalkWidget
+from widgets.time_widget import PowerOfTwoSpinBox
+from widgets.time_widget import SleepSchedule
 from additional.config_manager import AppConfig
 from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
 from additional.action_handler import ActionHandler
 from additional.functions import Functions
-from additional.functions import PowerOfTwoSpinBox
 from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
 from additional.resource_manager import ResourceManager
@@ -594,7 +595,6 @@ class MainWindow(QOpenGLWidget):
         # change opacity
         #self.canvas.SetOutputOpacity(v)
         #print(self.theme)
-
         local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
         # Tired Timer check
         # Check idle_animation
@@ -909,8 +909,8 @@ class SettingsWindow(QWidget):
         # Set fixed window size
         self.setMinimumHeight(440)
         self.setMaximumHeight(440)
-        self.setMinimumWidth(600)
-        self.setMaximumWidth(600)
+        self.setMinimumWidth(630)
+        self.setMaximumWidth(630)
 
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
@@ -936,6 +936,12 @@ class SettingsWindow(QWidget):
         self.tracking_mouse = self.app_config.tracking_mouse_switch
         self.sleep = self.app_config.sleep_switch
         self.time_scale = self.app_config.time_scale
+        self.time_schedule = self.app_config.time_schedule
+        self.use_12h_format = self.app_config.use_12h_format
+        self.sleep_h = self.app_config.sleep_h
+        self.sleep_m = self.app_config.sleep_m
+        self.wake_h = self.app_config.wake_h
+        self.wake_m = self.app_config.wake_m
         self.idle = self.app_config.idle_switch
         self.on_mouse = self.app_config.on_mouse_switch
         self.tap_body = self.app_config.tap_body_switch
@@ -1059,6 +1065,12 @@ class SettingsWindow(QWidget):
             'tracking_mouse': self.tracking_mouse,
             'sleep': self.sleep,
             'time_scale': self.time_scale,
+            'time_schedule': self.time_schedule,
+            'use_12h_format': self.use_12h_format,
+            'sleep_h': self.sleep_h,
+            'sleep_m': self.sleep_m,
+            'wake_h': self.wake_h,
+            'wake_m': self.wake_m,
             'idle': self.idle,
             'on_mouse': self.on_mouse,
             'tap_body': self.tap_body,
@@ -1075,6 +1087,9 @@ class SettingsWindow(QWidget):
 
     def get_current_settings(self):
         """Return the initial settings values"""
+
+        sleep_hour, sleep_minute = self.timeBox.get_sleep_time()
+        wake_hour, wake_minute = self.timeBox.get_wake_time()
 
         def get_dial_value(category):
             """Auxiliary function for getting the disk value"""
@@ -1099,6 +1114,12 @@ class SettingsWindow(QWidget):
             'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
             'sleep': self.sleepCheckBox.isChecked(),
             'time_scale': self.timeScaleBox.value(),
+            'time_schedule': self.sleepScheduleCheckBox.isChecked(),
+            'use_12h_format': self.timeBox.use_12h_format(),
+            'sleep_h': sleep_hour,
+            'sleep_m': sleep_minute,
+            'wake_h': wake_hour,
+            'wake_m': wake_minute,
             'idle': self.idleCheckBox.isChecked(),
             'on_mouse': self.onMouseCheckBox.isChecked(),
             'tap_body': self.tapBodyCheckBox.isChecked(),
@@ -1289,6 +1310,9 @@ class SettingsWindow(QWidget):
         self.timeScaleBox = PowerOfTwoSpinBox()
         self.sc_time_text = QLabel("Time Scale:")
         self.timeScaleBox.setValue(self.time_scale)
+        self.sleepScheduleCheckBox = QCheckBox("Use Sleep Schedule")
+
+        self.timeBox = SleepSchedule()
 
         self.idleCheckBox = QCheckBox("Idle")
         self.onMouseCheckBox = QCheckBox("On Mouse")
@@ -1299,6 +1323,10 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox.setChecked(self.auto_breath)
         self.trackingMouseCheckBox.setChecked(self.tracking_mouse)
         self.sleepCheckBox.setChecked(self.sleep)
+        self.sleepScheduleCheckBox.setChecked(self.time_schedule)
+        self.timeBox.sleep_time.set_time(self.sleep_h, self.sleep_m)
+        self.timeBox.wake_time.set_time(self.wake_h, self.wake_m)
+        self.timeBox.set_12h_format(self.use_12h_format)
         self.idleCheckBox.setChecked(self.idle)
         self.onMouseCheckBox.setChecked(self.on_mouse)
         self.tapBodyCheckBox.setChecked(self.tap_body)
@@ -1309,28 +1337,75 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.stateChanged.connect(self.on_setting_changed)
         self.sleepCheckBox.stateChanged.connect(self.sync_time_scale_box_with_checkbox)
         self.timeScaleBox.valueChanged.connect(self.on_setting_changed)
+        self.sleepScheduleCheckBox.stateChanged.connect(self.on_time_checkbox_changed)  # Изменено
+        self.timeBox.schedule_changed.connect(self.on_setting_changed)
         self.idleCheckBox.stateChanged.connect(self.on_setting_changed)
         self.onMouseCheckBox.stateChanged.connect(self.on_setting_changed)
         self.tapBodyCheckBox.stateChanged.connect(self.on_setting_changed)
 
         # Setting the initial state based on styles
         self.sync_time_scale_box_with_checkbox()
+        self.on_time_checkbox_changed(state=self.time_schedule)
 
         layout.addWidget(self.autoBlinkCheckBox, 0, 0)
         layout.addWidget(self.autoBreathCheckBox, 1, 0)
         layout.addWidget(self.trackingMouseCheckBox, 2, 0)
         layout.addWidget(self.sleepCheckBox, 3, 0)
         layout.addWidget(self.sc_time_text, 3, 1)
-        layout.addWidget(self.timeScaleBox, 3, 2)
-        layout.addWidget(self.idleCheckBox, 4, 0)
-        layout.addWidget(self.onMouseCheckBox, 5, 0)
-        layout.addWidget(self.tapBodyCheckBox, 6, 0)
+        layout.addWidget(self.timeScaleBox, 3, 2, 1, 3)
+        layout.addWidget(self.sleepScheduleCheckBox, 4, 0)
+        layout.addWidget(self.timeBox, 5, 0, 1, 3)
+        layout.addWidget(self.idleCheckBox, 6, 0)
+        layout.addWidget(self.onMouseCheckBox, 7, 0)
+        layout.addWidget(self.tapBodyCheckBox, 8, 0)
 
         tab.setLayout(layout)
         self.tab_widget.addTab(tab, "Behavior")
 
+    def on_time_checkbox_changed(self, state):
+        """Обработчик изменения состояния чекбокса расписания"""
+        self.update_schedule_widgets_state()
+        self.on_setting_changed()
+
+    def update_schedule_widgets_state(self, state = None):
+        """Обновляет состояние виджетов расписания в зависимости от чекбокса"""
+        if state is None:
+            is_enabled = self.sleepScheduleCheckBox.isChecked()
+        else:
+            if not self.sleepScheduleCheckBox.isChecked():
+                is_enabled = False
+            else:
+                is_enabled = state
+
+        # Устанавливаем состояние только для внутренних спинбоксов
+        # sleep_time и wake_time - это TimeSelector24H виджеты
+        sleep_time_widget = self.timeBox.sleep_time
+        wake_time_widget = self.timeBox.wake_time
+
+        # Делаем спинбоксы доступными только для чтения
+        sleep_time_widget.hour_spin.setReadOnly(not is_enabled)
+        sleep_time_widget.minute_spin.setReadOnly(not is_enabled)
+        sleep_time_widget.ampm_combo.setEnabled(is_enabled)
+        sleep_time_widget.format_checkbox.setEnabled(is_enabled)
+
+        wake_time_widget.hour_spin.setReadOnly(not is_enabled)
+        wake_time_widget.minute_spin.setReadOnly(not is_enabled)
+        wake_time_widget.ampm_combo.setEnabled(is_enabled)
+        wake_time_widget.format_checkbox.setEnabled(is_enabled)
+
+        # Также управляем глобальным чекбоксом формата
+        self.timeBox.global_format_checkbox.setEnabled(is_enabled)
+
+        # Можно добавить визуальную индикацию через стили
+        style = "QSpinBox:read-only { background-color: #f0f0f0; color: #808080; }"
+        sleep_time_widget.hour_spin.setStyleSheet(style)
+        sleep_time_widget.minute_spin.setStyleSheet(style)
+        wake_time_widget.hour_spin.setStyleSheet(style)
+        wake_time_widget.minute_spin.setStyleSheet(style)
+
     def sync_time_scale_box_with_checkbox(self):
         """Synchronizes the state of the spinbox with the checkbox"""
+
         is_sleep = self.sleepCheckBox.isChecked()
 
         # Blocking the signals so that setValue does not trigger on_setting_changed
@@ -1341,10 +1416,17 @@ class SettingsWindow(QWidget):
             self.timeScaleBox.setReadOnly(False)
             # Reset Style
             self.timeScaleBox.setStyleSheet("")
+
+            self.sleepScheduleCheckBox.setEnabled(True)
+
+            self.update_schedule_widgets_state(state= True)
         else:
-            # if sleep of
+            # if sleep off
             self.timeScaleBox.setReadOnly(True)
             self.timeScaleBox.setValue(1.0)
+            self.sleepScheduleCheckBox.setEnabled(False)
+            self.update_schedule_widgets_state(False)
+            self.update_schedule_widgets_state(state= False)
 
             # Applying a style to an inaccessible field
             if hasattr(self, 'mainWindow') and hasattr(self.mainWindow, 'theme'):
@@ -1380,7 +1462,6 @@ class SettingsWindow(QWidget):
                                         border: 1px solid #cccccc;
                                     }
                                 """)
-
 
         # Unblocking Signals
         self.timeScaleBox.blockSignals(False)
@@ -2213,6 +2294,8 @@ class SettingsWindow(QWidget):
     def apply_settings(self):
         """Apply current settings"""
         try:
+            sleep_hour, sleep_minute = self.timeBox.get_sleep_time()
+            wake_hour, wake_minute = self.timeBox.get_wake_time()
             # Collecting the current values
             current_settings = {
                 'frameless_window': self.framelessWindowCheckBox.isChecked(),
@@ -2230,6 +2313,12 @@ class SettingsWindow(QWidget):
                 'tracking_mouse': self.trackingMouseCheckBox.isChecked(),
                 'sleep': self.sleepCheckBox.isChecked(),
                 'time_scale': self.timeScaleBox.value(),
+                'time_schedule': self.sleepScheduleCheckBox.isChecked(),
+                'use_12h_format': self.timeBox.use_12h_format(),
+                'sleep_h': sleep_hour,
+                'sleep_m': sleep_minute,
+                'wake_h': wake_hour,
+                'wake_m': wake_minute,
                 'idle': self.idleCheckBox.isChecked(),
                 'on_mouse': self.onMouseCheckBox.isChecked(),
                 'tap_body': self.tapBodyCheckBox.isChecked(),
@@ -2273,6 +2362,12 @@ class SettingsWindow(QWidget):
             self.set_setting('tracking_mouse_switch', current_settings['tracking_mouse'])
             self.set_setting('sleep_switch', current_settings['sleep'])
             self.set_setting('time_scale', current_settings['time_scale'])
+            self.set_setting('time_schedule', current_settings['time_schedule'])
+            self.set_setting('use_12h_format', current_settings['use_12h_format'])
+            self.set_setting('sleep_h', current_settings['sleep_h'])
+            self.set_setting('sleep_m', current_settings['sleep_m'])
+            self.set_setting('wake_h', current_settings['wake_h'])
+            self.set_setting('wake_m', current_settings['wake_m'])
             self.set_setting('idle_switch', current_settings['idle'])
             self.set_setting('on_mouse_switch', current_settings['on_mouse'])
             self.set_setting('tap_body_switch', current_settings['tap_body'])
@@ -2374,6 +2469,17 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setChecked(self.initial_values['tracking_mouse'])
         self.sleepCheckBox.setChecked(self.initial_values['sleep'])
         self.timeScaleBox.setValue(self.initial_values['time_scale'])
+        self.sleepScheduleCheckBox.setChecked(self.initial_values['time_schedule'])
+        self.timeBox.set_12h_format(self.initial_values['use_12h_format'])
+        self.timeBox.sleep_time.set_time(
+            self.initial_values['sleep_h'],
+            self.initial_values['sleep_m']
+        )
+        self.timeBox.wake_time.set_time(
+            self.initial_values['wake_h'],
+            self.initial_values['wake_m']
+        )
+
         self.idleCheckBox.setChecked(self.initial_values['idle'])
         self.onMouseCheckBox.setChecked(self.initial_values['on_mouse'])
         self.tapBodyCheckBox.setChecked(self.initial_values['tap_body'])
@@ -2425,6 +2531,8 @@ class SettingsWindow(QWidget):
         self.autoBreathCheckBox.setIcon(self.mainWindow.get_icon("breath"))
         self.trackingMouseCheckBox.setIcon(self.mainWindow.get_icon("pointer"))
         self.sleepCheckBox.setIcon(self.mainWindow.get_icon("sleep"))
+        self.sleepScheduleCheckBox.setIcon(self.mainWindow.get_icon("sleep_schedule"))
+        self.timeBox.set_icon(self.mainWindow.get_icon("time_format"))
         self.idleCheckBox.setIcon(self.mainWindow.get_icon("idle_w"))
         self.onMouseCheckBox.setIcon(self.mainWindow.get_icon("mouse"))
         self.tapBodyCheckBox.setIcon(self.mainWindow.get_icon("tap"))
@@ -2554,6 +2662,10 @@ class SettingsWindow(QWidget):
         self.trackingMouseCheckBox.setText(self.mainWindow.lang['Settings']['TrackingMouse'])
         self.sleepCheckBox.setText(self.mainWindow.lang['Settings']['Sleep'])
         self.sc_time_text.setText(self.mainWindow.lang['Settings']['TimeScale'])
+        self.sleepScheduleCheckBox.setText(self.mainWindow.lang['Settings']['SleepSchedule'])
+        self.timeBox.set_text(sleep_time= self.mainWindow.lang['Settings']['SleepTime'],
+                              wake_time= self.mainWindow.lang['Settings']['WakeTime'],
+                              format= self.mainWindow.lang['Settings']['Format'])
         self.idleCheckBox.setText(self.mainWindow.lang['Settings']['Idle'])
         self.onMouseCheckBox.setText(self.mainWindow.lang['Settings']['OnMouse'])
         self.tapBodyCheckBox.setText(self.mainWindow.lang['Settings']['TapBody'])
@@ -2702,6 +2814,7 @@ class SettingsWindow(QWidget):
                 self.timeScaleBox.setReadOnly(False)
                 scale_value = self.timeScaleBox.value()
                 self.set_setting('time_scale', scale_value)
+                self.sleepScheduleCheckBox.setEnabled(True)
 
             else:
                 self.sleepCheckBox.setChecked(False)
@@ -2709,6 +2822,7 @@ class SettingsWindow(QWidget):
                 self.timeScaleBox.setReadOnly(True)
                 self.set_setting('time_scale', 1)
                 self.timeScaleBox.setValue(1)
+                self.sleepScheduleCheckBox.setEnabled(False)
 
             if self.idleCheckBox.isChecked():
                 self.idleCheckBox.setChecked(True)
@@ -2822,9 +2936,6 @@ class SettingsWindow(QWidget):
 
         # Принудительно закрываем всё приложение
         os._exit(0)
-
-# Additional classes
-
 
 if __name__ == "__main__":
     import sys

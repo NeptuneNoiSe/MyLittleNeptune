@@ -1,5 +1,3 @@
-from PySide6.QtWidgets import QDoubleSpinBox
-
 from package import resources
 from package.additional.resource_manager import ResourceManager
 import OpenGL.GL as gl
@@ -59,51 +57,3 @@ class Functions:
                     color[3] = 0 # 255
         img = Image.fromarray(new_data, 'RGBA')
         img.save(fName)
-
-class PowerOfTwoSpinBox(QDoubleSpinBox):
-    """SpinBox для степеней двойки без лишних нулей"""
-
-    POWERS = [0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setRange(0.25, 16.0)
-        self.setDecimals(3)  # Для точного отображения 0.25 и 0.5
-
-    def stepBy(self, steps):
-        """Переопределяем стандартное поведение шага"""
-        current = self.value()
-        current_idx = self._find_power_index(current)
-
-        new_idx = current_idx + steps
-        new_idx = max(0, min(len(self.POWERS) - 1, new_idx))
-
-        self.setValue(self.POWERS[new_idx])
-
-    def _find_power_index(self, value):
-        """Находит индекс в массиве степеней"""
-        for i, power in enumerate(self.POWERS):
-            if abs(power - value) < 0.001:
-                return i
-
-        # Fallback: находим ближайшую
-        closest_idx = 0
-        min_diff = abs(value - self.POWERS[0])
-
-        for i, power in enumerate(self.POWERS[1:], 1):
-            diff = abs(value - power)
-            if diff < min_diff:
-                min_diff = diff
-                closest_idx = i
-
-        return closest_idx
-
-    def textFromValue(self, value):
-        """Форматируем значение без лишних нулей"""
-        # Убираем .0 и .00 для целых чисел
-        if value.is_integer():
-            return f"{int(value):d}X"
-        else:
-            # Для дробных показываем максимум 2 знака
-            formatted = f"{value:.2f}".rstrip('0').rstrip('.')
-            return f"{formatted}X"

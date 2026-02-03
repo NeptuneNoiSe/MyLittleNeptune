@@ -129,7 +129,7 @@ class InputHandler:
         # Defining the type of interaction
         was_dragging = self.place_this
         self.place_this = False
-        if not self.sleep_move:
+        if not self.sleep_move and self.win.character.tired_controller.timer_count < self.win.character.tired_controller.sleep_v:
             self.win.character.tired_controller.timer_count = 1
 
         # Drag processing
@@ -150,7 +150,9 @@ class InputHandler:
                 not self.input_lock and
                 not self.sleep_move):
             # print("DEBUG: Correct wake up from click!")
-            self.win.character.state.set_woke_up_state()
+            self.win.character.tired_state.set_woke_up_state()
+
+            #self.win.character.tired_controller.woke_up()
             return
 
         if not self.sleep_move:

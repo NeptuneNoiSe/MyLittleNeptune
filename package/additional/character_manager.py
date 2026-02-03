@@ -1,3 +1,6 @@
+from datetime import datetime, date, timedelta
+from time import sleep
+
 from PySide6.QtCore import QTimer, QThread, QPropertyAnimation, QEasingCurve, QVariantAnimation
 import random
 
@@ -56,6 +59,10 @@ class CharacterManager:
         if hasattr(self.win, 'event_manager') and self.win.event_manager:
             return self.win.event_manager.special_stage
         return None  # или "default"
+
+    @property
+    def app_config(self):
+        return self.win.app_config
 
 class CharacterStateManager:
     def __init__(self, character):
@@ -189,17 +196,6 @@ class CharacterStateManager:
         self.character.expressions.set_lost_expression(fade_out=7000)
         self.character.character_text.set_lost_text()
 
-    def set_woke_up_state(self):
-        """Set wake up state"""
-        self.character.tired_controller.sleep = False
-        self.character.model.ResetAllParameters()
-        self.character.model.ResetExpressions()
-        self.character.tired_controller.wake_up_function()
-        self.character.audio.set_woke_audio()
-        self.character.movements.set_motion(group_name="Special", id=14)
-        self.character.expressions.set_surprised_expression(fade_out=10000)
-        self.character.character_text.set_woke_up_text()
-
     def set_random_state(self):
         """Set random state"""
         self.character.expressions.set_random_expression(fade_out=7000)
@@ -319,14 +315,22 @@ class CharacterTiredController:
         self.sleep = False
         self.wake_up = False
         self.timer_count = 1
-        self.sad_v = 60
-        self.tired_v = 80
-        self.sleep_v = 100
-        self.wake_up_v = 160
+        self.sad_v = 600
+        self.tired_v = 800
+        self.sleep_v = 1000
+        self.wake_up_v = 1600
         self.wake_up = False
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_state)
         self.start_timer()
+        # Добавляем состояния для расписания
+        self.schedule_state = "NORMAL"  # NORMAL, SCHEDULE_SLEEPING, SCHEDULE_IDLE
+        self.last_schedule_check = datetime.now()
+        self.schedule_timer = QTimer()
+        self.schedule_timer.timeout.connect(self._check_schedule_state)
+        self.schedule_timer.start(10000)  # Проверяем каждые 10 секунд
+        self._check_schedule_state()
+        self.sleep_again_timer = QTimer()
 
     @property
     def sleep_move(self):
@@ -368,39 +372,186 @@ class CharacterTiredController:
     def on_mouse_anim(self, value: bool) -> None:
         self.character.win.on_mouse_anim = value
 
+    @property
+    def time_schedule(self):
+        return self.character.app_config.time_schedule
+
+    @property
+    def sleep_h(self):
+        return self.character.app_config.sleep_h
+
+    @property
+    def sleep_m(self):
+        return self.character.app_config.sleep_m
+
+    @property
+    def wake_h(self):
+        return self.character.app_config.wake_h
+
+    @property
+    def wake_m(self):
+        return self.character.app_config.wake_m
+
+    def _timer_logging(self):
+        if not self.time_schedule:
+            timer_mode = "NORMAL"
+        else:
+            timer_mode = self.schedule_state
+        state = self.character.tired_state.condition
+        print(f"[TIRED TIMER]"
+              f" | Active: {self.timer.isActive()}"
+              f" | Mode: {timer_mode}"
+              f" | Count: {self.timer_count}"
+              f" | Condition: {state}"
+              f" | Thread: {QThread.currentThread()}")
+
+    def _check_schedule_state(self):
+        """Проверяет и обновляет состояние по расписанию"""
+        if not self.time_schedule:
+            self.schedule_state = "NORMAL"
+            return
+
+        now = datetime.now()
+        current_minutes = now.hour * 60 + now.minute
+        sleep_minutes = self.sleep_h * 60 + self.sleep_m
+        wake_minutes = self.wake_h * 60 + self.wake_m
+
+        # Определяем, в каком мы диапазоне
+        if sleep_minutes <= wake_minutes:
+            # Обычный диапазон (сон ночью)
+            if sleep_minutes <= current_minutes < wake_minutes:
+                self.schedule_state = "SCHEDULE_SLEEPING"
+            else:
+                self.schedule_state = "SCHEDULE_IDLE"
+        else:
+            # Диапазон через полночь
+            if current_minutes >= sleep_minutes or current_minutes < wake_minutes:
+                self.schedule_state = "SCHEDULE_SLEEPING"
+            else:
+                self.schedule_state = "SCHEDULE_IDLE"
+
+        self.last_schedule_check = now
+
     def should_enable_idle_anim(self) -> bool:
         """Checks whether idle animation can be enabled."""
-        return self.timer_count <= self.sleep_v
+        return self.timer_count < self.sleep_v
 
     def should_enable_mouse_anim(self) -> bool:
         """Checks whether animation can be enabled on mouse hover."""
-        return self.timer_count <= self.sleep_v
+        return self.timer_count < self.sleep_v
 
-    def reset_timer(self):
-        """Timer reset"""
-        self.timer.stop()
-        self.timer_count = 1
+    def _should_wake_up_by_schedule(self, now=None):
+        """Проверяет, наступило ли время пробуждения по расписанию"""
+        if now is None:
+            now = datetime.now()
+
+        current_minutes = now.hour * 60 + now.minute
+        wake_minutes = self.wake_h * 60 + self.wake_m
+
+        # Просыпаемся, когда наступило время wake_up
+        return current_minutes >= wake_minutes
+
+    def _wake_up_by_schedule(self):
+        """Принудительное пробуждение по расписанию"""
         if self.timer_log:
-            print("Timer reset")
+            print(f"[SCHEDULE_WAKEUP] Time to wake up! ({self.wake_h:02d}:{self.wake_m:02d})")
 
-    def start_timer(self):
-        """Start timer"""
-        self.reset_timer()  # Сброс перед запуском
-        self.timer.start(int(6000 / self.time_scale))
+        # Вызываем функцию пробуждения
+        self.character.tired_state.set_wake_up_state()
+
+        # Сбрасываем флаги
+        if hasattr(self, '_sleep_function_called'):
+            self._sleep_function_called = False
+
+        # Сбрасываем таймер
+        #self.timer_count = 1
+        #self.character.tired_state.set_idle_state()
+
+    def wake_up_function(self, short_wake_up = False):
+        """Run if character wake_up"""
+        self.character.model.ResetAllParameters()
+        self.character.model.ResetExpressions()
+
+        if not short_wake_up:
+            self.reset_timer_with_reload()
+            self.timer_count = 0
+            self.character.tired_state.condition = None
+            self.character.tired_state.set_idle_state()
+
+        self.character.win.animation_manager.set_sleep_state(False)
+        self.idle_anim = True
+        self.wake_up = True
+        self.sleep = False
+        self.sleep_move = False
+        self.character.win.mouse_tracker.set_sleep_state(False)
+        self.character.tracking_mouse = True
+
+    def sleep_function(self):
+        """Run if character sleep"""
+        self.character.win.animation_manager.set_sleep_state(True)
+        self.idle_anim = False
+        self.wake_up = False
+        self.sleep = True
+        self.character.audio.set_sleep_audio()
+        self.character.expressions.set_sleep_expression()
+        self.character.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
+        self.character.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
 
     def _update_state(self):
         """Update character state"""
-        self.timer_count += 1
-        state = self.character.tired_state.condition
+        if not self.sleep_switch:
+            return
 
+        self.timer_count += 1
+        now = datetime.now()
+        # Определяем текущий режим
         # Logging
         if self.timer_log:
-            print(f"[TIRED TIMER]"
-                  f" | Active: {self.timer.isActive()}"
-                  f" | Count: {self.timer_count}"
-                  f" | Condition: {state}"
-                  f" | Thread: {QThread.currentThread()}")
+            self._timer_logging()
+        if self.time_schedule:
+            if self.schedule_state == "SCHEDULE_IDLE":
+                # ВНЕ диапазона сна - персонаж всегда idle, не устает
+                self._handle_schedule_idle_mode()
+                return
+            elif self.schedule_state == "SCHEDULE_SLEEPING":
+                # ВНУТРИ диапазона сна - обычная логика усталости
+                self._handle_schedule_sleeping_mode()
+                return
 
+        # Обычный режим (без расписания)
+        self._handle_normal_mode()
+
+    def _handle_schedule_idle_mode(self):
+        """Режим вне времени сна по расписанию"""
+        # Всегда сбрасываем таймер усталости и устанавливаем idle
+        self.timer_count = min(self.timer_count, self.sad_v - 1)  # Не даем уставать
+        self.character.tired_state.set_idle_state()
+
+        if self.idle_switch:
+            self.idle_anim = True
+
+        # Логирование
+        if self.timer_log and self.timer_count % 300 == 0:  # Раз в 5 минут
+            print(f"[SCHEDULE_IDLE] Outside sleep range - forced idle")
+
+    def _handle_schedule_sleeping_mode(self):
+        """Режим внутри времени сна по расписании"""
+        # Включаем обычную логику усталости, но БЕЗ wake_up_state
+        # до наступления времени пробуждения
+
+        # Проверяем, не пора ли просыпаться по расписанию
+        now = datetime.now()
+        should_wake_up = self._should_wake_up_by_schedule(now)
+
+        if should_wake_up:
+            # Время просыпаться по расписанию
+            self._wake_up_by_schedule()
+            return
+        # Обычная логика усталости, но модифицированная
+        self._modified_normal_logic()
+
+    def _handle_normal_mode(self):
+        """Обычный режим без расписания"""
         # Processing states
         if self.timer_count <= self.sad_v:
             self.character.tired_state.set_idle_state()
@@ -424,35 +575,67 @@ class CharacterTiredController:
         elif self.timer_count == self.wake_up_v and self.sleep_switch:
             self.character.tired_state.set_wake_up_state()
 
+    def _modified_normal_logic(self):
+        """Модифицированная логика с явной стейт-машиной"""
+        # Определяем, какое состояние должно быть сейчас
+
+        target_state = self._get_target_sleep_state()
+
+        if target_state == "Sleep" and self.character.tired_state.condition == "Sleep":
+            # Фиксируем timer_count на значении sleep_v
+            self.timer_count = self.sleep_v
+            return
+
+        # Если состояние не изменилось - ничего не делаем
+        if self.character.tired_state.condition == target_state:
+            return
+
+        # Устанавливаем новое состояние
+        if target_state == "Idle":
+            self.character.tired_state.set_idle_state()
+        elif target_state == "Sad":
+            self.character.tired_state.set_sad_state()
+        elif target_state == "Tired":
+            self.character.tired_state.set_tired_state()
+        elif target_state == "Sleep":
+            self.character.tired_state.set_sleep_state()
+
+    def _get_target_sleep_state(self):
+        """Определяет целевое состояние для прогрессии сна"""
+        if self.timer_count < self.sad_v:
+            return "Idle"
+        elif self.sad_v <= self.timer_count < self.tired_v:
+            return "Sad"
+        elif self.tired_v <= self.timer_count < self.sleep_v:
+            return "Tired"
+        else:  # self.timer_count >= self.sleep_v
+            return "Sleep"
+
+    # Timer Control
+    def reset_timer(self):
+        """Timer reset"""
+        self.timer.stop()
+        self.timer_count = 1
+        if self.timer_log:
+            print("Timer reset")
+
+    def reset_timer_with_reload(self, delay_ms=10000, reason=""):
+        self.timer.stop()
+        #self.sleep_again_timer.stop()
+        # Логируем причину
+        if self.timer_log and reason:
+            print(f"[TIMER_RESET] {reason}")
+
+        QTimer.singleShot(delay_ms, self.start_timer)
+
     def reload_timer(self):
         """Timer reload"""
         self.start_timer()
 
-    def sleep_function(self):
-        """Run if character sleep"""
-        self.character.win.animation_manager.set_sleep_state(True)
-        self.idle_anim = False
-        self.wake_up = False
-        self.sleep = True
-        self.character.audio.set_sleep_audio()
-        self.character.expressions.set_sleep_expression()
-        self.character.model.SetAndSaveParameterValueById("ParamAngleY", -30.0, 1.0)
-        self.character.model.SetAndSaveParameterValueById("ParamAngleZ", -10.0, 1.0)
-
-    def wake_up_function(self):
-        """Run if character wake_up"""
-        self.character.model.ResetAllParameters()
-        self.character.model.ResetExpressions()
-        self.timer_count = 0
-        self.character.tired_state.condition = None
-        self.character.tired_state.set_idle_state()
-        self.character.win.animation_manager.set_sleep_state(False)
-        self.idle_anim = True
-        self.wake_up = True
-        self.sleep = False
-        self.sleep_move = False
-        self.character.win.mouse_tracker.set_sleep_state(False)
-        self.character.tracking_mouse = True
+    def start_timer(self):
+        """Start timer"""
+        self.reset_timer()  # Сброс перед запуском
+        self.timer.start(int(1000 / self.time_scale))
 
 class CharacterTiredStateManager:
     def __init__(self, character):
@@ -477,7 +660,7 @@ class CharacterTiredStateManager:
         self.character.expressions.set_tired_expression()
         self.character.character_text.set_tired_text()
 
-    def set_sleep_state(self):
+    def set_sleep_state(self, sleep_again = False):
         self.condition = "Sleep"
         self.character.audio.set_pre_sleep_audio()
         self.character.movements.set_sleep_motion()
@@ -485,14 +668,35 @@ class CharacterTiredStateManager:
             self.character.tracking_mouse = False
             self.character.win.input_handler.handle_mouse_idle()
             self.character.win.mouse_tracker.set_sleep_state(True)
-        self.character.character_text.set_sleep_text()
+        if not sleep_again:
+            self.character.character_text.set_sleep_text()
+        else:
+            self.character.character_text.set_sleep_again_text()
 
     def set_wake_up_state(self):
         self.character.tired_controller.wake_up_function()
+        self.character.tired_controller.sleep_again_timer.stop()
         self.character.audio.set_wake_up_audio()
         self.character.movements.set_motion(group_name="Special", id=19)
         self.character.expressions.set_wake_up_expression(fade_out=10000)
         self.character.character_text.set_wake_up_text()
+
+    def set_woke_up_state(self):
+        """Set woke up state"""
+        short_woke_up = False
+        if self.character.tired_controller.time_schedule:
+            short_woke_up = True
+        self.character.tired_controller.sleep = False
+        self.character.model.ResetAllParameters()
+        self.character.model.ResetExpressions()
+        self.character.tired_controller.wake_up_function(short_wake_up=short_woke_up)
+        self.character.audio.set_woke_audio()
+        self.character.movements.set_motion(group_name="Special", id=14)
+        s_interval = 10000
+        self.character.expressions.set_surprised_expression(fade_out=s_interval)
+        self.character.character_text.set_woke_up_text()
+        if short_woke_up:
+            self.character.tired_controller.sleep_again_timer.singleShot(s_interval, lambda: self.set_sleep_state(sleep_again=True))
 
 class CharacterExpressionManager:
     def __init__(self, character):
@@ -756,6 +960,11 @@ class CharacterTextManager:
 
     def set_sleep_text(self):
         self.text = ['Talk', 'Sleep']
+        self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
+        self.update()
+
+    def set_sleep_again_text(self):
+        self.text = ['Talk', 'SleepAgain']
         self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
         self.update()
 

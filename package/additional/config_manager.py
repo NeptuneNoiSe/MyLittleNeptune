@@ -46,6 +46,12 @@ class AppConfig(QObject):
             'tracking_mouse': 'True',
             'sleep': 'True',
             'time_scale': '1',
+            'time_schedule': 'False',
+            'use_12h_format': 'False',
+            'sleep_h': '23',
+            'sleep_m': '0',
+            'wake_h': '8',
+            'wake_m': '0',
             'idle_animation': 'True',
             'on_mouse_animation': 'True',
             'tap_body_animation': 'True'
@@ -447,6 +453,60 @@ class AppConfig(QObject):
     def time_scale(self, value: float):
         self._config.set('Behavior', 'time_scale', str(value))
         self._save_and_notify('Behavior', 'time_scale', str(value))
+
+    @property
+    def time_schedule(self) -> bool:
+        return self._config.getboolean('Behavior', 'time_schedule')
+
+    @time_schedule.setter
+    def time_schedule(self, value: bool):
+        self._config.set('Behavior', 'time_schedule', str(value))
+        self._save_and_notify('Behavior', 'time_schedule', str(value))
+
+    @property
+    def use_12h_format(self) -> bool:
+        return self._config.getboolean('Behavior', 'use_12h_format')
+
+    @use_12h_format.setter
+    def use_12h_format(self, value: bool):
+        self._config.set('Behavior', 'use_12h_format', str(value))
+        self._save_and_notify('Behavior', 'use_12h_format', str(value))
+
+    @property
+    def sleep_h(self) -> int:
+        return self._config.getint('Behavior', 'sleep_h')
+
+    @sleep_h.setter
+    def sleep_h(self, value: int):
+        self._config.set('Behavior', 'sleep_h', str(value))
+        self._save_and_notify('Behavior', 'sleep_h', str(value))
+
+    @property
+    def sleep_m(self) -> int:
+        return self._config.getint('Behavior', 'sleep_m')
+
+    @sleep_m.setter
+    def sleep_m(self, value: int):
+        self._config.set('Behavior', 'sleep_m', str(value))
+        self._save_and_notify('Behavior', 'sleep_m', str(value))
+
+    @property
+    def wake_h(self) -> int:
+        return self._config.getint('Behavior', 'wake_h')
+
+    @wake_h.setter
+    def wake_h(self, value: int):
+        self._config.set('Behavior', 'wake_h', str(value))
+        self._save_and_notify('Behavior', 'wake_h', str(value))
+
+    @property
+    def wake_m(self) -> int:
+        return self._config.getint('Behavior', 'wake_m')
+
+    @wake_m.setter
+    def wake_m(self, value: int):
+        self._config.set('Behavior', 'wake_m', str(value))
+        self._save_and_notify('Behavior', 'wake_m', str(value))
 
     @property
     def tracking_mouse_switch(self) -> bool:

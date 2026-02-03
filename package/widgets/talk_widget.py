@@ -45,7 +45,7 @@ class TalkWidget:
 
         # Logging
         if self.win.timer_log:
-            print(f"[Timer] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")
+            print(f"[DIALOG TIMER] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")
 
     def init_ui(self):
         """Initializing UI elements"""

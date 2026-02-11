@@ -216,6 +216,7 @@ class ActionHandler:
         self.win.character.expressions.set_cry_expression()
         self.win.character.audio.set_really_quit_audio()
         self.win.kaomoji = "(o;TωT)o"
+        self.win.quit_box_active = True
 
         answer = QMessageBox.question(
             self.win,
@@ -228,6 +229,8 @@ class ActionHandler:
         if answer == QMessageBox.StandardButton.Yes:
             self.win.character.state.set_quit_state(quit='Yes')
             self.win.input_handler.input_lock = True
+            self.win.quit_box_active = False
         else:
             self.win.character.tired_controller.timer_count = 1
             self.win.character.state.set_quit_state(quit='No')
+            self.win.quit_box_active = False

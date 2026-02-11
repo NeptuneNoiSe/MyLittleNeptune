@@ -55,6 +55,19 @@ class CharacterManager:
         return None  # или "default"
 
     @property
+    def show_event_greeting(self):
+        if hasattr(self.win, 'event_manager') and self.win.event_manager:
+            return self.win.event_manager.show_event_greeting
+        return None  # или "default"
+
+    @property
+    def delay_congratulation_after_greeting(self):
+        if hasattr(self.win, 'event_manager') and self.win.event_manager:
+            return self.win.event_manager.delay_congratulation_after_greeting
+        return None  # или "default"
+
+
+    @property
     def special_stage(self):
         if hasattr(self.win, 'event_manager') and self.win.event_manager:
             return self.win.event_manager.special_stage
@@ -117,15 +130,23 @@ class CharacterStateManager:
             is_first_run: If True, the callback is not called (for the first character display).
             example: on_finished=None if is_first_run else self._after_animation_fade_in_callback
         """
-        if self.character.current_event:
+        if self.character.current_event and self.character.show_event_greeting:
             current_event_group = self.character.current_event.replace(" ", "") + "Event"
             if self.character.special_stage:
                 key = self.character.special_stage.replace(" ", "")
+                print(key)
             else:
                 key = "Greeting"
             self.character.character_text.set_event_greeting_text(group_name=current_event_group, text_key=key)
         else:
             self.character.character_text.set_greeting_text()
+
+        if self.character.delay_congratulation_after_greeting:
+            delay_ms = self.character.delay_congratulation_after_greeting
+            self.set_event_congratulation_state(delay_ms= delay_ms,
+                                                duration = 10000,
+                                                event_name= self.character.current_event,
+                                                event_key= self.character.special_stage)
 
         self.win.image_manager.background_image.background_opacity = 0
 
@@ -147,7 +168,7 @@ class CharacterStateManager:
     def _after_animation_fade_in_callback(self):
         """Runs after the animation is completed"""
         if self.character.current_event:
-            if self.character.special_stage:
+            if self.character.special_stage and self.character.show_event_greeting:
                 key = self.character.special_stage.replace(" ", "_")
             else:
                 key = "Greeting"
@@ -286,16 +307,35 @@ class CharacterStateManager:
         self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_cry_expression()
 
-    def set_event_congratulation_state(self, event_name: str | None = None,
+    def set_event_congratulation_state(self, delay_ms = 0, duration = 10000, event_name: str | None = None,
                                      event_key: str | None = None) -> None:
-        """Character say goodbye"""
-        audio_key = event_name.replace(" ", "_") + "_" + event_key
-        self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
-        self.character.expressions.set_happy_expression(fade_out=7000)
-        self.character.expressions.set_star_expression(fade_out=7000)
-        self.character.movements.set_motion(group_name="Special", id=3)
-        text_group = event_name.replace(" ", "") + "Event"
-        self.character.character_text.set_event_congratulation_text(group_name=text_group,text_key=event_key)
+        """Character say congratulation"""
+        def start_congratulation():
+            if (self.win.input_handler.input_lock
+                    or self.win.settings_update_state
+                    or self.win.quit_box_active):
+                return
+            else:
+                self.win.input_handler.input_lock = True
+                self.win.input_handler.set_transparent_input(delay=duration)
+                audio_key = event_name.replace(" ", "_") + "_" + event_key
+                self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
+                self.character.expressions.set_happy_expression(fade_out=duration)
+                self.character.expressions.set_star_expression(fade_out=duration)
+                self.character.movements.set_motion(group_name="Special", id=3)
+                self.win.event_manager.congratulate_event(duration=duration)
+                text_group = event_name.replace(" ", "") + "Event"
+                kaomoji = "❤~(//◠‿◠//)" if text_group == "ValentinesDayEvent" else None
+                self.character.character_text.set_event_congratulation_text(group_name=text_group,
+                                                                            text_key=event_key,
+                                                                            kaomoji = kaomoji)
+                QTimer.singleShot(duration, end_congratulation)
+
+        def end_congratulation():
+            self.win.input_handler.input_lock = False
+
+        QTimer.singleShot(delay_ms, start_congratulation)
+
 
     def set_sing_song_state(self):
         """Character sings a song"""

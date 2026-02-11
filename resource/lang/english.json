@@ -192,5 +192,8 @@
     "Holidays": "New Year's holidays, Day:",
     "Xmas": "Merry Christmas!",
     "BackGroundHint": "Background image is available in the settings"
+  },
+  "ValentinesDayEvent": {
+    "Congratulation": "Happy Valentine's Day!"
   }
 }

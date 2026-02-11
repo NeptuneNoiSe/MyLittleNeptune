@@ -195,7 +195,7 @@ class AnimationsManager:
                          stop_fade_out=True,
                          stop_fade_duration=500,
                          unique_id=None,
-                         **extra_kwargs):  # Для совместимости с будущими параметрами
+                         **extra_kwargs):
         """
             Proxy method for set_pulsating_color.
 

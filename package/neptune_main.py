@@ -220,6 +220,7 @@ class MainWindow(QOpenGLWidget):
         self.background = False
         self.background_available = False
         self.first_run=True
+        self.quit_box_active = False
 
         # Mouse position
         self.clickX = -1
@@ -342,7 +343,7 @@ class MainWindow(QOpenGLWidget):
 
             self.frmY = (self.SrcSize.height() - window_height) - self.h_correction
 
-            self.move(int(self.frmX), int(self.frmY))
+            self.move(int(self.frmX), int(self.frmY  - self.h_correction))
 
         else:
             # Defensive logic for large models
@@ -420,6 +421,7 @@ class MainWindow(QOpenGLWidget):
         self.character.state.set_greeting_state(is_first_run=True)
         self.input_handler.input_lock = True
         self.first_run = False
+        self.position_window()
 
     def init_classes(self):
         """Initialize classes"""
@@ -879,6 +881,7 @@ class MainWindow(QOpenGLWidget):
         if self.character.tired_state.condition == "Sleep":
             self.character.tired_controller.wake_up_function()
         self.kaomoji = "(o;TωT)o"
+        self.quit_box_active = True
         answer = QMessageBox.question(self,
                                       self.lang['Actions']['Quit'],
                                       self.name + ": " + self.lang['Talk']['Quit'] + " " + self.kaomoji,
@@ -887,9 +890,11 @@ class MainWindow(QOpenGLWidget):
         if answer == QMessageBox.StandardButton.Yes:
             event.accept()
             self.kaomoji = "(^3^)"
+            self.quit_box_active = False
         else:
             self.character.tired_controller.timer_count = 1
             self.character.state.set_quit_state(quit='No')
+            self.quit_box_active = False
             event.ignore()
 
 class SettingsWindow(QWidget):

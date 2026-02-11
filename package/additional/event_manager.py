@@ -13,6 +13,9 @@ class EventManager:
         self.event_instance = None
         self.event_log = False
         self.special_stage = None
+        self.delay_congratulation_after_greeting = None
+        self.show_event_greeting = False
+
         self.event_time_manager = EventTimeManager(self)
 
         # Get the current event
@@ -51,12 +54,16 @@ class EventManager:
 
     def draw_event_text(self, painter):
         if self.event_instance:
-            self.event_instance.draw_text(painter)
+            self.event_instance.draw_event_text(painter)
 
-    def draw_event_text(self, painter):
-        if self.current_event is None:
-            return
-        self.event_instance.draw_new_year_text(painter)
+    def congratulate_event(self, duration= 10000):
+        if self.event_instance:
+            self.event_instance.congratulate_event(duration)
+
+    #def draw_event_text(self, painter):
+    #    if self.current_event is None:
+    #        return
+    #    self.event_instance.draw_new_year_text(painter)
 
     def draw_text_on_model(self):
         if self.current_event is None:
@@ -72,11 +79,15 @@ class EventTimeManager:
         self._special_event_schedule = self._load_special_day_schedule()
 
     def _load_schedule(self) -> Dict:
-        """Загружает расписание событий"""
+        """Loads the event schedule"""
         return {
             "New Year": {
                 "start": {"month": 12, "day": 17},
                 "end": {"month": 1, "day": 11}
+            },
+            "Valentines Day": {
+                "start": {"month": 2, "day": 14},
+                "end": {"month": 2, "day": 15}
             }
             # Other Events:
             # "Halloween": {"start": {"month": 10, "day": 28}, "end": {"month": 11, "day": 2}},
@@ -84,7 +95,7 @@ class EventTimeManager:
         }
 
     def _load_special_day_schedule(self) -> Dict:
-        """Loads the event schedule"""
+        """Loads the special day event schedule"""
         return {
             "New Year Day": {
                 "start": {"month": 12, "day": 31},
@@ -669,3 +680,55 @@ class NewYearEvent:
         self.win.background = False
         self.win.current_sing_song = None
         self.win.background_available = False
+
+class ValentinesDayEvent:
+    def __init__(self, event_manager):
+        self.event_manager = event_manager
+
+        self._win = None
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.event_manager.win
+
+    def get_special_stage(self):
+        self.event_manager.delay_congratulation_after_greeting = 15000
+        return "Congratulation"
+
+    def draw_event_text(self, painter: QPainter):
+        """Draws Even text on the widget"""
+        pass
+
+    def draw_on_model(self):
+        pass
+
+    def congratulate_event(self, duration):
+        self.win.animation_manager.play_color_pulse(r=255, g=126, b=147, stop_after_ms=duration)
+        self.win.image_manager.item_image.set_item("valentinebox", position=(0, -50 * self.win.a_scale))
+        self.win.image_manager.item_image.set_size(width=self.win.w_resize / 6, height=self.win.h_resize / 6)
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            source=self.win.image_manager.item_image,
+            start=0,
+            end=1,
+            duration=1000,
+            easing="in_quad")
+
+        self.win.image_manager.item_image.animate_bounce_continuous(animation = "animate_bounce",
+                                                                    height=10,
+                                                                    bounce_duration=800,
+                                                                    bounces=3,
+                                                                    total_duration=duration)
+
+        def function_stop():
+            end_duration = duration / 4
+            self.win.image_manager.item_image.animate_scale_bounce(0, 0.5, duration=end_duration)
+            self.win.animation_manager.opacity_animator.animate_opacity(
+                source=self.win.image_manager.item_image,
+                start=1,
+                end=0,
+                duration=end_duration,
+                easing="out_quad")
+            QTimer.singleShot(duration, self.win.image_manager.item_image.hide)
+
+        QTimer.singleShot(duration, function_stop)

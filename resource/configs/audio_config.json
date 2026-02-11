@@ -33,6 +33,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Purple Heart": {
@@ -101,6 +102,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Black Heart": {
@@ -169,6 +171,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "White Heart": {
@@ -236,6 +239,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Green Heart": {
@@ -302,6 +306,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Purple Sister": {
@@ -367,6 +372,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Black Sister": {
@@ -431,6 +437,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "White Sister Rom": {
@@ -496,6 +503,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "White Sister Ram": {

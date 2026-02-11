@@ -56,11 +56,11 @@ class InputHandler:
         self.win.show()
         self.mouse_input_timer.stop()
 
-    def set_transparent_input(self):
+    def set_transparent_input(self, delay = 5000):
         """Set transperent input if user click on trasparent area"""
         self.win.setWindowFlags(self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput)
         self.win.show()
-        self.mouse_input_timer.start(5000)
+        self.mouse_input_timer.start(delay)
 
     def update_idle_counter(self):
         """Update the idle counter"""

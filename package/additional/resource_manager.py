@@ -19,6 +19,7 @@ class ResourceManager:
         self._categorize_characters()
         self.languages: Dict[str, Dict] = {}
         self.background_images: Dict[str, str] = {}
+        self.item_images: Dict[str, str] = {}
         self.animation_files: Dict[str, str] = {}
         self.extra_motions: Dict[str, str] = {}
         self._talk_images: Dict[str, str] = {}
@@ -74,6 +75,13 @@ class ResourceManager:
                 self.resources_dir, f"images/bgs/{image_name}.png"
             )
         return self.background_images[image_name]
+
+    def load_item_image(self, image_name: str)-> str:
+        if image_name not in self.item_images:
+            self.item_images[image_name] = os.path.join(
+                self.resources_dir, f"images/items/{image_name}.png"
+            )
+        return self.item_images[image_name]
 
     def load_animation(self, anim_name: str) -> str:
         """Returns animation path"""

@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 from configparser import ConfigParser
 from PySide6.QtCore import QObject, Signal
@@ -6,6 +7,70 @@ class AppConfig(QObject):
     """A class for managing application settings."""
     config_changed = Signal(str, str, str)  # section, key, value
 
+    DEFAULT_CONFIG = {
+        'Main': {
+            'language': 'English',
+            'color_icons': 'False',
+            'background': 'False',
+            'theme': '',
+            'screen_width': '0',
+            'screen_height': '0'
+        },
+        'WindowFlags': {
+            'X11BypassWindowManagerHint': 'True',
+            'FramelessWindowHint': 'True',
+            'WindowMinimizeButtonHint': 'True',
+            'WindowMaximizeButtonHint': 'False',
+            'WindowCloseButtonHint': 'True',
+            'WindowTransparentForInput': 'False',
+            'WindowType_Mask': 'False',
+            'WindowStaysOnTopHint': 'True',
+            'WindowStaysOnBottomHint': 'False'
+        },
+        'Model': {
+            'auto_scale': 'True',
+            'models_scale': '1',
+            'random_character': 'False',
+            'random_character_hdd': 'False',
+            'character_name': 'Neptune',
+            'x_param': '0',
+            'y_param': '0',
+            'w_resize': '0',
+            'h_resize': '0',
+            'w_correction': '0',
+            'h_correction': '0'
+        },
+        'Behavior': {
+            'auto_blink': 'True',
+            'auto_breath': 'True',
+            'tracking_mouse': 'True',
+            'sleep': 'True',
+            'time_scale': '1',
+            'time_schedule': 'False',
+            'use_12h_format': 'False',
+            'sleep_h': '23',
+            'sleep_m': '0',
+            'wake_h': '8',
+            'wake_m': '0',
+            'idle_animation': 'True',
+            'on_mouse_animation': 'True',
+            'tap_body_animation': 'True'
+        },
+        'Audio': {
+            'audio_system': 'True',
+            'master': '100',
+            'voice': '100',
+            'sfx': '90',
+            'bgm': '60',
+            'ambient': '50'
+        },
+        'Other': {
+            'show_text_widget': 'True',
+            'show_name': 'True',
+            'show_kaomoji': 'True'
+        }
+    }
+
     def __init__(self):
         super().__init__()
         self._config = self._load_or_create_config()
@@ -13,93 +78,35 @@ class AppConfig(QObject):
     def _load_or_create_config(self) -> ConfigParser:
         """Loads the config or creates a new one with default values"""
         config = ConfigParser()
-        config.read('config.ini')
 
-        if not self._check_config_sections(config):
-            self._create_default_config(config)
-            self._save_full_config(config)
+        # Читаем существующий конфиг
+        if os.path.exists('config.ini'):
+            config.read('config.ini')
+
+        # Проверяем и создаем недостающие секции и ключи
+        self._validate_and_fix_config(config)
 
         return config
 
-    def _check_config_sections(self, config: ConfigParser) -> bool:
-        """Checking the availability of all necessary sections"""
-        required_sections = {
-            'Main', 'WindowFlags', 'Scale',
-            'Model', 'Animations', 'Settings'
-        }
-        return all(config.has_section(section) for section in required_sections)
+    def _validate_and_fix_config(self, config: ConfigParser):
+        """Проверяет и создает недостающие секции и ключи"""
+        config_changed = False
 
-    def _create_default_config(self, config: ConfigParser):
-        """Fills the config with default values"""
-        # Main section
-        if not config.has_section('Main'):
-            config.add_section('Main')
-            config.set('Main', 'language', 'English')
-            config.set('Main', 'color_icons', 'False')
-            config.set('Main', 'background', 'True')
-            config.set('Main', 'theme', '')
-            config.set('Main', 'screen_width', '0')
-            config.set('Main', 'screen_height', '0')
-
-        # WindowFlags section
-        if not config.has_section('WindowFlags'):
-            config.add_section('WindowFlags')
-            window_flags = {
-                'X11BypassWindowManagerHint': 'True',
-                'FramelessWindowHint': 'True',
-                'WindowMinimizeButtonHint': 'True',
-                'WindowMaximizeButtonHint': 'False',
-                'WindowCloseButtonHint': 'True',
-                'WindowTransparentForInput': 'False',
-                'WindowType_Mask': 'False',
-                'WindowStaysOnTopHint': 'True',
-                'WindowStaysOnBottomHint': 'False'
-            }
-            for flag, value in window_flags.items():
-                config.set('WindowFlags', flag, value)
-
-        # Other sections
-        sections = {
-            'Scale': {
-                'auto_scale': 'True',
-                'models_scale': '1'
-            },
-            'Model': {
-                'character_name': 'Neptune',
-                'selected_model': '0',
-                'x_param': '0',
-                'y_param': '0',
-                'w_resize': '0',
-                'h_resize': '0',
-                'w_correction': '0',
-                'h_correction': '0'
-            },
-            'Animations': {
-                'idle_animation': 'True',
-                'on_mouse_animation': 'True',
-                'tap_body_animation': 'True'
-            },
-            'Settings': {
-                'auto_blink': 'True',
-                'auto_breath': 'True',
-                'tracking_mouse': 'True',
-                'sleep': 'True'
-            },
-            'Audio': {
-                'audio_system': 'True',
-                'master': '100',
-                'voice': '100',
-                'sfx': '90',
-                'bgm': '60',
-                'ambient': '50'
-            }
-        }
-
-        for section, options in sections.items():
+        for section, options in self.DEFAULT_CONFIG.items():
+            # Создаем секцию, если ее нет
             if not config.has_section(section):
                 config.add_section(section)
-                for key, value in options.items():
-                    config.set(section, key, value)
+                config_changed = True
+
+            # Добавляем недостающие ключи
+            for key, default_value in options.items():
+                if not config.has_option(section, key):
+                    config.set(section, key, default_value)
+                    config_changed = True
+
+        # Сохраняем, если были изменения
+        if config_changed:
+            self._save_full_config(config)
 
     def _save_full_config(self, config: ConfigParser):
         """Saves the entire config with the notification"""
@@ -208,12 +215,12 @@ class AppConfig(QObject):
 
     @property
     def auto_scale(self) -> bool:
-        return self._config.getboolean('Scale', 'auto_scale')
+        return self._config.getboolean('Model', 'auto_scale')
 
     @auto_scale.setter
     def auto_scale(self, value: bool):
-        self._config.set('Scale', 'auto_scale', str(value))
-        self._save_and_notify('Scale', 'auto_scale', str(value))
+        self._config.set('Model', 'auto_scale', str(value))
+        self._save_and_notify('Model', 'auto_scale', str(value))
 
     # Language config
     @property
@@ -257,25 +264,15 @@ class AppConfig(QObject):
     # Models config
     @property
     def models_scale(self) -> float:
-        return self._config.getfloat('Scale', 'models_scale')
+        return self._config.getfloat('Model', 'models_scale')
 
     @models_scale.setter
     def models_scale(self, value: float):
-        self._config.set('Scale', 'models_scale', str(value))
-        self._save_and_notify('Scale', 'models_scale', str(value))
-
-    @property
-    def models_switch(self) -> int:
-        return self._config.getint('Model', 'selected_model')
-
-    @models_switch.setter
-    def models_switch(self, value: int):
-        self._config.set('Model', 'selected_model', str(value))
-        self._save_and_notify('Model', 'selected_model', str(value))
+        self._config.set('Model', 'models_scale', str(value))
+        self._save_and_notify('Model', 'models_scale', str(value))
 
     def update_model_params(
             self,
-            model_id: Optional[int] = None,
             character_name: Optional[str] = None,
             x_param: Optional[int] = None,
             y_param: Optional[int] = None,
@@ -288,8 +285,6 @@ class AppConfig(QObject):
             twm_y: Optional[float] = None
     ):
         """Updates the model parameters (all parameters are optional)"""
-        if model_id is not None:
-            self._config.set('Model', 'selected_model', str(model_id))
         if character_name is not None:
             self._config.set('Model', 'character_name', character_name)
         if x_param is not None:
@@ -395,69 +390,150 @@ class AppConfig(QObject):
         self._config.set('Model', 'character_name', str(value))
         self._save_and_notify('Model', 'character_name', str(value))
 
+    @property
+    def random_character(self) -> bool:
+        return self._config.getboolean('Model', 'random_character')
+
+    @random_character.setter
+    def random_character(self, value: bool):
+        self._config.set('Model', 'random_character', str(value))
+        self._save_and_notify('Model', 'random_character', str(value))
+
+    @property
+    def random_character_hdd(self) -> bool:
+        return self._config.getboolean('Model', 'random_character_hdd')
+
+    @random_character_hdd.setter
+    def random_character_hdd(self, value: bool):
+        self._config.set('Model', 'random_character_hdd', str(value))
+        self._save_and_notify('Model', 'random_character_hdd', str(value))
+
     # Animation switches config
     @property
     def idle_switch(self) -> bool:
-        return self._config.getboolean('Animations', 'idle_animation')
+        return self._config.getboolean('Behavior', 'idle_animation')
 
     @idle_switch.setter
     def idle_switch(self, value: bool):
-        self._config.set('Animations', 'idle_animation', str(value))
-        self._save_and_notify('Animations', 'idle_animation', str(value))
+        self._config.set('Behavior', 'idle_animation', str(value))
+        self._save_and_notify('Behavior', 'idle_animation', str(value))
 
     @property
     def on_mouse_switch(self) -> bool:
-        return self._config.getboolean('Animations', 'on_mouse_animation')
+        return self._config.getboolean('Behavior', 'on_mouse_animation')
 
     @on_mouse_switch.setter
     def on_mouse_switch(self, value: bool):
-        self._config.set('Animations', 'on_mouse_animation', str(value))
-        self._save_and_notify('Animations', 'on_mouse_animation', str(value))
+        self._config.set('Behavior', 'on_mouse_animation', str(value))
+        self._save_and_notify('Behavior', 'on_mouse_animation', str(value))
 
     @property
     def tap_body_switch(self) -> bool:
-        return self._config.getboolean('Animations', 'tap_body_animation')
+        return self._config.getboolean('Behavior', 'tap_body_animation')
 
     @tap_body_switch.setter
     def tap_body_switch(self, value: bool):
-        self._config.set('Animations', 'tap_body_animation', str(value))
-        self._save_and_notify('Animations', 'tap_body_animation', str(value))
+        self._config.set('Behavior', 'tap_body_animation', str(value))
+        self._save_and_notify('Behavior', 'tap_body_animation', str(value))
 
     @property
     def sleep_switch(self) -> bool:
-        return self._config.getboolean('Settings', 'sleep')
+        return self._config.getboolean('Behavior', 'sleep')
 
     @sleep_switch.setter
     def sleep_switch(self, value: bool):
-        self._config.set('Settings', 'sleep', str(value))
-        self._save_and_notify('Settings', 'sleep', str(value))
+        self._config.set('Behavior', 'sleep', str(value))
+        self._save_and_notify('Behavior', 'sleep', str(value))
+
+    @property
+    def time_scale(self) -> float:
+        return self._config.getfloat('Behavior', 'time_scale')
+
+    @time_scale.setter
+    def time_scale(self, value: float):
+        self._config.set('Behavior', 'time_scale', str(value))
+        self._save_and_notify('Behavior', 'time_scale', str(value))
+
+    @property
+    def time_schedule(self) -> bool:
+        return self._config.getboolean('Behavior', 'time_schedule')
+
+    @time_schedule.setter
+    def time_schedule(self, value: bool):
+        self._config.set('Behavior', 'time_schedule', str(value))
+        self._save_and_notify('Behavior', 'time_schedule', str(value))
+
+    @property
+    def use_12h_format(self) -> bool:
+        return self._config.getboolean('Behavior', 'use_12h_format')
+
+    @use_12h_format.setter
+    def use_12h_format(self, value: bool):
+        self._config.set('Behavior', 'use_12h_format', str(value))
+        self._save_and_notify('Behavior', 'use_12h_format', str(value))
+
+    @property
+    def sleep_h(self) -> int:
+        return self._config.getint('Behavior', 'sleep_h')
+
+    @sleep_h.setter
+    def sleep_h(self, value: int):
+        self._config.set('Behavior', 'sleep_h', str(value))
+        self._save_and_notify('Behavior', 'sleep_h', str(value))
+
+    @property
+    def sleep_m(self) -> int:
+        return self._config.getint('Behavior', 'sleep_m')
+
+    @sleep_m.setter
+    def sleep_m(self, value: int):
+        self._config.set('Behavior', 'sleep_m', str(value))
+        self._save_and_notify('Behavior', 'sleep_m', str(value))
+
+    @property
+    def wake_h(self) -> int:
+        return self._config.getint('Behavior', 'wake_h')
+
+    @wake_h.setter
+    def wake_h(self, value: int):
+        self._config.set('Behavior', 'wake_h', str(value))
+        self._save_and_notify('Behavior', 'wake_h', str(value))
+
+    @property
+    def wake_m(self) -> int:
+        return self._config.getint('Behavior', 'wake_m')
+
+    @wake_m.setter
+    def wake_m(self, value: int):
+        self._config.set('Behavior', 'wake_m', str(value))
+        self._save_and_notify('Behavior', 'wake_m', str(value))
 
     @property
     def tracking_mouse_switch(self) -> bool:
-        return self._config.getboolean('Settings', 'tracking_mouse')
+        return self._config.getboolean('Behavior', 'tracking_mouse')
 
     @tracking_mouse_switch.setter
     def tracking_mouse_switch(self, value: bool):
-        self._config.set('Settings', 'tracking_mouse', str(value))
-        self._save_and_notify('Settings', 'tracking_mouse', str(value))
+        self._config.set('Behavior', 'tracking_mouse', str(value))
+        self._save_and_notify('Behavior', 'tracking_mouse', str(value))
 
     @property
     def auto_blink(self) -> bool:
-        return self._config.getboolean('Settings', 'auto_blink')
+        return self._config.getboolean('Behavior', 'auto_blink')
 
     @auto_blink.setter
     def auto_blink(self, value: bool):
-        self._config.set('Settings', 'auto_blink', str(value))
-        self._save_and_notify('Settings', 'auto_blink', str(value))
+        self._config.set('Behavior', 'auto_blink', str(value))
+        self._save_and_notify('Behavior', 'auto_blink', str(value))
 
     @property
     def auto_breath(self) -> bool:
-        return self._config.getboolean('Settings', 'auto_breath')
+        return self._config.getboolean('Behavior', 'auto_breath')
 
     @auto_breath.setter
     def auto_breath(self, value: bool):
-        self._config.set('Settings', 'auto_breath', str(value))
-        self._save_and_notify('Settings', 'auto_breath', str(value))
+        self._config.set('Behavior', 'auto_breath', str(value))
+        self._save_and_notify('Behavior', 'auto_breath', str(value))
 
     @property
     def audio_system(self) -> bool:
@@ -512,6 +588,33 @@ class AppConfig(QObject):
     def ambient(self, value: int):
         self._config.set('Audio', 'ambient', str(value))
         self._save_and_notify('Audio', 'ambient', str(value))
+
+    @property
+    def show_text_widget(self) -> bool:
+        return self._config.getboolean('Other', 'show_text_widget')
+
+    @show_text_widget.setter
+    def show_text_widget(self, value: bool):
+        self._config.set('Other', 'show_text_widget', str(value))
+        self._save_and_notify('Other', 'show_text_widget', str(value))
+
+    @property
+    def show_name(self) -> bool:
+        return self._config.getboolean('Other', 'show_name')
+
+    @show_name.setter
+    def show_name(self, value: bool):
+        self._config.set('Other', 'show_name', str(value))
+        self._save_and_notify('Other', 'show_name', str(value))
+
+    @property
+    def show_kaomoji(self) -> bool:
+        return self._config.getboolean('Other', 'show_kaomoji')
+
+    @show_kaomoji.setter
+    def show_kaomoji(self, value: bool):
+        self._config.set('Other', 'show_kaomoji', str(value))
+        self._save_and_notify('Other', 'show_kaomoji', str(value))
 
     # Save configs
     def _save_and_notify(self, section: str, key: str, value: str):

@@ -1,8 +1,7 @@
 {
   "Neptune": {
-    "model_path": "v3/Neptune/Neptune.model3.json",
+    "model_path": "models/Neptune/Neptune.model3.json",
     "name_key": "Neptune",
-    "models_switch": 0,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 600,
@@ -12,9 +11,8 @@
     "posXR": 64
     },
   "Purple Heart": {
-    "model_path": "v3/PurpleHeart/PurpleHeart.model3.json",
+    "model_path": "models/PurpleHeart/PurpleHeart.model3.json",
     "name_key": "Purple Heart",
-    "models_switch": 1,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 700,
@@ -24,9 +22,8 @@
     "posXR": 85
     },
   "Noire": {
-    "model_path": "v3/Noire/Noire.model3.json",
+    "model_path": "models/Noire/Noire.model3.json",
     "name_key": "Noire",
-    "models_switch": 2,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 700,
@@ -36,9 +33,8 @@
     "posXR": 100
     },
   "Black Heart": {
-    "model_path": "v3/BlackHeart/BlackHeart.model3.json",
+    "model_path": "models/BlackHeart/BlackHeart.model3.json",
     "name_key": "Black Heart",
-    "models_switch": 3,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 700,
@@ -48,9 +44,8 @@
     "posXR": 100
     },
   "Blanc": {
-    "model_path": "v3/Blanc/Blanc.model3.json",
+    "model_path": "models/Blanc/Blanc.model3.json",
     "name_key": "Blanc",
-    "models_switch": 4,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 600,
@@ -60,9 +55,8 @@
     "posXR": 60
     },
   "White Heart": {
-    "model_path": "v3/WhiteHeart/WhiteHeart.model3.json",
+    "model_path": "models/WhiteHeart/WhiteHeart.model3.json",
     "name_key": "White Heart",
-    "models_switch": 5,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 700,
@@ -72,9 +66,8 @@
     "posXR": 90
     },
   "Vert": {
-    "model_path": "v3/Vert/Vert.model3.json",
+    "model_path": "models/Vert/Vert.model3.json",
     "name_key": "Vert",
-    "models_switch": 6,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 700,
@@ -84,9 +77,8 @@
     "posXR": 120
     },
   "Green Heart": {
-    "model_path": "v3/GreenHeart/GreenHeart.model3.json",
+    "model_path": "models/GreenHeart/GreenHeart.model3.json",
     "name_key": "Green Heart",
-    "models_switch": 7,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 700,
@@ -96,9 +88,8 @@
     "posXR": 90
     },
   "NepGear": {
-    "model_path": "v3/NepGear/NepGear.model3.json",
+    "model_path": "models/NepGear/NepGear.model3.json",
     "name_key": "NepGear",
-    "models_switch": 8,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 600,
@@ -108,9 +99,8 @@
     "posXR": 55
     },
   "Purple Sister": {
-    "model_path": "v3/PurpleSister/PurpleSister.model3.json",
+    "model_path": "models/PurpleSister/PurpleSister.model3.json",
     "name_key": "Purple Sister",
-    "models_switch": 9,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 650,
@@ -120,9 +110,8 @@
     "posXR": 65
     },
   "Uni": {
-    "model_path": "v3/Uni/Uni.model3.json",
+    "model_path": "models/Uni/Uni.model3.json",
     "name_key": "Uni",
-    "models_switch": 10,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 600,
@@ -132,9 +121,8 @@
     "posXR": 60
     },
   "Black Sister": {
-    "model_path": "v3/BlackSister/BlackSister.model3.json",
+    "model_path": "models/BlackSister/BlackSister.model3.json",
     "name_key": "Black Sister",
-    "models_switch": 11,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 650,
@@ -144,9 +132,8 @@
     "posXR": 110
     },
   "Rom": {
-    "model_path": "v3/Rom/Rom.model3.json",
+    "model_path": "models/Rom/Rom.model3.json",
     "name_key": "Rom",
-    "models_switch": 12,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 600,
@@ -156,9 +143,8 @@
     "posXR": 70
     },
   "White Sister Rom": {
-    "model_path": "v3/WhiteSisterRom/WhiteSisterRom.model3.json",
+    "model_path": "models/WhiteSisterRom/WhiteSisterRom.model3.json",
     "name_key": "White Sister Rom",
-    "models_switch": 13,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 650,
@@ -168,9 +154,8 @@
     "posXR": 130
     },
   "Ram": {
-    "model_path": "v3/Ram/Ram.model3.json",
+    "model_path": "models/Ram/Ram.model3.json",
     "name_key": "Ram",
-    "models_switch": 14,
     "hdd_form": false,
     "can_transform": true,
     "mx_param": 600,
@@ -180,9 +165,8 @@
     "posXR": 60
     },
   "White Sister Ram": {
-    "model_path": "v3/WhiteSisterRam/WhiteSisterRam.model3.json",
+    "model_path": "models/WhiteSisterRam/WhiteSisterRam.model3.json",
     "name_key": "White Sister Ram",
-    "models_switch": 15,
     "hdd_form": true,
     "can_transform": true,
     "mx_param": 650,
@@ -192,9 +176,8 @@
     "posXR": 75
     },
   "Histoire": {
-    "model_path": "v3/Histoire/Histoire.model3.json",
+    "model_path": "models/Histoire/Histoire.model3.json",
     "name_key": "Histoire",
-    "models_switch": 16,
     "hdd_form": false,
     "can_transform": false,
     "mx_param": 500,
@@ -204,15 +187,25 @@
     "posXR": 40
     },
   "Maho": {
-    "model_path": "v3/Maho/Maho.model3.json",
+    "model_path": "models/Maho/Maho.model3.json",
     "name_key": "Maho",
-    "models_switch": 17,
     "hdd_form": false,
-    "can_transform": false,
+    "can_transform": true,
     "mx_param": 600,
     "my_param": 600,
     "w_correction": -70,
     "h_correction": 0,
     "posXR": 40
+    },
+    "Grey Sister": {
+    "model_path": "models/GreySister/GreySister.model3.json",
+    "name_key": "Grey Sister",
+    "hdd_form": true,
+    "can_transform": true,
+    "mx_param": 650,
+    "my_param": 650,
+    "w_correction": -70,
+    "h_correction": 0,
+    "posXR": 65
     }
 }

@@ -17,7 +17,8 @@
     "Ram": "Рам",
     "WhiteSisterRam": "Белая Сестра Рам",
     "Histoire": "Хистоар",
-    "Maho": "Махо"
+    "Maho": "Махо",
+    "GreySister": "Серая Сестра"
   },
   "NamesActions": {
     "Neptune": "&Нептун",
@@ -37,7 +38,8 @@
     "Ram": "&Рам",
     "WhiteSisterRam": "&Белая Сестра Рам",
     "Histoire": "&Хистоар",
-    "Maho": "&Махо"
+    "Maho": "&Махо",
+    "GreySister": "&Серая Сестра"
   },
   "Talk": {
     "Hello": "Привет!",
@@ -76,6 +78,7 @@
     "FunnyBl": "Арр!!!",
     "FunnyHDD": "Я Богиня!",
     "Sleep": "Я хочу спать",
+    "SleepAgain": "Я еще посплю!",
     "WakeUp": "Я Проснулась",
     "Woke": "Ты меня разбудил",
     "TransformToHDD": "Активация HDD-формы!",
@@ -138,14 +141,24 @@
     "ColorIcons": "Цветные иконки",
     "Background": "Фоновое изображение",
     "Theme": "Тема:",
-    "ScaleTitle": "Масштаб",
+    "ModelTitle": "Модель",
     "AutoScale": "Авто Масштаб",
     "ScaleMultiplier": "Множитель масштаба:",
+    "RandomCharacter": "Случайный персонаж при запуске",
+    "RandomCharacterHDD": "Случайный персонаж при запуске (включая HDD)",
     "Behavior": "Поведение",
-    "AutoBlink": "Авто Моргание",
-    "AutoBreath": "Авто Дыхание",
+    "AutoBlink": "Моргание",
+    "AutoBreath": "Дыхание",
     "TrackingMouse": "Слежение за Мышью",
     "Sleep": "Сон",
+    "TimeScale": "Сжатие времени: ",
+    "SleepSchedule": "Использовать Расписание Сна:",
+    "SleepTime": "Ложиться спать в:",
+    "WakeTime": "Просыпаться в:",
+    "Format": "Использовать 12-часовой формат",
+    "Idle": "Анимация Ожидания",
+    "OnMouse": "Анимация Наведения Мыши",
+    "TapBody": "Анимация Нажатия Мыши",
     "AudioTitle": "Звук",
     "AudioSystemON": "Аудио Система: ВКЛЮЧЕНА",
     "AudioSystemOFF": "Аудио Система: ВЫКЛЮЧЕНА",
@@ -160,7 +173,10 @@
     "ResetSound": "Сброс",
     "Mute": "Отключить Всё",
     "Unmute": "Включить Всё",
-    "OtherTitle": "Разное"
+    "OtherTitle": "Разное",
+    "ShowTextWidget": "Отображать текстовый виджет",
+    "ShowName": "Отображать имя персонажа в виджете",
+    "ShowKaomoji": "Отображать каомодзи в виджете"
   },
   "NewYearEvent": {
     "Greeting": "Привет! Скоро Новый Год",
@@ -176,5 +192,8 @@
     "Holidays": "Новогодние каникулы, День:",
     "Xmas": "Счастливого Рождества!",
     "BackGroundHint": "Фоновое изображение доступно в настройках"
+  },
+  "ValentinesDayEvent": {
+    "Congratulation": "С Днём Святого Валентина!"
   }
 }

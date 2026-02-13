@@ -1,4 +1,5 @@
 import os
+import random
 import live2d.v3 as live2d
 from live2d.v3 import Parameter
 from package.additional.resource_manager import ResourceManager
@@ -127,8 +128,7 @@ class ModelsManager:
             win.move(new_x, new_y)
 
         # Save config
-        win.app_config.update_model_params(model_id=win.models_switch,
-                                           character_name=win.character_name,
+        win.app_config.update_model_params(character_name=win.character_name,
                                            x_param=win.mx_param,
                                            y_param=win.my_param,
                                            w_resize=win.w_resize,
@@ -166,7 +166,7 @@ class ModelsManager:
 
     def _load_fallback_model(self, win) -> None:
         """Backup option for errors"""
-        fallback_path = os.path.join(self.resources_dir, "v3/Neptune/Neptune.model3.json")
+        fallback_path = os.path.join(self.resources_dir, "models/Neptune/Neptune.model3.json")
         win.model = live2d.Model()
         win.model.LoadModelJson(fallback_path)
 
@@ -175,3 +175,24 @@ class ModelsManager:
         for i in range(win.model.GetParameterCount()):
             param: Parameter = win.model.GetParameter(i)
             print(param.id, param.type, param.value, param.max, param.min, param.default)
+
+    def load_random_character(self, win):
+        """Load Random Character"""
+        self.random_hdd = win.app_config.random_character_hdd
+        base_characters = self.resource_manager.get_base_character_names()
+        hdd_characters = self.resource_manager.get_hdd_character_names()
+        all_characters = self.resource_manager.get_all_character_names()
+
+        if self.random_hdd:
+            selected_character = random.choice(base_characters + hdd_characters)
+        else:
+            selected_character = random.choice(base_characters)
+
+        win.character_name = selected_character
+        startup_config = win.resource_manager.get_character_config(selected_character)
+
+        # Update window params
+        self._update_win_params(win, startup_config)
+
+        if win.models_log:
+            print(f"[Random Character] Selected: {selected_character} (index: {win.models_switch})")

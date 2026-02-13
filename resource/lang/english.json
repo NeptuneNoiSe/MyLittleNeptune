@@ -17,7 +17,8 @@
     "Ram": "Ram",
     "WhiteSisterRam": "White Sister Ram",
     "Histoire": "Histoire",
-    "Maho": "Maho"
+    "Maho": "Maho",
+    "GreySister": "Grey Sister"
   },
   "NamesActions": {
     "Neptune": "&Neptune",
@@ -37,7 +38,8 @@
     "Ram": "&Ram",
     "WhiteSisterRam": "&White Sister Ram",
     "Histoire": "&Histoire",
-    "Maho": "&Maho"
+    "Maho": "&Maho",
+    "GreySister": "&Grey Sister"
   },
   "Talk": {
     "Hello": "Hello!",
@@ -76,6 +78,7 @@
     "FunnyBl": "Argh!!!",
     "FunnyHDD": "I am a Goddess!",
     "Sleep": "I want to sleep",
+    "SleepAgain": "I'll get some more sleep!",
     "WakeUp": "I'm WakeUp",
     "Woke": "You woke me up",
     "TransformToHDD": "HDD Transformation Initiated!",
@@ -138,14 +141,24 @@
     "Background": "Background image",
     "ColorIcons": "Color icons",
     "Theme": "Theme:",
-    "ScaleTitle": "Scale",
+    "ModelTitle": "Model",
     "AutoScale": "AutoScale",
     "ScaleMultiplier": "Scale multiplier:",
+    "RandomCharacter": "Random character on startup",
+    "RandomCharacterHDD": "Random character on startup (include HDD)",
     "Behavior": "Behavior",
-    "AutoBlink": "Auto Blink",
-    "AutoBreath": "Auto Breath",
+    "AutoBlink": "Blink",
+    "AutoBreath": "Breath",
     "TrackingMouse": "Tracking Mouse Position",
     "Sleep": "Sleep",
+    "TimeScale": "Time Scale: ",
+    "SleepSchedule": "Use Sleep Schedule:",
+    "SleepTime": "Go to sleep at:",
+    "WakeTime": "Wake up at:",
+    "Format": "Use 12-hour format",
+    "Idle": "Idle Animation",
+    "OnMouse": "On Mouse Animation",
+    "TapBody": "Tap Body Animation",
     "AudioTitle": "Audio",
     "AudioSystemON": "Audio System: ON",
     "AudioSystemOFF": "Audio System: OFF",
@@ -160,7 +173,10 @@
     "ResetSound": "Reset",
     "Mute": "Mute All",
     "Unmute": "Unmute All",
-    "OtherTitle": "Other"
+    "OtherTitle": "Other",
+    "ShowTextWidget": "Show text widget",
+    "ShowName": "Show character name in widget",
+    "ShowKaomoji": "Show kaomoji in widget"
   },
   "NewYearEvent": {
     "Greeting": "Hi! The New Year is coming soon",
@@ -176,5 +192,8 @@
     "Holidays": "New Year's holidays, Day:",
     "Xmas": "Merry Christmas!",
     "BackGroundHint": "Background image is available in the settings"
+  },
+  "ValentinesDayEvent": {
+    "Congratulation": "Happy Valentine's Day!"
   }
 }

@@ -56,11 +56,11 @@ class InputHandler:
         self.win.show()
         self.mouse_input_timer.stop()
 
-    def set_transparent_input(self):
+    def set_transparent_input(self, delay = 5000):
         """Set transperent input if user click on trasparent area"""
         self.win.setWindowFlags(self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput)
         self.win.show()
-        self.mouse_input_timer.start(5000)
+        self.mouse_input_timer.start(delay)
 
     def update_idle_counter(self):
         """Update the idle counter"""
@@ -129,7 +129,7 @@ class InputHandler:
         # Defining the type of interaction
         was_dragging = self.place_this
         self.place_this = False
-        if not self.sleep_move:
+        if not self.sleep_move and self.win.character.tired_controller.timer_count < self.win.character.tired_controller.sleep_v:
             self.win.character.tired_controller.timer_count = 1
 
         # Drag processing
@@ -150,7 +150,9 @@ class InputHandler:
                 not self.input_lock and
                 not self.sleep_move):
             # print("DEBUG: Correct wake up from click!")
-            self.win.character.state.set_woke_up_state()
+            self.win.character.tired_state.set_woke_up_state()
+
+            #self.win.character.tired_controller.woke_up()
             return
 
         if not self.sleep_move:

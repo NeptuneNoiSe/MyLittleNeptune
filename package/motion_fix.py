@@ -69,6 +69,6 @@ def copy_modify_from_motion(motion_path: str, save_root: str = "./out/motions") 
 if __name__ == "__main__":
     # 用例（仅限v3模型）
     model_name = "lafei"
-    motionPathList = load_all_motion_path_from_model_dir(os.path.join(resources.RESOURCES_DIRECTORY, "v3", model_name))
+    motionPathList = load_all_motion_path_from_model_dir(os.path.join(resources.RESOURCES_DIRECTORY, "models", model_name))
     for path in motionPathList:
         copy_modify_from_motion(path, save_root=f"./fixed_motions/{model_name}/motions")

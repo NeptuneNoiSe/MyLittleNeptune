@@ -73,8 +73,21 @@ class AnimationsManager:
     def _load_extra_motions(self):
         """Loads extra motions"""
         motions = self.resource_manager.load_extra_motions()
-        for i, (name, path) in enumerate(motions.items()):
-            self.model.LoadExtraMotion("Extra", i, path)
+
+        for name, path in motions.items():
+            try:
+                motion_index = self.model.LoadExtraMotion("Extra", path)
+
+                # Save motion index
+                if not hasattr(self, '_extra_motion_indices'):
+                    self._extra_motion_indices = {}
+                self._extra_motion_indices[name] = motion_index
+
+                if self.win.callbacks_log:
+                    print(f"[Motion] Loaded extra motion '{name}' with index {motion_index} from {path}")
+
+            except Exception as e:
+                print(f"[Error] Failed to load extra motion '{name}': {e}")
 
     def _load_profiles(self) -> dict:
         """Load a single config for all characters"""
@@ -158,7 +171,7 @@ class AnimationsManager:
         self.color_animator.fade_to_color(r,g,b,duration)
 
     def play_random_flicker_shape(self, stop_after_ms=7000):
-        """Случайный режим пульсации со случайными цветами"""
+        """Play random flicker color pulsation"""
         random_shape = self.color_animator.get_random_flicker_shape()
         self.color_animator.set_pulsating_color(
             r=random.randint(100, 255),
@@ -182,7 +195,7 @@ class AnimationsManager:
                          stop_fade_out=True,
                          stop_fade_duration=500,
                          unique_id=None,
-                         **extra_kwargs):  # Для совместимости с будущими параметрами
+                         **extra_kwargs):
         """
             Proxy method for set_pulsating_color.
 
@@ -784,6 +797,7 @@ class TransformAnimator:
             "Uni": self.win.action_handler.on_action_black_sister,
             "Rom": self.win.action_handler.on_action_white_sister_rom,
             "Ram": self.win.action_handler.on_action_white_sister_ram,
+            "Maho": self.win.action_handler.on_action_grey_sister
         }
         if self.win.character_name in transformations:
             transformations[self.win.character_name]()
@@ -803,6 +817,7 @@ class TransformAnimator:
             "Black Sister": self.win.action_handler.on_action_uni,
             "White Sister Rom": self.win.action_handler.on_action_rom,
             "White Sister Ram": self.win.action_handler.on_action_ram,
+            "Grey Sister": self.win.action_handler.on_action_maho
         }
         if self.win.character_name in transformations:
             transformations[self.win.character_name]()

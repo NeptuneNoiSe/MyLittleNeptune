@@ -33,6 +33,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Purple Heart": {
@@ -101,6 +102,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Black Heart": {
@@ -169,6 +171,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "White Heart": {
@@ -236,6 +239,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Green Heart": {
@@ -302,6 +306,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Purple Sister": {
@@ -367,6 +372,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "Black Sister": {
@@ -431,6 +437,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "White Sister Rom": {
@@ -496,6 +503,7 @@
     "new_year_greeting_today": "new_year_day.wav",
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
+    "valentines_day_congratulation": "valentines_day.wav",
     "default": "default.wav"
   },
   "White Sister Ram": {
@@ -603,6 +611,37 @@
     "quit": "quit.wav",
     "normal": "normal.wav",
     "normal_maho": "normal_alt.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
+    "default": "default.wav"
+  },
+  "Grey Sister": {
+    "greeting": "hello.wav",
+    "goodbye": "goodbye.wav",
+    "me": "me.wav",
+    "drag": "drag.wav",
+    "stay": "stay.wav",
+    "lost": "lost.wav",
+    "transform": "transform.wav",
+    "transformed": "transformed.wav",
+    "transform_fail": "transform_fail.wav",
+    "woke": "woke.wav",
+    "wake_up": "wake_up.wav",
+    "pre_sleep": "pre_sleep.wav",
+    "sleep": "sleep.wav",
+    "settings": "settings.wav",
+    "happy": "happy.wav",
+    "angry": "angry.wav",
+    "sad": "sad.wav",
+    "smile": "smile.wav",
+    "tired": "tired.wav",
+    "closedeyes": "closed_eyes.wav",
+    "cry": "cry.wav",
+    "fear": "fear.wav",
+    "surprised": "surprised.wav",
+    "really_quit": "really_quit.wav",
+    "quit": "quit.wav",
+    "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
     "default": "default.wav"

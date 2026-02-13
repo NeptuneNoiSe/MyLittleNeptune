@@ -704,19 +704,20 @@ class ValentinesDayEvent:
         pass
 
     def congratulate_event(self, duration):
-        self.win.animation_manager.play_color_pulse(r=255, g=126, b=147, stop_after_ms=duration)
-        self.win.image_manager.item_image.set_item("valentinebox", position=(0, -50 * self.win.a_scale))
-        self.win.image_manager.item_image.set_size(width=self.win.w_resize / 6, height=self.win.h_resize / 6)
-        self.win.animation_manager.opacity_animator.animate_opacity(
-            source=self.win.image_manager.item_image,
-            start=0,
-            end=1,
-            duration=1000,
-            easing="in_quad")
+        self.win.animation_manager.play_color_pulse(pulse_duration=1000, r=255, g=126, b=147, stop_after_ms=duration)
+        self.win.image_manager.item_image.set_item("valentinebox", position=(0, -50 * self.win.a_scale),opacity=0)
+        self.win.image_manager.item_image.set_percentage_size(relative_to_model=True,
+                                                              width_percent=16,
+                                                              height_percent=16)
+        self.win.animation_manager.opacity_animator.animate_opacity(source=self.win.image_manager.item_image,
+                                                                    start=0,
+                                                                    end=1,
+                                                                    duration=1500,
+                                                                    easing="in_quad")
 
         self.win.image_manager.item_image.animate_bounce_continuous(animation = "animate_bounce",
                                                                     height=10,
-                                                                    bounce_duration=800,
+                                                                    bounce_duration=duration/10,
                                                                     bounces=3,
                                                                     total_duration=duration)
 

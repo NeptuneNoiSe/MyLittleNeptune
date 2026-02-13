@@ -119,17 +119,17 @@ class ItemImage(QObject):
 
         self.position_animation = None
 
-        # Хранилище для анимаций
-        self._animations = []  # Список всех активных анимаций
-        self._animation_groups = []  # Список групп
+        # Animations Store
+        self._animations = []
+        self._animation_groups = []
 
-        # Параметры по умолчанию
-        self._item_opacity = 0
-        self._scale = 1.0  # Масштаб (0.0 - 2.0)
+        # Default Vars
+        self._item_opacity = 1.0
+        self._scale = 1.0
         self._anim_scale = 1.0
-        self._position_x = 0  # Смещение по X (пиксели)
-        self._position_y = 0  # Смещение по Y (пиксели)
-        self._alignment = Qt.AlignmentFlag.AlignCenter  # Выравнивание
+        self._position_x = 0
+        self._position_y = 0
+        self._alignment = Qt.AlignmentFlag.AlignCenter
         self._keep_aspect_ratio = True
         self._smooth_transformation = True
 
@@ -137,34 +137,33 @@ class ItemImage(QObject):
         self.original_pixmap = None
         self.scaled_pixmap = None
 
-        # Инициализация
         QTimer.singleShot(0, self._setup_label)
 
     def SetOutputOpacity(self, value):
-        """Метод для установки прозрачности"""
+        """Opacity control"""
         self.item_opacity = value
 
     def _setup_label(self):
-        """Настройка label после инициализации окна"""
+        """Setup the label"""
         if self.win:
             self.label.setParent(self.win)
             self.label.lower()
             self.label.hide()
 
     def _cleanup_animations(self):
-        """Очистка завершенных анимаций"""
+        """Clean up animations"""
         self._animations = [a for a in self._animations if a]
         self._animation_groups = [g for g in self._animation_groups if g]
 
     def get_anim_scale(self):
-        """Getter для анимационного масштаба"""
+        """Scale Getter"""
         return self._anim_scale
 
     def set_anim_scale(self, value):
-        """Setter для анимационного масштаба"""
+        """Scale Setter"""
         self._anim_scale = value
-        self._scale = value  # Обновляем основной масштаб
-        self._update_pixmap()  # Перерисовываем
+        self._scale = value
+        self._update_pixmap()
 
     anim_scale = Property(float, get_anim_scale, set_anim_scale)
 
@@ -212,7 +211,7 @@ class ItemImage(QObject):
         self._update_position()
 
     def set_item(self, image_name, show=True, **kwargs):
-        """Установить изображение с возможностью анимации"""
+        """Set item image"""
         self.current_image_name = image_name
 
         if not image_name:
@@ -271,7 +270,7 @@ class ItemImage(QObject):
         self.label.setGeometry(int(x), int(y), pixmap_width, pixmap_height)
 
     def set_size(self, width=None, height=None, keep_aspect=True):
-        """Установить конкретный размер"""
+        """Set Size"""
         if not self.original_pixmap:
             return
 
@@ -296,21 +295,26 @@ class ItemImage(QObject):
         self.label.setPixmap(self.scaled_pixmap)
         self._update_position()
 
-    def set_percentage_size(self, width_percent=None, height_percent=None):
-        """Установить размер в процентах от окна"""
+    def set_percentage_size(self, width_percent=None, height_percent=None, relative_to_model=False):
+        """Set size in percentage"""
         if not self.win:
             return
 
-        win_width = self.win.width()
-        win_height = self.win.height()
+        if relative_to_model:
+            win_width = self.win.w_resize
+            win_height = self.win.h_resize
+        else:
+            win_width = self.win.width()
+            win_height = self.win.height()
 
-        width = win_width * (width_percent / 100) if width_percent else None
-        height = win_height * (height_percent / 100) if height_percent else None
+        width = win_width * (width_percent / 100) if width_percent is not None else None
+        height = win_height * (height_percent / 100) if height_percent is not None else None
 
+        #print(f"Setting size relative to {mode}: {width_percent}% → {width}px, {height_percent}% → {height}px")
         self.set_size(width, height)
 
     def set_relative_position(self, x_percent=0, y_percent=0):
-        """Установить позицию в процентах от окна"""
+        """Set position in percent"""
         if not self.win:
             return
 
@@ -319,7 +323,7 @@ class ItemImage(QObject):
         self._update_position()
 
     def set_alignment(self, horizontal='center', vertical='center'):
-        """Установить выравнивание"""
+        """Set Alignment"""
         align_map = {
             'left': Qt.AlignLeft,
             'right': Qt.AlignRight,
@@ -336,14 +340,12 @@ class ItemImage(QObject):
         self._update_position()
 
     def animate_position(self, target_x, target_y, duration=1000):
-        """Анимация перемещения"""
+        """Default Position Animation"""
         if not self.label:
             return None
 
-        # Очищаем старые анимации
         self._cleanup_animations()
 
-        # Создаем анимацию и сохраняем
         self.position_animation = QPropertyAnimation(self.label, b"pos")
         self._animations.append(self.position_animation)  # Сохраняем!
 
@@ -352,7 +354,6 @@ class ItemImage(QObject):
         self.position_animation.setEndValue(QPoint(target_x, target_y))
         self.position_animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
 
-        # Удаляем анимацию после завершения
         def cleanup():
             if self.position_animation in self._animations:
                 self._animations.remove(self.position_animation)
@@ -364,33 +365,30 @@ class ItemImage(QObject):
         return self.position_animation
 
     def animate_bounce_continuous(self, animation_type="animate_bounce", **kwargs):
-        """Непрерывное подпрыгивание"""
+        """Loop Bounce Animation"""
         if not self.label:
             return None
 
         self._cleanup_animations()
 
-        # Параметры по умолчанию
         params = {
             'height': 30,
-            'bounce_duration': 800,  # миллисекунды
+            'bounce_duration': 800,
             'bounces': 3,
-            'total_duration': 10000  # миллисекунды!
+            'total_duration': 10000
         }
         params.update(kwargs)
 
-        # Конвертируем в секунды для time.time()
         start_time = time.time()
-        end_time = start_time + (params['total_duration'] / 1000.0)  # мс → секунды
+        end_time = start_time + (params['total_duration'] / 1000.0)
 
         def bounce_loop():
             current_time = time.time()
 
             if current_time >= end_time:
-                # print(f"Animation finished. Duration: {params['total_duration']}ms")  # Отладка
+                # print(f"Animation finished. Duration: {params['total_duration']}ms")
                 return
 
-            # Запускаем выбранную анимацию
             if animation_type == "animate_bounce":
                 self.animate_bounce(
                     height=params['height'],
@@ -405,14 +403,13 @@ class ItemImage(QObject):
             else:
                 return
 
-            # Следующий bounce
             QTimer.singleShot(params['bounce_duration'], bounce_loop)
 
         bounce_loop()
         return None
 
     def animate_bounce(self, height=30, duration=800):
-        """Анимация подпрыгивания"""
+        """Bounce Animation"""
         if not self.label:
             return None
 
@@ -421,25 +418,21 @@ class ItemImage(QObject):
         try:
             start_pos = self.label.pos()
 
-            # СОХРАНЯЕМ как атрибут объекта!
             self.animation_group = QSequentialAnimationGroup()
             self._animation_groups.append(self.animation_group)
 
-            # 1. Анимация вверх
             anim_up = QPropertyAnimation(self.label, b"pos")
             anim_up.setDuration(duration // 2)
             anim_up.setStartValue(start_pos)
             anim_up.setEndValue(QPoint(start_pos.x(), start_pos.y() - height))
             anim_up.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-            # 2. Анимация вниз с эффектом отскока
             anim_down = QPropertyAnimation(self.label, b"pos")
             anim_down.setDuration(duration // 2)
             anim_down.setStartValue(QPoint(start_pos.x(), start_pos.y() - height))
             anim_down.setEndValue(start_pos)
             anim_down.setEasingCurve(QEasingCurve.Type.OutBounce)
 
-            # Добавляем в группу
             self.animation_group.addAnimation(anim_up)
             self.animation_group.addAnimation(anim_down)
 
@@ -457,7 +450,7 @@ class ItemImage(QObject):
             return None
 
     def animate_bounce_multiple(self, height=30, duration=800, bounces=3):
-        """Анимация с несколькими отскоками"""
+        """Multiple Bounce Animation"""
         if not self.label:
             return None
 
@@ -465,21 +458,18 @@ class ItemImage(QObject):
 
         start_pos = self.label.pos()
 
-        # СОХРАНЯЕМ как атрибут объекта!
         self.animation_group = QSequentialAnimationGroup()
         self._animation_groups.append(self.animation_group)
 
         for i in range(bounces):
             current_height = height * (0.7 ** i)
 
-            # Вверх
             anim_up = QPropertyAnimation(self.label, b"pos")
             anim_up.setDuration(duration // 2)
             anim_up.setStartValue(start_pos if i == 0 else self.label.pos())
             anim_up.setEndValue(QPoint(start_pos.x(), start_pos.y() - int(current_height)))
             anim_up.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-            # Вниз
             anim_down = QPropertyAnimation(self.label, b"pos")
             anim_down.setDuration(duration // 2)
             anim_down.setStartValue(QPoint(start_pos.x(), start_pos.y() - int(current_height)))
@@ -489,7 +479,6 @@ class ItemImage(QObject):
             self.animation_group.addAnimation(anim_up)
             self.animation_group.addAnimation(anim_down)
 
-        # Удаляем группу после завершения
         def cleanup_group():
             if self.animation_group in self._animation_groups:
                 self._animation_groups.remove(self.animation_group)
@@ -500,23 +489,19 @@ class ItemImage(QObject):
         return self.animation_group
 
     def festive_bounce(self, intensity=1.5):
-        """Праздничный bounce с разными эффектами"""
+        """Bounce Animation with effects"""
         if not self.label:
             return
 
         self._cleanup_animations()
 
-        # Комбинация нескольких анимаций
         self.animation_group = []
 
-        # 1. Подпрыгивание
         bounce_anim = self.animate_bounce(height=30 * float(intensity), duration=800)
         if bounce_anim:
             self.animation_group.append(bounce_anim)
 
-        # 2. Легкое вращение (если поддерживается)
         try:
-            # Проверяем есть ли свойство rotation
             rotation_anim = QPropertyAnimation(self.label, b"rotation")
             rotation_anim.setDuration(1000)
             rotation_anim.setStartValue(0)
@@ -530,33 +515,28 @@ class ItemImage(QObject):
             if self.animation_group in self._animation_groups:
                 self._animation_groups.remove(self.animation_group)
 
-        # 3. Изменение масштаба
         QTimer.singleShot(200, lambda: self.animate_scale_bounce(1.0, 1.1, 300))
 
         return self.animation_group
 
     def animate_scale_bounce(self, start_scale, end_scale, duration=300):
-        """Анимация масштабирования"""
+        """Scale bounce Animation"""
         if not self.label:
             return None
 
         self._cleanup_animations()
 
-        # Сохраняем текущий масштаб для восстановления
         self._original_scale_before_animation = self._scale
 
-        # Создаем группу
         self.animation_group = QSequentialAnimationGroup()
         self._animation_groups.append(self.animation_group)
 
-        # Анимация увеличения
         scale_up = QPropertyAnimation(self, b"anim_scale")
         scale_up.setDuration(duration // 2)
         scale_up.setStartValue(start_scale)
         scale_up.setEndValue(end_scale)
         scale_up.setEasingCurve(QEasingCurve.Type.OutQuad)
 
-        # Анимация уменьшения
         scale_down = QPropertyAnimation(self, b"anim_scale")
         scale_down.setDuration(duration // 2)
         scale_down.setStartValue(end_scale)
@@ -569,7 +549,6 @@ class ItemImage(QObject):
         def cleanup_group():
             if self.animation_group in self._animation_groups:
                 self._animation_groups.remove(self.animation_group)
-            # Восстанавливаем исходный масштаб если нужно
             # self._scale = self._original_scale_before_animation
             # self._update_pixmap()
 
@@ -579,7 +558,7 @@ class ItemImage(QObject):
         return self.animation_group
 
     def reset_transform(self):
-        """Сбросить все трансформации к значениям по умолчанию"""
+        """Reset all transformations to default values"""
         self._scale = 1.0
         self._position_x = 0
         self._position_y = 0
@@ -591,23 +570,23 @@ class ItemImage(QObject):
 
 
     def show(self):
-        """Показать изображение"""
+        """Show Label"""
         if self.label:
             self.label.show()
             self.label.raise_()
 
     def hide(self):
-        """Скрыть изображение"""
+        """Hide Label"""
         if self.label:
             self.label.hide()
 
     def toggle(self):
-        """Переключить видимость"""
+        """Toggle Label"""
         if self.label.isVisible():
             self.hide()
         else:
             self.show()
 
     def is_visible(self):
-        """Проверить видимость"""
+        """Check if Label is Visible"""
         return self.label.isVisible() if self.label else False

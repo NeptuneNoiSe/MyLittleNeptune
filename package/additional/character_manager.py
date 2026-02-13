@@ -310,10 +310,12 @@ class CharacterStateManager:
     def set_event_congratulation_state(self, delay_ms = 0, duration = 10000, event_name: str | None = None,
                                      event_key: str | None = None) -> None:
         """Character say congratulation"""
+        timer_congratulate = QTimer()
         def start_congratulation():
             if (self.win.input_handler.input_lock
                     or self.win.settings_update_state
                     or self.win.quit_box_active):
+                timer_congratulate = None
                 return
             else:
                 self.win.input_handler.input_lock = True
@@ -333,8 +335,9 @@ class CharacterStateManager:
 
         def end_congratulation():
             self.win.input_handler.input_lock = False
+            timer_congratulate = None
 
-        QTimer.singleShot(delay_ms, start_congratulation)
+        timer_congratulate.singleShot(delay_ms, start_congratulation)
 
 
     def set_sing_song_state(self):

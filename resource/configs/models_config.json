@@ -207,5 +207,16 @@
     "w_correction": -70,
     "h_correction": 0,
     "posXR": 65
+    },
+  "Anri": {
+    "model_path": "models/Anri/Anri.model3.json",
+    "name_key": "Anri",
+    "hdd_form": false,
+    "can_transform": false,
+    "mx_param": 750,
+    "my_param": 750,
+    "w_correction": -175,
+    "h_correction": -65,
+    "posXR": 65
     }
 }

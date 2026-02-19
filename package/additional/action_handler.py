@@ -109,6 +109,9 @@ class ActionHandler:
     def on_action_grey_sister(self):
         self._change_character("Grey Sister")
 
+    def on_action_anri(self):
+        self._change_character("Anri")
+
     # Animations Actions
     def _toggle_animation_setting(self, config_key, switch_attr, anim_attr,
                                   enabled_text_key, disabled_text_key, enabled):

@@ -54,7 +54,7 @@
                 {"part": "ParamHairFront", "range": [0.0, 10.0]},
                 {"part": "ParamHairSideL", "range": [0.0, 10.0]},
                 {"part": "ParamHairSideR", "range": [0.0, 10.0]},
-                {"part": "ParamHairBack", "range": [0.0, 10.0]},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0]},
                 {"part": "Param7", "range": [0.0, 10.0]},
                 {"part": "Param10", "range": [0, 10]},
                 {"part": "Param11", "range": [0, 10]},
@@ -3939,6 +3939,188 @@
                 {"part": "Param36", "range": [-1.0, 0], "speed": 0.05},
                 {"part": "Param42", "range": [-10.0, 0.0]},
                 {"part": "Param43", "range": [-10.0, 0.0]}
+            ]
+          }
+        }
+    },
+    "Anri": {
+        "hit_zones": {
+            "HAIR CLIP": ["Part31"],
+            "HAIR": ["Part33"],
+            "EYEBROWS": ["Part32"],
+            "HEAD": ["Part39"],
+            "LEFT EYE": ["Part36"],
+            "RIGHT EYE": ["Part37"],
+            "CHEEKS": ["Part38"],
+            "MOUTH": ["Part35"],
+            "BRA": ["Part43"],
+            "LEFT HAND": ["apple_arm"],
+            "RIGHT HAND": ["Part56"],
+            "CABLE": ["ArtMesh343_Skinning"],
+            "LEFT LEG": ["Part54"],
+            "RIGHT LEG": ["Part53"]
+        },
+        "animations": {
+            "HAIR CLIP": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "HEAD": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "EYEBROWS": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "LEFT EYE": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "RIGHT EYE": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "CHEEKS": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "MOUTH": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "BRA": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [5, 6, 7, 8],
+                "priority": 3
+            },
+            "LEFT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [11, 12, 13],
+                "priority": 3
+            },
+            "RIGHT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [14, 15, 16],
+                "priority": 3
+            },
+            "SKIRT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [2, 3, 4],
+                "priority": 3
+            },
+            "LEFT LEG": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [17, 18],
+                "priority": 3
+            },
+            "RIGHT LEG": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [19, 20],
+                "priority": 3
+            },
+            "default": {
+                "anim_type": "RandomMotion",
+                "group": "TapBody",
+                "priority": 3
+            }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "ParamHairFront", "range": [0.0, 10.0]},
+                {"part": "Param26", "range": [0.0, 10.0]},
+                {"part": "ParamHairSideL", "range": [0.0, 10.0]},
+                {"part": "ParamHairSideR", "range": [0.0, 10.0]},
+                {"part": "ParamHairBackR", "range": [0.0, 10.0]},
+                {"part": "Param7", "range": [0.0, 10.0]},
+
+                {"part": "Param33", "range": [0, 10]},
+                {"part": "Param34", "range": [0, 10]},
+
+                {"part": "Param10", "range": [0, 10]},
+                {"part": "Param11", "range": [0, 10]},
+
+                {"part": "Param18", "range": [0, 10]},
+                {"part": "Param19", "range": [0, 10]},
+
+                {"part": "Param_Angle_Rotation_1_ArtMesh343", "range": [0, 1], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh343", "range": [0, 2], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh343", "range": [0, 3], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh343", "range": [0, 4], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh343", "range": [0, 5], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh343", "range": [0, 6], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh343", "range": [0, 7], "speed": 0.11}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "ParamHairFront", "range": [-10.0, 0.0]},
+                {"part": "Param26", "range": [-10, 0]},
+                {"part": "ParamHairSideL", "range": [-10.0, 0.0]},
+                {"part": "ParamHairSideR", "range": [-10.0, 0.0]},
+                {"part": "ParamHairBackR", "range": [-10.0, 0.0]},
+                {"part": "Param7", "range": [-10.0, 0.0]},
+
+                {"part": "Param33", "range": [-10, 0]},
+                {"part": "Param34", "range": [-10, 0]},
+
+                {"part": "Param10", "range": [-10, 0]},
+                {"part": "Param11", "range": [-10, 0]},
+                {"part": "Param18", "range": [-10, 0]},
+                {"part": "Param19", "range": [-10, 0]},
+
+                {"part": "Param_Angle_Rotation_1_ArtMesh343", "range": [-1, 0], "speed": 0.05},
+                {"part": "Param_Angle_Rotation_2_ArtMesh343", "range": [-2, 0], "speed": 0.06},
+                {"part": "Param_Angle_Rotation_3_ArtMesh343", "range": [-3, 0], "speed": 0.07},
+                {"part": "Param_Angle_Rotation_4_ArtMesh343", "range": [-4, 0], "speed": 0.08},
+                {"part": "Param_Angle_Rotation_5_ArtMesh343", "range": [-5, 0], "speed": 0.09},
+                {"part": "Param_Angle_Rotation_6_ArtMesh343", "range": [-6, 0], "speed": 0.10},
+                {"part": "Param_Angle_Rotation_7_ArtMesh343", "range": [-7, 0], "speed": 0.11}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param59", "range": [0, 10]}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param59", "range": [-10, 0]}
             ]
           }
         }

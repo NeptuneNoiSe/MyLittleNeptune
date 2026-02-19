@@ -158,6 +158,7 @@ class ResourceManager:
                 "Histoire": "histoire_talk.svg",
                 "Maho": "maho_talk.svg",
                 "Grey Sister": "grey_sister_talk.svg",
+                "Anri": "anri_talk.svg",
                 "default": "talk.svg"
             }
 

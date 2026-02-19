@@ -850,6 +850,11 @@ class MainWindow(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/characters/grey_sister.ico")), self.lang['NamesActions']['GreySister'])
         if not self.input_handler.input_lock:
             action_grey_sister.triggered.connect(self.action_handler.on_action_grey_sister)
+        # Anri
+        action_anri = submenu_character.addAction(QIcon(os.path.join(
+            resources.RESOURCES_DIRECTORY, "icons/characters/anri.ico")), self.lang['NamesActions']['Anri'])
+        if not self.input_handler.input_lock:
+            action_anri.triggered.connect(self.action_handler.on_action_anri)
 
         context_menu.addMenu(submenu_character)
 

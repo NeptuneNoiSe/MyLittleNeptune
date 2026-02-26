@@ -713,6 +713,7 @@ class MainWindow(QOpenGLWidget):
         self.set_theme()
         # if self.talk_update:
         self.apply_character_config(self.character_name)
+        self.position_window()
 
     def settings_show(self):
         """Show Settings Window"""

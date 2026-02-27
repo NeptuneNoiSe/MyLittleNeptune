@@ -11,14 +11,13 @@ class TalkWidget:
     def __init__(self, win):
         self.win = win
         self.widget = QWidget(win)
+        self._widget_opacity = 1.0
         self.init_ui()
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
         self.dialog_animation = True
         self.exp_fade_out_var = 7000
         self.is_quitting = True
-
-
 
     # Dialog close timer
     def dialog_timer(self, interval: int | None = None) -> None:
@@ -59,7 +58,27 @@ class TalkWidget:
         self.talk_form_layout = QFormLayout(self.text_sub_widget)
         self.talk_text_label = QLabel()
 
+        self.talk_image_label_opacity = QGraphicsOpacityEffect()
+        self.talk_image_label_opacity.setOpacity(1.0)
+        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
+
         self.grid_layout.addWidget(self.talk_frame, 1, 0, 1, 1)
+
+    def SetOutputOpacity(self, value):
+        """Метод для OpacityAnimator"""
+        self.widget_opacity = value
+
+    @property
+    def widget_opacity(self):
+        return self._widget_opacity
+
+    @widget_opacity.setter
+    def widget_opacity(self, value):
+        self._widget_opacity = max(0.0, min(1.0, value))
+        if hasattr(self, 'talk_image_label_opacity'):
+            self.talk_image_label_opacity.setOpacity(self._widget_opacity)
+            # Обновляем виджет
+            self.talk_image_label.update()
 
     @property
     def show_text_in_console(self):
@@ -149,6 +168,50 @@ class TalkWidget:
     def SrcSize(self):
         return self.win.SrcSize
 
+    def show_appearance_animation(self):
+        """Show widget Animation using OpacityAnimator"""
+        self.talk_image_label_opacity.setOpacity(0)
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            source=self,
+            start=0.0,
+            end=0.9,
+            duration=500,
+            easing="in_quad"
+        )
+
+    def close_dialog(self):
+        """Close dialog box with Animation using OpacityAnimator"""
+        if not self.show_widget:
+            return
+
+        self.dialogCloseTimer.stop()
+
+        if self.dialog_animation:
+            self.win.animation_manager.opacity_animator.animate_opacity(
+                source=self,
+                start=0.9,
+                end=0.0,
+                duration=500,
+                easing="out_quad",
+                on_finished=self.close_dialog_after_animation
+            )
+        else:
+            self.close_dialog_after_animation()
+
+    def close_dialog_after_animation(self):
+        """Close the dialog box after animation"""
+        self.talk = False
+        self.widget.close()
+        self.talk_text_label.repaint()
+
+        # If you need to process Qt events
+        from PySide6.QtWidgets import QApplication
+        QApplication.processEvents()
+
+        # Sleep state processing
+        if hasattr(self.win.character, 'tired_state') and self.win.character.tired_state.condition == "Sleep":
+            self.win.character.tired_controller.sleep_function()
+
     def change_talk_widget_side(self):
         """Defines the side of the screen for displaying the widget"""
         vSizeX = self.vSize.width()
@@ -159,23 +222,6 @@ class TalkWidget:
             self.screenSide = "Right"
         elif center <= 0:
             self.screenSide = "Left"
-
-    def show_appearance_animation(self):
-        """Show widget Animation"""
-        # Setting up transparency with animation
-        self.talk_image_label_opacity = QGraphicsOpacityEffect()
-        self.talk_image_label_opacity.setOpacity(0.0)  # Initial transparency value
-        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
-
-        # Creating an animation
-        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-        self.opacity_animation.setDuration(250)  # Animation duration in milliseconds
-        self.opacity_animation.setStartValue(0.0)  # Initial value
-        self.opacity_animation.setEndValue(0.9)  # Final value
-        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Smoothness of animation
-
-        # Adding animations to the queue (so as not to block the main thread)
-        QTimer.singleShot(0, self.opacity_animation.start)
 
     def show_talk(self):
         """Shows a widget with the text"""
@@ -241,6 +287,13 @@ class TalkWidget:
 
         if self.show_text_in_console:
             print(f"{self.name}: {self.text}\n{self.kaomoji}")
+
+        if self.win.input_handler.drag_intensity == 0:
+            self.win.animation_manager.animate_bounce(
+                target=self.widget,
+                height=15,
+                duration=1000
+            )
 
     def _setup_talk_image(self):
         """Adjusts the image in the widget"""
@@ -373,36 +426,6 @@ class TalkWidget:
 
         return offset_x, offset_y
 
-    def close_dialog(self):
-        """Close dialog box with Animation"""
-        if not self.show_widget:
-            return
-        self.dialogCloseTimer.stop()
-        if self.dialog_animation:
-            self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-            self.opacity_animation.setDuration(500)
-            self.opacity_animation.setStartValue(0.9)
-            self.opacity_animation.setEndValue(0.0)
-            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Smoothness of animation
-            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Hide after animation
-            QTimer.singleShot(0, self.opacity_animation.start)
-        else:
-            self.close_dialog_after_animation()
-
-    def close_dialog_after_animation(self):
-        """Closes the dialog box after animation"""
-        self.talk = False
-        self.widget.close()
-        self.talk_text_label.repaint()
-
-        # If you need to process Qt events
-        from PySide6.QtWidgets import QApplication
-        QApplication.processEvents()
-
-        # Sleep state processing
-        if hasattr(self.win.character, 'tired_state') and self.win.character.tired_state.condition == "Sleep":
-            self.win.character.tired_controller.sleep_function()
-
     def update_text(self):
         """Updates the text in the widget"""
         self.talk_text_label.repaint()
@@ -454,3 +477,37 @@ class TalkWidget:
         # Creating a new widget (the old one will be deleted by the garbage collector)
         self.widget = QWidget(parent)
         self.init_ui()  # The main initialization method
+
+    # TODO: LEGACY OPACITY METHODS: MUST BE REMOVED AFTER TESTING NEW METHODS
+    def show_appearance_animation_legacy(self):
+        """Show widget Animation"""
+        # Setting up transparency with animation
+        self.talk_image_label_opacity = QGraphicsOpacityEffect()
+        self.talk_image_label_opacity.setOpacity(0.0)  # Initial transparency value
+        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
+
+        # Creating an animation
+        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
+        self.opacity_animation.setDuration(250)  # Animation duration in milliseconds
+        self.opacity_animation.setStartValue(0.0)  # Initial value
+        self.opacity_animation.setEndValue(0.9)  # Final value
+        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Smoothness of animation
+
+        # Adding animations to the queue (so as not to block the main thread)
+        QTimer.singleShot(0, self.opacity_animation.start)
+
+    def close_dialog_legacy(self):
+        """Close dialog box with Animation"""
+        if not self.show_widget:
+            return
+        self.dialogCloseTimer.stop()
+        if self.dialog_animation:
+            self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
+            self.opacity_animation.setDuration(500)
+            self.opacity_animation.setStartValue(0.9)
+            self.opacity_animation.setEndValue(0.0)
+            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Smoothness of animation
+            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Hide after animation
+            QTimer.singleShot(0, self.opacity_animation.start)
+        else:
+            self.close_dialog_after_animation()

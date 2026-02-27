@@ -1,9 +1,11 @@
 from PySide6.QtCore import QSize, QObject, QTimer, QPropertyAnimation, QEasingCurve, QVariantAnimation, \
-    QParallelAnimationGroup
+    QParallelAnimationGroup, QSequentialAnimationGroup, QPoint
 from PySide6.QtGui import QMovie, Qt
-from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
+from PySide6.QtWidgets import QWidget, QApplication, QGraphicsOpacityEffect
 
 from package import resources
+import weakref
+import uuid
 import warnings
 import random
 import time
@@ -27,6 +29,7 @@ class AnimationsManager:
         self.transform_animator = TransformAnimator(self)
         self.blink_animator = BlinkAnimator(self)
         self.opacity_animator = OpacityAnimator(self)
+        self.bounce_animator = BounceAnimator(self)
         self.drag_animator = DragAnimator(self)
         self.color_animator = ColorAnimator(self)
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
@@ -251,6 +254,21 @@ class AnimationsManager:
         self.color_animator.stop_pulse(pulse_id=pulse_id,
                                        fade_out=fade_out,
                                        fade_duration=fade_duration)
+
+    def animate_bounce_continuous(self, target, **kwargs):
+        return self.bounce_animator.animate_bounce_continuous(target, **kwargs)
+
+    def animate_bounce(self, target, **kwargs):
+        return self.bounce_animator.animate_bounce(target, **kwargs)
+
+    def animate_scale_bounce(self, target, **kwargs):
+        return self.bounce_animator.animate_scale_bounce(target, **kwargs)
+
+    def stop_scale_bounce(self, target):
+        self.bounce_animator.stop_scale_bounce(target)
+
+    def stop_bounce(self, target):
+        self.bounce_animator.stop_bounce(target)
 
 class AnimationPlayer:
     """Animation Player"""
@@ -604,6 +622,356 @@ class OpacityAnimator:
             self._last_finished_slot = on_finished  # Сохраняем для будущего отключения
 
         self.anim.start()
+
+# TODO: НЕОБХОДИМО ТЕСТИРОВАНИЕ АНИМАТОРА НА РАЗЛИЧНЫХ ОБЪЕКТАХ
+class BounceAnimator:
+    """Универсальный аниматор подпрыгивания для любых объектов"""
+    def __init__(self, animation_manager):
+        self.animation_manager = animation_manager
+        self.bounce_loops = {}  # для непрерывных анимаций
+        self.bounce_animations = {}  # для одиночных анимаций
+
+        # Кэшируем часто используемые easing curves
+        self.easing_curves = {
+            "linear": QEasingCurve.Linear,
+            "out_quad": QEasingCurve.OutQuad,
+            "out_bounce": QEasingCurve.OutBounce,
+            "out_cubic": QEasingCurve.OutCubic,
+            "in_out_quad": QEasingCurve.InOutQuad,
+        }
+
+    def _get_easing(self, name):
+        """Получить easing curve по имени"""
+        return self.easing_curves.get(name, QEasingCurve.Linear)
+
+    def _get_widget(self, target):
+        """Универсальное получение виджета из любого объекта"""
+        # Прямой QWidget
+        if isinstance(target, QWidget):
+            return target
+
+        # Объект с label (как ItemImage)
+        if hasattr(target, 'label') and isinstance(target.label, QWidget):
+            return target.label
+
+        # Объект с методом get_target_widget
+        if hasattr(target, 'get_target_widget') and callable(target.get_target_widget):
+            widget = target.get_target_widget()
+            if isinstance(widget, QWidget):
+                return widget
+
+        # Объект с атрибутом widget
+        if hasattr(target, 'widget') and isinstance(target.widget, QWidget):
+            return target.widget
+
+        return None
+
+    def _cleanup_animation(self, anim_id):
+        """Очистка завершенной анимации"""
+        if anim_id in self.bounce_animations:
+            del self.bounce_animations[anim_id]
+
+    # ============= ПУБЛИЧНЫЕ МЕТОДЫ =============
+
+    def animate_bounce(self, target, height=30, duration=800,
+                       easing_up="out_quad", easing_down="out_bounce",
+                       on_finished=None):
+        """Одиночное подпрыгивание"""
+        widget = self._get_widget(target)
+        if not widget:
+            print(f"Warning: Cannot get widget from {target}")
+            return None
+
+        try:
+            start_pos = widget.pos()
+            group = QSequentialAnimationGroup()
+
+            # Вверх
+            anim_up = QPropertyAnimation(widget, b"pos")
+            anim_up.setDuration(duration // 2)
+            anim_up.setStartValue(start_pos)
+            anim_up.setEndValue(QPoint(start_pos.x(), start_pos.y() - height))
+            anim_up.setEasingCurve(self._get_easing(easing_up))
+
+            # Вниз
+            anim_down = QPropertyAnimation(widget, b"pos")
+            anim_down.setDuration(duration // 2)
+            anim_down.setStartValue(QPoint(start_pos.x(), start_pos.y() - height))
+            anim_down.setEndValue(start_pos)
+            anim_down.setEasingCurve(self._get_easing(easing_down))
+
+            group.addAnimation(anim_up)
+            group.addAnimation(anim_down)
+
+            # Уникальный ID
+            anim_id = f"bounce_{id(target)}_{id(widget)}_{int(time.time() * 1000)}"
+
+            self.bounce_animations[anim_id] = {
+                'target': weakref.ref(target) if hasattr(target, '__class__') else target,
+                'widget': weakref.ref(widget),
+                'animation': group
+            }
+
+            if on_finished:
+                group.finished.connect(on_finished)
+
+            group.finished.connect(lambda: self._cleanup_animation(anim_id))
+
+            QTimer.singleShot(0, group.start)
+            return anim_id
+
+        except Exception as e:
+            print(f"Error in animate_bounce: {e}")
+            return None
+
+    def animate_bounce_continuous(self, target,
+                                  height=30,
+                                  bounce_duration=800,
+                                  bounces=3,
+                                  total_duration=10000,
+                                  on_finished=None):
+        """
+        Непрерывное подпрыгивание
+
+        Args:
+            target: объект для анимации
+            height: высота прыжка
+            bounce_duration: длительность одного прыжка
+            bounces: количество прыжков в одной итерации
+            total_duration: общая длительность анимации
+            on_finished: callback при завершении
+        """
+
+        widget = self._get_widget(target)
+        if not widget:
+            return None
+
+        # Уникальный ID для этой непрерывной анимации
+        loop_id = f"bounce_loop_{id(target)}_{int(time.time() * 1000)}"
+
+        # Время окончания
+        end_time = time.time() + (total_duration / 1000.0)
+
+        def bounce_iteration():
+            # Проверяем, не остановлена ли анимация
+            if loop_id not in self.bounce_loops:
+                return
+
+            # Проверяем время
+            if time.time() >= end_time:
+                # Завершаем
+                if loop_id in self.bounce_loops:
+                    del self.bounce_loops[loop_id]
+                if on_finished:
+                    on_finished()
+                return
+
+            # Запускаем множественное подпрыгивание
+            self.animate_bounce_multiple(
+                target=target,
+                height=height,
+                duration=bounce_duration,
+                bounces=bounces,
+                on_finished=lambda: QTimer.singleShot(50, bounce_iteration)
+            )
+
+        # Сохраняем информацию о цикле
+        self.bounce_loops[loop_id] = {
+            'target_id': id(target),
+            'end_time': end_time
+        }
+
+        # Запускаем первый цикл
+        QTimer.singleShot(0, bounce_iteration)
+
+        return loop_id
+
+    def animate_bounce_multiple(self, target, height=30, duration=800,
+                                bounces=3, damping=0.7, on_finished=None):
+        """Множественное подпрыгивание с затуханием"""
+
+        widget = self._get_widget(target)
+        if not widget:
+            return None
+
+        try:
+            start_pos = widget.pos()
+            group = QSequentialAnimationGroup()
+
+            for i in range(bounces):
+                current_height = height * (damping ** i)
+
+                anim_up = QPropertyAnimation(widget, b"pos")
+                anim_up.setDuration(duration // 2)
+                anim_up.setStartValue(widget.pos() if i == 0 else widget.pos())
+                anim_up.setEndValue(QPoint(start_pos.x(), start_pos.y() - int(current_height)))
+                anim_up.setEasingCurve(self._get_easing("out_quad"))
+
+                anim_down = QPropertyAnimation(widget, b"pos")
+                anim_down.setDuration(duration // 2)
+                anim_down.setStartValue(QPoint(start_pos.x(), start_pos.y() - int(current_height)))
+                anim_down.setEndValue(start_pos)
+                anim_down.setEasingCurve(self._get_easing("out_bounce"))
+
+                group.addAnimation(anim_up)
+                group.addAnimation(anim_down)
+
+            anim_id = f"bounce_multi_{id(target)}_{int(time.time() * 1000)}"
+
+            self.bounce_animations[anim_id] = {
+                'target': weakref.ref(target) if hasattr(target, '__class__') else target,
+                'widget': weakref.ref(widget),
+                'animation': group
+            }
+
+            if on_finished:
+                group.finished.connect(on_finished)
+
+            group.finished.connect(lambda: self._cleanup_animation(anim_id))
+
+            QTimer.singleShot(0, group.start)
+            return anim_id
+
+        except Exception as e:
+            print(f"Error in animate_bounce_multiple: {e}")
+            return None
+
+    def animate_scale_bounce(self, target, start_scale=1.0, end_scale=1.2,
+                             duration=300, easing_up="out_quad", easing_down="in_out_quad",
+                             on_finished=None):
+        """
+        Анимация масштаба с отскоком для любого объекта со свойством scale
+
+        Args:
+            target: объект для анимации (должен иметь свойство scale и anim_scale)
+            start_scale: начальный масштаб
+            end_scale: конечный масштаб (пик)
+            duration: длительность анимации в мс
+            easing_up: кривая для увеличения
+            easing_down: кривая для уменьшения
+            on_finished: callback при завершении
+        """
+
+        # Проверяем, что target имеет нужные атрибуты
+        if not hasattr(target, 'anim_scale') or not hasattr(target, 'scale'):
+            print(f"Warning: Target {target} must have 'anim_scale' property")
+            return None
+
+        try:
+            # Сохраняем оригинальный масштаб если нужно
+            if not hasattr(self, '_original_scales'):
+                self._original_scales = {}
+
+            target_id = id(target)
+            self._original_scales[target_id] = getattr(target, 'scale', start_scale)
+
+            # Создаем группу анимаций
+            group = QSequentialAnimationGroup()
+
+            # Увеличение
+            scale_up = QPropertyAnimation(target, b"anim_scale")
+            scale_up.setDuration(duration // 2)
+            scale_up.setStartValue(start_scale)
+            scale_up.setEndValue(end_scale)
+            scale_up.setEasingCurve(self._get_easing(easing_up))
+
+            # Уменьшение обратно
+            scale_down = QPropertyAnimation(target, b"anim_scale")
+            scale_down.setDuration(duration // 2)
+            scale_down.setStartValue(end_scale)
+            scale_down.setEndValue(start_scale)
+            scale_down.setEasingCurve(self._get_easing(easing_down))
+
+            group.addAnimation(scale_up)
+            group.addAnimation(scale_down)
+
+            # Уникальный ID
+            anim_id = f"scale_bounce_{target_id}_{int(time.time() * 1000)}"
+
+            # Сохраняем анимацию (можно в отдельный словарь или в bounce_animations)
+            if not hasattr(self, 'scale_animations'):
+                self.scale_animations = {}
+
+            self.scale_animations[anim_id] = {
+                'target': weakref.ref(target) if hasattr(target, '__class__') else target,
+                'target_id': target_id,
+                'animation': group,
+                'original_scale': start_scale
+            }
+
+            # Callback завершения
+            if on_finished:
+                group.finished.connect(on_finished)
+
+            # Очистка после завершения
+            def cleanup():
+                if anim_id in self.scale_animations:
+                    # Восстанавливаем оригинальный масштаб если нужно
+                    # target.scale = self._original_scales.get(target_id, start_scale)
+                    del self.scale_animations[anim_id]
+                if target_id in self._original_scales:
+                    del self._original_scales[target_id]
+
+            group.finished.connect(cleanup)
+
+            # Запускаем
+            QTimer.singleShot(0, group.start)
+            return anim_id
+
+        except Exception as e:
+            print(f"Error in animate_scale_bounce: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def stop_scale_bounce(self, target):
+        """Остановить анимацию масштаба для объекта"""
+        target_id = id(target)
+
+        if hasattr(self, 'scale_animations'):
+            to_delete = []
+            for anim_id, anim_data in self.scale_animations.items():
+                if anim_data.get('target_id') == target_id:
+                    if 'animation' in anim_data:
+                        anim_data['animation'].stop()
+                    to_delete.append(anim_id)
+
+            for anim_id in to_delete:
+                del self.scale_animations[anim_id]
+
+    def stop_bounce(self, target):
+        """Остановить все bounce анимации для объекта"""
+        target_id = id(target)
+
+        # Останавливаем активные анимации
+        to_delete = []
+        for anim_id, anim_data in self.bounce_animations.items():
+            if anim_data.get('target_id') == target_id or \
+                    (hasattr(anim_data.get('target'), 'id') and anim_data['target']() is target):
+                if 'animation' in anim_data:
+                    anim_data['animation'].stop()
+                to_delete.append(anim_id)
+
+        for anim_id in to_delete:
+            del self.bounce_animations[anim_id]
+
+        # Останавливаем циклы
+        to_delete = []
+        for loop_id, loop_data in self.bounce_loops.items():
+            if loop_data.get('target_id') == target_id:
+                to_delete.append(loop_id)
+
+        for loop_id in to_delete:
+            del self.bounce_loops[loop_id]
+
+    def stop_all_bounces(self):
+        """Остановить все bounce анимации"""
+        for anim_data in self.bounce_animations.values():
+            if 'animation' in anim_data:
+                anim_data['animation'].stop()
+
+        self.bounce_animations.clear()
+        self.bounce_loops.clear()
 
 class TransformAnimator:
     """Character transformation animation management"""

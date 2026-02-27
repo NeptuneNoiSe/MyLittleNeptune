@@ -364,6 +364,78 @@ class ItemImage(QObject):
 
         return self.position_animation
 
+    def animate_scale_bounce(self, start_scale, end_scale, duration=300):
+        """Scale bounce Animation"""
+        if not self.label:
+            return None
+
+        self._cleanup_animations()
+
+        self._original_scale_before_animation = self._scale
+
+        self.animation_group = QSequentialAnimationGroup()
+        self._animation_groups.append(self.animation_group)
+
+        scale_up = QPropertyAnimation(self, b"anim_scale")
+        scale_up.setDuration(duration // 2)
+        scale_up.setStartValue(start_scale)
+        scale_up.setEndValue(end_scale)
+        scale_up.setEasingCurve(QEasingCurve.Type.OutQuad)
+
+        scale_down = QPropertyAnimation(self, b"anim_scale")
+        scale_down.setDuration(duration // 2)
+        scale_down.setStartValue(end_scale)
+        scale_down.setEndValue(start_scale)
+        scale_down.setEasingCurve(QEasingCurve.Type.InOutQuad)
+
+        self.animation_group.addAnimation(scale_up)
+        self.animation_group.addAnimation(scale_down)
+
+        def cleanup_group():
+            if self.animation_group in self._animation_groups:
+                self._animation_groups.remove(self.animation_group)
+            # self._scale = self._original_scale_before_animation
+            # self._update_pixmap()
+
+        self.animation_group.finished.connect(cleanup_group)
+
+        QTimer.singleShot(0, self.animation_group.start)
+        return self.animation_group
+
+    def reset_transform(self):
+        """Reset all transformations to default values"""
+        self._scale = 1.0
+        self._position_x = 0
+        self._position_y = 0
+        self._alignment = Qt.AlignCenter
+        self._item_opacity = 1.0
+
+        self._update_pixmap()
+        self._apply_opacity()
+
+    def show(self):
+        """Show Label"""
+        if self.label:
+            self.label.show()
+            self.label.raise_()
+
+    def hide(self):
+        """Hide Label"""
+        if self.label:
+            self.label.hide()
+
+    def toggle(self):
+        """Toggle Label"""
+        if self.label.isVisible():
+            self.hide()
+        else:
+            self.show()
+
+    def is_visible(self):
+        """Check if Label is Visible"""
+        return self.label.isVisible() if self.label else False
+
+    # TODO: LEGACY METHODS: MUST BE MOVED TO THE ANIMATION MANAGER CLASS
     def animate_bounce_continuous(self, animation_type="animate_bounce", **kwargs):
         """Loop Bounce Animation"""
         if not self.label:
@@ -518,75 +590,3 @@ class ItemImage(QObject):
         QTimer.singleShot(200, lambda: self.animate_scale_bounce(1.0, 1.1, 300))
 
         return self.animation_group
-
-    def animate_scale_bounce(self, start_scale, end_scale, duration=300):
-        """Scale bounce Animation"""
-        if not self.label:
-            return None
-
-        self._cleanup_animations()
-
-        self._original_scale_before_animation = self._scale
-
-        self.animation_group = QSequentialAnimationGroup()
-        self._animation_groups.append(self.animation_group)
-
-        scale_up = QPropertyAnimation(self, b"anim_scale")
-        scale_up.setDuration(duration // 2)
-        scale_up.setStartValue(start_scale)
-        scale_up.setEndValue(end_scale)
-        scale_up.setEasingCurve(QEasingCurve.Type.OutQuad)
-
-        scale_down = QPropertyAnimation(self, b"anim_scale")
-        scale_down.setDuration(duration // 2)
-        scale_down.setStartValue(end_scale)
-        scale_down.setEndValue(start_scale)
-        scale_down.setEasingCurve(QEasingCurve.Type.InOutQuad)
-
-        self.animation_group.addAnimation(scale_up)
-        self.animation_group.addAnimation(scale_down)
-
-        def cleanup_group():
-            if self.animation_group in self._animation_groups:
-                self._animation_groups.remove(self.animation_group)
-            # self._scale = self._original_scale_before_animation
-            # self._update_pixmap()
-
-        self.animation_group.finished.connect(cleanup_group)
-
-        QTimer.singleShot(0, self.animation_group.start)
-        return self.animation_group
-
-    def reset_transform(self):
-        """Reset all transformations to default values"""
-        self._scale = 1.0
-        self._position_x = 0
-        self._position_y = 0
-        self._alignment = Qt.AlignCenter
-        self._item_opacity = 1.0
-
-        self._update_pixmap()
-        self._apply_opacity()
-
-
-    def show(self):
-        """Show Label"""
-        if self.label:
-            self.label.show()
-            self.label.raise_()
-
-    def hide(self):
-        """Hide Label"""
-        if self.label:
-            self.label.hide()
-
-    def toggle(self):
-        """Toggle Label"""
-        if self.label.isVisible():
-            self.hide()
-        else:
-            self.show()
-
-    def is_visible(self):
-        """Check if Label is Visible"""
-        return self.label.isVisible() if self.label else False

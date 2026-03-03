@@ -1154,6 +1154,7 @@ class TransformAnimator:
             int(self.win.h_resize + self.win.trm_cmy * self.win.models_scale)
         )
 
+    # TODO: Оптимизировать функцию(минимизировать использование имён персонажей в коде)
     def _transform_to_hdd(self):
         """Transformation to hdd form"""
         transformations = {

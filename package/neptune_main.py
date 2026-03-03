@@ -31,6 +31,7 @@ from package.additional.animation_manager import AnimationsManager
 from package.additional.image_manager import ImageManager
 from package.additional.event_manager import EventManager
 from package.additional.audio_manager import AudioManager
+from package.additional.models_window import ModelsWindow
 
 class MainWindow(QOpenGLWidget):
     def __init__(self) -> None:
@@ -213,6 +214,7 @@ class MainWindow(QOpenGLWidget):
         self.read = False
         self.settings_update_state = False
         self.settings_lock = False
+        self.character_lock = False
         self.model_move = False
         self.talk = True
         self.reset_expression = True
@@ -240,6 +242,7 @@ class MainWindow(QOpenGLWidget):
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
+        self.models_window = ModelsWindow(self)
         self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
         self.canvas: Canvas | None = None
@@ -299,7 +302,7 @@ class MainWindow(QOpenGLWidget):
             self.hdd_form = False
             self.can_transform = True
 
-            self.mx_param = self.app_config.mx_param  # Через property
+            self.mx_param = self.app_config.mx_param
             self.my_param = self.app_config.my_param
 
             scale_factor = self.a_scale * self.models_scale
@@ -725,6 +728,12 @@ class MainWindow(QOpenGLWidget):
         settings.close()
         self.settings_update_state = False
 
+    def models_window_show(self):
+        self.models_window.show()
+
+    def models_window_close(self):
+        self.models_window.hide()
+
     # Context Menu
     def contextMenuEvent(self, e):
         """Context Menu Event"""
@@ -754,6 +763,15 @@ class MainWindow(QOpenGLWidget):
         context_menu.addAction(transform_action)
         context_menu.addSeparator()
 
+        # Model Changer Action
+        set_characters_action = QAction(self.get_icon("character"), self.lang['Actions']['Characters'], self)
+        if not self.input_handler.input_lock:
+            set_characters_action.triggered.connect(self.models_window_show)
+        context_menu.addAction(set_characters_action)
+        context_menu.addSeparator()
+
+        # TODO: LEGACY METHODS MUST BE REMOVED
+        ###############################################################################################################
         # Character Submenu
         submenu_character = QMenu(self).addMenu(self.get_icon("character"), self.lang['Actions']['Characters'])
         # Neptune
@@ -856,8 +874,8 @@ class MainWindow(QOpenGLWidget):
             resources.RESOURCES_DIRECTORY, "icons/characters/anri.ico")), self.lang['NamesActions']['Anri'])
         if not self.input_handler.input_lock:
             action_anri.triggered.connect(self.action_handler.on_action_anri)
-
-        context_menu.addMenu(submenu_character)
+        # context_menu.addMenu(submenu_character)
+        ###############################################################################################################
 
         # Settings Action
         settings_action = QAction(self.get_icon("settings"), self.lang['Actions']['Settings'], self)
@@ -870,6 +888,7 @@ class MainWindow(QOpenGLWidget):
         about_action = QAction(self.get_icon("about"), self.lang['Actions']['About'], self)
         about_action.triggered.connect(self.action_handler.on_action_about)
         context_menu.addAction(about_action)
+        context_menu.addSeparator()
 
         # Exit Action
         exit_action = QAction(self.get_icon("exit"), self.lang['Actions']['Quit'], self)
@@ -884,6 +903,7 @@ class MainWindow(QOpenGLWidget):
         self.character.state.set_crying_state()
         self.character.audio.set_really_quit_audio()
         settings.close()
+        self.models_window.close()
         if self.character.tired_state.condition == "Sleep":
             self.character.tired_controller.wake_up_function()
         self.kaomoji = "(o;TωT)o"

@@ -35,6 +35,50 @@ class ActionHandler:
         self.win.settings_close()
         self.win.character.state.set_transform_state()
 
+    def on_action_stop_all_motions(self):
+        if self.win.character.tired_state.condition != "Sleep":
+            self.win.character.state.set_settings_state(text_key='StopMotions')
+        self.win.model.StopAllMotions()
+
+    # Settings Actions
+    def on_action_settings(self):
+        self.win.settings_show()
+
+    def on_action_about(self):
+        QMessageBox.information(
+            self.win,
+            self.win.lang['Actions']['AboutAlt'],
+            self.win.lang['Actions']['AboutText']
+        )
+
+    def on_action_quit(self):
+        if self.win.character.tired_state.condition == "Sleep":
+            self.win.character.tired_controller.wake_up_function()
+        self.win.models_window.close()
+        self.win.settings_close()
+        self.win.character.expressions.set_cry_expression()
+        self.win.character.audio.set_really_quit_audio()
+        self.win.kaomoji = "(o;TωT)o"
+        self.win.quit_box_active = True
+
+        answer = QMessageBox.question(
+            self.win,
+            self.win.lang['Actions']['Quit'],
+            f"{self.win.name}: {self.win.lang['Talk']['Quit']} {self.win.kaomoji}",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if answer == QMessageBox.StandardButton.Yes:
+            self.win.character.state.set_quit_state(quit='Yes')
+            self.win.input_handler.input_lock = True
+            self.win.quit_box_active = False
+        else:
+            self.win.character.tired_controller.timer_count = 1
+            self.win.character.state.set_quit_state(quit='No')
+            self.win.quit_box_active = False
+
+    # TODO: LEGACY METHODS MUST BE REMOVED
     # Characters Actions
     def _change_character(self, character_name):
         # Check if the current name matches the selected one
@@ -195,45 +239,3 @@ class ActionHandler:
             'tap_body_animation', 'tap_body_switch', 'tap_body_anim',
             'TapBodyEnabled', 'TapBodyDisabled', False
         )
-
-    def on_action_stop_all_motions(self):
-        if self.win.character.tired_state.condition != "Sleep":
-            self.win.character.state.set_settings_state(text_key='StopMotions')
-        self.win.model.StopAllMotions()
-
-    # Settings Actions
-    def on_action_settings(self):
-        self.win.settings_show()
-
-    def on_action_about(self):
-        QMessageBox.information(
-            self.win,
-            self.win.lang['Actions']['AboutAlt'],
-            self.win.lang['Actions']['AboutText']
-        )
-
-    def on_action_quit(self):
-        if self.win.character.tired_state.condition == "Sleep":
-            self.win.character.tired_controller.wake_up_function()
-
-        self.win.character.expressions.set_cry_expression()
-        self.win.character.audio.set_really_quit_audio()
-        self.win.kaomoji = "(o;TωT)o"
-        self.win.quit_box_active = True
-
-        answer = QMessageBox.question(
-            self.win,
-            self.win.lang['Actions']['Quit'],
-            f"{self.win.name}: {self.win.lang['Talk']['Quit']} {self.win.kaomoji}",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-
-        if answer == QMessageBox.StandardButton.Yes:
-            self.win.character.state.set_quit_state(quit='Yes')
-            self.win.input_handler.input_lock = True
-            self.win.quit_box_active = False
-        else:
-            self.win.character.tired_controller.timer_count = 1
-            self.win.character.state.set_quit_state(quit='No')
-            self.win.quit_box_active = False

@@ -131,6 +131,12 @@ class ResourceManager:
                     print(f"[Warning] Motion file not found: {full_path}")
         return self.extra_motions
 
+    def get_character_image_path(self, name):
+        character = name.replace(" ", "_").lower()
+        path = os.path.join(self.resources_dir, "images/characters/" + character + ".png")
+        return path
+
+    # TODO: Оптимизировать функцию(минимизировать использование имён персонажей в коде)
     def load_talk_images(self) -> [Dict[str, str], Dict[str, str]]:
         """Loads all images for speech widgets"""
         if self._talk_images is not None:
@@ -267,6 +273,7 @@ class ResourceManager:
                         if os.path.exists(root_file):
                             character_dict[sound_type] = root_file
                         else:
+                            # TODO: заменить на default
                             # Final fallback: use nep_nep.wav from the root
                             nep_nep_root = os.path.join(audio_dir, "nep.wav")
                             if os.path.exists(nep_nep_root):

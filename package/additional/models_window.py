@@ -28,7 +28,7 @@ class ModelsWindow(QWidget):
 
         # Настройка окна
         self.setWindowTitle("Character Selector")
-        self.setFixedSize(680, 600)
+        self.setFixedSize(660, 560)
 
         # Установка иконки окна
         icon_path = os.path.join(resources.RESOURCES_DIRECTORY, "icons/color/character.svg")
@@ -40,14 +40,14 @@ class ModelsWindow(QWidget):
         main_layout.setContentsMargins(10, 10, 10, 10)
 
         # Заголовок
-        title_label = QLabel("Выберите персонажа")
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("""
+        self.title_label = QLabel("Выберите персонажа")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
             font-size: 18px;
             font-weight: bold;
             padding: 10px;
         """)
-        main_layout.addWidget(title_label)
+        # main_layout.addWidget(self.title_label)
 
         # Лейбл для сообщений (изначально скрыт)
         self.message_label = QLabel()
@@ -81,13 +81,14 @@ class ModelsWindow(QWidget):
         self.scroll_area.setWidget(self.scroll_content)
         main_layout.addWidget(self.scroll_area)
 
-        # Загружаем персонажей
+    def set_language(self):
+        self.setWindowTitle(self.win.lang['ModelsWindow']['Title'])
+        self.title_label.setText(self.win.lang['ModelsWindow']['Title'])
         self.load_characters()
 
     def load_characters(self, include_hdd: bool = True):
         """Загружает и отображает кнопки всех персонажей"""
-
-        # Получаем списки персонажей
+        # Получаем списки персонажей (английские имена для логики)
         base_names = self.win.resource_manager.get_base_character_names()
         hdd_names = self.win.resource_manager.get_hdd_character_names() if include_hdd else []
 
@@ -98,37 +99,44 @@ class ModelsWindow(QWidget):
         col = 0
         max_cols = 4
 
-        # Функция создания кнопки персонажа
-        def create_character_button(name: str, is_hdd: bool = False):
-            image_path = self.win.resource_manager.get_character_image_path(name)
+        def get_localized_name(orig_name: str) -> str:
+            """Возвращает локализованное имя персонажа"""
+            normalized_name = orig_name.replace(" ", "")
+            if hasattr(self.win, 'lang') and 'Names' in self.win.lang:
+                return self.win.lang['Names'].get(normalized_name, orig_name)
+            return orig_name
 
-            # Создаем кнопку с учетом типа персонажа
+        def create_character_button(orig_name: str, is_hdd: bool = False):
+            display_name = get_localized_name(orig_name)
+
+            image_path = self.win.resource_manager.get_character_image_path(orig_name)
+
             btn = CharacterButton(
-                character_name=name,
+                character_name=display_name,
                 image_path=image_path,
-                is_hdd=is_hdd  # Передаем флаг HDD
+                is_hdd=is_hdd
             )
 
-            btn.clicked.connect(self.on_character_selected)
+            btn.clicked.connect(lambda checked, name=orig_name: self.on_character_selected(name))
             return btn
 
-        # Создаем кнопки для базовых персонажей
-        for name in base_names:
+        for orig_name in base_names:
             if col >= max_cols:
                 row += 1
                 col = 0
-            btn = create_character_button(name, is_hdd=False)
+            btn = create_character_button(orig_name, is_hdd=False)
             self.scroll_layout.addWidget(btn, row, col)
             col += 1
 
-        # Создаем кнопки для HDD персонажей
         if hdd_names:
-            # Добавляем отступ
             row += 1
             col = 0
 
-            # Заголовок для HDD
-            hdd_label = QLabel("HDD персонажи")
+            hdd_label_text = "HDD персонажи"
+            if hasattr(self.win, 'lang') and 'ModelsWindow' in self.win.lang:
+                hdd_label_text = self.win.lang['ModelsWindow'].get('HDDTitle', hdd_label_text)
+
+            hdd_label = QLabel(hdd_label_text)
             hdd_label.setStyleSheet("""
                 font-weight: bold;
                 color: #ff9800;
@@ -138,101 +146,101 @@ class ModelsWindow(QWidget):
             self.scroll_layout.addWidget(hdd_label, row, 0, 1, max_cols)
             row += 1
 
-            # Создаем кнопки для HDD
-            for name in hdd_names:
+            for orig_name in hdd_names:
                 if col >= max_cols:
                     row += 1
                     col = 0
-                btn = create_character_button(name, is_hdd=True)
+                btn = create_character_button(orig_name, is_hdd=True)
                 self.scroll_layout.addWidget(btn, row, col)
                 col += 1
 
     def on_character_selected(self, character_name: str):
         """Обработчик выбора персонажа с защитой от спама"""
-        # Проверка, можно ли выбирать
+        normalized_name = character_name.replace(" ", "")
+
+        if hasattr(self.win, 'lang') and 'Names' in self.win.lang:
+            display_name = self.win.lang['Names'].get(normalized_name, character_name)
+        else:
+            display_name = character_name
+
         if not self.can_select:
-            print("Выбор временно заблокирован")
-            self.show_message("⏳ Подождите 7 секунд перед следующим выбором", is_error=True, duration=5000)
+            # print("Выбор временно заблокирован")
+            self.show_message(f"⏳ {self.win.lang['ModelsWindow']['DelayMessage']}",
+                              is_error=True,
+                              type_error="can_select",
+                              duration=5000)
             return
 
-        print(f"Выбран персонаж: {character_name}")
+        # print(f"Выбран персонаж: {character_name}")
 
         if self.win.character_lock:
             return
 
-        # Проверка блокировки ввода
         if self.win.input_handler.input_lock:
-            print("Input locked")
-            self.show_message("🔒 Ввод заблокирован", is_error=True)
+            # print("Input locked")
+            self.show_message(f"🔒 {self.win.lang['ModelsWindow']['InputLockMessage']}",
+                              is_error=True,
+                              type_error="input_lock")
             return
 
-        # Проверка блокировки настроек
         if self.win.settings_lock:
-            print("Settings locked")
+            # print("Settings locked")
             self.win.character.state.set_character_lock_state()
-            self.show_message("⚙️ Настройки заблокированы", is_error=True)
+            self.show_message(f"⚙️ {self.win.lang['ModelsWindow']['SettingsLockMessage']}",
+                              is_error=True,
+                              type_error="settings_lock")
             return
 
-        # Проверка, не выбран ли уже этот персонаж
         if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
-            print(f"Персонаж {character_name} уже выбран")
+            # print(f"Персонаж {character_name} уже выбран")
             self.win.character.state.already_changed_character()
-            self.show_message(f"✨ {character_name} уже выбран", is_info=True)
+            self.show_message(f"✨ {display_name} {self.win.lang['ModelsWindow']['AlreadyChangedMessage']}",
+                              is_info=True)
             return
 
-        # Блокируем возможность выбора
         self.can_select = False
 
-        # Запускаем таймер для разблокировки через 7 секунд
         self.selection_timer.start(7000)
 
-        # Отключаем все кнопки на время
         #self.set_buttons_enabled(False)
 
-        # Показываем сообщение о выборе
-        self.show_message(f"✅ Выбран {character_name}", is_success=True)
+        self.show_message(f"✅ {self.win.lang['ModelsWindow']['CharacterSelectedMessage']} {display_name}",
+                          is_success=True)
 
-        # Отключаем обновление talk виджета
         self.win.talk_widget.talk_update = False
 
-        # Логика для трансформации
-        if not self.win.transform:
-            self.win.model_move = True
-            self.win.character.state.set_goodbye_state()
+        self.win.model_move = True
+        self.win.character.state.set_goodbye_state()
 
         # Устанавливаем нового персонажа
         self.win.character_name = character_name
 
-        # Обновляем модель
-        if self.win.transform:
-            self.win.models_manager.update_model(self.win)
-
-        print(f"Персонаж успешно изменен на: {character_name}")
+        # print(f"Персонаж успешно изменен на: {character_name}")
 
     def allow_selection(self):
         """Разрешает выбор персонажа"""
         self.can_select = True
         self.set_buttons_enabled(True)
-        if self.is_error:
-            self.show_message("✨ Можно выбирать персонажа", is_info=True, duration=1500)
-            self.is_error = False
-        print("Выбор снова разрешен")
+        if self.type_error == "can_select":
+            self.show_message(f"✨ {self.win.lang['ModelsWindow']['AllowSelectionMessage']}",
+                              is_info=True, duration=1500)
+            self.type_error == ""
+        # print("Выбор снова разрешен")
 
     def set_buttons_enabled(self, enabled: bool):
         """Включает/отключает все кнопки"""
         for button in self.findChildren(CharacterButton):
             button.setEnabled(enabled)
 
-    def show_message(self, text: str, is_error: bool = False, is_success: bool = False,
+    def show_message(self, text: str, is_error: bool = False, type_error: str = "", is_success: bool = False,
                      is_info: bool = False, duration: int = 2000):
         """Показывает сообщение в окне"""
-        # Останавливаем предыдущий таймер, если он еще работает
         if self.message_timer.isActive():
             self.message_timer.stop()
 
         self.message_label.setText(text)
+        self.type_error = type_error
 
-        # Устанавливаем стиль в зависимости от типа сообщения
         if is_error:
             self.is_error = True
             self.message_label.setStyleSheet("""
@@ -273,8 +281,6 @@ class ModelsWindow(QWidget):
 
         self.message_label.show()
 
-        # Автоматически скрываем сообщение через duration миллисекунд
-        # Запускаем таймер на скрытие
         self.message_timer.start(duration)
 
     def hide_message(self):
@@ -302,19 +308,20 @@ class CharacterButton(QFrame):
     clicked = Signal(str)
 
     def __init__(self, character_name: str, image_path: Optional[str] = None,
-                 is_hdd: bool = False, parent=None):
+                 is_hdd: bool = False, orig_name: Optional[str] = None, parent=None):
         super().__init__(parent)
 
         self.character_name = character_name
+        self.display_name = character_name
+        self.orig_name = orig_name or character_name
         self.image_path = image_path
         self.is_hdd = is_hdd
         self.is_pressed = False
         self.pressed_image_path = None
-        self.return_timer = QTimer()  # Таймер для задержки возврата
-        self.return_timer.setSingleShot(True)  # Однократный таймер
+        self.return_timer = QTimer()
+        self.return_timer.setSingleShot(True)
         self.return_timer.timeout.connect(self.return_to_normal)
 
-        # Формируем путь к нажатому состоянию
         if image_path:
             base, ext = os.path.splitext(image_path)
             self.pressed_image_path = f"{base}_push{ext}"
@@ -322,23 +329,19 @@ class CharacterButton(QFrame):
         self.setFixedSize(140, 160)
         self.setCursor(Qt.PointingHandCursor)
 
-        # Создаем анимацию
         self.animation = QPropertyAnimation(self, b"pos")
         self.animation.setDuration(100)
         self.animation.setEasingCurve(QEasingCurve.OutQuad)
 
-        # Основной layout
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(5)
         layout.setContentsMargins(5, 5, 5, 5)
 
-        # Контейнер для изображения
         self.image_container = QLabel()
         self.image_container.setFixedSize(120, 120)
         self.image_container.setAlignment(Qt.AlignCenter)
 
-        # Имя персонажа
         self.name_label = QLabel(character_name)
         self.name_label.setAlignment(Qt.AlignCenter)
         self.name_label.setWordWrap(True)
@@ -353,10 +356,8 @@ class CharacterButton(QFrame):
         layout.addWidget(self.image_container)
         layout.addWidget(self.name_label)
 
-        # Загружаем изображение
         self.set_normal_image()
 
-        # Устанавливаем базовый стиль
         self.update_style(normal=True)
 
     def get_base_style(self, normal: bool = True) -> str:
@@ -475,32 +476,26 @@ class CharacterButton(QFrame):
             self.is_pressed = True
             self.set_pressed_image()
 
-            # Анимация нажатия
             self.animation.setStartValue(self.pos())
             self.animation.setEndValue(self.pos() + QPoint(2, 2))
             self.animation.start()
 
-            # Меняем стиль на нажатый
             self.update_style(normal=False)
 
-            # Запускаем таймер для возврата через 3 секунды
-            self.return_timer.start(1500)  # 3000 мс = 3 секунды
+            self.return_timer.start(1500)
 
-            # Сразу испускаем сигнал о выборе персонажа
-            self.clicked.emit(self.character_name)
+            self.clicked.emit(self.orig_name)
 
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
-        # Переопределяем, но ничего не делаем, так как возврат происходит по таймеру
         super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
         """Если мышь ушла с кнопки во время нажатия"""
         if self.is_pressed and not self.rect().contains(event.pos()):
-            # Отменяем все эффекты, если мышь ушла с кнопки
             self.is_pressed = False
-            self.return_timer.stop()  # Останавливаем таймер
+            self.return_timer.stop()
             self.set_normal_image()
             self.update_style(normal=True)
             self.animation.stop()
@@ -509,89 +504,4 @@ class CharacterButton(QFrame):
 
     def leaveEvent(self, event):
         """Когда курсор покидает виджет"""
-        # Не отменяем нажатое состояние, если оно активно
         super().leaveEvent(event)
-
-# Дополнительный класс для более продвинутого управления
-class CharacterSelector:
-    """Класс для управления выбором персонажа"""
-
-    def __init__(self, resource_manager):
-        self.resource_manager = resource_manager
-        self.models_window = None
-        self.win = None
-        print("CharacterSelector инициализирован")
-
-    def set_main_window(self, win):
-        """Устанавливаем ссылку на главное окно"""
-        self.win = win
-        print(f"Main window установлен: {win}")
-
-    def change_character(self, character_name):
-        """Изменение персонажа"""
-        print(f"change_character вызван с именем: {character_name}")
-
-        if not self.win:
-            print("Ошибка: Main window не установлен")
-            return
-
-        # Проверка блокировки
-        if self.win.settings_lock:
-            print("Settings lock active")
-            self.win.character.state.set_character_lock_state()
-            return
-
-        # Проверка, не выбран ли уже этот персонаж
-        if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
-            print(f"Персонаж {character_name} уже выбран")
-            self.win.character.state.already_changed_character()
-            return
-
-        print(f"Меняем персонажа на {character_name}")
-        self.win.talk_widget.talk_update = False
-        if not self.win.transform:
-            self.win.model_move = True
-            self.win.character.state.set_goodbye_state()
-
-        self.win.character_name = character_name
-        if self.win.transform:
-            self.win.models_manager.update_model(self.win)
-
-        print(f"Персонаж успешно изменен на: {character_name}")
-
-    def open_character_selection(self, parent_win, callback=None):
-        """
-        Открывает окно выбора персонажа
-        """
-        print("open_character_selection вызван")
-
-        # Сохраняем ссылку на главное окно, если её ещё нет
-        if self.win is None:
-            self.set_main_window(parent_win)
-
-        # Проверяем, существует ли уже окно
-        if self.models_window is not None and self.models_window.isVisible():
-            print("Окно выбора уже открыто, поднимаем на передний план")
-            self.models_window.raise_()
-            return
-
-        # Создаем новое окно
-        print("Создаем новое окно ModelsWindow")
-        self.models_window = ModelsWindow(parent_win)
-
-        # Подключаем сигнал с проверкой
-        print("Подключаем сигнал character_selected к change_character")
-        try:
-            self.models_window.character_selected.connect(self.change_character)
-            print("Сигнал успешно подключен")
-        except Exception as e:
-            print(f"Ошибка при подключении сигнала: {e}")
-
-        # Если есть дополнительный callback, подключаем и его
-        if callback:
-            print(f"Подключаем дополнительный callback: {callback}")
-            self.models_window.character_selected.connect(callback)
-
-        # Показываем окно
-        print("Показываем окно")
-        self.models_window.show()

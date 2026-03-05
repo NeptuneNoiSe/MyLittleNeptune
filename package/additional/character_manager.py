@@ -1080,7 +1080,6 @@ class CharacterMovementsManager:
                    id: int | None = None) -> None:
 
         self.character.win.animation_manager.play_animation(
-            model=self.model,
             anim_type='Motion',
             group_or_id=group_name,
             no=id,

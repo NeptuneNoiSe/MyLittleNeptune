@@ -35,21 +35,18 @@ class ResourceManager:
         # self.animation_player._log_callbacks = enabled
 
     def _categorize_characters(self):
-        """Распределяет персонажей по категориям (base/hdd)"""
+        """Categorize characters (base/hdd)"""
         for char_name, config in self.character_configs.items():
-            # Получаем ключевое имя (используем name_key или оригинальное имя)
             display_name = config.get('name_key', char_name)
 
-            # Проверяем, является ли персонаж HDD формой
             is_hdd = config.get('hdd_form', False)
 
-            # Добавляем в соответствующий словарь
             if is_hdd:
                 self.hdd_characters[display_name] = config
             else:
                 self.base_characters[display_name] = config
 
-        # Логирование для отладки
+        # Logs:
         # print(f"[ResourceManager] Categorized characters:")
         # print(f"  Base: {list(self.base_characters.keys())}")
         # print(f"  HDD: {list(self.hdd_characters.keys())}")
@@ -91,6 +88,7 @@ class ResourceManager:
             )
         return self.animation_files[anim_name]
 
+    # TODO: Автоматизировать импорт анимаций
     def load_extra_motions(self) -> Dict[str, str]:
         """Loads all extra animations"""
         if not self.extra_motions:
@@ -133,7 +131,7 @@ class ResourceManager:
 
     def get_character_image_path(self, name):
         character = name.replace(" ", "_").lower()
-        path = os.path.join(self.resources_dir, "images/characters/" + character + ".png")
+        path = os.path.join(self.resources_dir, f"images/characters/{character}.png")
         return path
 
     # TODO: Оптимизировать функцию(минимизировать использование имён персонажей в коде)
@@ -213,15 +211,15 @@ class ResourceManager:
         return self.ui_labels[label_name]
 
     def get_base_character_names(self) -> List[str]:
-        """Возвращает список имен базовых персонажей"""
+        """Returns the names of base characters"""
         return list(self.base_characters.keys())
 
     def get_hdd_character_names(self) -> List[str]:
-        """Возвращает список имен HDD персонажей"""
+        """Returns the names of HDD characters"""
         return list(self.hdd_characters.keys())
 
     def get_all_character_names(self, include_hdd: bool = True) -> List[str]:
-        """Возвращает список всех имен персонажей"""
+        """Returns the names of all characters"""
         if include_hdd:
             return self.get_base_character_names() + self.get_hdd_character_names()
         return self.get_base_character_names()
@@ -273,11 +271,10 @@ class ResourceManager:
                         if os.path.exists(root_file):
                             character_dict[sound_type] = root_file
                         else:
-                            # TODO: заменить на default
-                            # Final fallback: use nep_nep.wav from the root
-                            nep_nep_root = os.path.join(audio_dir, "nep.wav")
-                            if os.path.exists(nep_nep_root):
-                                character_dict[sound_type] = nep_nep_root
+                            # Final fallback: use default_sound from the root
+                            default_root = os.path.join(audio_dir, "default_sound.wav")
+                            if os.path.exists(default_root):
+                                character_dict[sound_type] = default_root
                             else:
                                 # Ultimate fallback: leave the path, but there is no file
                                 character_dict[sound_type] = character_file

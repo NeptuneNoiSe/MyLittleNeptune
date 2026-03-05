@@ -18,8 +18,8 @@ from package.additional.resource_manager import ResourceManager
 
 class AnimationsManager:
     """Main Animation Manager"""
-    def __init__(self, win, model):
-        self.model = model
+    def __init__(self, win):
+        # self.model = self.win.model
         self.win = win
         # LOGS
         self._log_callbacks = False
@@ -79,7 +79,7 @@ class AnimationsManager:
 
         for name, path in motions.items():
             try:
-                motion_index = self.model.LoadExtraMotion("Extra", path)
+                motion_index = self.win.model.LoadExtraMotion("Extra", path)
 
                 # Save motion index
                 if not hasattr(self, '_extra_motion_indices'):
@@ -109,7 +109,7 @@ class AnimationsManager:
         self._sleep_mode = is_sleeping  # It can be used for special sleep animations.
 
     # Proxy-methods for AnimationPlayer
-    def play_animation(self, model, anim_type: str, group_or_id, no=None, priority=None,
+    def play_animation(self, anim_type: str, group_or_id, no=None, priority=None,
                        custom_start=None, custom_finish=None):
         """
         Proxy-Method for AnimationPlayer.play_animation
@@ -123,7 +123,6 @@ class AnimationsManager:
             priority = PRIORITY_MAP.get(priority.upper(), priority)
 
         return self.animation_player.play_animation(
-            model=model,
             anim_type=anim_type,
             group_or_id=group_or_id,
             no=no,
@@ -284,10 +283,6 @@ class AnimationPlayer:
         return self.animation_manager.win
 
     @property
-    def model(self):
-        return self.animation_manager.model
-
-    @property
     def profiles(self):
         return self.animation_manager.profiles
 
@@ -306,7 +301,7 @@ class AnimationPlayer:
         pass  # Or you can allow it if necessary:
         # self.animation_manager._log_callbacks = value
 
-    def play_animation(self,model, anim_type: str, group_or_id, no=None, priority=None,
+    def play_animation(self, anim_type: str, group_or_id, no=None, priority=None,
                        custom_start=None, custom_finish=None):
         """
         A universal method for starting animations
@@ -321,14 +316,14 @@ class AnimationPlayer:
         }
 
         if anim_type == 'RandomMotion':
-            model.StartRandomMotion(
+            self.win.model.StartRandomMotion(
                 str(group_or_id),  # Group (str)
                 priority,
                 onStart=callbacks['start'],
                 onFinish=callbacks['finish']
             )
         elif anim_type == 'Motion':
-            model.StartMotion(
+            self.win.model.StartMotion(
                 str(group_or_id),  # Group (str)
                 int(no),  # Animation number (int)
                 int(priority),  # Live2d priority (int)
@@ -355,7 +350,7 @@ class AnimationPlayer:
     def _handle_motion_finish(self, group, no):
         """Callback with Animation Finish"""
         if not self.animation_manager.transform_animator.transform:
-            self.model.ResetAllParameters()
+            self.win.model.ResetAllParameters()
         if group != "Idle":  # If the NON-idle animation has ended
             self._reset_idle_state()
             self.animation_manager.blink_animator.set_blink_enabled(True)
@@ -397,7 +392,7 @@ class AnimationPlayer:
 
     def _play_idle_animation(self):
         """Running animations with timer updates"""
-        self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE,
+        self.win.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE,
                                      onStart=lambda g, n: self._handle_idle_start(g, n),
                                      onFinish=lambda g, n: self._handle_idle_finish(g, n)
                                      )
@@ -433,7 +428,6 @@ class AnimationPlayer:
             options = profile['options']
             anim_id = random.choice([options] if isinstance(options, int) else options)
             self.play_animation(
-                model=self.model,
                 anim_type='Motion',
                 group_or_id=profile['group'],
                 no=anim_id,
@@ -441,7 +435,6 @@ class AnimationPlayer:
             )
         else:
             self.play_animation(
-                model=self.model,
                 anim_type='RandomMotion',
                 group_or_id=profile['group'],
                 priority=profile['priority']
@@ -523,9 +516,9 @@ class BlinkAnimator:
     def _set_eye_params(self, base_value: float):
         """Save apply eyes parameters"""
         if self._blink_state['override_blink']:
-            self.animation_manager.model.SetParameterValueById("ParamEyeLOpen",
+            self.win.model.SetParameterValueById("ParamEyeLOpen",
                                                                base_value * random.uniform(0.95, 1.0))
-            self.animation_manager.model.SetParameterValueById("ParamEyeROpen",
+            self.win.model.SetParameterValueById("ParamEyeROpen",
                                                                base_value * random.uniform(0.98, 1.0))
 
     def _start_new_blink(self):
@@ -585,13 +578,16 @@ class OpacityAnimator:
             warnings.simplefilter("ignore", RuntimeWarning)
             try:
                 self.anim.valueChanged.disconnect()
-            except RuntimeError:
+            except (RuntimeError, TypeError):
+                pass
+            try:
+                self.anim.finished.disconnect()
+            except (RuntimeError, TypeError):
                 pass
 
         self.anim.setDuration(duration)
         self.anim.setStartValue(float(start))
         self.anim.setEndValue(float(end))
-        self.anim.valueChanged.connect(source.SetOutputOpacity)
 
         # Process easing curve
         if not hasattr(self, 'EASING_TYPES'):
@@ -603,23 +599,12 @@ class OpacityAnimator:
             }
 
         easing_curve = self.EASING_TYPES.get(easing, QEasingCurve.Linear)
+        self.anim.setEasingCurve(easing_curve)
 
-        # Set Var SetOutputOpacity
-        # win.canvas.SetOutputOpacity
         self.anim.valueChanged.connect(source.SetOutputOpacity)
-
-        #  on_finished connect
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            if hasattr(self, "_last_finished_slot"):
-                try:
-                    self.anim.finished.disconnect(self._last_finished_slot)
-                except RuntimeError:
-                    pass
 
         if callable(on_finished):
             self.anim.finished.connect(on_finished)
-            self._last_finished_slot = on_finished  # Сохраняем для будущего отключения
 
         self.anim.start()
 
@@ -980,6 +965,8 @@ class TransformAnimator:
 
         self._win = None
 
+        self.win.transformMovie = QMovie()
+
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._on_animation_tick)
 
@@ -990,16 +977,46 @@ class TransformAnimator:
         self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
         self.transform_lock = False
 
+        self._current_transform_in = None
+        self._current_transform_out = None
+
     @property
     def win(self):
         """Actual window link"""
         return self.animation_manager.win
+
+    def _cleanup_current_movies(self):
+        """Очистка текущих анимационных объектов"""
+        try:
+            if self._current_transform_in:
+                self._current_transform_in.stop()
+                self._current_transform_in.deleteLater()
+                self._current_transform_in = None
+
+
+            if self._current_transform_out:
+                self._current_transform_out.stop()
+                self._current_transform_out.deleteLater()
+                self._current_transform_out = None
+
+            if hasattr(self.win, 'transformLabel') and self.win.transformLabel:
+                old_movie = self.win.transformLabel.movie()
+                if old_movie:
+                    old_movie.stop()
+                    old_movie.deleteLater()
+                self.win.transformLabel.setMovie(None)
+                self.win.transformLabel.clear()
+
+        except Exception as e:
+            print(f"Error cleaning up movies: {e}")
 
     # Transform Animations
     def play_transform_animation(self):
         """Start full transformation sequence"""
         if self.animation_phase != 0:
             return
+
+        self._cleanup_current_movies()
 
         self.current_animation_win = self.win
         self.animation_phase = 1
@@ -1011,13 +1028,17 @@ class TransformAnimator:
 
         # Setup transform_in animation
         self._play_model_animation()
-        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_in"))
-        self.win.transformLabel.setMovie(self.win.transformMovie)
-        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+
+        movie_path = self.animation_manager.resource_manager.load_animation("transform_in")
+        self._current_transform_in = QMovie(movie_path)
+        self._current_transform_in.setCacheMode(QMovie.CacheAll)
+
+        self.win.transformLabel.setMovie(self._current_transform_in)
         self.win.transformLabel.raise_()
         self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
-        self.win.transformMovie.start()
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale),
+                                     int(self.win.trm_my * self.win.models_scale))
+        self._current_transform_in.start()
         self.win.transformLabel.show()
 
         self.animation_timer.start(16)  # 60 FPS
@@ -1041,8 +1062,11 @@ class TransformAnimator:
 
     def _process_fade_out(self):
         """Handle transform_in animation and opacity fade"""
-        current_frame = self.win.transformMovie.currentFrameNumber()
-        total_frames = self.win.transformMovie.frameCount()
+        if not self._current_transform_in:
+            return
+
+        current_frame = self._current_transform_in.currentFrameNumber()
+        total_frames = self._current_transform_in.frameCount()
 
         # Smooth fade from 70% to 100% animation
         fade_start = int(total_frames * 0.70)
@@ -1052,9 +1076,9 @@ class TransformAnimator:
 
         # When fade out completes, move to model swap
         if current_frame >= total_frames - 3:
-            self.win.transformMovie.stop()
+            self._current_transform_in.stop()
             self.animation_phase = 2
-         # Close dialog
+        # Close dialog
         if current_frame >= (total_frames - 3) / 2:
             self.win.talk_widget.close_dialog_after_animation()
 
@@ -1070,28 +1094,43 @@ class TransformAnimator:
 
     def _transform_animation_reset(self):
         """Reset animation"""
+        if self._current_transform_in:
+            self._current_transform_in.stop()
+            self._current_transform_in.deleteLater()
+            self._current_transform_in = None
+
         self.win.transformLabel.movie().setScaledSize(QSize(1, 1))
-        self.win.transformMovie.stop()
         self.win.transformLabel.close()
 
     def _init_fade_in(self):
         """Initialize transform_out animation"""
-        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_out"))
-        self.win.transformLabel.setMovie(self.win.transformMovie)
-        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+        if self._current_transform_out:
+            self._current_transform_out.stop()
+            self._current_transform_out.deleteLater()
+            self._current_transform_out = None
+
+        movie_path = self.animation_manager.resource_manager.load_animation("transform_out")
+        self._current_transform_out = QMovie(movie_path)
+        self._current_transform_out.setCacheMode(QMovie.CacheAll)
+
+        self.win.transformLabel.setMovie(self._current_transform_out)
         self.win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size()
         )
-        self.win.transformMovie.start()
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
+        self._current_transform_out.start()
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale),
+                                     int(self.win.trm_my * self.win.models_scale))
         self.win.transformLabel.show()
 
         self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
 
     def _process_fade_in(self):
         """Handle transform_out animation with delayed opacity restore"""
-        current_frame = self.win.transformMovie.currentFrameNumber()
-        total_frames = self.win.transformMovie.frameCount()
+        if not self._current_transform_out:
+            return
+
+        current_frame = self._current_transform_out.currentFrameNumber()
+        total_frames = self._current_transform_out.frameCount()
 
         # Starting the appearance with 15% animation
         fade_start = int(total_frames * 0.15)
@@ -1103,7 +1142,7 @@ class TransformAnimator:
         elif fade_start <= current_frame <= fade_end:
             # Smooth appearance from 25% to 70%
             progress = (current_frame - fade_start) / (fade_end - fade_start)
-            self. win.canvas.SetOutputOpacity(progress)
+            self.win.canvas.SetOutputOpacity(progress)
         else:
             # After 70%, set 100% transparency
             self.win.canvas.SetOutputOpacity(1.0)
@@ -1115,6 +1154,11 @@ class TransformAnimator:
     def _finalize_transformation(self):
         """Cleanup after transformation"""
         try:
+            if self._current_transform_out:
+                self._current_transform_out.stop()
+                self._current_transform_out.deleteLater()
+                self._current_transform_out = None
+
             self.win.transformMovie.stop()
             self.win.transformLabel.close()
             self.win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
@@ -1129,6 +1173,9 @@ class TransformAnimator:
             # Reset transformation flags
             self.win.character.transform_exp_show = False
             self.win.character.transform_text_show = False
+
+            self._cleanup_current_movies()
+
         finally:
             self.animation_timer.stop()
             self.current_animation_win = None
@@ -1140,7 +1187,6 @@ class TransformAnimator:
         if not self.win.hdd_form:
             # Playing the transformation animation
             self.animation_manager.play_animation(
-                model=self.win.model,
                 anim_type='Motion',
                 group_or_id="Unique",
                 no=0,
@@ -1195,6 +1241,13 @@ class TransformAnimator:
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
+    def stop_all_animations(self):
+        """Метод для внешнего вызова при закрытии"""
+        self._cleanup_current_movies()
+        self.animation_timer.stop()
+        self.animation_phase = 0
+        self._animation_active = False
+
 class BodyPartAnimator:
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
@@ -1205,8 +1258,8 @@ class BodyPartAnimator:
         self.last_time = time.perf_counter()
 
     @property
-    def model(self):
-        return self.animation_manager.model
+    def win(self):
+        return self.animation_manager.win
 
     @property
     def target_fps(self):
@@ -1249,7 +1302,7 @@ class BodyPartAnimator:
     def stop_all(self):
         """Stop Animation"""
         for part_id in list(self.active_parts.keys()):
-            self.model.SetParameterValueById(part_id, 0)
+            self.win.model.SetParameterValueById(part_id, 0)
         self.active_parts.clear()
         self.body_part_timer.stop()
 
@@ -1284,7 +1337,7 @@ class BodyPartAnimator:
                     new_value = config['range'][0]
                     config['direction'] = 1
 
-                self.model.SetParameterValueById(part_id, new_value)
+                self.win.model.SetParameterValueById(part_id, new_value)
                 config['value'] = new_value
 
             except Exception as e:
@@ -1302,7 +1355,7 @@ class BodyPartAnimator:
         """Safely deleting a part from active_parts"""
         if part_id in self.active_parts:
             try:
-                self.model.SetParameterValueById(part_id, 0)
+                self.win.model.SetParameterValueById(part_id, 0)
             except:
                 pass
             del self.active_parts[part_id]
@@ -1336,10 +1389,6 @@ class DragAnimator:
     @property
     def win(self):
         return self.animation_manager.win
-
-    @property
-    def model(self):
-        return self.animation_manager.model
 
     @property
     def profiles(self):
@@ -2227,3 +2276,224 @@ class ColorAnimator(QObject):
         if self.color_anim.is_running:
             self.win.b_red = min(1.0, self.win.b_red + volume * 0.2)
             self.win.b_blue = min(1.0, self.win.b_blue + volume * 0.1)
+
+class TransformAnimatorLegacy:
+    """Character transformation animation management"""
+    def __init__(self, animation_manager):
+        self.animation_manager = animation_manager
+
+        self._win = None
+
+        self.animation_timer = QTimer()
+        self.animation_timer.timeout.connect(self._on_animation_tick)
+
+        # Transform Animation State
+        self.transform_text = False
+        self.transform = False
+        self.current_animation_win = None
+        self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
+        self.transform_lock = False
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.animation_manager.win
+
+    # Transform Animations
+    def play_transform_animation(self):
+        """Start full transformation sequence"""
+        if self.animation_phase != 0:
+            return
+
+        self.current_animation_win = self.win
+        self.animation_phase = 1
+        self.win.input_handler.input_lock = True
+        self.transform = self.win.transform = True
+        self.win.canvas.SetOutputOpacity(1.0)
+
+        self.animation_manager.start_rainbow_effect(speed=2.0)
+
+        # Setup transform_in animation
+        self._play_model_animation()
+        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_in"))
+        self.win.transformLabel.setMovie(self.win.transformMovie)
+        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+        self.win.transformLabel.raise_()
+        self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
+        self.win.transformMovie.start()
+        self.win.transformLabel.show()
+
+        self.animation_timer.start(16)  # 60 FPS
+
+    def _on_animation_tick(self):
+        """Animation phases"""
+        if not self.current_animation_win:
+            self.animation_timer.stop()
+            return
+
+        self._win = self.current_animation_win
+
+        if self.animation_phase == 1:
+            self._process_fade_out()
+        elif self.animation_phase == 2:
+            self._execute_model_swap()
+            self.animation_phase = 3
+            self._init_fade_in()
+        elif self.animation_phase == 3:
+            self._process_fade_in()
+
+    def _process_fade_out(self):
+        """Handle transform_in animation and opacity fade"""
+        current_frame = self.win.transformMovie.currentFrameNumber()
+        total_frames = self.win.transformMovie.frameCount()
+
+        # Smooth fade from 70% to 100% animation
+        fade_start = int(total_frames * 0.70)
+        if current_frame >= fade_start:
+            progress = (current_frame - fade_start) / (total_frames - fade_start)
+            self.win.canvas.SetOutputOpacity(1.0 - progress)
+
+        # When fade out completes, move to model swap
+        if current_frame >= total_frames - 3:
+            self.win.transformMovie.stop()
+            self.animation_phase = 2
+         # Close dialog
+        if current_frame >= (total_frames - 3) / 2:
+            self.win.talk_widget.close_dialog_after_animation()
+
+    def _execute_model_swap(self):
+        """Execute model transformation using your existing methods"""
+        try:
+            if not self.win.hdd_form:
+                self._transform_to_hdd()  # Your HDD transformation
+            else:
+                self._transform_to_regular()  # Your regular transformation
+        finally:
+            self._transform_animation_reset()
+
+    def _transform_animation_reset(self):
+        """Reset animation"""
+        self.win.transformLabel.movie().setScaledSize(QSize(1, 1))
+        self.win.transformMovie.stop()
+        self.win.transformLabel.close()
+
+    def _init_fade_in(self):
+        """Initialize transform_out animation"""
+        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_out"))
+        self.win.transformLabel.setMovie(self.win.transformMovie)
+        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+        self.win.transformLabel.movie().setScaledSize(
+            self._calculate_animation_size()
+        )
+        self.win.transformMovie.start()
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
+        self.win.transformLabel.show()
+
+        self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
+
+    def _process_fade_in(self):
+        """Handle transform_out animation with delayed opacity restore"""
+        current_frame = self.win.transformMovie.currentFrameNumber()
+        total_frames = self.win.transformMovie.frameCount()
+
+        # Starting the appearance with 15% animation
+        fade_start = int(total_frames * 0.15)
+        fade_end = int(total_frames * 0.7)  # Finalize on 70%
+
+        if current_frame < fade_start:
+            # Transparency Delay from 0% to 25% of the animation
+            self.win.canvas.SetOutputOpacity(0.0)
+        elif fade_start <= current_frame <= fade_end:
+            # Smooth appearance from 25% to 70%
+            progress = (current_frame - fade_start) / (fade_end - fade_start)
+            self. win.canvas.SetOutputOpacity(progress)
+        else:
+            # After 70%, set 100% transparency
+            self.win.canvas.SetOutputOpacity(1.0)
+
+        # Final Animation with end
+        if current_frame >= total_frames - 3:
+            self._finalize_transformation()
+
+    def _finalize_transformation(self):
+        """Cleanup after transformation"""
+        try:
+            self.win.transformMovie.stop()
+            self.win.transformLabel.close()
+            self.win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
+            self.win.input_handler.input_lock = False
+            self.win.transform_lock = False
+            self.win.talk_widget.talk_update = True
+            self.transform = self.win.transform = False
+            self.win.character.state.set_transformed_state()
+
+            self.animation_manager.stop_rainbow_effect()
+
+            # Reset transformation flags
+            self.win.character.transform_exp_show = False
+            self.win.character.transform_text_show = False
+        finally:
+            self.animation_timer.stop()
+            self.current_animation_win = None
+            self.animation_phase = 0
+
+
+    def _play_model_animation(self):
+        """Model animation playback"""
+        # Regular form processing (hdd_form=False)
+        if not self.win.hdd_form:
+            # Playing the transformation animation
+            self.animation_manager.play_animation(
+                anim_type='Motion',
+                group_or_id="Unique",
+                no=0,
+                priority="FORCE",
+            )
+
+    def _calculate_animation_size(self):
+        """Calculate animation size"""
+        return QSize(
+            int(self.win.w_resize + self.win.trm_cmx * self.win.models_scale),
+            int(self.win.h_resize + self.win.trm_cmy * self.win.models_scale)
+        )
+
+    def _transform_to_hdd(self):
+        """Transformation to hdd form"""
+        transformations = {
+            "Neptune": self.win.action_handler.on_action_purple_heart,
+            "Noire": self.win.action_handler.on_action_black_heart,
+            "Blanc": self.win.action_handler.on_action_white_heart,
+            "Vert": self.win.action_handler.on_action_green_heart,
+            "NepGear": self.win.action_handler.on_action_purple_sister,
+            "Uni": self.win.action_handler.on_action_black_sister,
+            "Rom": self.win.action_handler.on_action_white_sister_rom,
+            "Ram": self.win.action_handler.on_action_white_sister_ram,
+            "Maho": self.win.action_handler.on_action_grey_sister
+        }
+        if self.win.character_name in transformations:
+            transformations[self.win.character_name]()
+        self.transform_lock = 1
+        self.win.character.transform_exp_show = True
+        self.win.character.transform_text_show = True
+        self.win.character.expressions.set_funny_expression(fade_out=30000)
+
+    def _transform_to_regular(self):
+        """Transformation to regular form"""
+        transformations = {
+            "Purple Heart": self.win.action_handler.on_action_neptune,
+            "Black Heart": self.win.action_handler.on_action_noire,
+            "White Heart": self.win.action_handler.on_action_blanc,
+            "Green Heart": self.win.action_handler.on_action_vert,
+            "Purple Sister": self.win.action_handler.on_action_nepgear,
+            "Black Sister": self.win.action_handler.on_action_uni,
+            "White Sister Rom": self.win.action_handler.on_action_rom,
+            "White Sister Ram": self.win.action_handler.on_action_ram,
+            "Grey Sister": self.win.action_handler.on_action_maho
+        }
+        if self.win.character_name in transformations:
+            transformations[self.win.character_name]()
+        self.transform_lock = 1
+        self.win.character.transform_exp_show = True
+        self.win.character.transform_text_show = True
+        self.win.character.expressions.set_funny_expression(fade_out=30000)

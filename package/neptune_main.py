@@ -242,7 +242,6 @@ class MainWindow(QOpenGLWidget):
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
-        self.models_window = ModelsWindow(self)
         self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
         self.canvas: Canvas | None = None
@@ -262,6 +261,7 @@ class MainWindow(QOpenGLWidget):
         self.mouse_tracker = MouseTracker(self)
         # Mouse tracking timer
         self.mouse_tracker.idle_timer.timeout.connect(self.input_handler.handle_mouse_idle)
+        self.models_window = ModelsWindow(self)
 
     def _init_window_geometry(self):
         """Initialize the window geometry"""
@@ -429,7 +429,7 @@ class MainWindow(QOpenGLWidget):
     def init_classes(self):
         """Initialize classes"""
         self.event_manager = EventManager(self)
-        self.animation_manager = AnimationsManager(self, self.model)
+        self.animation_manager = AnimationsManager(self)
         self.image_manager = ImageManager(self)
         self.animation_manager.set_target_fps(self.target_fps)
         self.change_character(self.character_name)
@@ -620,7 +620,6 @@ class MainWindow(QOpenGLWidget):
 
             if self.on_mouse_anim and self.on_mouse_switch == True:
                 self.animation_manager.play_animation(
-                    model=self.model,
                     anim_type='RandomMotion',
                     group_or_id="OnMouse",
                     priority=live2d.MotionPriority.NORMAL
@@ -717,6 +716,7 @@ class MainWindow(QOpenGLWidget):
         # if self.talk_update:
         self.apply_character_config(self.character_name)
         self.position_window()
+        self.models_window.set_language()
 
     def settings_show(self):
         """Show Settings Window"""
@@ -925,10 +925,10 @@ class MainWindow(QOpenGLWidget):
 
 class SettingsWindow(QWidget):
     """Settings Window Class"""
-    def __init__(self, pythonic_window_registration: bool = False):
+    def __init__(self, main_window: MainWindow, pythonic_window_registration: bool = False):
         super().__init__()
         self.pythonic_reg = pythonic_window_registration
-        self.mainWindow = MainWindow()
+        self.mainWindow = main_window
         self.app_config = self.mainWindow.app_config
         self.settings_log= False
 
@@ -3026,7 +3026,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = MainWindow()
     win.setFormat(format)
-    settings = SettingsWindow()
+    settings = SettingsWindow(win)
     settings.setWindowIcon(QIcon(os.path.join(
         resources.RESOURCES_DIRECTORY, "icons/color/settings.svg")))
 

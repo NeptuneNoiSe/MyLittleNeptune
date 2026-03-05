@@ -142,6 +142,7 @@ class ModelsManager:
     def _reload_model(self, win, config: dict) -> None:
         """Reload Live2D model"""
         if hasattr(win, 'model'):
+            live2d.Model.DestroyRenderer(win.model)
             del win.model
             win.model = None
 

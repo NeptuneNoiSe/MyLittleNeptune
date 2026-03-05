@@ -110,7 +110,7 @@
     "Normal": "&Normal",
     "SingSong": "&Sing Song",
     "Transform": "&Transform",
-    "Characters": "&Character Selector",
+    "Characters": "&Characters",
     "Animations": "&Animations",
     "Idle": "Idle Animation",
     "OnMouse": "OnMouse Animation",
@@ -179,6 +179,16 @@
     "ShowTextWidget": "Show text widget",
     "ShowName": "Show character name in widget",
     "ShowKaomoji": "Show kaomoji in widget"
+  },
+  "ModelsWindow": {
+    "Title": "Choose a character",
+    "HDDTitle": "HDD Characters",
+    "DelayMessage": "Wait a bit before making your next choice",
+    "InputLockMessage": "Input locked",
+    "SettingsLockMessage": "Apply the settings before selecting a character",
+    "AlreadyChangedMessage": "already changed",
+    "CharacterSelectedMessage": "Selected",
+    "AllowSelectionMessage": "You can choose a character"
   },
   "NewYearEvent": {
     "Greeting": "Hi! The New Year is coming soon",

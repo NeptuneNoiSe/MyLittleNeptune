@@ -22,7 +22,6 @@ from widgets.time_widget import SleepSchedule
 from additional.config_manager import AppConfig
 from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
-from additional.action_handler import ActionHandler
 from additional.functions import Functions
 from additional.input_handler import InputHandler
 from additional.input_handler import MouseTracker
@@ -242,7 +241,6 @@ class MainWindow(QOpenGLWidget):
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
-        self.action_handler = ActionHandler(self)
         self.model: live2d.Model | None = None
         self.canvas: Canvas | None = None
         self.character = None
@@ -742,16 +740,16 @@ class MainWindow(QOpenGLWidget):
         # Window Submenu
         submenu_window = QMenu(self).addMenu(self.get_icon("window"), self.lang['Actions']['Window'])
         action_minimize = submenu_window.addAction(self.get_icon("window_min"), self.lang['Actions']['Minimize'])
-        action_minimize.triggered.connect(self.action_handler.on_action_minimize)
+        action_minimize.triggered.connect(self.showMinimized)
         action_normal = submenu_window.addAction(self.get_icon("window_restore"), self.lang['Actions']['Normal'])
-        action_normal.triggered.connect(self.action_handler.on_action_normal)
+        action_normal.triggered.connect(self.showNormal)
         context_menu.addMenu(submenu_window)
         context_menu.addSeparator()
 
         # Sing Song Action
         sing_song_action = QAction(self.get_icon("song"), self.lang['Actions']['SingSong'], self)
         if not self.input_handler.input_lock:
-            sing_song_action.triggered.connect(self.action_handler.on_action_sing_song)
+            sing_song_action.triggered.connect(self.character.state.set_sing_song_state)
         if self.current_sing_song:
             context_menu.addAction(sing_song_action)
             context_menu.addSeparator()
@@ -759,7 +757,7 @@ class MainWindow(QOpenGLWidget):
         # Transform Action
         transform_action = QAction(self.get_icon("transform"), self.lang['Actions']['Transform'], self)
         if not self.input_handler.input_lock:
-            transform_action.triggered.connect(self.action_handler.on_action_transform)
+            transform_action.triggered.connect(self.character.state.set_transform_state)
         context_menu.addAction(transform_action)
         context_menu.addSeparator()
 
@@ -770,133 +768,33 @@ class MainWindow(QOpenGLWidget):
         context_menu.addAction(set_characters_action)
         context_menu.addSeparator()
 
-        # TODO: LEGACY METHODS MUST BE REMOVED
-        ###############################################################################################################
-        # Character Submenu
-        submenu_character = QMenu(self).addMenu(self.get_icon("character"), self.lang['Actions']['Characters'])
-        # Neptune
-        action_neptune = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/neptune.ico")), self.lang['NamesActions']['Neptune'])
-        if not self.input_handler.input_lock:
-            action_neptune.triggered.connect(self.action_handler.on_action_neptune)
-        # Purple Heart
-        action_purple_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/purple_heart.ico")), self.lang['NamesActions']['PurpleHeart'])
-        if not self.input_handler.input_lock:
-            action_purple_heart.triggered.connect(self.action_handler.on_action_purple_heart)
-        # Noire
-        action_noire = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/noire.ico")), self.lang['NamesActions']['Noire'])
-        if not self.input_handler.input_lock:
-            action_noire.triggered.connect(self.action_handler.on_action_noire)
-        # Black Heart
-        action_black_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/black_heart.ico")), self.lang['NamesActions']['BlackHeart'])
-        if not self.input_handler.input_lock:
-            action_black_heart.triggered.connect(self.action_handler.on_action_black_heart)
-        # Blanc
-        action_blanc = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/blanc.ico")), self.lang['NamesActions']['Blanc'])
-        if not self.input_handler.input_lock:
-            action_blanc.triggered.connect(self.action_handler.on_action_blanc)
-        # White Heart
-        action_white_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/white_heart.ico")), self.lang['NamesActions']['WhiteHeart'])
-        if not self.input_handler.input_lock:
-            action_white_heart.triggered.connect(self.action_handler.on_action_white_heart)
-        # Vert
-        action_vert = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/vert.ico")), self.lang['NamesActions']['Vert'])
-        if not self.input_handler.input_lock:
-            action_vert.triggered.connect(self.action_handler.on_action_vert)
-        # Green Heart
-        action_green_heart = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/green_heart.ico")), self.lang['NamesActions']['GreenHeart'])
-        if not self.input_handler.input_lock:
-            action_green_heart.triggered.connect(self.action_handler.on_action_green_heart)
-        # NepGear
-        action_nepgear = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/nepgear.ico")), self.lang['NamesActions']['NepGear'])
-        if not self.input_handler.input_lock:
-            action_nepgear.triggered.connect(self.action_handler.on_action_nepgear)
-        # Purple Sister
-        action_purple_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/purple_sister.ico")), self.lang['NamesActions']['PurpleSister'])
-        if not self.input_handler.input_lock:
-            action_purple_sister.triggered.connect(self.action_handler.on_action_purple_sister)
-        # Uni
-        action_uni = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/uni.ico")), self.lang['NamesActions']['Uni'])
-        if not self.input_handler.input_lock:
-            action_uni.triggered.connect(self.action_handler.on_action_uni)
-        # Black Sister
-        action_black_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/black_sister.ico")), self.lang['NamesActions']['BlackSister'])
-        if not self.input_handler.input_lock:
-            action_black_sister.triggered.connect(self.action_handler.on_action_black_sister)
-        # Rom
-        action_rom = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/rom.ico")), self.lang['NamesActions']['Rom'])
-        if not self.input_handler.input_lock:
-            action_rom.triggered.connect(self.action_handler.on_action_rom)
-        # White Sister Rom
-        action_white_sister_rom = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/white_sister_rom.ico")), self.lang['NamesActions']['WhiteSisterRom'])
-        if not self.input_handler.input_lock:
-            action_white_sister_rom.triggered.connect(self.action_handler.on_action_white_sister_rom)
-        # Ram
-        action_ram = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/ram.ico")), self.lang['NamesActions']['Ram'])
-        if not self.input_handler.input_lock:
-            action_ram.triggered.connect(self.action_handler.on_action_ram)
-        # White Sister Ram
-        action_white_sister_ram = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/white_sister_ram.ico")), self.lang['NamesActions']['WhiteSisterRam'])
-        if not self.input_handler.input_lock:
-            action_white_sister_ram.triggered.connect(self.action_handler.on_action_white_sister_ram)
-        # Histoire
-        action_histoire = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/histoire.ico")), self.lang['NamesActions']['Histoire'])
-        if not self.input_handler.input_lock:
-            action_histoire.triggered.connect(self.action_handler.on_action_histoire)
-        # Maho
-        action_maho = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/maho.ico")), self.lang['NamesActions']['Maho'])
-        if not self.input_handler.input_lock:
-            action_maho.triggered.connect(self.action_handler.on_action_maho)
-        # Grey Sister
-        action_grey_sister = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/grey_sister.ico")), self.lang['NamesActions']['GreySister'])
-        if not self.input_handler.input_lock:
-            action_grey_sister.triggered.connect(self.action_handler.on_action_grey_sister)
-        # Anri
-        action_anri = submenu_character.addAction(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/characters/anri.ico")), self.lang['NamesActions']['Anri'])
-        if not self.input_handler.input_lock:
-            action_anri.triggered.connect(self.action_handler.on_action_anri)
-        # context_menu.addMenu(submenu_character)
-        ###############################################################################################################
-
         # Settings Action
         settings_action = QAction(self.get_icon("settings"), self.lang['Actions']['Settings'], self)
         if not self.input_handler.input_lock:
-            settings_action.triggered.connect(self.action_handler.on_action_settings)
+            settings_action.triggered.connect(self.settings_show)
         context_menu.addAction(settings_action)
         context_menu.addSeparator()
 
         # About Action
         about_action = QAction(self.get_icon("about"), self.lang['Actions']['About'], self)
-        about_action.triggered.connect(self.action_handler.on_action_about)
+        about_action.triggered.connect(self.about)
         context_menu.addAction(about_action)
         context_menu.addSeparator()
 
         # Exit Action
         exit_action = QAction(self.get_icon("exit"), self.lang['Actions']['Quit'], self)
         if not self.input_handler.input_lock:
-            exit_action.triggered.connect(self.action_handler.on_action_quit)
+            exit_action.triggered.connect(self.on_action_quit)
         context_menu.addAction(exit_action)
 
         context_menu.exec(e.globalPos())
+
+    def about(self):
+        QMessageBox.information(
+            self,
+            self.lang['Actions']['AboutAlt'],
+            self.lang['Actions']['AboutText']
+        )
 
     def closeEvent(self, event):
         """Close Event"""
@@ -922,6 +820,33 @@ class MainWindow(QOpenGLWidget):
             self.character.state.set_quit_state(quit='No')
             self.quit_box_active = False
             event.ignore()
+
+    def on_action_quit(self):
+        if self.character.tired_state.condition == "Sleep":
+            self.character.tired_controller.wake_up_function()
+        self.models_window.close()
+        self.settings_close()
+        self.character.expressions.set_cry_expression()
+        self.character.audio.set_really_quit_audio()
+        self.kaomoji = "(o;TωT)o"
+        self.quit_box_active = True
+
+        answer = QMessageBox.question(
+            self,
+            self.lang['Actions']['Quit'],
+            f"{self.name}: {self.lang['Talk']['Quit']} {self.kaomoji}",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if answer == QMessageBox.StandardButton.Yes:
+            self.character.state.set_quit_state(quit='Yes')
+            self.input_handler.input_lock = True
+            self.quit_box_active = False
+        else:
+            self.character.tired_controller.timer_count = 1
+            self.character.state.set_quit_state(quit='No')
+            self.quit_box_active = False
 
 class SettingsWindow(QWidget):
     """Settings Window Class"""

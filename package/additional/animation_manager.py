@@ -975,7 +975,6 @@ class TransformAnimator:
         self.transform = False
         self.current_animation_win = None
         self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
-        self.transform_lock = False
 
         self._current_transform_in = None
         self._current_transform_out = None
@@ -1021,7 +1020,7 @@ class TransformAnimator:
         self.current_animation_win = self.win
         self.animation_phase = 1
         self.win.input_handler.input_lock = True
-        self.transform = self.win.transform = True
+        self.win.transform = True
         self.win.canvas.SetOutputOpacity(1.0)
 
         self.animation_manager.start_rainbow_effect(speed=2.0)
@@ -1085,10 +1084,7 @@ class TransformAnimator:
     def _execute_model_swap(self):
         """Execute model transformation using your existing methods"""
         try:
-            if not self.win.hdd_form:
-                self._transform_to_hdd()  # Your HDD transformation
-            else:
-                self._transform_to_regular()  # Your regular transformation
+            self._transform_change()
         finally:
             self._transform_animation_reset()
 
@@ -1200,43 +1196,14 @@ class TransformAnimator:
             int(self.win.h_resize + self.win.trm_cmy * self.win.models_scale)
         )
 
-    # TODO: Оптимизировать функцию(минимизировать использование имён персонажей в коде)
-    def _transform_to_hdd(self):
-        """Transformation to hdd form"""
-        transformations = {
-            "Neptune": self.win.action_handler.on_action_purple_heart,
-            "Noire": self.win.action_handler.on_action_black_heart,
-            "Blanc": self.win.action_handler.on_action_white_heart,
-            "Vert": self.win.action_handler.on_action_green_heart,
-            "NepGear": self.win.action_handler.on_action_purple_sister,
-            "Uni": self.win.action_handler.on_action_black_sister,
-            "Rom": self.win.action_handler.on_action_white_sister_rom,
-            "Ram": self.win.action_handler.on_action_white_sister_ram,
-            "Maho": self.win.action_handler.on_action_grey_sister
-        }
-        if self.win.character_name in transformations:
-            transformations[self.win.character_name]()
-        self.transform_lock = 1
-        self.win.character.transform_exp_show = True
-        self.win.character.transform_text_show = True
-        self.win.character.expressions.set_funny_expression(fade_out=30000)
+    def _transform_change(self):
+        target_name = self.win.resource_manager.get_alt_form_name(self.win.character_name)
+        if not target_name:
+            return
+        self.win.talk_widget.talk_update = False
+        self.win.character_name = target_name
+        self.win.models_manager.update_model(self.win)
 
-    def _transform_to_regular(self):
-        """Transformation to regular form"""
-        transformations = {
-            "Purple Heart": self.win.action_handler.on_action_neptune,
-            "Black Heart": self.win.action_handler.on_action_noire,
-            "White Heart": self.win.action_handler.on_action_blanc,
-            "Green Heart": self.win.action_handler.on_action_vert,
-            "Purple Sister": self.win.action_handler.on_action_nepgear,
-            "Black Sister": self.win.action_handler.on_action_uni,
-            "White Sister Rom": self.win.action_handler.on_action_rom,
-            "White Sister Ram": self.win.action_handler.on_action_ram,
-            "Grey Sister": self.win.action_handler.on_action_maho
-        }
-        if self.win.character_name in transformations:
-            transformations[self.win.character_name]()
-        self.transform_lock = 1
         self.win.character.transform_exp_show = True
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
@@ -2276,224 +2243,3 @@ class ColorAnimator(QObject):
         if self.color_anim.is_running:
             self.win.b_red = min(1.0, self.win.b_red + volume * 0.2)
             self.win.b_blue = min(1.0, self.win.b_blue + volume * 0.1)
-
-class TransformAnimatorLegacy:
-    """Character transformation animation management"""
-    def __init__(self, animation_manager):
-        self.animation_manager = animation_manager
-
-        self._win = None
-
-        self.animation_timer = QTimer()
-        self.animation_timer.timeout.connect(self._on_animation_tick)
-
-        # Transform Animation State
-        self.transform_text = False
-        self.transform = False
-        self.current_animation_win = None
-        self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
-        self.transform_lock = False
-
-    @property
-    def win(self):
-        """Actual window link"""
-        return self.animation_manager.win
-
-    # Transform Animations
-    def play_transform_animation(self):
-        """Start full transformation sequence"""
-        if self.animation_phase != 0:
-            return
-
-        self.current_animation_win = self.win
-        self.animation_phase = 1
-        self.win.input_handler.input_lock = True
-        self.transform = self.win.transform = True
-        self.win.canvas.SetOutputOpacity(1.0)
-
-        self.animation_manager.start_rainbow_effect(speed=2.0)
-
-        # Setup transform_in animation
-        self._play_model_animation()
-        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_in"))
-        self.win.transformLabel.setMovie(self.win.transformMovie)
-        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
-        self.win.transformLabel.raise_()
-        self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
-        self.win.transformMovie.start()
-        self.win.transformLabel.show()
-
-        self.animation_timer.start(16)  # 60 FPS
-
-    def _on_animation_tick(self):
-        """Animation phases"""
-        if not self.current_animation_win:
-            self.animation_timer.stop()
-            return
-
-        self._win = self.current_animation_win
-
-        if self.animation_phase == 1:
-            self._process_fade_out()
-        elif self.animation_phase == 2:
-            self._execute_model_swap()
-            self.animation_phase = 3
-            self._init_fade_in()
-        elif self.animation_phase == 3:
-            self._process_fade_in()
-
-    def _process_fade_out(self):
-        """Handle transform_in animation and opacity fade"""
-        current_frame = self.win.transformMovie.currentFrameNumber()
-        total_frames = self.win.transformMovie.frameCount()
-
-        # Smooth fade from 70% to 100% animation
-        fade_start = int(total_frames * 0.70)
-        if current_frame >= fade_start:
-            progress = (current_frame - fade_start) / (total_frames - fade_start)
-            self.win.canvas.SetOutputOpacity(1.0 - progress)
-
-        # When fade out completes, move to model swap
-        if current_frame >= total_frames - 3:
-            self.win.transformMovie.stop()
-            self.animation_phase = 2
-         # Close dialog
-        if current_frame >= (total_frames - 3) / 2:
-            self.win.talk_widget.close_dialog_after_animation()
-
-    def _execute_model_swap(self):
-        """Execute model transformation using your existing methods"""
-        try:
-            if not self.win.hdd_form:
-                self._transform_to_hdd()  # Your HDD transformation
-            else:
-                self._transform_to_regular()  # Your regular transformation
-        finally:
-            self._transform_animation_reset()
-
-    def _transform_animation_reset(self):
-        """Reset animation"""
-        self.win.transformLabel.movie().setScaledSize(QSize(1, 1))
-        self.win.transformMovie.stop()
-        self.win.transformLabel.close()
-
-    def _init_fade_in(self):
-        """Initialize transform_out animation"""
-        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_out"))
-        self.win.transformLabel.setMovie(self.win.transformMovie)
-        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
-        self.win.transformLabel.movie().setScaledSize(
-            self._calculate_animation_size()
-        )
-        self.win.transformMovie.start()
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
-        self.win.transformLabel.show()
-
-        self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
-
-    def _process_fade_in(self):
-        """Handle transform_out animation with delayed opacity restore"""
-        current_frame = self.win.transformMovie.currentFrameNumber()
-        total_frames = self.win.transformMovie.frameCount()
-
-        # Starting the appearance with 15% animation
-        fade_start = int(total_frames * 0.15)
-        fade_end = int(total_frames * 0.7)  # Finalize on 70%
-
-        if current_frame < fade_start:
-            # Transparency Delay from 0% to 25% of the animation
-            self.win.canvas.SetOutputOpacity(0.0)
-        elif fade_start <= current_frame <= fade_end:
-            # Smooth appearance from 25% to 70%
-            progress = (current_frame - fade_start) / (fade_end - fade_start)
-            self. win.canvas.SetOutputOpacity(progress)
-        else:
-            # After 70%, set 100% transparency
-            self.win.canvas.SetOutputOpacity(1.0)
-
-        # Final Animation with end
-        if current_frame >= total_frames - 3:
-            self._finalize_transformation()
-
-    def _finalize_transformation(self):
-        """Cleanup after transformation"""
-        try:
-            self.win.transformMovie.stop()
-            self.win.transformLabel.close()
-            self.win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
-            self.win.input_handler.input_lock = False
-            self.win.transform_lock = False
-            self.win.talk_widget.talk_update = True
-            self.transform = self.win.transform = False
-            self.win.character.state.set_transformed_state()
-
-            self.animation_manager.stop_rainbow_effect()
-
-            # Reset transformation flags
-            self.win.character.transform_exp_show = False
-            self.win.character.transform_text_show = False
-        finally:
-            self.animation_timer.stop()
-            self.current_animation_win = None
-            self.animation_phase = 0
-
-
-    def _play_model_animation(self):
-        """Model animation playback"""
-        # Regular form processing (hdd_form=False)
-        if not self.win.hdd_form:
-            # Playing the transformation animation
-            self.animation_manager.play_animation(
-                anim_type='Motion',
-                group_or_id="Unique",
-                no=0,
-                priority="FORCE",
-            )
-
-    def _calculate_animation_size(self):
-        """Calculate animation size"""
-        return QSize(
-            int(self.win.w_resize + self.win.trm_cmx * self.win.models_scale),
-            int(self.win.h_resize + self.win.trm_cmy * self.win.models_scale)
-        )
-
-    def _transform_to_hdd(self):
-        """Transformation to hdd form"""
-        transformations = {
-            "Neptune": self.win.action_handler.on_action_purple_heart,
-            "Noire": self.win.action_handler.on_action_black_heart,
-            "Blanc": self.win.action_handler.on_action_white_heart,
-            "Vert": self.win.action_handler.on_action_green_heart,
-            "NepGear": self.win.action_handler.on_action_purple_sister,
-            "Uni": self.win.action_handler.on_action_black_sister,
-            "Rom": self.win.action_handler.on_action_white_sister_rom,
-            "Ram": self.win.action_handler.on_action_white_sister_ram,
-            "Maho": self.win.action_handler.on_action_grey_sister
-        }
-        if self.win.character_name in transformations:
-            transformations[self.win.character_name]()
-        self.transform_lock = 1
-        self.win.character.transform_exp_show = True
-        self.win.character.transform_text_show = True
-        self.win.character.expressions.set_funny_expression(fade_out=30000)
-
-    def _transform_to_regular(self):
-        """Transformation to regular form"""
-        transformations = {
-            "Purple Heart": self.win.action_handler.on_action_neptune,
-            "Black Heart": self.win.action_handler.on_action_noire,
-            "White Heart": self.win.action_handler.on_action_blanc,
-            "Green Heart": self.win.action_handler.on_action_vert,
-            "Purple Sister": self.win.action_handler.on_action_nepgear,
-            "Black Sister": self.win.action_handler.on_action_uni,
-            "White Sister Rom": self.win.action_handler.on_action_rom,
-            "White Sister Ram": self.win.action_handler.on_action_ram,
-            "Grey Sister": self.win.action_handler.on_action_maho
-        }
-        if self.win.character_name in transformations:
-            transformations[self.win.character_name]()
-        self.transform_lock = 1
-        self.win.character.transform_exp_show = True
-        self.win.character.transform_text_show = True
-        self.win.character.expressions.set_funny_expression(fade_out=30000)

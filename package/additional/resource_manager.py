@@ -28,36 +28,6 @@ class ResourceManager:
         self.audio_files = None
         self._logging_audio_system = False
 
-    def set_debug_audio_system_logging(self, enabled: bool):
-        """Logging management"""
-        self._logging_audio_system = enabled
-
-        # self.animation_player._log_callbacks = enabled
-
-    def _categorize_characters(self):
-        """Categorize characters (base/hdd)"""
-        for char_name, config in self.character_configs.items():
-            display_name = config.get('name_key', char_name)
-
-            is_hdd = config.get('hdd_form', False)
-
-            if is_hdd:
-                self.hdd_characters[display_name] = config
-            else:
-                self.base_characters[display_name] = config
-
-        # Logs:
-        # print(f"[ResourceManager] Categorized characters:")
-        # print(f"  Base: {list(self.base_characters.keys())}")
-        # print(f"  HDD: {list(self.hdd_characters.keys())}")
-        # print(f"  Total: {len(self.character_configs)} characters")
-
-    def _load_character_configs(self) -> Dict[str, Dict]:
-        """Loads character configs from a JSON file"""
-        config_path = os.path.join(self.resources_dir, "configs/models_config.json")
-        with open(config_path, encoding="utf-8") as f:
-            return json.load(f)
-
     def load_language(self, language: str) -> Dict[str, Any]:
         """Loads language file"""
         if language not in self.languages:
@@ -65,6 +35,17 @@ class ResourceManager:
             with open(lang_path, encoding="utf-8") as f:
                 self.languages[language] = json.load(f)
         return self.languages[language]
+
+    def _load_character_configs(self) -> Dict[str, Dict]:
+        """Loads character configs from a JSON file"""
+        config_path = os.path.join(self.resources_dir, "configs/models_config.json")
+        with open(config_path, encoding="utf-8") as f:
+            return json.load(f)
+
+    def get_character_config(self, character_name: str) -> Dict[str, Any]:
+        """Returns the configuration of the character by name"""
+
+        return self.character_configs.get(character_name, {})
 
     def load_background_image(self, image_name: str)-> str:
         if image_name not in self.background_images:
@@ -185,10 +166,6 @@ class ResourceManager:
         image_map = mirrored_images if mirrored else talk_images
         return image_map.get(character_name, image_map["default"])
 
-    def get_character_config(self, character_name: str) -> Dict[str, Any]:
-        """Returns the configuration of the character by name"""
-        return self.character_configs.get(character_name, {})
-
     def get_model(self, character_name: str) -> live2d.Model:
         """Returns the character model, loading it if necessary"""
         if character_name not in self.loaded_models:
@@ -200,6 +177,16 @@ class ResourceManager:
             model.LoadModelJson(model_path)
             self.loaded_models[character_name] = model
         return self.loaded_models[character_name]
+
+    def unload_model(self, character_name: str) -> None:
+        """Unloads the model from memory"""
+        if character_name in self.loaded_models:
+            self.loaded_models.pop(character_name)
+
+    def clear_cache(self) -> None:
+        """Clears all cached resources"""
+        self.loaded_models.clear()
+        self.ui_labels.clear()
 
     def get_label(self, label_name: str, text: str = "", size: QSize = None) -> QLabel:
         """Creates or returns an existing QLabel"""
@@ -224,15 +211,40 @@ class ResourceManager:
             return self.get_base_character_names() + self.get_hdd_character_names()
         return self.get_base_character_names()
 
-    def unload_model(self, character_name: str) -> None:
-        """Unloads the model from memory"""
-        if character_name in self.loaded_models:
-            self.loaded_models.pop(character_name)
+    def get_alt_form_name(self, character_name: str) -> str:
+        config = self.character_configs.get(character_name)
+        alt_form_key = None
+        if config:
+            alt_form_key = config.get('alt_form_key')
+        return alt_form_key
 
-    def clear_cache(self) -> None:
-        """Clears all cached resources"""
-        self.loaded_models.clear()
-        self.ui_labels.clear()
+    def _categorize_characters(self):
+        """Categorize characters (base/hdd)"""
+        for char_name, config in self.character_configs.items():
+            display_name = config.get('name_key', char_name)
+
+            is_hdd = config.get('hdd_form', False)
+
+            if is_hdd:
+                self.hdd_characters[display_name] = config
+            else:
+                self.base_characters[display_name] = config
+
+        # Logs:
+        # print(f"[ResourceManager] Categorized characters:")
+        # print(f"  Base: {list(self.base_characters.keys())}")
+        # print(f"  HDD: {list(self.hdd_characters.keys())}")
+        # print(f"  Total: {len(self.character_configs)} characters")
+
+    def set_debug_audio_system_logging(self, enabled: bool):
+        """Logging management"""
+        self._logging_audio_system = enabled
+
+        # self.animation_player._log_callbacks = enabled
+
+    def _character_to_folder_name(self, character_name: str) -> str:
+        """Converts the character's name to a folder name (removes spaces)"""
+        return character_name.replace(" ", "")
 
     def load_audio_files(self) -> Dict[str, Dict[str, str]]:
         """Loads all audio files with fallback to root audio folder"""
@@ -286,10 +298,6 @@ class ResourceManager:
                 print(f"✅ Audio files loaded with root fallback: {list(self._audio_files.keys())}")
 
         return self._audio_files
-
-    def _character_to_folder_name(self, character_name: str) -> str:
-        """Converts the character's name to a folder name (removes spaces)"""
-        return character_name.replace(" ", "")
 
     def get_audio(self, character_name: str, audio_type: str = "default") -> Optional[str]:
         """Gets audio file"""

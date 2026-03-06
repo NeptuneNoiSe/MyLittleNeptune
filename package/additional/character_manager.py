@@ -228,6 +228,20 @@ class CharacterStateManager:
 
     def set_transform_state(self):
         """Transform state"""
+        self.win.model_move = False
+        if not self.win.can_transform or self.win.settings_lock:
+            if self.character.tired_state.condition != "Sleep":
+                self.set_transform_failure_state()
+            return
+
+        if self.character.tired_state.condition == "Sleep":
+            return
+
+        self.win.animation_manager.transform_animation_start()
+        self.character.tired_controller.timer_count = 1
+        self.win.settings_close()
+        self.win.models_window.close()
+
         self.character.expressions.fadeoutTimer.stop()
         self.character.audio.set_transform_audio()
         if not self.win.hdd_form:

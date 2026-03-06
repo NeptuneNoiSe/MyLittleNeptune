@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QMessageBox
 
-
+# TODO: Legacy Class MUST BE REMOVED
 class ActionHandler:
     """OnActions Handler"""
     def __init__(self, win):
@@ -78,7 +78,6 @@ class ActionHandler:
             self.win.character.state.set_quit_state(quit='No')
             self.win.quit_box_active = False
 
-    # TODO: LEGACY METHODS MUST BE REMOVED
     # Characters Actions
     def _change_character(self, character_name):
         # Check if the current name matches the selected one

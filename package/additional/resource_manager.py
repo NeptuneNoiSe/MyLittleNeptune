@@ -69,45 +69,26 @@ class ResourceManager:
             )
         return self.animation_files[anim_name]
 
-    # TODO: Автоматизировать импорт анимаций
     def load_extra_motions(self) -> Dict[str, str]:
-        """Loads all extra animations"""
+        """Loads all extra animations by scanning the directory"""
         if not self.extra_motions:
             motions_dir = os.path.join(self.resources_dir, "external_motions")
             if not os.path.exists(motions_dir):
                 print(f"[Warning] Extra motions directory not found: {motions_dir}")
                 return {}
 
-            motion_files = {
-                "drag_down": "drag_down.motion3.json",
-                "side_touch_head": "side_touch_head.motion3.json",
-                "touch_body": "touch_body.motion3.json",
-                "touch_body2": "touch_body2.motion3.json",
-                "touch_body3": "touch_body3.motion3.json",
-                "touch_bra": "touch_bra.motion3.json",
-                "touch_bra1": "touch_bra1.motion3.json",
-                "touch_bra2": "touch_bra2.motion3.json",
-                "touch_bra3": "touch_bra3.motion3.json",
-                "touch_head": "touch_head.motion3.json",
-                "touch_head2": "touch_head2.motion3.json",
-                "touch_hl": "touch_hl.motion3.json",
-                "touch_hl1": "touch_hl1.motion3.json",
-                "touch_hl2": "touch_hl2.motion3.json",
-                "touch_hr": "touch_hr.motion3.json",
-                "touch_hr1": "touch_hr1.motion3.json",
-                "touch_hr2": "touch_hr2.motion3.json",
-                "touch_leg": "touch_leg.motion3.json",
-                "touch_leg1": "touch_leg1.motion3.json",
-                "touch_leg2": "touch_leg2.motion3.json",
-                "touch_leg3": "touch_leg3.motion3.json",
-            }
             self.extra_motions = {}
-            for name, filename in motion_files.items():
-                full_path = os.path.join(motions_dir, filename)
-                if os.path.exists(full_path):
+
+            # Scan files in directory
+            for filename in os.listdir(motions_dir):
+                if filename.endswith('.motion3.json'):
+                    name = filename.replace('.motion3.json', '')
+                    full_path = os.path.join(motions_dir, filename)
                     self.extra_motions[name] = full_path
-                else:
-                    print(f"[Warning] Motion file not found: {full_path}")
+                    # print(f"[Info] Loaded motion: {name}")
+
+            if not self.extra_motions:
+                print(f"[Warning] No motion files found in {motions_dir}")
         return self.extra_motions
 
     def get_character_image_path(self, name):
@@ -115,48 +96,53 @@ class ResourceManager:
         path = os.path.join(self.resources_dir, f"images/characters/{character}.png")
         return path
 
-    # TODO: Оптимизировать функцию(минимизировать использование имён персонажей в коде)
     def load_talk_images(self) -> [Dict[str, str], Dict[str, str]]:
-        """Loads all images for speech widgets"""
+        """Loads all images for speech widgets by scanning directories"""
         if self._talk_images is not None:
             talk_dir = os.path.join(self.resources_dir, "images/talk")
             mirrored_dir = os.path.join(self.resources_dir, "images/talk_mirrored")
 
-            # File names for all characters
-            image_files = {
-                "Neptune": "neptune_talk.svg",
-                "Purple Heart": "purple_heart_talk.svg",
-                "Noire": "noire_talk.svg",
-                "Black Heart": "black_heart_talk.svg",
-                "Blanc": "blanc_talk.svg",
-                "White Heart": "white_heart_talk.svg",
-                "Vert": "vert_talk.svg",
-                "Green Heart": "green_heart_talk.svg",
-                "NepGear": "nepgear_talk.svg",
-                "Purple Sister": "purple_sister_talk.svg",
-                "Uni": "uni_talk.svg",
-                "Black Sister": "black_sister_talk.svg",
-                "Rom": "rom_talk.svg",
-                "White Sister Rom": "white_sister_rom_talk.svg",
-                "Ram": "ram_talk.svg",
-                "White Sister Ram": "white_sister_ram_talk.svg",
-                "Histoire": "histoire_talk.svg",
-                "Maho": "maho_talk.svg",
-                "Grey Sister": "grey_sister_talk.svg",
-                "Anri": "anri_talk.svg",
-                "default": "talk.svg"
-            }
+            # Check directory
+            if not os.path.exists(talk_dir):
+                print(f"[Warning] Talk images directory not found: {talk_dir}")
+                return {}, {}
 
-            # Creating paths for normal and mirror images
-            self._talk_images = {
-                name: os.path.join(talk_dir, filename)
-                for name, filename in image_files.items()
-            }
+            self._talk_images = {}
+            self._mirrored_talk_images = {}
 
-            self._mirrored_talk_images = {
-                name: os.path.join(mirrored_dir, filename.replace('.svg', '_mirrored.svg'))
-                for name, filename in image_files.items()
-            }
+            for filename in os.listdir(talk_dir):
+                if filename.endswith('.svg'):
+                    # Get name from file
+                    # "name_talk.svg" -> "Name"
+                    name = filename.replace('_talk.svg', '').replace('.svg', '')
+
+                    formatted_name = name.title().replace('_', ' ')
+
+                    # Save path
+                    full_path = os.path.join(talk_dir, filename)
+                    self._talk_images[formatted_name] = full_path
+
+                    # Find mirrored image
+                    mirrored_filename = filename.replace('.svg', '_mirrored.svg')
+                    mirrored_path = os.path.join(mirrored_dir, mirrored_filename)
+
+                    if os.path.exists(mirrored_path):
+                        self._mirrored_talk_images[formatted_name] = mirrored_path
+                    else:
+                        self._mirrored_talk_images[formatted_name] = full_path
+                        print(f"[Warning] Mirrored image not found for {filename}, using original")
+
+            default_path = os.path.join(talk_dir, "talk.svg")
+            if os.path.exists(default_path):
+                self._talk_images["default"] = default_path
+
+                default_mirrored = os.path.join(mirrored_dir, "talk_mirrored.svg")
+                if os.path.exists(default_mirrored):
+                    self._mirrored_talk_images["default"] = default_mirrored
+                else:
+                    self._mirrored_talk_images["default"] = default_path
+
+            # print(f"[Info] Loaded {len(self._talk_images)} talk image(s) from {talk_dir}")
 
         return self._talk_images, self._mirrored_talk_images
 
@@ -164,7 +150,29 @@ class ResourceManager:
         """Returns the path to the image for the specified character"""
         talk_images, mirrored_images = self.load_talk_images()
         image_map = mirrored_images if mirrored else talk_images
-        return image_map.get(character_name, image_map["default"])
+
+        #print(f"[Debug] Available keys: {list(image_map.keys())}")
+        #print(f"[Debug] Looking for: '{character_name}'")
+
+        if character_name in image_map:
+            return image_map[character_name]
+
+        variants = [
+            character_name,
+            character_name.lower(),
+            character_name.lower().replace(' ', '_'),
+            character_name.replace(' ', '_'),
+            character_name.title(),
+            character_name.replace(' ', ''),
+        ]
+
+        for variant in variants:
+            if variant in image_map:
+                print(f"[Info] Found match using variant: '{variant}'")
+                return image_map[variant]
+
+        print(f"[Warning] Image not found for character: {character_name}, using default")
+        return image_map.get("default", "")
 
     def get_model(self, character_name: str) -> live2d.Model:
         """Returns the character model, loading it if necessary"""

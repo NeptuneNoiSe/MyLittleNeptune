@@ -382,12 +382,11 @@ class CharacterTiredController:
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_state)
         self.start_timer()
-        # Добавляем состояния для расписания
         self.schedule_state = "NORMAL"  # NORMAL, SCHEDULE_SLEEPING, SCHEDULE_IDLE
         self.last_schedule_check = datetime.now()
         self.schedule_timer = QTimer()
         self.schedule_timer.timeout.connect(self._check_schedule_state)
-        self.schedule_timer.start(10000)  # Проверяем каждые 10 секунд
+        self.schedule_timer.start(10000)
         self._check_schedule_state()
         self.sleep_again_timer = QTimer()
 
@@ -465,7 +464,7 @@ class CharacterTiredController:
               f" | Thread: {QThread.currentThread()}")
 
     def _check_schedule_state(self):
-        """Проверяет и обновляет состояние по расписанию"""
+        """Check schedule State"""
         if not self.time_schedule:
             self.schedule_state = "NORMAL"
             return
@@ -475,15 +474,12 @@ class CharacterTiredController:
         sleep_minutes = self.sleep_h * 60 + self.sleep_m
         wake_minutes = self.wake_h * 60 + self.wake_m
 
-        # Определяем, в каком мы диапазоне
         if sleep_minutes <= wake_minutes:
-            # Обычный диапазон (сон ночью)
             if sleep_minutes <= current_minutes < wake_minutes:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
         else:
-            # Диапазон через полночь
             if current_minutes >= sleep_minutes or current_minutes < wake_minutes:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
@@ -500,29 +496,25 @@ class CharacterTiredController:
         return self.timer_count < self.sleep_v
 
     def _should_wake_up_by_schedule(self, now=None):
-        """Проверяет, наступило ли время пробуждения по расписанию"""
+        """Checks if the scheduled wake-up time has arrived"""
         if now is None:
             now = datetime.now()
 
         current_minutes = now.hour * 60 + now.minute
         wake_minutes = self.wake_h * 60 + self.wake_m
 
-        # Просыпаемся, когда наступило время wake_up
         return current_minutes >= wake_minutes
 
     def _wake_up_by_schedule(self):
-        """Принудительное пробуждение по расписанию"""
+        """Forced wake up by schedule"""
         if self.timer_log:
             print(f"[SCHEDULE_WAKEUP] Time to wake up! ({self.wake_h:02d}:{self.wake_m:02d})")
 
-        # Вызываем функцию пробуждения
         self.character.tired_state.set_wake_up_state()
 
-        # Сбрасываем флаги
         if hasattr(self, '_sleep_function_called'):
             self._sleep_function_called = False
 
-        # Сбрасываем таймер
         #self.timer_count = 1
         #self.character.tired_state.set_idle_state()
 
@@ -563,54 +555,40 @@ class CharacterTiredController:
 
         self.timer_count += 1
         now = datetime.now()
-        # Определяем текущий режим
         # Logging
         if self.timer_log:
             self._timer_logging()
         if self.time_schedule:
             if self.schedule_state == "SCHEDULE_IDLE":
-                # ВНЕ диапазона сна - персонаж всегда idle, не устает
                 self._handle_schedule_idle_mode()
                 return
             elif self.schedule_state == "SCHEDULE_SLEEPING":
-                # ВНУТРИ диапазона сна - обычная логика усталости
                 self._handle_schedule_sleeping_mode()
                 return
 
-        # Обычный режим (без расписания)
         self._handle_normal_mode()
 
     def _handle_schedule_idle_mode(self):
-        """Режим вне времени сна по расписанию"""
-        # Всегда сбрасываем таймер усталости и устанавливаем idle
-        self.timer_count = min(self.timer_count, self.sad_v - 1)  # Не даем уставать
+        self.timer_count = min(self.timer_count, self.sad_v - 1)
         self.character.tired_state.set_idle_state()
 
         if self.idle_switch:
             self.idle_anim = True
 
-        # Логирование
-        if self.timer_log and self.timer_count % 300 == 0:  # Раз в 5 минут
+        if self.timer_log and self.timer_count % 300 == 0:
             print(f"[SCHEDULE_IDLE] Outside sleep range - forced idle")
 
     def _handle_schedule_sleeping_mode(self):
-        """Режим внутри времени сна по расписании"""
-        # Включаем обычную логику усталости, но БЕЗ wake_up_state
-        # до наступления времени пробуждения
-
-        # Проверяем, не пора ли просыпаться по расписанию
         now = datetime.now()
         should_wake_up = self._should_wake_up_by_schedule(now)
 
         if should_wake_up:
-            # Время просыпаться по расписанию
             self._wake_up_by_schedule()
             return
-        # Обычная логика усталости, но модифицированная
         self._modified_normal_logic()
 
     def _handle_normal_mode(self):
-        """Обычный режим без расписания"""
+        """Normal mode withou schedule"""
         # Processing states
         if self.timer_count <= self.sad_v:
             self.character.tired_state.set_idle_state()
@@ -635,21 +613,17 @@ class CharacterTiredController:
             self.character.tired_state.set_wake_up_state()
 
     def _modified_normal_logic(self):
-        """Модифицированная логика с явной стейт-машиной"""
-        # Определяем, какое состояние должно быть сейчас
+        """Modified normal logic with State machine"""
 
         target_state = self._get_target_sleep_state()
 
         if target_state == "Sleep" and self.character.tired_state.condition == "Sleep":
-            # Фиксируем timer_count на значении sleep_v
             self.timer_count = self.sleep_v
             return
 
-        # Если состояние не изменилось - ничего не делаем
         if self.character.tired_state.condition == target_state:
             return
 
-        # Устанавливаем новое состояние
         if target_state == "Idle":
             self.character.tired_state.set_idle_state()
         elif target_state == "Sad":
@@ -660,7 +634,7 @@ class CharacterTiredController:
             self.character.tired_state.set_sleep_state()
 
     def _get_target_sleep_state(self):
-        """Определяет целевое состояние для прогрессии сна"""
+        """Get target sleep state"""
         if self.timer_count < self.sad_v:
             return "Idle"
         elif self.sad_v <= self.timer_count < self.tired_v:
@@ -681,7 +655,6 @@ class CharacterTiredController:
     def reset_timer_with_reload(self, delay_ms=10000, reason=""):
         self.timer.stop()
         #self.sleep_again_timer.stop()
-        # Логируем причину
         if self.timer_log and reason:
             print(f"[TIMER_RESET] {reason}")
 
@@ -693,7 +666,7 @@ class CharacterTiredController:
 
     def start_timer(self):
         """Start timer"""
-        self.reset_timer()  # Сброс перед запуском
+        self.reset_timer()
         self.timer.start(int(1000 / self.time_scale))
 
 class CharacterTiredStateManager:

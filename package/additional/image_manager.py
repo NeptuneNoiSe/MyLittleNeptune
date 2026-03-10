@@ -5,10 +5,8 @@ from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel
 import time
 import math
 
-
 from package import resources
 from package.additional.resource_manager import ResourceManager
-
 
 class ImageManager:
     def __init__(self, win):

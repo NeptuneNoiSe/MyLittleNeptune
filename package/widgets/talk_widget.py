@@ -477,37 +477,3 @@ class TalkWidget:
         # Creating a new widget (the old one will be deleted by the garbage collector)
         self.widget = QWidget(parent)
         self.init_ui()  # The main initialization method
-
-    # TODO: LEGACY OPACITY METHODS: MUST BE REMOVED AFTER TESTING NEW METHODS
-    def show_appearance_animation_legacy(self):
-        """Show widget Animation"""
-        # Setting up transparency with animation
-        self.talk_image_label_opacity = QGraphicsOpacityEffect()
-        self.talk_image_label_opacity.setOpacity(0.0)  # Initial transparency value
-        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
-
-        # Creating an animation
-        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-        self.opacity_animation.setDuration(250)  # Animation duration in milliseconds
-        self.opacity_animation.setStartValue(0.0)  # Initial value
-        self.opacity_animation.setEndValue(0.9)  # Final value
-        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Smoothness of animation
-
-        # Adding animations to the queue (so as not to block the main thread)
-        QTimer.singleShot(0, self.opacity_animation.start)
-
-    def close_dialog_legacy(self):
-        """Close dialog box with Animation"""
-        if not self.show_widget:
-            return
-        self.dialogCloseTimer.stop()
-        if self.dialog_animation:
-            self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-            self.opacity_animation.setDuration(500)
-            self.opacity_animation.setStartValue(0.9)
-            self.opacity_animation.setEndValue(0.0)
-            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Smoothness of animation
-            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Hide after animation
-            QTimer.singleShot(0, self.opacity_animation.start)
-        else:
-            self.close_dialog_after_animation()

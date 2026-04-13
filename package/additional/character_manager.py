@@ -80,6 +80,7 @@ class CharacterManager:
 class CharacterStateManager:
     def __init__(self, character):
         self.character = character
+        self.current_state = None
 
         # GoodBye timer
         self.goodByeTimer = QTimer()
@@ -130,6 +131,7 @@ class CharacterStateManager:
             is_first_run: If True, the callback is not called (for the first character display).
             example: on_finished=None if is_first_run else self._after_animation_fade_in_callback
         """
+        self.current_state = "Greeting"
         if self.character.current_event and self.character.show_event_greeting:
             current_event_group = self.character.current_event.replace(" ", "") + "Event"
             if self.character.special_stage:
@@ -143,6 +145,7 @@ class CharacterStateManager:
 
         if self.character.delay_congratulation_after_greeting:
             delay_ms = self.character.delay_congratulation_after_greeting
+            # event_name = self.character.current_event if self.win.birthday_active else None
             self.set_event_congratulation_state(delay_ms= delay_ms,
                                                 duration = 10000,
                                                 event_name= self.character.current_event,
@@ -185,6 +188,7 @@ class CharacterStateManager:
 
     def set_goodbye_state(self):
         """Character say goodbye"""
+        self.current_state = "Goodbye"
         self.win.input_handler.input_lock = True
         self.win.character_lock = True
         self.goodByeTimer.start(3000)
@@ -197,9 +201,11 @@ class CharacterStateManager:
             self.character.tired_controller.wake_up_function()
 
         self.character.win.talk_widget.talk_update = False
+        self.cancel_congratulation_timer()
 
     def set_drag_state(self):
         """Set drag state"""
+        #self.current_state = "Draging"
         self.character.audio.set_drag_audio()
         self.character.expressions.set_drag_expression()
         self.character.character_text.set_drag_text()
@@ -277,6 +283,7 @@ class CharacterStateManager:
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
         """Update Settings state"""
+        self.cancel_congratulation_timer()
         self.character.audio.set_settings_audio()
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
@@ -289,6 +296,7 @@ class CharacterStateManager:
 
     def set_quit_state(self, quit: str):
         """Quiting state"""
+        self.cancel_congratulation_timer()
         if quit == 'Yes':
             self.character.audio.set_quit_audio()
             self.character.expressions.set_cry_expression()
@@ -320,44 +328,83 @@ class CharacterStateManager:
 
     def set_crying_state(self):
         """Set crying state"""
+        self.cancel_congratulation_timer()
         self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_cry_expression()
 
-    def set_event_congratulation_state(self, delay_ms = 0, duration = 10000, event_name: str | None = None,
-                                     event_key: str | None = None) -> None:
+    def set_event_congratulation_state(self, delay_ms=0, duration=10000, event_name: str | None = None,
+                                       event_key: str | None = None) -> None:
         """Character say congratulation"""
-        timer_congratulate = QTimer()
+        if (self.win.settings_lock
+                or self.win.quit_box_active
+                or self.current_state == "Goodbye"
+                or self.goodByeTimer.isActive()):
+            return
+
+        self.timer_congratulate = QTimer()
+        self.timer_congratulate.setSingleShot(True)
+
         def start_congratulation():
             if (self.win.input_handler.input_lock
-                    or self.win.settings_update_state
-                    or self.win.quit_box_active):
-                timer_congratulate = None
+                    or self.win.settings_lock
+                    or self.win.quit_box_active
+                    or self.current_state == "Goodbye"
+                    or self.goodByeTimer.isActive()):
+                if hasattr(self, 'timer_congratulate'):
+                    self.timer_congratulate.stop()
+                    self.timer_congratulate.deleteLater()
+                    del self.timer_congratulate
                 return
+
+            self.win.input_handler.input_lock = True
+            self.win.input_handler.set_transparent_input(delay=duration)
+
+            audio_key = event_name.replace(" ", "_") + "_" + event_key
+            self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
+
+            self.character.expressions.set_happy_expression(fade_out=duration)
+            self.character.expressions.set_star_expression(fade_out=duration)
+
+            self.character.movements.set_motion(group_name="Special", id=3)
+
+            self.win.event_manager.congratulate_event(duration=duration)
+
+            text_group = event_name.replace(" ", "") + "Event"
+            if text_group == "ValentinesDayEvent":
+                self.character.character_text.set_event_congratulation_text(
+                    group_name=text_group,
+                    text_key=event_key,
+                    kaomoji="❤~(//◠‿◠//)"
+                )
             else:
-                self.win.input_handler.input_lock = True
-                self.win.input_handler.set_transparent_input(delay=duration)
-                audio_key = event_name.replace(" ", "_") + "_" + event_key
-                self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
-                self.character.expressions.set_happy_expression(fade_out=duration)
-                self.character.expressions.set_star_expression(fade_out=duration)
-                self.character.movements.set_motion(group_name="Special", id=3)
-                self.win.event_manager.congratulate_event(duration=duration)
-                text_group = event_name.replace(" ", "") + "Event"
-                kaomoji = "❤~(//◠‿◠//)" if text_group == "ValentinesDayEvent" else None
-                self.character.character_text.set_event_congratulation_text(group_name=text_group,
-                                                                            text_key=event_key,
-                                                                            kaomoji = kaomoji)
-                QTimer.singleShot(duration, end_congratulation)
+                self.character.character_text.set_event_congratulation_text(
+                    group_name=text_group,
+                    text_key=event_key
+                )
+
+            QTimer.singleShot(duration, end_congratulation)
 
         def end_congratulation():
             self.win.input_handler.input_lock = False
-            timer_congratulate = None
+            if hasattr(self, 'timer_congratulate'):
+                self.timer_congratulate.stop()
+                self.timer_congratulate.deleteLater()
+                del self.timer_congratulate
 
-        timer_congratulate.singleShot(delay_ms, start_congratulation)
+        self.timer_congratulate.timeout.connect(start_congratulation)
+        self.timer_congratulate.start(delay_ms)
+
+    def cancel_congratulation_timer(self):
+        """Force cancel congratulation timer"""
+        if hasattr(self, 'timer_congratulate'):
+            self.timer_congratulate.stop()
+            self.timer_congratulate.deleteLater()
+            del self.timer_congratulate
 
 
     def set_sing_song_state(self):
         """Character sings a song"""
+        self.cancel_congratulation_timer()
         self.win.audio_manager.play_song()
         self.character.movements.set_motion(group_name="Special", id=3)
         self.character.expressions.set_smile_expression(fade_out=self.win.song_duration)
@@ -614,7 +661,6 @@ class CharacterTiredController:
 
     def _modified_normal_logic(self):
         """Modified normal logic with State machine"""
-
         target_state = self._get_target_sleep_state()
 
         if target_state == "Sleep" and self.character.tired_state.condition == "Sleep":

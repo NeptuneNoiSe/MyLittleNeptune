@@ -67,7 +67,11 @@ class AppConfig(QObject):
         'Other': {
             'show_text_widget': 'True',
             'show_name': 'True',
-            'show_kaomoji': 'True'
+            'show_kaomoji': 'True',
+            'birthday_active': 'False',
+            'birthday_year': '0',
+            'birthday_month': '0',
+            'birthday_day': '0'
         }
     }
 
@@ -615,6 +619,42 @@ class AppConfig(QObject):
     def show_kaomoji(self, value: bool):
         self._config.set('Other', 'show_kaomoji', str(value))
         self._save_and_notify('Other', 'show_kaomoji', str(value))
+
+    @property
+    def birthday_active(self) -> bool:
+        return self._config.getboolean('Other', 'birthday_active')
+
+    @birthday_active.setter
+    def birthday_active(self, value: bool):
+        self._config.set('Other', 'birthday_active', str(value))
+        self._save_and_notify('Other', 'birthday_active', str(value))
+
+    @property
+    def birthday_year(self) -> int:
+        return self._config.getint('Other', 'birthday_year')
+
+    @birthday_year.setter
+    def birthday_year(self, value: int):
+        self._config.set('Other', 'birthday_year', str(value))
+        self._save_and_notify('Other', 'birthday_year', str(value))
+
+    @property
+    def birthday_month(self) -> int:
+        return self._config.getint('Other', 'birthday_month')
+
+    @birthday_month.setter
+    def birthday_month(self, value: int):
+        self._config.set('Other', 'birthday_month', str(value))
+        self._save_and_notify('Other', 'birthday_month', str(value))
+
+    @property
+    def birthday_day(self) -> int:
+        return self._config.getint('Other', 'birthday_day')
+
+    @birthday_day.setter
+    def birthday_day(self, value: int):
+        self._config.set('Other', 'birthday_day', str(value))
+        self._save_and_notify('Other', 'birthday_day', str(value))
 
     # Save configs
     def _save_and_notify(self, section: str, key: str, value: str):

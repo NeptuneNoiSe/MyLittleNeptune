@@ -176,6 +176,11 @@
     "Mute": "Mute All",
     "Unmute": "Unmute All",
     "OtherTitle": "Other",
+    "BirthdayTitle": "Enter Your BirthDay:",
+    "DateText": "Date of Birth: ",
+    "Age": "Your Age: ",
+    "BirthdayInfo": "* The character will wish you a Happy Birthday on this day",
+    "TextWidget": "Text Widget Settings:",
     "ShowTextWidget": "Show text widget",
     "ShowName": "Show character name in widget",
     "ShowKaomoji": "Show kaomoji in widget"
@@ -207,5 +212,8 @@
   },
   "ValentinesDayEvent": {
     "Congratulation": "Happy Valentine's Day!"
+  },
+  "BirthDayEvent": {
+    "Congratulation": "Happy Birthday!"
   }
 }

@@ -168,7 +168,7 @@ class ResourceManager:
 
         for variant in variants:
             if variant in image_map:
-                print(f"[Info] Found match using variant: '{variant}'")
+                # print(f"[Info] Found match using variant: '{variant}'")
                 return image_map[variant]
 
         print(f"[Warning] Image not found for character: {character_name}, using default")

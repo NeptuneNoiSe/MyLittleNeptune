@@ -7,7 +7,7 @@ from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QSurfaceFormat, QAction
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory, QTabWidget, QDialogButtonBox, QDial, \
-    QFrame
+    QFrame, QSpacerItem, QSizePolicy
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -19,6 +19,7 @@ from live2d.utils.lipsync import WavHandler
 from widgets.talk_widget import TalkWidget
 from widgets.time_widget import PowerOfTwoSpinBox
 from widgets.time_widget import SleepSchedule
+from widgets.time_widget import BirthdayDateEdit
 from additional.config_manager import AppConfig
 from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
@@ -907,6 +908,10 @@ class SettingsWindow(QWidget):
         self.sfx = self.app_config.sfx
         self.bgm = self.app_config.bgm
         self.ambient = self.app_config.ambient
+        self.birthday_active = self.app_config.birthday_active
+        self.birthday_year = self.app_config.birthday_year
+        self.birthday_month = self.app_config.birthday_month
+        self.birthday_day = self.app_config.birthday_day
         self.show_text_widget = self.app_config.show_text_widget
         self.show_name = self.app_config.show_name
         self.show_kaomoji = self.app_config.show_kaomoji
@@ -1036,6 +1041,10 @@ class SettingsWindow(QWidget):
             'sfx': self.sfx,
             'bgm': self.bgm,
             'ambient': self.ambient,
+            'birthday_active': self.birthday_active,
+            'birthday_year': self.birthday_year,
+            'birthday_month': self.birthday_month,
+            'birthday_day': self.birthday_day,
             'show_text_widget': self.show_text_widget,
             'show_name': self.show_name,
             'show_kaomoji': self.show_kaomoji
@@ -1046,6 +1055,11 @@ class SettingsWindow(QWidget):
 
         sleep_hour, sleep_minute = self.timeBox.get_sleep_time()
         wake_hour, wake_minute = self.timeBox.get_wake_time()
+
+        birthday_date = self.birthday_widget.getDate()
+        birthday_year = birthday_date.year()
+        birthday_month = birthday_date.month()
+        birthday_day = birthday_date.day()
 
         def get_dial_value(category):
             """Auxiliary function for getting the disk value"""
@@ -1085,6 +1099,10 @@ class SettingsWindow(QWidget):
             'bgm': get_dial_value('bgm'),
             'sfx': get_dial_value('sfx'),
             'ambient': get_dial_value('ambient'),
+            'birthday_active': self.birthdayActiveCheckBox.isChecked(),
+            'birthday_year': birthday_year,
+            'birthday_month': birthday_month,
+            'birthday_day': birthday_day,
             'show_text_widget': self.showTextWidgetCheckBox.isChecked(),
             'show_name': self.showNameCheckBox.isChecked(),
             'show_kaomoji': self.showKaomojiCheckBox.isChecked()
@@ -1095,6 +1113,7 @@ class SettingsWindow(QWidget):
         """Creates an appearance settings tab"""
         tab = QWidget()
         layout = QGridLayout()
+        blank = QLabel()
 
         # Window Flags
         self.framelessWindowCheckBox = QCheckBox("Frameless window")
@@ -1127,6 +1146,8 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.themeComboBox, 3, 1)
         layout.addWidget(self.colorIconsCheckBox, 4, 0, 1, 2)
         layout.addWidget(self.backgroundImageCheckBox, 5, 0, 1, 2)
+        layout.addWidget(blank, 6, 0, 1, 2)
+        layout.setVerticalSpacing(25)
 
         # Connecting change signals
         self.framelessWindowCheckBox.stateChanged.connect(self.on_setting_changed)
@@ -1150,6 +1171,8 @@ class SettingsWindow(QWidget):
         """Creates a model settings tab"""
         tab = QWidget()
         layout = QGridLayout()
+        blank = QLabel()
+        spacer = QSpacerItem(20, 1, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.modelScaleBox = QDoubleSpinBox()
         self.sc_mult_text = QLabel("Scale multiplier:")
@@ -1173,9 +1196,14 @@ class SettingsWindow(QWidget):
 
         layout.addWidget(self.sc_mult_text, 0, 0)
         layout.addWidget(self.modelScaleBox, 0, 1)
-        layout.addWidget(self.autoScaleCheckBox, 1, 0, 1, 2)
-        layout.addWidget(self.randomCharacterCheckBox, 2, 0, 1, 2)
-        layout.addWidget(self.randomCharacterHDDCheckBox, 3, 0, 1, 2)
+        layout.addWidget(self.autoScaleCheckBox, 2, 0, 1, 2)
+        layout.addWidget(self.randomCharacterCheckBox, 3, 0, 1, 2)
+        layout.addWidget(self.randomCharacterHDDCheckBox, 4, 0, 1, 2)
+        layout.addItem(spacer, 5, 0)
+        #layout.addWidget(blank, 0, 0, 1, 2)
+
+        layout.setVerticalSpacing(25)
+        #layout.setHorizontalSpacing(25)
 
         # Connecting signals
         self.autoScaleCheckBox.toggled.connect(self.sync_scale_box_with_checkbox)
@@ -1649,10 +1677,14 @@ class SettingsWindow(QWidget):
         """Creates an advanced settings tab"""
         tab = QWidget()
         layout = QGridLayout()
+        blank = QLabel()
 
         #info_label = QLabel("Additional settings will be added here.")
         #info_label.setAlignment(Qt.AlignCenter)
         #layout.addWidget(info_label)
+
+        self.text_widget_group = QGroupBox("Text Widget Settings:")
+        text_widget_layout = QGridLayout()
 
         self.showTextWidgetCheckBox = QCheckBox("Show Text Widget")
         self.showNameCheckBox = QCheckBox("Show Name")
@@ -1669,9 +1701,47 @@ class SettingsWindow(QWidget):
         self.showNameCheckBox.stateChanged.connect(self.on_setting_changed)
         self.showKaomojiCheckBox.stateChanged.connect(self.on_setting_changed)
 
-        layout.addWidget(self.showTextWidgetCheckBox, 0, 0)
-        layout.addWidget(self.showNameCheckBox, 1, 0)
-        layout.addWidget(self.showKaomojiCheckBox, 2, 0)
+        # Birthday Widget
+        self.birthday_title = QLabel("Enter Your Birthday:")
+        self.birthday_widget = BirthdayDateEdit()
+        self.birthday_info = QLabel("Birthday info")
+        self.birthday_info.setStyleSheet("color: grey; font-weight: bold;")
+
+        if hasattr(self, 'birthday_widget'):
+            self.birthday_widget.setDateFromComponents(
+                self.birthday_year,
+                self.birthday_month,
+                self.birthday_day
+            )
+
+        self.birthday_group = QGroupBox("Enter Your Birthday:")
+        birthday_layout = QGridLayout()
+
+        self.birthdayActiveCheckBox = QCheckBox("Birthday Activate")
+
+        self.birthdayActiveCheckBox.setChecked(self.birthday_active)
+
+        self.birthday_widget.dateChanged.connect(self.on_setting_changed)
+
+        self.birthdayActiveCheckBox.stateChanged.connect(self.on_setting_changed)
+
+        #text_widget_layout.addWidget(birthday_label)
+        text_widget_layout.addWidget(self.showTextWidgetCheckBox, 0,0)
+        text_widget_layout.addWidget(self.showNameCheckBox, 1,0)
+        text_widget_layout.addWidget(self.showKaomojiCheckBox, 2,0)
+        #text_widget_layout.addStretch()
+
+        self.text_widget_group.setLayout(text_widget_layout)
+
+        birthday_layout.addWidget(self.birthdayActiveCheckBox, 0, 0)
+        birthday_layout.addWidget(self.birthday_widget, 1, 0)
+        birthday_layout.addWidget(self.birthday_info, 2, 0)
+        layout.addWidget(blank, 3, 0)
+
+        self.birthday_group.setLayout(birthday_layout)
+
+        layout.addWidget(self.text_widget_group, 0, 0)
+        layout.addWidget(self.birthday_group, 1, 0)
 
         # Add icons
         self.update_icons()
@@ -2252,6 +2322,11 @@ class SettingsWindow(QWidget):
         try:
             sleep_hour, sleep_minute = self.timeBox.get_sleep_time()
             wake_hour, wake_minute = self.timeBox.get_wake_time()
+
+            birthday_date = self.birthday_widget.getDate()
+            birthday_year = birthday_date.year()
+            birthday_month = birthday_date.month()
+            birthday_day = birthday_date.day()
             # Collecting the current values
             current_settings = {
                 'frameless_window': self.framelessWindowCheckBox.isChecked(),
@@ -2284,6 +2359,10 @@ class SettingsWindow(QWidget):
                 'bgm': getattr(self, 'bgm_dial').value() if hasattr(self, 'bgm_dial') else self.bgm,
                 'sfx': getattr(self, 'sfx_dial').value() if hasattr(self, 'sfx_dial') else self.sfx,
                 'ambient': getattr(self, 'ambient_dial').value() if hasattr(self, 'ambient_dial') else self.ambient,
+                'birthday_active': self.birthdayActiveCheckBox.isChecked(),
+                'birthday_year': birthday_year,
+                'birthday_month': birthday_month,
+                'birthday_day': birthday_day,
                 'show_text_widget': self.showTextWidgetCheckBox.isChecked(),
                 'show_name': self.showNameCheckBox.isChecked(),
                 'show_kaomoji': self.showKaomojiCheckBox.isChecked()
@@ -2328,6 +2407,10 @@ class SettingsWindow(QWidget):
             self.set_setting('on_mouse_switch', current_settings['on_mouse'])
             self.set_setting('tap_body_switch', current_settings['tap_body'])
             self.set_setting('audio_system', current_settings['audio_system'])
+            self.set_setting('birthday_active', current_settings['birthday_active'])
+            self.set_setting('birthday_year', current_settings['birthday_year'])
+            self.set_setting('birthday_month', current_settings['birthday_month'])
+            self.set_setting('birthday_day', current_settings['birthday_day'])
             self.set_setting('show_text_widget', current_settings['show_text_widget'])
             self.set_setting('show_name', current_settings['show_name'])
             self.set_setting('show_kaomoji', current_settings['show_kaomoji'])
@@ -2460,6 +2543,13 @@ class SettingsWindow(QWidget):
                 # Update color
                 self.update_dial_color(dial, self.initial_values[category], category)
 
+        self.birthdayActiveCheckBox.setChecked(self.initial_values['birthday_active'])
+
+        self.birthday_widget.setDateFromComponents(
+            self.initial_values['birthday_year'],
+            self.initial_values['birthday_month'],
+            self.initial_values['birthday_day']
+        )
         self.showTextWidgetCheckBox.setChecked(self.initial_values['show_text_widget'])
         self.showNameCheckBox.setChecked(self.initial_values['show_name'])
         self.showKaomojiCheckBox.setChecked(self.initial_values['show_kaomoji'])
@@ -2496,6 +2586,7 @@ class SettingsWindow(QWidget):
         self.showTextWidgetCheckBox.setIcon(self.mainWindow.get_icon("text_widget"))
         self.showNameCheckBox.setIcon(self.mainWindow.get_icon("name"))
         self.showKaomojiCheckBox.setIcon(self.mainWindow.get_icon("kaomoji"))
+        self.birthdayActiveCheckBox.setIcon(self.mainWindow.get_icon("cake"))
 
     def get_available_styles(self):
         """Dynamically loads the icon based on the current theme."""
@@ -2572,6 +2663,13 @@ class SettingsWindow(QWidget):
                     self.mainWindow.audio_manager.set_master_volume(audio_value)
                 else:
                     self.mainWindow.audio_manager.set_category_volume(key, audio_value, True)
+
+        #if key == 'birthday_active':
+            #if hasattr(self.mainWindow, 'event_manager'):
+                #self.mainWindow.event_manager.birthday_active = value
+                #print(self.mainWindow.event_manager.birthday_active)
+
+        self.birthday_widget.setLanguage(self.language.lower())
 
     def updateSettings(self):
         # Update tab names
@@ -2651,11 +2749,16 @@ class SettingsWindow(QWidget):
             self.mute_button.setText(self.mainWindow.lang['Settings']['Unmute'])
 
         # Other Tab
+        self.text_widget_group.setTitle(self.mainWindow.lang['Settings']['TextWidget'])
         self.showTextWidgetCheckBox.setText(self.mainWindow.lang['Settings']['ShowTextWidget'])
         self.showNameCheckBox.setText(self.mainWindow.lang['Settings']['ShowName'])
         # self.showNameCheckBox.setEnabled(self.show_text_widget)
         self.showKaomojiCheckBox.setText(self.mainWindow.lang['Settings']['ShowKaomoji'])
         # self.showKaomojiCheckBox.setEnabled(self.show_text_widget)
+        self.birthday_group.setTitle(self.mainWindow.lang['Settings']['BirthdayTitle'])
+        self.birthday_widget.setText(self.mainWindow.lang['Settings']['DateText'],
+                                     self.mainWindow.lang['Settings']['Age'])
+        self.birthday_info.setText(self.mainWindow.lang['Settings']['BirthdayInfo'])
 
         # Update icons
         self.update_icons()
@@ -2829,6 +2932,13 @@ class SettingsWindow(QWidget):
                 self.showKaomojiCheckBox.setChecked(False)
                 self.set_setting('show_kaomoji', False)
 
+            if self.birthdayActiveCheckBox.isChecked():
+                self.birthdayActiveCheckBox.setChecked(True)
+                self.set_setting('birthday_active', True)
+            else:
+                self.birthdayActiveCheckBox.setChecked(False)
+                self.set_setting('birthday_active', False)
+
             self.language_org = self.langComboBox.currentText()
             self.getLanguageName()
             self.theme = self.themeComboBox.currentText()
@@ -2883,14 +2993,9 @@ class SettingsWindow(QWidget):
 
     def force_quit_app(self):
         """Force Close Window"""
-        # Сохраняем текущее состояние окна настроек
         self.unsaved_changes = False
         self.mainWindow.settings_lock = False
-
-        # Закрываем окно настроек
         self.close()
-
-        # Принудительно закрываем всё приложение
         os._exit(0)
 
 if __name__ == "__main__":

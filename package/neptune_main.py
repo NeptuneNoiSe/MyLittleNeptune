@@ -150,6 +150,9 @@ class MainWindow(QOpenGLWidget):
         self.w_correction = 0
         self.h_correction = 0
         self.a_scale = 1
+        self.l2d_scale = 1
+        self.offset_x = 0.0
+        self.offset_y = 0.0
         self.mx_param = 0
         self.my_param = 0
         self.frmX = 0
@@ -308,8 +311,15 @@ class MainWindow(QOpenGLWidget):
             self.w_res = int(self.mx_param * scale_factor)
             self.h_res = int(self.my_param * scale_factor)
 
+            self.l2d_scale = self.app_config.l2d_scale
+            self.offset_x = self.app_config.offset_x
+            self.offset_y = self.app_config.offset_y
+
             # Updating the remaining parameters
             self.app_config.update_model_params(
+                l2d_scale=self.l2d_scale,
+                offset_x=self.offset_x,
+                offset_y=self.offset_y,
                 w_resize=self.w_res,
                 h_resize=self.h_res,
                 w_correction=-70,
@@ -327,6 +337,7 @@ class MainWindow(QOpenGLWidget):
         self.resize(int(self.w_resize), int(self.h_resize))
         self.w_correction = self.app_config.w_correction
         self.h_correction = self.app_config.h_correction
+
 
     def position_window(self):
         """Set window position with conditions"""
@@ -444,6 +455,8 @@ class MainWindow(QOpenGLWidget):
         if self.model:
             self.model.Resize(w, h)
             self.canvas.SetSize(w, h)
+            self.model.SetScale(self.l2d_scale)
+            self.model.SetOffset(self.offset_x, self.offset_y)
 
     def on_draw(self):
         """Canvas draw method"""
@@ -592,6 +605,7 @@ class MainWindow(QOpenGLWidget):
 
         # Check current system color scheme
         self.get_system_theme()
+        self.input_handler.checkCursor()
 
         # Test canvas opacity
         #self.total_radius += self.radius_per_frame
@@ -648,7 +662,8 @@ class MainWindow(QOpenGLWidget):
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
             self.input_handler.start_pos = event.scenePosition()
             if not self.clickInLA:
-                self.input_handler.set_transparent_input()
+                pass
+                #self.input_handler.set_transparent_input()
             if self.isInL2DArea(x, y):
                 self.clickInLA = True
                 self.clickX, self.clickY = x, y

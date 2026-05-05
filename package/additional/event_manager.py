@@ -61,11 +61,6 @@ class EventManager:
         if self.event_instance:
             self.event_instance.congratulate_event(duration)
 
-    #def draw_event_text(self, painter):
-    #    if self.current_event is None:
-    #        return
-    #    self.event_instance.draw_new_year_text(painter)
-
     def draw_text_on_model(self):
         if self.current_event is None:
             return
@@ -122,6 +117,26 @@ class EventTimeManager:
                 return event_name
 
         return None
+
+    def get_current_event_birthday(self) -> Optional[str]:
+        """Determines the current active event with special birthday handling"""
+        today = date.today()
+        active_events = []
+
+        for event_name, schedule in self._event_schedule.items():
+            start = schedule["start"]
+            end = schedule["end"]
+
+            if self._is_date_in_period(today, start, end):
+                active_events.append(event_name)
+
+        if not active_events:
+            return None
+
+        if "BirthDay" in active_events:
+            return "BirthDay"
+
+        return active_events[0]
 
     def get_special_event(self) -> Optional[str]:
         """Defines the current active special event"""
@@ -597,7 +612,7 @@ class NewYearEvent:
         self.text_color = QColor(255, 255, 255)  # Белый
         self.text_shadow_color = QColor(0, 0, 0)  # Черный
 
-    def draw_new_year_text(self, painter: QPainter):
+    def draw_event_text(self, painter: QPainter):
         """Draws New Year's text on the widget"""
         if not self.new_year_event or not self.show_new_year_text or not self.text_visible:
             return
@@ -675,7 +690,7 @@ class NewYearEvent:
     def draw_on_model(self):
         if self.show_new_year_text:
             painter2 = QPainter(self.win)
-            self.draw_new_year_text(painter2)
+            self.draw_event_text(painter2)
             painter2.end()
 
     def event_end(self):
@@ -721,7 +736,7 @@ class ValentinesDayEvent:
                                                                     duration=1500,
                                                                     easing="in_quad")
 
-        self.win.image_manager.item_image.animate_bounce_continuous(animation = "animate_bounce",
+        self.win.image_manager.item_image.animate_bounce_continuous(target=self.win.image_manager.item_image,
                                                                     height=10,
                                                                     bounce_duration=duration/10,
                                                                     bounces=3,

@@ -129,6 +129,9 @@ class ModelsManager:
 
         # Save config
         win.app_config.update_model_params(character_name=win.character_name,
+                                           l2d_scale=win.l2d_scale,
+                                           offset_x=win.offset_x,
+                                           offset_y=win.offset_y,
                                            x_param=win.mx_param,
                                            y_param=win.my_param,
                                            w_resize=win.w_resize,

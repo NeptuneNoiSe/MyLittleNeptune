@@ -35,10 +35,9 @@ class InputHandler:
         self._current_pos = QPoint()
         self.smooth_factor = 0.3
 
-        # Input release timer
-        self.mouse_input_timer = QTimer()
-        self.mouse_input_timer.setSingleShot(True)
-        self.mouse_input_timer.timeout.connect(self.transparent_input_disable)
+        self.last_state = None
+        self.state_change_counter = 0
+        self.state_change_threshold = 50
 
         # Main tracking update timer
         self.update_timer = QTimer()
@@ -50,17 +49,34 @@ class InputHandler:
         self.sleepInputTimer.setSingleShot(True)
         self.sleepInputTimer.timeout.connect(self.takingSleep)
 
-    def transparent_input_disable(self):
-        """Disable transparent input"""
-        self.win.setWindowFlags(self.win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput)
-        self.win.show()
-        self.mouse_input_timer.stop()
+    def checkCursor(self):
+        global_pos = QCursor.pos()
+        local_pos = self.win.mapFromGlobal(global_pos)
 
-    def set_transparent_input(self, delay = 5000):
-        """Set transperent input if user click on trasparent area"""
-        self.win.setWindowFlags(self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput)
+        if not self.win.rect().contains(local_pos):
+            return
+
+        is_on_character = self.win.isInL2DArea(local_pos.x(), local_pos.y())
+
+        if is_on_character != self.last_state:
+            self.state_change_counter += 1
+            if self.state_change_counter >= self.state_change_threshold:
+                self.change_input_state(is_on_character)
+                self.state_change_counter = 0
+                self.last_state = is_on_character
+        else:
+            self.state_change_counter = 0
+
+    def change_input_state(self, is_on_character):
+        if is_on_character:
+            flags = self.win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput
+        else:
+            flags = self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput
+
+        self.win.hide()
+        self.win.setWindowFlags(flags)
+        self.win.setAttribute(Qt.WA_TranslucentBackground)
         self.win.show()
-        self.mouse_input_timer.start(delay)
 
     def update_idle_counter(self):
         """Update the idle counter"""

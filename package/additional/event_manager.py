@@ -794,6 +794,7 @@ class BirthDayEvent:
                                                              bounce_duration=duration/10,
                                                              bounces=3,
                                                              total_duration=duration)
+        self.win.particle_overlay.particle_presets.confetti(duration=duration)
 
         def function_stop():
             end_duration = duration / 4

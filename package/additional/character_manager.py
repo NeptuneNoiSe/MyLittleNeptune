@@ -245,8 +245,9 @@ class CharacterStateManager:
 
         self.win.animation_manager.transform_animation_start()
         self.character.tired_controller.timer_count = 1
-        self.win.settings_close()
+        #self.win.settings_close()
         self.win.models_window.close()
+        self.win.animation_status = True
 
         self.character.expressions.fadeoutTimer.stop()
         self.character.audio.set_transform_audio()
@@ -280,6 +281,7 @@ class CharacterStateManager:
                 self.character.character_text.set_transformed_normal_text()
             self.character.transform_text_show = False
             self.character.transform_exp_show = False
+            self.win.animation_status = False
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
         """Update Settings state"""
@@ -357,7 +359,8 @@ class CharacterStateManager:
                 return
 
             self.win.input_handler.input_lock = True
-            self.win.input_handler.set_transparent_input(delay=duration)
+            self.win.animation_status = True
+            #self.win.input_handler.set_transparent_input(delay=duration)
 
             audio_key = event_name.replace(" ", "_") + "_" + event_key
             self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
@@ -386,6 +389,7 @@ class CharacterStateManager:
 
         def end_congratulation():
             self.win.input_handler.input_lock = False
+            self.win.animation_status = False
             if hasattr(self, 'timer_congratulate'):
                 self.timer_congratulate.stop()
                 self.timer_congratulate.deleteLater()

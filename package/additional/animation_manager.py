@@ -562,7 +562,7 @@ class OpacityAnimator:
         return self.animation_manager.win
 
     def get_anim_for_object(self, obj):
-        """Возвращает уникальный аниматор для объекта"""
+        """Returns a unique animator for the object"""
         obj_id = id(obj)
         if obj_id not in self.animations:
             self.animations[obj_id] = QVariantAnimation()
@@ -608,15 +608,14 @@ class OpacityAnimator:
 
         self.anim.start()
 
-# TODO: НЕОБХОДИМО ТЕСТИРОВАНИЕ АНИМАТОРА НА РАЗЛИЧНЫХ ОБЪЕКТАХ
 class BounceAnimator:
-    """Универсальный аниматор подпрыгивания для любых объектов"""
+    """Universal bouncing animator for any object"""
     def __init__(self, animation_manager):
         self.animation_manager = animation_manager
-        self.bounce_loops = {}  # для непрерывных анимаций
-        self.bounce_animations = {}  # для одиночных анимаций
+        self.bounce_loops = {}
+        self.bounce_animations = {}
 
-        # Кэшируем часто используемые easing curves
+
         self.easing_curves = {
             "linear": QEasingCurve.Linear,
             "out_quad": QEasingCurve.OutQuad,
@@ -626,42 +625,39 @@ class BounceAnimator:
         }
 
     def _get_easing(self, name):
-        """Получить easing curve по имени"""
+        """get easing curve on name"""
         return self.easing_curves.get(name, QEasingCurve.Linear)
 
     def _get_widget(self, target):
-        """Универсальное получение виджета из любого объекта"""
-        # Прямой QWidget
+        """Universal widget retrieval from any object"""
+
         if isinstance(target, QWidget):
             return target
 
-        # Объект с label (как ItemImage)
         if hasattr(target, 'label') and isinstance(target.label, QWidget):
             return target.label
 
-        # Объект с методом get_target_widget
         if hasattr(target, 'get_target_widget') and callable(target.get_target_widget):
             widget = target.get_target_widget()
             if isinstance(widget, QWidget):
                 return widget
 
-        # Объект с атрибутом widget
         if hasattr(target, 'widget') and isinstance(target.widget, QWidget):
             return target.widget
 
         return None
 
     def _cleanup_animation(self, anim_id):
-        """Очистка завершенной анимации"""
+        """Clearing a completed animation"""
         if anim_id in self.bounce_animations:
             del self.bounce_animations[anim_id]
 
-    # ============= ПУБЛИЧНЫЕ МЕТОДЫ =============
+    # ============= Public Methods =============
 
     def animate_bounce(self, target, height=30, duration=800,
                        easing_up="out_quad", easing_down="out_bounce",
                        on_finished=None):
-        """Одиночное подпрыгивание"""
+        """Single bounce animation"""
         widget = self._get_widget(target)
         if not widget:
             print(f"Warning: Cannot get widget from {target}")
@@ -716,33 +712,29 @@ class BounceAnimator:
                                   total_duration=10000,
                                   on_finished=None):
         """
-        Непрерывное подпрыгивание
+        Continuous bounce animation
 
         Args:
-            target: объект для анимации
-            height: высота прыжка
-            bounce_duration: длительность одного прыжка
-            bounces: количество прыжков в одной итерации
-            total_duration: общая длительность анимации
-            on_finished: callback при завершении
+            target: target object
+            height: jump height
+            bounce_duration: jump duration
+            bounces: the number of jumps in one iteration
+            total_duration: animation duration
+            on_finished: callback when animation is finished
         """
 
         widget = self._get_widget(target)
         if not widget:
             return None
 
-        # Уникальный ID для этой непрерывной анимации
         loop_id = f"bounce_loop_{id(target)}_{int(time.time() * 1000)}"
 
-        # Время окончания
         end_time = time.time() + (total_duration / 1000.0)
 
         def bounce_iteration():
-            # Проверяем, не остановлена ли анимация
             if loop_id not in self.bounce_loops:
                 return
 
-            # Проверяем время
             if time.time() >= end_time:
                 # Завершаем
                 if loop_id in self.bounce_loops:
@@ -751,7 +743,6 @@ class BounceAnimator:
                     on_finished()
                 return
 
-            # Запускаем множественное подпрыгивание
             self.animate_bounce_multiple(
                 target=target,
                 height=height,
@@ -760,20 +751,18 @@ class BounceAnimator:
                 on_finished=lambda: QTimer.singleShot(50, bounce_iteration)
             )
 
-        # Сохраняем информацию о цикле
         self.bounce_loops[loop_id] = {
             'target_id': id(target),
             'end_time': end_time
         }
 
-        # Запускаем первый цикл
         QTimer.singleShot(0, bounce_iteration)
 
         return loop_id
 
     def animate_bounce_multiple(self, target, height=30, duration=800,
                                 bounces=3, damping=0.7, on_finished=None):
-        """Множественное подпрыгивание с затуханием"""
+        """Multiple bouncing with attenuation"""
 
         widget = self._get_widget(target)
         if not widget:
@@ -825,42 +814,37 @@ class BounceAnimator:
                              duration=300, easing_up="out_quad", easing_down="in_out_quad",
                              on_finished=None):
         """
-        Анимация масштаба с отскоком для любого объекта со свойством scale
+        Bounce scale animation for any object with the scale property
 
-        Args:
-            target: объект для анимации (должен иметь свойство scale и anim_scale)
-            start_scale: начальный масштаб
-            end_scale: конечный масштаб (пик)
-            duration: длительность анимации в мс
-            easing_up: кривая для увеличения
-            easing_down: кривая для уменьшения
-            on_finished: callback при завершении
+            Args:
+                target: the object to animate (must have the scale and anim_scale properties)
+                start_scale: the initial scale
+                end_scale: the final scale (peak)
+                duration: the duration of the animation in ms
+                easing_up: the curve for increasing
+                easing_down: the curve for decreasing
+                on_finished: the callback when the animation is complete
         """
 
-        # Проверяем, что target имеет нужные атрибуты
         if not hasattr(target, 'anim_scale') or not hasattr(target, 'scale'):
             print(f"Warning: Target {target} must have 'anim_scale' property")
             return None
 
         try:
-            # Сохраняем оригинальный масштаб если нужно
             if not hasattr(self, '_original_scales'):
                 self._original_scales = {}
 
             target_id = id(target)
             self._original_scales[target_id] = getattr(target, 'scale', start_scale)
 
-            # Создаем группу анимаций
             group = QSequentialAnimationGroup()
 
-            # Увеличение
             scale_up = QPropertyAnimation(target, b"anim_scale")
             scale_up.setDuration(duration // 2)
             scale_up.setStartValue(start_scale)
             scale_up.setEndValue(end_scale)
             scale_up.setEasingCurve(self._get_easing(easing_up))
 
-            # Уменьшение обратно
             scale_down = QPropertyAnimation(target, b"anim_scale")
             scale_down.setDuration(duration // 2)
             scale_down.setStartValue(end_scale)
@@ -870,10 +854,8 @@ class BounceAnimator:
             group.addAnimation(scale_up)
             group.addAnimation(scale_down)
 
-            # Уникальный ID
             anim_id = f"scale_bounce_{target_id}_{int(time.time() * 1000)}"
 
-            # Сохраняем анимацию (можно в отдельный словарь или в bounce_animations)
             if not hasattr(self, 'scale_animations'):
                 self.scale_animations = {}
 
@@ -884,11 +866,9 @@ class BounceAnimator:
                 'original_scale': start_scale
             }
 
-            # Callback завершения
             if on_finished:
                 group.finished.connect(on_finished)
 
-            # Очистка после завершения
             def cleanup():
                 if anim_id in self.scale_animations:
                     # Восстанавливаем оригинальный масштаб если нужно
@@ -899,7 +879,6 @@ class BounceAnimator:
 
             group.finished.connect(cleanup)
 
-            # Запускаем
             QTimer.singleShot(0, group.start)
             return anim_id
 
@@ -910,7 +889,7 @@ class BounceAnimator:
             return None
 
     def stop_scale_bounce(self, target):
-        """Остановить анимацию масштаба для объекта"""
+        """Stop the zoom animation for an object"""
         target_id = id(target)
 
         if hasattr(self, 'scale_animations'):
@@ -925,10 +904,9 @@ class BounceAnimator:
                 del self.scale_animations[anim_id]
 
     def stop_bounce(self, target):
-        """Остановить все bounce анимации для объекта"""
+        """Stop bounce animations for an object"""
         target_id = id(target)
 
-        # Останавливаем активные анимации
         to_delete = []
         for anim_id, anim_data in self.bounce_animations.items():
             if anim_data.get('target_id') == target_id or \
@@ -940,7 +918,6 @@ class BounceAnimator:
         for anim_id in to_delete:
             del self.bounce_animations[anim_id]
 
-        # Останавливаем циклы
         to_delete = []
         for loop_id, loop_data in self.bounce_loops.items():
             if loop_data.get('target_id') == target_id:
@@ -950,7 +927,7 @@ class BounceAnimator:
             del self.bounce_loops[loop_id]
 
     def stop_all_bounces(self):
-        """Остановить все bounce анимации"""
+        """Stop all bounce animations"""
         for anim_data in self.bounce_animations.values():
             if 'animation' in anim_data:
                 anim_data['animation'].stop()
@@ -985,7 +962,6 @@ class TransformAnimator:
         return self.animation_manager.win
 
     def _cleanup_current_movies(self):
-        """Очистка текущих анимационных объектов"""
         try:
             if self._current_transform_in:
                 self._current_transform_in.stop()
@@ -1209,7 +1185,7 @@ class TransformAnimator:
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
     def stop_all_animations(self):
-        """Метод для внешнего вызова при закрытии"""
+        """Method for an external call when closing"""
         self._cleanup_current_movies()
         self.animation_timer.stop()
         self.animation_phase = 0

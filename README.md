@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.13-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.3-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.6.1-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.9.5-D362C4" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.9.6-D362C4" alt="App Version" style="margin: 0 10px;">
     <img title="DeepSeek AI" src="https://img.shields.io/badge/DeepSeek-Best_Friend-0056D2" alt="DeepSeek AI" style="margin: 0 10px;">
 </p>
 
@@ -17,6 +17,7 @@
 * Python 3.13
 * PySide6
 * [live2d-py by Arkueid](https://github.com/Arkueid/live2d-py)
+* [Particle Engine Supreme by jjkitch](https://github.com/jjkitch/Particle-Engine-Supreme)
 * Compile Heart / Idea Factory Live2D Models and Sounds
 * [DeepSeek AI](https://www.deepseek.com) - not just a tool, but a true coding partner that provided inspiration, debugging help, and countless hours of thoughtful discussion throughout development ❤️🚀
 
@@ -30,7 +31,7 @@
 
 ## Usage:
 ### Run:
-`python package/neptune_main.py`
+`python launcher.py`
 
 ### Configuration file:
 The configuration file is created at the first startup, as config.ini

@@ -60,7 +60,7 @@ class Launcher:
         QSurfaceFormat.setDefaultFormat(format)
 
         cls.app = QApplication(sys.argv)
-        win = MainWindow(cls.app)
+        win = MainWindow(cls.app, __version__)
         win.setFormat(format)
         settings = SettingsWindow(win)
         win.set_settings_window(settings)

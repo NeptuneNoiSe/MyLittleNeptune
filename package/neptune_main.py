@@ -3,10 +3,11 @@ import os
 import time
 import resources
 import OpenGL.GL as gl
-from PySide6.QtCore import QTimerEvent, Qt
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QAction, QIcon
+from PySide6.QtCore import QTimerEvent, Qt, QTimer
+from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QAction, QIcon, QPalette, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QStyleFactory, QApplication
+from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QStyleFactory, QApplication, QProgressBar, \
+    QWidget
 from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
@@ -32,12 +33,11 @@ from package.windows.models_window import ModelsWindow
 from package.windows.overlay_window import ContextMenuOverlay
 from package.windows.overlay_window import ParticleOverlayWindow
 
+
 class MainWindow(QOpenGLWidget):
-    def __init__(self, app) -> None:
+    def __init__(self, app, version) -> None:
         super().__init__()
-        #self.settings = Launcher.get_settings()
-        self.settings = None
-        self.app = app
+
         # LOGS:
         # l2d-py Main Log:
         live2d.enableLog(False)
@@ -68,7 +68,7 @@ class MainWindow(QOpenGLWidget):
 
         self._init_config()
 
-        self._init_vars()
+        self._init_vars(app, version)
 
         self._init_ui()
 
@@ -147,8 +147,13 @@ class MainWindow(QOpenGLWidget):
         # Sleep Animation Time Scale
         self.time_scale = self.app_config.time_scale
 
-    def _init_vars(self):
+    def _init_vars(self, app, version):
         """Initialize Main Vars"""
+        # Main Vars
+        self.settings = None
+        self.app = app
+        self.version = version
+
         # Icons Vars
         self.ICON_COLOR_FOLDER = "black"
         self.color_icons = True
@@ -596,7 +601,6 @@ class MainWindow(QOpenGLWidget):
 
         # Priority 3: System Theme
         scheme = self.app.styleHints().colorScheme()
-        print(scheme)
         if scheme == Qt.ColorScheme.Dark:
             self.ICON_COLOR_FOLDER = "white"
             return "dark"
@@ -850,7 +854,7 @@ class MainWindow(QOpenGLWidget):
         # Exit Action
         exit_action = QAction(self.get_icon("exit"), self.lang['Actions']['Quit'], context_menu)
         if not self.input_handler.input_lock:
-            exit_action.triggered.connect(self.on_action_quit)
+            exit_action.triggered.connect(self.close)
         context_menu.addAction(exit_action)
 
         context_menu.aboutToHide.connect(self._on_context_menu_closed)
@@ -861,61 +865,238 @@ class MainWindow(QOpenGLWidget):
             self.context_menu_overlay = None
 
     def about(self):
-        QMessageBox.information(
-            self,
-            self.lang['Actions']['AboutAlt'],
-            self.lang['Actions']['AboutText']
+        about_box = QMessageBox(self)
+        about_box.setWindowTitle(self.lang['Actions']['AboutAlt'])
+        about_box.setText(f"My Little Neptune\n{self.lang['Actions']['Version']}{self.version}\n{self.lang['Actions']['AboutText']}")
+        about_box.setIcon(QMessageBox.Icon.Information)
+
+        pixmap = QPixmap(self.resource_manager.load_msg_box_image("about")).scaled(
+            128, 128,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
         )
+        about_box.setIconPixmap(pixmap)
+        about_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+
+        about_box.exec()
+
+    @staticmethod
+    def show_question_with_timer(
+            parent,
+            title: str,
+            question: str,
+            timeout_seconds: int = 10,
+            default_button: QMessageBox.StandardButton = QMessageBox.StandardButton.No,
+            custom_timeout_message: str = None,
+            cancel_button=False,
+            color_start=None,
+            color_end=None,
+            bg_color=None,
+            icon_path=None,
+            custom_image_path=None
+    ) -> QMessageBox.StandardButton:
+        """
+        Shows a dialog with an auto-response timer
+
+        Args:
+            parent: parent widget
+            title: dialog title
+            question: question text
+            timeout_seconds: time until auto-response (seconds)
+            default_button: button that will be pressed automatically
+            custom_timeout_message: custom timeout message (if None, default is used)
+            cancel_button: additional cancel button(if None, not used),
+            color_start= set custom color for progress bar(if None, used system color),
+            color_end=set custom color for progress bar(if None, used system color),
+            bg_color=set custom color for progress bar(if None, used system color),
+            icon_path=custom icon for message box(if None, default is used),
+            custom_image_path=custom image for message box(if None, default is used)
+
+        Returns:
+            the pressed button (or default_button on timeout)
+        """
+
+        if cancel_button:
+            msg_box = QMessageBox(
+                QMessageBox.Icon.Question,
+                title,
+                question,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
+                parent
+            )
+        else:
+            msg_box = QMessageBox(
+                QMessageBox.Icon.Question,
+                title,
+                question,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                parent
+            )
+
+        if custom_image_path:
+            pixmap = QPixmap(custom_image_path).scaled(128, 128,
+                                                       Qt.AspectRatioMode.KeepAspectRatio,
+                                                       Qt.TransformationMode.SmoothTransformation)
+            msg_box.setIconPixmap(pixmap)
+        elif icon_path:
+            msg_box.setIconPixmap(QPixmap(icon_path))
+
+        if hasattr(parent, 'mainWindow') and parent.mainWindow and hasattr(parent.mainWindow, 'lang'):
+            button_text = parent.mainWindow.lang["Buttons"]
+        elif hasattr(parent, 'win') and parent.win and hasattr(parent.win, 'lang'):
+            button_text = parent.win.lang["Buttons"]
+        elif hasattr(parent, 'lang'):
+            button_text = parent.lang["Buttons"]
+        else:
+            button_text = {"Yes": "Yes", "No": "No", "Cancel": "Cancel"}
+
+        yes_button = msg_box.button(QMessageBox.StandardButton.Yes)
+        yes_button.setText(button_text["Yes"])
+
+        no_button = msg_box.button(QMessageBox.StandardButton.No)
+        no_button.setText(button_text["No"])
+
+        if cancel_button:
+            cancel_button = msg_box.button(QMessageBox.StandardButton.Cancel)
+            cancel_button.setText(button_text["Cancel"])
+
+        container = QWidget()
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(0, 10, 0, 0)
+
+        progress_bar = QProgressBar()
+        progress_bar.setRange(0, 10)
+        progress_bar.setValue(10)
+        progress_bar.setFormat("%v sec")
+        progress_bar.setRange(0, timeout_seconds)
+        progress_bar.setValue(timeout_seconds)
+        progress_bar.setTextVisible(False)
+        progress_bar.setFixedHeight(6)
+        text_color = "#FF6B6B"
+
+        if color_start and color_end:
+            style = """
+                        QProgressBar {{
+                            border: none;
+                            border-radius: 3px;
+                            background-color: {bg_color};
+                        }}
+                        QProgressBar::chunk {{
+                            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 {color_start}, stop:1 {color_end});
+                            border-radius: 3px;
+                        }}
+                    """.format(bg_color=bg_color,
+                               color_start=color_start,
+                               color_end=color_end)
+            text_color = color_start
+        else:
+            palette = QApplication.palette()
+            accent_color = palette.color(QPalette.ColorRole.Highlight)
+
+            # Создаём градиент на основе акцентного цвета
+            lighter_accent = accent_color.lighter(120)
+            style = """
+                        QProgressBar {{
+                            border: none;
+                            border-radius: 3px;
+                            background-color: {bg_color};
+                        }}
+                        QProgressBar::chunk {{
+                            background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 {color_start}, stop:1 {color_end});
+                            border-radius: 3px;
+                        }}
+                    """.format(bg_color=accent_color.lighter(220).name(),
+                               color_start=accent_color.name(),
+                               color_end=lighter_accent.name())
+            text_color = accent_color.name()
+
+        progress_bar.setStyleSheet(style)
+
+        timer_label = QLabel()
+        timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        timer_label.setStyleSheet(f"color: {text_color}; margin-top: 5px; font-weight: bold;")
+
+        container_layout.addWidget(progress_bar)
+        container_layout.addWidget(timer_label)
+
+        layout = msg_box.layout()
+        if layout:
+            layout.addWidget(container, layout.rowCount(), 0, 1, layout.columnCount())
+
+        time_left = timeout_seconds
+
+        def update_timer():
+            nonlocal time_left
+            time_left -= 1
+            progress_bar.setValue(time_left)
+
+            if custom_timeout_message:
+                timer_label.setText(custom_timeout_message.format(seconds=time_left))
+            else:
+                timer_label.setText(f"⏱️ Automatic closing via {time_left} sec.")
+
+            if time_left <= 0:
+                timer.stop()
+                msg_box.done(default_button)
+
+        timer = QTimer()
+        timer.timeout.connect(update_timer)
+        timer.start(1000)
+
+        if custom_timeout_message:
+            timer_label.setText(custom_timeout_message.format(seconds=timeout_seconds))
+        else:
+            timer_label.setText(f"⏱️ Automatic closing via {timeout_seconds} sec.")
+
+        reply = msg_box.exec()
+
+        if timer.isActive():
+            timer.stop()
+
+        return reply
 
     def closeEvent(self, event):
-        """Close Event"""
-        self.character.state.set_crying_state()
-        self.character.audio.set_really_quit_audio()
-        self.settings.close()
-        self.models_window.close()
-        #self.particle_overlay.close()
-        if self.character.tired_state.condition == "Sleep":
-            self.character.tired_controller.wake_up_function()
-        self.kaomoji = "(o;TωT)o"
-        self.quit_box_active = True
-        answer = QMessageBox.question(self,
-                                      self.lang['Actions']['Quit'],
-                                      self.name + ": " + self.lang['Talk']['Quit'] + " " + self.kaomoji,
-                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                                      QMessageBox.StandardButton.No)
-        if answer == QMessageBox.StandardButton.Yes:
+        if hasattr(self, 'quit_box_active') and self.quit_box_active:
             event.accept()
-            self.kaomoji = "(^3^)"
-            self.quit_box_active = False
-        else:
-            self.character.tired_controller.timer_count = 1
-            self.character.state.set_quit_state(quit='No')
-            self.quit_box_active = False
-            event.ignore()
+            return
 
-    def on_action_quit(self):
         if self.character.tired_state.condition == "Sleep":
             self.character.tired_controller.wake_up_function()
+
         self.models_window.close()
         self.settings_close()
+
+        if event.spontaneous():
+            QApplication.quit()
+            #self.character.state.set_quit_state(quit='Yes')
+            event.accept()
+        else:
+            self.show_quit_dialog()
+            event.ignore()
+
+    def show_quit_dialog(self):
+        """Show quit dialog"""
         self.character.expressions.set_cry_expression()
         self.character.audio.set_really_quit_audio()
         self.kaomoji = "(o;TωT)o"
         self.quit_box_active = True
 
-        answer = QMessageBox.question(
-            self,
-            self.lang['Actions']['Quit'],
-            f"{self.name}: {self.lang['Talk']['Quit']} {self.kaomoji}",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+        answer = self.show_question_with_timer(
+            parent=self,
+            title=self.lang['Actions']['Quit'],
+            question=f"{self.lang['Talk']['Quit']} {self.kaomoji}",
+            timeout_seconds=10,
+            default_button=QMessageBox.StandardButton.Yes,
+            custom_timeout_message=f"⏱️ {self.lang['Settings']['AutoCloseMessage']}",
+            custom_image_path=self.resource_manager.load_msg_box_image("quit")
         )
 
         if answer == QMessageBox.StandardButton.Yes:
             self.character.state.set_quit_state(quit='Yes')
-            self.input_handler.input_lock = True
-            self.quit_box_active = False
+            # QApplication.quit()
         else:
             self.character.tired_controller.timer_count = 1
             self.character.state.set_quit_state(quit='No')
-            self.quit_box_active = False
+        self.quit_box_active = False

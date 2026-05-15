@@ -20,6 +20,7 @@ class ResourceManager:
         self.languages: Dict[str, Dict] = {}
         self.background_images: Dict[str, str] = {}
         self.item_images: Dict[str, str] = {}
+        self.msg_box_images: Dict[str, str] = {}
         self.animation_files: Dict[str, str] = {}
         self.extra_motions: Dict[str, str] = {}
         self._talk_images: Dict[str, str] = {}
@@ -60,6 +61,13 @@ class ResourceManager:
                 self.resources_dir, f"images/items/{image_name}.png"
             )
         return self.item_images[image_name]
+
+    def load_msg_box_image(self, image_name: str)-> str:
+        if image_name not in self.msg_box_images:
+            self.msg_box_images[image_name] = os.path.join(
+                self.resources_dir, f"images/msg_box/{image_name}.png"
+            )
+        return self.msg_box_images[image_name]
 
     def load_animation(self, anim_name: str) -> str:
         """Returns animation path"""

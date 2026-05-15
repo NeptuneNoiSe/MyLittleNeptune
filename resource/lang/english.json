@@ -120,17 +120,22 @@
     "About": "&About",
     "AboutAlt": "About",
     "Quit": "Quit",
-    "AboutText": "My Little Neptune\nThe assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
+    "Version": "Version: ",
+    "AboutText": "The assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
   },
-  "Settings": {
-    "Settings": "Settings",
-    "ResetPosition": "Reset Position",
-    "Quit": "Force Quit",
-    "WindowTitle": "Window",
-    "Controls": "Controls",
+  "Buttons": {
     "Apply": "Apply",
     "OK": "OK",
     "Cancel": "Cancel",
+    "Quit": "Force Quit",
+    "ResetPosition": "Reset Position",
+    "Yes": "Yes",
+    "No": "No"
+  },
+  "Settings": {
+    "Settings": "Settings",
+    "WindowTitle": "Window",
+    "Controls": "Controls",
     "Error": "Error",
     "UnsavedChangesTitle": "Unsaved changes",
     "UnsavedChanges": "You have unsaved changes",
@@ -183,7 +188,8 @@
     "TextWidget": "Text Widget Settings:",
     "ShowTextWidget": "Show text widget",
     "ShowName": "Show character name in widget",
-    "ShowKaomoji": "Show kaomoji in widget"
+    "ShowKaomoji": "Show kaomoji in widget",
+    "AutoCloseMessage": "Automatic closing via {seconds} sec."
   },
   "ModelsWindow": {
     "Title": "Choose a character",
@@ -194,6 +200,12 @@
     "AlreadyChangedMessage": "already changed",
     "CharacterSelectedMessage": "Selected",
     "AllowSelectionMessage": "You can choose a character"
+  },
+  "Time": {
+    "Days": "d.",
+    "Hours": "h.",
+    "Minutes": "min.",
+    "Seconds": "sec."
   },
   "NewYearEvent": {
     "Greeting": "Hi! The New Year is coming soon",

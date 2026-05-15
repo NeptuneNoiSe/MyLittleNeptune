@@ -120,17 +120,22 @@
     "About": "&О Себе",
     "AboutAlt": "О Себе",
     "Quit": "Выход",
-    "AboutText": "My Little Neptune\nПриложение-помощник на вашем рабочем столе,\nкоторое каждый день дарит вам радость своим внешним видом!:)\nРазработчик: Neptune NoiSe\nПриложение основано на:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
+    "Version": "Версия: ",
+    "AboutText": "Приложение-помощник на вашем рабочем столе,\nкоторое каждый день дарит вам радость своим внешним видом!:)\nРазработчик: Neptune NoiSe\nПриложение основано на:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
   },
-  "Settings": {
-    "Settings": "Параметры",
-    "ResetPosition": "Сброс Положения",
-    "Quit": "Принудительный Выход",
-    "WindowTitle": "Окно",
-    "Controls": "Управление",
+  "Buttons": {
     "Apply": "Применить",
     "OK": "ОК",
     "Cancel": "Отмена",
+    "Quit": "Принудительный Выход",
+    "ResetPosition": "Сброс Положения",
+    "Yes": "Да",
+    "No": "Нет"
+  },
+  "Settings": {
+    "Settings": "Параметры",
+    "WindowTitle": "Окно",
+    "Controls": "Управление",
     "Error": "Ошибка",
     "UnsavedChangesTitle": "Hесохранённые изменения",
     "UnsavedChanges": "Вы имеете несохранённые изменения",
@@ -183,7 +188,8 @@
     "TextWidget": "Настройки Текстового виджета:",
     "ShowTextWidget": "Отображать текстовый виджет",
     "ShowName": "Отображать имя персонажа в виджете",
-    "ShowKaomoji": "Отображать каомодзи в виджете"
+    "ShowKaomoji": "Отображать каомодзи в виджете",
+    "AutoCloseMessage": "Автоматическое закрытие через {seconds} сек."
   },
   "ModelsWindow": {
     "Title": "Выберите персонажа",
@@ -194,6 +200,12 @@
     "AlreadyChangedMessage": "уже выбрана",
     "CharacterSelectedMessage": "Выбрана",
     "AllowSelectionMessage": "Можно выбирать персонажа"
+  },
+  "Time": {
+    "Days": "д.",
+    "Hours": "ч.",
+    "Minutes": "мин.",
+    "Seconds": "сек."
   },
   "NewYearEvent": {
     "Greeting": "Привет! Скоро Новый Год",

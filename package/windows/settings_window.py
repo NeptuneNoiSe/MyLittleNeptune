@@ -1457,15 +1457,21 @@ class SettingsWindow(QWidget):
         if self.mainWindow.animation_status:
             return
         if self.unsaved_changes:
-            reply = QMessageBox.question(
-                self, self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
-                self.mainWindow.lang['Settings']['DiscardChanges'],
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No
+            reply = self.mainWindow.show_question_with_timer(
+                parent=self,
+                title=self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
+                question=self.mainWindow.lang['Settings']['DiscardChanges'],
+                timeout_seconds=10,
+                default_button=QMessageBox.StandardButton.Yes,
+                custom_timeout_message=f"⏱️ {self.mainWindow.lang['Settings']['AutoCloseMessage']}",
+                custom_image_path=self.mainWindow.resource_manager.load_msg_box_image("settings"),
+                color_start="#FF6B6B",
+                color_end="#FFB88C",
+                bg_color="#e0e0e0"
             )
-
             if reply == QMessageBox.StandardButton.Yes:
                 self.revert_to_initial_values()
+                self.close()
         else:
             pass
 
@@ -1853,11 +1859,11 @@ class SettingsWindow(QWidget):
 
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
-        self.resetPosButton.setText(self.mainWindow.lang['Settings']['ResetPosition'])
-        self.quitButton.setText(self.mainWindow.lang['Settings']['Quit'])
-        self.apply_button.setText(self.mainWindow.lang['Settings']['Apply'])
-        self.ok_button.setText(self.mainWindow.lang['Settings']['OK'])
-        self.cancel_button.setText(self.mainWindow.lang['Settings']['Cancel'])
+        self.resetPosButton.setText(self.mainWindow.lang['Buttons']['ResetPosition'])
+        self.quitButton.setText(self.mainWindow.lang['Buttons']['Quit'])
+        self.apply_button.setText(self.mainWindow.lang['Buttons']['Apply'])
+        self.ok_button.setText(self.mainWindow.lang['Buttons']['OK'])
+        self.cancel_button.setText(self.mainWindow.lang['Buttons']['Cancel'])
 
         # Appearance Tab
         self.framelessWindowCheckBox.setText(self.mainWindow.lang['Settings']['FramelessWindow'])
@@ -2141,19 +2147,25 @@ class SettingsWindow(QWidget):
 
     def closeEvent(self, event):
         """Close Window Handler"""
-
         if self.unsaved_changes:
-            reply = QMessageBox.question(
-                self, self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
-                self.mainWindow.lang['Settings']['ApplyBeforeClosing'],
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
-                QMessageBox.StandardButton.Yes
+            reply = self.mainWindow.show_question_with_timer(
+                parent=self,
+                title=self.mainWindow.lang['Settings']['UnsavedChangesTitle'],
+                question=self.mainWindow.lang['Settings']['ApplyBeforeClosing'],
+                timeout_seconds=10,
+                default_button=QMessageBox.StandardButton.No,
+                cancel_button=True,
+                custom_timeout_message=f"⏱️ {self.mainWindow.lang['Settings']['AutoCloseMessage']}",
+                custom_image_path=self.mainWindow.resource_manager.load_msg_box_image("settings"),
+                color_start="#FF6B6B",
+                color_end="#FFB88C",
+                bg_color="#e0e0e0"
             )
-
             if reply == QMessageBox.StandardButton.Yes:
                 self.apply_settings()
                 event.accept()
             elif reply == QMessageBox.StandardButton.No:
+                self.revert_to_initial_values()
                 event.accept()
             else:
                 event.ignore()

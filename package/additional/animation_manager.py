@@ -1000,6 +1000,8 @@ class TransformAnimator:
         self.win.canvas.SetOutputOpacity(1.0)
 
         self.animation_manager.start_rainbow_effect(speed=2.0)
+        self.win.particle_overlay.particle_presets.transform(name=self.win.character_name)
+        self.win.particle_overlay.particle_presets.transform_fairy_dust(particle_duration = 0.75)
 
         # Setup transform_in animation
         self._play_model_animation()
@@ -1095,6 +1097,7 @@ class TransformAnimator:
         self.win.transformLabel.show()
 
         self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
+        self.win.particle_overlay.particle_presets.transform(name=self.win.character_name, reverse=True)
 
     def _process_fade_in(self):
         """Handle transform_out animation with delayed opacity restore"""
@@ -1149,6 +1152,7 @@ class TransformAnimator:
             self._cleanup_current_movies()
 
         finally:
+            self.win.particle_overlay.stop_particle_system()
             self.animation_timer.stop()
             self.current_animation_win = None
             self.animation_phase = 0

@@ -235,6 +235,7 @@ class CharacterStateManager:
     def set_transform_state(self):
         """Transform state"""
         self.win.model_move = False
+        self.cancel_congratulation_timer()
         if not self.win.can_transform or self.win.settings_lock:
             if self.character.tired_state.condition != "Sleep":
                 self.set_transform_failure_state()

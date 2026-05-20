@@ -778,6 +778,8 @@ class BirthDayEvent:
 
     def congratulate_event(self, duration):
         #self.win.animation_manager.play_color_pulse(pulse_duration=1000, r=255, g=126, b=147, stop_after_ms=duration)
+        self.win.audio_manager.play_audio("Effects", "happy_birthday", enable_lipsync=False, category="sfx",
+                                      stop_audio=False)
         self.win.animation_manager.start_rainbow_effect(speed=3.0)
         self.win.image_manager.item_image.set_item("cake", position=(0, -50 * self.win.a_scale),opacity=0)
         self.win.image_manager.item_image.set_percentage_size(relative_to_model=True,

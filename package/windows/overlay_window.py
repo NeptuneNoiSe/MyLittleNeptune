@@ -81,7 +81,6 @@ class ContextMenuOverlay(QMenu):
                 }
             """)
         else:
-            # Неизвестная тема — используем тёмную по умолчанию
             self.setStyleSheet("""
                 QMenu {
                     background-color: rgba(40, 40, 40, 240);
@@ -155,20 +154,39 @@ class ParticleOverlayWindow(QWidget):
             Qt.WindowType.Tool
         )
         #self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        self.width_offset = 0
+        self.height_offset = 0
 
         from package.particle_engine_supreme import GlobalEffectOverlay
 
         self.particle_system = GlobalEffectOverlay(self, use_physics=True)
-        self.particle_system.setGeometry(0, 0, self.width(), self.height())
 
     def followMainWindow(self, main_window_geometry):
-        self.setGeometry(main_window_geometry)
+        """Updates the window position and size"""
+        main_width = main_window_geometry.width()
+        main_height = main_window_geometry.height()
+
+        overlay_width = main_width + self.width_offset
+        overlay_height = main_height + self.height_offset
+
+        x = main_window_geometry.x() + (main_width - overlay_width) // 2
+        y = main_window_geometry.y() + (main_height - overlay_height) // 2
+
+        self.setGeometry(x, y, overlay_width, overlay_height)
+        self.particle_system.setGeometry(0, 0, overlay_width, overlay_height)
+
+    def set_width_reduction(self, reduction):
+        """Sets the width reduction (positive number - reduction)"""
+        self.width_offset = -reduction
+        if self.parent():
+            self.followMainWindow(self.parent().geometry())
 
     def add_particle_preset(self, preset_name = "", *args, **kwargs):
         preset = preset_name
 
     def stop_particle_system(self, duration=0):
         QTimer.singleShot(duration, lambda: self.particle_system.clear_effects())
+        self.set_width_reduction(0)
 
 class ParticlePresets:
     def __init__(self, overlay_window):
@@ -198,16 +216,52 @@ class ParticlePresets:
 
     def confetti(self, duration=1000, count=1):
         self.overlay_window.particle_system.clear_effects()
+        particle_duration = int(duration / 10000)
         self.overlay_window.particle_system.add_global_effect("confetti",
-                                               count=3* count,
-                                               shape="star",
-                                               interval=5)
-        self.overlay_window.particle_system.add_global_effect("confetti",
-                                               count=2 * count,
-                                               shape="line",
-                                               interval=4)
-        self.overlay_window.particle_system.add_global_effect("confetti",
-                                               count=1 * count,
-                                               interval=3)
+                                                              duration=particle_duration,
+                                                              count=3 * count,
+                                                              shape="star",
+                                                              interval=5)
+        self.overlay_window.particle_system.add_global_effect("confetti",duration=particle_duration,count=2 * count,shape="line",interval=4)
+        self.overlay_window.particle_system.add_global_effect("confetti",duration=particle_duration,count=1 * count,nterval=3)
         self.overlay_window.stop_particle_system(duration)
+
+    def transform_fairy_dust(self, particle_duration: float = -1):
+        self.overlay_window.particle_system.add_global_effect("fairy_dust", duration= particle_duration)
+
+    def transform(self, duration=1000, count=1, name = "", reverse=False):
+        self.overlay_window.particle_system.clear_effects()
+        self.overlay_window.set_width_reduction(150)
+        if reverse:
+            angle_min = 90
+            angle_max = 90
+            gravity = 0.2
+        else:
+            angle_min = -90
+            angle_max = -90
+            gravity = -0.2
+
+        self.overlay_window.particle_system.add_global_effect("matrix",
+                                                              angle_min = angle_min,
+                                                              angle_max = angle_max,
+                                                              gravity = gravity,
+                                                              color = ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff"],
+                                                              text_chars = f'{name.upper()}01010101010101010101',
+                                                              color_curve = None,
+                                                              life_max = 120,
+                                                              life_min=60,
+                                                              count= 2 * count,
+                                                              interval= 5)
+        self.overlay_window.particle_system.add_global_effect("rain",
+                                                              angle_min=angle_min,
+                                                              angle_max=angle_max,
+                                                              gravity=gravity,
+                                                              color=["#ff0000", "#00ff00", "#0000ff", "#ffff00",
+                                                                     "#ff00ff"],
+                                                              color_curve=None,
+                                                              life_max=12,
+                                                              life_min=6,
+                                                              count=2 * count,
+                                                              interval=5)
+
 

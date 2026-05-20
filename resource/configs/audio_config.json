@@ -700,7 +700,8 @@
   "Effects": {
     "transform_start": "transform_start.wav",
     "transform_finish": "transform_finish.wav",
-    "new_year_fanfare": "new_year_fanfare.wav"
+    "new_year_fanfare": "new_year_fanfare.wav",
+    "happy_birthday": "happy_birthday.wav"
   },
   "BGM": {
     "new_year_song": "new_year_song.wav",

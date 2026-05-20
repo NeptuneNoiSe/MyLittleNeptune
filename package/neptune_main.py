@@ -369,8 +369,11 @@ class MainWindow(QOpenGLWidget):
                 self.frmX = (self.SrcSize.width() - window_width)
 
             self.frmY = (self.SrcSize.height() - window_height) - self.h_correction
-
-            self.move(int(self.frmX), int(self.frmY - self.h_correction))
+            if self.first_run:
+                fr_c = 25
+            else:
+                fr_c = 0
+            self.move(int(self.frmX), int(self.frmY - fr_c))
 
         else:
             # Defensive logic for large models
@@ -456,8 +459,9 @@ class MainWindow(QOpenGLWidget):
         self.talk_widget.show_talk()
         self.character.state.set_greeting_state(is_first_run=True)
         self.input_handler.input_lock = True
-        self.first_run = False
         self.position_window()
+        self.first_run = False
+
 
     def init_classes(self):
         """Initialize classes"""
@@ -702,6 +706,7 @@ class MainWindow(QOpenGLWidget):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Handling mouse button press"""
+        #self.particle_overlay.particle_presets.light_explosion()
         if event.button() == Qt.LeftButton and not self.input_handler.input_lock:
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()

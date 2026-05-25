@@ -8,7 +8,7 @@ import resources
 
 class ModelsWindow(QWidget):
     """Models Window Class"""
-    character_selected = Signal(str)  # Сигнал для передачи выбранного персонажа
+    character_selected = Signal(str)  # The signal for transmitting the selected character
 
     def __init__(self, win):
         super().__init__()
@@ -26,20 +26,19 @@ class ModelsWindow(QWidget):
         self.message_timer.setSingleShot(True)
         self.message_timer.timeout.connect(self.hide_message)
 
-        # Настройка окна
+        # Setting up the window
         self.setWindowTitle("Character Selector")
         self.setFixedSize(660, 560)
 
-        # Установка иконки окна
+        # Installing the window icon
         icon_path = os.path.join(resources.RESOURCES_DIRECTORY, "icons/color/character.svg")
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
-        # Основной layout
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
 
-        # Заголовок
+        # Set title
         self.title_label = QLabel("Выберите персонажа")
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("""
@@ -49,7 +48,7 @@ class ModelsWindow(QWidget):
         """)
         # main_layout.addWidget(self.title_label)
 
-        # Лейбл для сообщений (изначально скрыт)
+        # Label for messages (initially hidden)
         self.message_label = QLabel()
         self.message_label.setAlignment(Qt.AlignCenter)
         self.message_label.setStyleSheet("""
@@ -63,16 +62,14 @@ class ModelsWindow(QWidget):
                 margin: 5px;
             }
         """)
-        self.message_label.hide()  # Скрываем по умолчанию
+        self.message_label.hide()
         main_layout.addWidget(self.message_label)
 
-        # Создание прокручиваемой области для кнопок
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
-        # Виджет для контента внутри скролла
         self.scroll_content = QWidget()
         self.scroll_layout = QGridLayout(self.scroll_content)
         self.scroll_layout.setAlignment(Qt.AlignTop)
@@ -87,12 +84,10 @@ class ModelsWindow(QWidget):
         self.load_characters()
 
     def load_characters(self, include_hdd: bool = True):
-        """Загружает и отображает кнопки всех персонажей"""
-        # Получаем списки персонажей (английские имена для логики)
+        """Loads and displays all character buttons"""
         base_names = self.win.resource_manager.get_base_character_names()
         hdd_names = self.win.resource_manager.get_hdd_character_names() if include_hdd else []
 
-        # Очищаем предыдущее содержимое
         self.clear_layout(self.scroll_layout)
 
         row = 0
@@ -100,7 +95,7 @@ class ModelsWindow(QWidget):
         max_cols = 4
 
         def get_localized_name(orig_name: str) -> str:
-            """Возвращает локализованное имя персонажа"""
+            """Returns the localized character name"""
             normalized_name = orig_name.replace(" ", "")
             if hasattr(self.win, 'lang') and 'Names' in self.win.lang:
                 return self.win.lang['Names'].get(normalized_name, orig_name)
@@ -132,7 +127,7 @@ class ModelsWindow(QWidget):
             row += 1
             col = 0
 
-            hdd_label_text = "HDD персонажи"
+            hdd_label_text = "HDD Characters"
             if hasattr(self.win, 'lang') and 'ModelsWindow' in self.win.lang:
                 hdd_label_text = self.win.lang['ModelsWindow'].get('HDDTitle', hdd_label_text)
 
@@ -155,7 +150,7 @@ class ModelsWindow(QWidget):
                 col += 1
 
     def on_character_selected(self, character_name: str):
-        """Обработчик выбора персонажа с защитой от спама"""
+        """Character selection handler with spam protection"""
         normalized_name = character_name.replace(" ", "")
 
         if hasattr(self.win, 'lang') and 'Names' in self.win.lang:
@@ -164,14 +159,14 @@ class ModelsWindow(QWidget):
             display_name = character_name
 
         if not self.can_select:
-            # print("Выбор временно заблокирован")
+            # print("The selection is temporarily blocked")
             self.show_message(f"⏳ {self.win.lang['ModelsWindow']['DelayMessage']}",
                               is_error=True,
                               type_error="can_select",
                               duration=5000)
             return
 
-        # print(f"Выбран персонаж: {character_name}")
+        # print(f"A character is selected: {character_name}")
 
         if self.win.character_lock:
             return
@@ -192,7 +187,7 @@ class ModelsWindow(QWidget):
             return
 
         if hasattr(self.win, 'character_name') and self.win.character_name == character_name:
-            # print(f"Персонаж {character_name} уже выбран")
+            # print(f"The character {character_name} has already been selected")
             self.win.character.state.already_changed_character()
             self.show_message(f"✨ {display_name} {self.win.lang['ModelsWindow']['AlreadyChangedMessage']}",
                               is_info=True)
@@ -212,29 +207,28 @@ class ModelsWindow(QWidget):
         self.win.model_move = True
         self.win.character.state.set_goodbye_state()
 
-        # Устанавливаем нового персонажа
         self.win.character_name = character_name
 
-        # print(f"Персонаж успешно изменен на: {character_name}")
+        # print(f"The character has been successfully changed to: {character_name}")
 
     def allow_selection(self):
-        """Разрешает выбор персонажа"""
+        """Allow character selection"""
         self.can_select = True
         self.set_buttons_enabled(True)
         if self.type_error == "can_select":
             self.show_message(f"✨ {self.win.lang['ModelsWindow']['AllowSelectionMessage']}",
                               is_info=True, duration=1500)
             self.type_error == ""
-        # print("Выбор снова разрешен")
+        # print("The choice is allowed again")
 
     def set_buttons_enabled(self, enabled: bool):
-        """Включает/отключает все кнопки"""
+        """Enables/disables all buttons"""
         for button in self.findChildren(CharacterButton):
             button.setEnabled(enabled)
 
     def show_message(self, text: str, is_error: bool = False, type_error: str = "", is_success: bool = False,
                      is_info: bool = False, duration: int = 2000):
-        """Показывает сообщение в окне"""
+        """Shows the message in the window"""
         if self.message_timer.isActive():
             self.message_timer.stop()
 
@@ -284,11 +278,11 @@ class ModelsWindow(QWidget):
         self.message_timer.start(duration)
 
     def hide_message(self):
-        """Скрывает сообщение"""
+        """Hide message"""
         self.message_label.hide()
 
     def clear_layout(self, layout):
-        """Очищает layout от всех виджетов"""
+        """Clear the layout of the window"""
         if layout is not None:
             while layout.count():
                 item = layout.takeAt(0)
@@ -299,12 +293,12 @@ class ModelsWindow(QWidget):
                     self.clear_layout(item.layout())
 
     def show_with_filter(self, show_hdd: bool = True):
-        """Показывает окно с возможностью фильтрации HDD персонажей"""
+        """Shows a window with the ability to filter characters by HDD"""
         self.load_characters(show_hdd)
         self.show()
 
 class CharacterButton(QFrame):
-    """Кнопка с анимацией при нажатии и задержкой возврата"""
+    """Button with animation on click and delay on return"""
     clicked = Signal(str)
 
     def __init__(self, character_name: str, image_path: Optional[str] = None,
@@ -361,7 +355,7 @@ class CharacterButton(QFrame):
         self.update_style(normal=True)
 
     def get_base_style(self, normal: bool = True) -> str:
-        """Возвращает базовый стиль в зависимости от типа персонажа"""
+        """Returns the base style based on the character type"""
         if self.is_hdd:
             base_style = """
                 CharacterButton {
@@ -397,11 +391,11 @@ class CharacterButton(QFrame):
             """
 
     def update_style(self, normal: bool = True):
-        """Обновляет стиль кнопки"""
+        """Update button style"""
         self.setStyleSheet(self.get_base_style(normal))
 
     def set_normal_image(self):
-        """Устанавливает обычное изображение"""
+        """Set Normal Image"""
         if self.image_path and os.path.exists(self.image_path):
             pixmap = QPixmap(self.image_path)
             if not pixmap.isNull():
@@ -417,7 +411,7 @@ class CharacterButton(QFrame):
         self.set_placeholder_image()
 
     def set_pressed_image(self):
-        """Устанавливает изображение для нажатого состояния"""
+        """Set Pressed image"""
         if self.pressed_image_path and os.path.exists(self.pressed_image_path):
             pixmap = QPixmap(self.pressed_image_path)
             if not pixmap.isNull():
@@ -429,7 +423,6 @@ class CharacterButton(QFrame):
                 self.image_container.setPixmap(scaled_pixmap)
                 return
 
-        # Если нет изображения для нажатия, используем обычное с эффектом
         self.set_normal_image()
         self.image_container.setStyleSheet("""
             QLabel {
@@ -438,7 +431,7 @@ class CharacterButton(QFrame):
         """)
 
     def set_placeholder_image(self):
-        """Устанавливает заглушку для изображения"""
+        """Set placeholder image"""
         self.image_container.setText(self.character_name[0] if self.character_name else "?")
 
         if self.is_hdd:
@@ -460,15 +453,13 @@ class CharacterButton(QFrame):
         """)
 
     def return_to_normal(self):
-        """Возвращает кнопку в обычное состояние после задержки"""
+        """Return Button to normal state"""
         self.is_pressed = False
         self.set_normal_image()
 
-        # Анимация возврата
         self.animation.setDirection(QPropertyAnimation.Backward)
         self.animation.start()
 
-        # Возвращаем обычный стиль
         self.update_style(normal=True)
 
     def mousePressEvent(self, event):
@@ -492,7 +483,7 @@ class CharacterButton(QFrame):
         super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
-        """Если мышь ушла с кнопки во время нажатия"""
+        """If the mouse leaves the button while it is being pressed"""
         if self.is_pressed and not self.rect().contains(event.pos()):
             self.is_pressed = False
             self.return_timer.stop()
@@ -503,5 +494,5 @@ class CharacterButton(QFrame):
         super().mouseMoveEvent(event)
 
     def leaveEvent(self, event):
-        """Когда курсор покидает виджет"""
+        """When the cursor leaves the widget"""
         super().leaveEvent(event)

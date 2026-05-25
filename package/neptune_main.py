@@ -1,14 +1,16 @@
 import math
 import os
+import sys
 import time
 import resources
 import OpenGL.GL as gl
+import numpy as np
+from PIL import Image
 from PySide6.QtCore import QTimerEvent, Qt, QTimer
-from PySide6.QtGui import QMouseEvent, QCursor, QScreen, QAction, QIcon, QPalette, QPixmap
+from PySide6.QtGui import QGuiApplication, QMouseEvent, QCursor, QScreen, QAction, QIcon, QPalette, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QStyleFactory, QApplication, QProgressBar, \
     QWidget
-from PySide6.QtGui import QGuiApplication
 
 import live2d.v3 as live2d
 from live2d.utils.canvas import Canvas
@@ -16,22 +18,18 @@ from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 
-from widgets.talk_widget import TalkWidget
-
 from additional.config_manager import AppConfig
 from additional.models_manager import ModelsManager
 from additional.character_manager import CharacterManager
-from additional.functions import Functions
-from additional.input_handler import InputHandler
-from additional.input_handler import MouseTracker
+from additional.input_handler import InputHandler, MouseTracker
 from additional.resource_manager import ResourceManager
-from package.additional.animation_manager import AnimationsManager
-from package.additional.image_manager import ImageManager
-from package.additional.event_manager import EventManager
-from package.additional.audio_manager import AudioManager
-from package.windows.models_window import ModelsWindow
-from package.windows.overlay_window import ContextMenuOverlay
-from package.windows.overlay_window import ParticleOverlayWindow
+from additional.animation_manager import AnimationsManager
+from additional.image_manager import ImageManager
+from additional.event_manager import EventManager
+from additional.audio_manager import AudioManager
+from widgets.talk_widget import TalkWidget
+from windows.models_window import ModelsWindow
+from windows.overlay_window import ContextMenuOverlay, ParticleOverlayWindow
 
 
 class MainWindow(QOpenGLWidget):
@@ -263,7 +261,6 @@ class MainWindow(QOpenGLWidget):
         self.canvas: Canvas | None = None
         self.character = None
         self.talk_widget = None
-        self.functions = Functions(self, self.model)
         self.input_handler = InputHandler(self, self.model)
         self.animation_manager = None
         self.image_manager = None
@@ -425,6 +422,53 @@ class MainWindow(QOpenGLWidget):
         if hasattr(self, 'particle_overlay'):
             self.particle_overlay.followMainWindow(self.geometry())
 
+    def setLanguage(self):
+        """Set App Localization"""
+        # List of supported languages (key: value for load_language)
+        supported_languages = {
+            "Russian": "russian",
+            "English": "english",
+            # "Key in the interface": "file_name.json"
+        }
+        # Choose a language or fallback (english)
+        language_key = supported_languages.get(self.language, "english")
+        self.lang = self.resource_manager.load_language(language_key)
+
+    def savePng(self, fName):
+        """Screenshot function"""
+        data = gl.glReadPixels(0, 0, self.width(), self.height(), gl.GL_RGBA, gl.GL_UNSIGNED_BYTE)
+        data = np.frombuffer(data, dtype=np.uint8).reshape(self.height(), self.width(), 4)
+        data = np.flipud(data)
+        new_data = np.zeros_like(data)
+        for rid, row in enumerate(data):
+            for cid, col in enumerate(row):
+                color = None
+                new_data[rid][cid] = col
+                if cid > 0 and data[rid][cid - 1][3] == 0 and col[3] != 0:
+                    color = new_data[rid][cid - 1]
+                elif cid > 0 and data[rid][cid - 1][3] != 0 and col[3] == 0:
+                    color = new_data[rid][cid]
+                if color is not None:
+                    color[0] = 0 # 255
+                    color[1] = 0
+                    color[2] = 0
+                    color[3] = 0 # 255
+                color = None
+                if rid > 0:
+                    if data[rid - 1][cid][3] == 0 and col[3] != 0:
+                        color = new_data[rid - 1][cid]
+                    elif data[rid - 1][cid][3] != 0 and col[3] == 0:
+                        color = new_data[rid][cid]
+                elif col[3] != 0:
+                    color = new_data[rid][cid]
+                if color is not None:
+                    color[0] = 0 #255
+                    color[1] = 0
+                    color[2] = 0
+                    color[3] = 0 # 255
+        img = Image.fromarray(new_data, 'RGBA')
+        img.save(fName)
+
     def change_character(self, name: str):
         """Set character name in Animation Manager """
         self.animation_manager.character_name = name
@@ -448,7 +492,7 @@ class MainWindow(QOpenGLWidget):
         self.canvas = Canvas()
         self.target_fps = 60  # Сохраняем значение FPS
         self.startTimer(int(1000 / self.target_fps))
-        self.functions.setLanguage()
+        self.setLanguage()
         self.model.CreateRenderer(2)
         self.canvas.SetOutputOpacity(0)
         self.init_classes()
@@ -461,7 +505,6 @@ class MainWindow(QOpenGLWidget):
         self.input_handler.input_lock = True
         self.position_window()
         self.first_run = False
-
 
     def init_classes(self):
         """Initialize classes"""
@@ -553,7 +596,8 @@ class MainWindow(QOpenGLWidget):
             self.update()
 
         if not self.read:
-            self.functions.savePng('screenshot.png')
+            if not self.canvas_draw:
+                self.savePng('screenshot.png')
             self.read = True
 
     def set_app_title(self):
@@ -775,7 +819,7 @@ class MainWindow(QOpenGLWidget):
 
         self.auto_scale_init = True
 
-        self.functions.setLanguage()
+        self.setLanguage()
         self.set_theme()
         # if self.talk_update:
         self.apply_character_config(self.character_name)
@@ -1074,7 +1118,8 @@ class MainWindow(QOpenGLWidget):
         self.settings_close()
 
         if event.spontaneous():
-            QApplication.quit()
+            # QApplication.quit()
+            sys.exit(0)
             #self.character.state.set_quit_state(quit='Yes')
             event.accept()
         else:

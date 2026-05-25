@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, date, timedelta
 from time import sleep
 
@@ -321,7 +322,7 @@ class CharacterStateManager:
                     end=0.0,
                     duration=500,
                     easing="out_quad",
-                    on_finished=lambda: exit(0))))
+                    on_finished=lambda: sys.exit(0))))
 
         elif quit == 'No':
             self.character.audio.set_happy_audio()

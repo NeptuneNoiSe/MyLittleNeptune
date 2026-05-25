@@ -1,4 +1,6 @@
 import os
+import sys
+
 import package.resources as resources
 
 from PySide6.QtCore import Qt, Slot, QSize
@@ -755,7 +757,7 @@ class SettingsWindow(QWidget):
 
         # Test Sound Button
         self.test_audio_button = QPushButton("Test Sound")
-        self.test_audio_button.setIcon(self.mainWindow.get_icon("audio_test"))
+        # self.test_audio_button.setIcon(self.mainWindow.get_icon("audio_test"))
         self.test_audio_button.setFixedSize(100, 30)
         self.test_audio_button.setStyleSheet("""
                QPushButton {
@@ -776,7 +778,7 @@ class SettingsWindow(QWidget):
 
         # Reset Button
         self.reset_audio_button = QPushButton(" Reset")
-        self.reset_audio_button.setIcon(self.mainWindow.get_icon("reset"))
+        # self.reset_audio_button.setIcon(self.mainWindow.get_icon("reset"))
         self.reset_audio_button.setFixedSize(100, 30)
         self.reset_audio_button.setStyleSheet("""
                QPushButton:disabled {
@@ -787,7 +789,7 @@ class SettingsWindow(QWidget):
 
         # Button mute/unmute
         self.mute_button = QPushButton(" Mute All")
-        self.mute_button.setIcon(self.mainWindow.get_icon("mute"))
+        # self.mute_button.setIcon(self.mainWindow.get_icon("mute"))
         self.mute_button.setFixedSize(100, 30)
         self.is_muted = False
         self.mute_button.setStyleSheet("""
@@ -2177,4 +2179,4 @@ class SettingsWindow(QWidget):
         self.unsaved_changes = False
         self.mainWindow.settings_lock = False
         self.close()
-        os._exit(0)
+        sys.exit(0)

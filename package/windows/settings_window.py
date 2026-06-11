@@ -3,7 +3,7 @@ import sys
 
 import package.resources as resources
 
-from PySide6.QtCore import Qt, Slot, QSize
+from PySide6.QtCore import Qt, Slot, QSize, QTimer
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory, QTabWidget, QDialogButtonBox, QDial, \
@@ -15,9 +15,8 @@ from package.widgets.time_widget import BirthdayDateEdit
 
 class SettingsWindow(QWidget):
     """Settings Window Class"""
-    def __init__(self, main_window, pythonic_window_registration: bool = False):
+    def __init__(self, main_window):
         super().__init__()
-        self.pythonic_reg = pythonic_window_registration
         self.mainWindow = main_window
         self.app_config = self.mainWindow.app_config
         self.settings_log = False
@@ -36,7 +35,6 @@ class SettingsWindow(QWidget):
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowCloseButtonHint)
         self.getWindowFlag_FramelessWindowHint = self.app_config.FramelessWindowHint
         self.getWindowFlag_WindowStaysOnTopHint = self.app_config.WindowStaysOnTopHint
-
         self.getWindowFlag_WindowMinimizeButtonHint = self.app_config.WindowMinimizeButtonHint
         self.getWindowFlag_WindowCloseButtonHint = self.app_config.WindowCloseButtonHint
         self.getWindowFlag_WindowStaysOnBottomHint = self.app_config.WindowStaysOnBottomHint
@@ -129,7 +127,7 @@ class SettingsWindow(QWidget):
         # Button fixed size
         button_width = 150
 
-        self.resetPosButton.setFixedWidth(button_width)
+        self.reset_model_button.setFixedWidth(button_width)
         self.quitButton.setFixedWidth(button_width)
         self.apply_button.setFixedWidth(button_width)
 
@@ -148,7 +146,7 @@ class SettingsWindow(QWidget):
         buttons_layout.setSpacing(8)  # The distance between the buttons
         buttons_layout.setContentsMargins(0, 0, 0, 0)
 
-        buttons_layout.addWidget(self.resetPosButton)
+        buttons_layout.addWidget(self.reset_model_button)
         buttons_layout.addWidget(self.button_box)
         buttons_layout.addWidget(self.apply_button)
         buttons_layout.addWidget(self.quitButton)
@@ -1419,8 +1417,8 @@ class SettingsWindow(QWidget):
     def create_buttons(self):
         """Create settings buttons"""
         # Create Buttons
-        self.resetPosButton = QPushButton("&Reset Position")
-        self.resetPosButton.clicked.connect(self.reset_position)
+        self.reset_model_button = QPushButton("&Reset Position")
+        self.reset_model_button.clicked.connect(self.reset_model)
 
         self.quitButton = QPushButton("&Quit")
         self.quitButton.clicked.connect(self.force_quit_app)
@@ -1638,7 +1636,7 @@ class SettingsWindow(QWidget):
 
             # Update Main Window
             self.mainWindow.setSettings(flags)
-            self.mainWindow.show()
+            # self.mainWindow.show()
             self.mainWindow.model_move = True
 
             # Update Icons
@@ -1652,6 +1650,9 @@ class SettingsWindow(QWidget):
             self.mainWindow.settings_lock = False
             self.apply_button.setEnabled(False)
             self.cancel_button.setEnabled(False)
+
+            if self.mainWindow.talk_widget:
+                QTimer.singleShot(100, lambda:self.mainWindow.character.state.set_settings_state(text_key='SettingsApplied'))
 
             if self.settings_log:
                 print("Settings applied successfully!")
@@ -1801,7 +1802,7 @@ class SettingsWindow(QWidget):
 
         return available_styles
 
-    def reset_position(self):
+    def reset_model(self):
         """Reset model position"""
         if self.mainWindow.animation_status:
             return
@@ -1861,7 +1862,7 @@ class SettingsWindow(QWidget):
 
         # Settings Main
         self.setWindowTitle(self.mainWindow.lang['Settings']['Settings'])
-        self.resetPosButton.setText(self.mainWindow.lang['Buttons']['ResetPosition'])
+        self.reset_model_button.setText(self.mainWindow.lang['Buttons']['ResetModel'])
         self.quitButton.setText(self.mainWindow.lang['Buttons']['Quit'])
         self.apply_button.setText(self.mainWindow.lang['Buttons']['Apply'])
         self.ok_button.setText(self.mainWindow.lang['Buttons']['OK'])
@@ -1956,176 +1957,171 @@ class SettingsWindow(QWidget):
         if self.getWindowFlag_WindowType_Mask:
             flags = flags | Qt.WindowType.WindowType_Mask
 
-        if self.pythonic_reg:
-            for checkBox, flag in self.hintFlagWidgets:
-                if checkBox.isChecked():
-                    flags = flags | flag
+        if self.framelessWindowCheckBox.isChecked():
+            flags = flags | Qt.WindowType.FramelessWindowHint
+            self.app_config.FramelessWindowHint = True
+            self.mainWindow.frameless = True
+            self.framelessWindowCheckBox.setChecked(True)
         else:
-            if self.framelessWindowCheckBox.isChecked():
-                flags = flags | Qt.WindowType.FramelessWindowHint
-                self.app_config.FramelessWindowHint = True
-                self.mainWindow.frameless = True
-                self.framelessWindowCheckBox.setChecked(True)
-            else:
-                self.app_config.FramelessWindowHint = False
-                self.mainWindow.frameless = False
-                self.framelessWindowCheckBox.setChecked(False)
+            self.app_config.FramelessWindowHint = False
+            self.mainWindow.frameless = False
+            self.framelessWindowCheckBox.setChecked(False)
 
-            if self.windowStaysOnTopCheckBox.isChecked():
-                flags = flags | Qt.WindowType.WindowStaysOnTopHint
-                self.app_config.WindowStaysOnTopHint = True
-                self.windowStaysOnTopCheckBox.setChecked(True)
-            else:
-                self.app_config.WindowStaysOnTopHint = False
-                self.windowStaysOnTopCheckBox.setChecked(False)
-                self.app_config.WindowStaysOnBottomHint = True
+        if self.windowStaysOnTopCheckBox.isChecked():
+            flags = flags | Qt.WindowType.WindowStaysOnTopHint
+            self.app_config.WindowStaysOnTopHint = True
+            self.windowStaysOnTopCheckBox.setChecked(True)
+        else:
+            self.app_config.WindowStaysOnTopHint = False
+            self.windowStaysOnTopCheckBox.setChecked(False)
+            self.app_config.WindowStaysOnBottomHint = True
 
-            if self.colorIconsCheckBox.isChecked():
-                self.set_setting('color_icons', True)
-                self.colorIconsCheckBox.setChecked(True)
-            else:
-                self.set_setting('color_icons', False)
-                self.colorIconsCheckBox.setChecked(False)
+        if self.colorIconsCheckBox.isChecked():
+            self.set_setting('color_icons', True)
+            self.colorIconsCheckBox.setChecked(True)
+        else:
+            self.set_setting('color_icons', False)
+            self.colorIconsCheckBox.setChecked(False)
 
-            if self.backgroundImageCheckBox.isChecked():
-                self.set_setting('background', True)
-                self.backgroundImageCheckBox.setChecked(True)
-            else:
-                self.set_setting('background', False)
-                self.backgroundImageCheckBox.setChecked(False)
+        if self.backgroundImageCheckBox.isChecked():
+            self.set_setting('background', True)
+            self.backgroundImageCheckBox.setChecked(True)
+        else:
+            self.set_setting('background', False)
+            self.backgroundImageCheckBox.setChecked(False)
 
-            if self.autoScaleCheckBox.isChecked():
-                self.autoScaleCheckBox.setChecked(True)
-                self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
-                self.modelScaleBox.setReadOnly(True)
-                self.set_setting('auto_scale', True)
-                self.set_setting('models_scale', 1)
-                self.modelScaleBox.setValue(1)
-            else:
-                self.autoScaleCheckBox.setChecked(False)
-                self.modelScaleBox.setReadOnly(False)
-                self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
-                scale_value = self.modelScaleBox.value()
-                self.set_setting('auto_scale', False)
-                self.set_setting('models_scale', scale_value)
+        if self.autoScaleCheckBox.isChecked():
+            self.autoScaleCheckBox.setChecked(True)
+            self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
+            self.modelScaleBox.setReadOnly(True)
+            self.set_setting('auto_scale', True)
+            self.set_setting('models_scale', 1)
+            self.modelScaleBox.setValue(1)
+        else:
+            self.autoScaleCheckBox.setChecked(False)
+            self.modelScaleBox.setReadOnly(False)
+            self.autoScaleCheckBox.stateChanged.connect(self.modelMoveOn)
+            scale_value = self.modelScaleBox.value()
+            self.set_setting('auto_scale', False)
+            self.set_setting('models_scale', scale_value)
 
-            if self.randomCharacterCheckBox.isChecked():
-                self.randomCharacterCheckBox.setChecked(True)
-                self.set_setting('random_character', True)
-            else:
-                self.randomCharacterCheckBox.setChecked(False)
-                self.set_setting('random_character', False)
+        if self.randomCharacterCheckBox.isChecked():
+            self.randomCharacterCheckBox.setChecked(True)
+            self.set_setting('random_character', True)
+        else:
+            self.randomCharacterCheckBox.setChecked(False)
+            self.set_setting('random_character', False)
 
-            if self.randomCharacterHDDCheckBox.isChecked():
-                self.randomCharacterHDDCheckBox.setChecked(True)
-                self.set_setting('random_character_hdd', True)
-            else:
-                self.randomCharacterHDDCheckBox.setChecked(False)
-                self.set_setting('random_character_hdd', False)
+        if self.randomCharacterHDDCheckBox.isChecked():
+            self.randomCharacterHDDCheckBox.setChecked(True)
+            self.set_setting('random_character_hdd', True)
+        else:
+            self.randomCharacterHDDCheckBox.setChecked(False)
+            self.set_setting('random_character_hdd', False)
 
-            if self.autoBlinkCheckBox.isChecked():
-                self.autoBlinkCheckBox.setChecked(True)
-                self.app_config.auto_blink = True
-            else:
-                self.autoBlinkCheckBox.setChecked(False)
-                self.app_config.auto_blink = False
+        if self.autoBlinkCheckBox.isChecked():
+            self.autoBlinkCheckBox.setChecked(True)
+            self.app_config.auto_blink = True
+        else:
+            self.autoBlinkCheckBox.setChecked(False)
+            self.app_config.auto_blink = False
 
-            if self.autoBreathCheckBox.isChecked():
-                self.autoBreathCheckBox.setChecked(True)
-                self.app_config.auto_breath = True
-            else:
-                self.autoBreathCheckBox.setChecked(False)
-                self.app_config.auto_breath = False
+        if self.autoBreathCheckBox.isChecked():
+            self.autoBreathCheckBox.setChecked(True)
+            self.app_config.auto_breath = True
+        else:
+            self.autoBreathCheckBox.setChecked(False)
+            self.app_config.auto_breath = False
 
-            if self.trackingMouseCheckBox.isChecked():
-                self.trackingMouseCheckBox.setChecked(True)
-                self.set_setting('tracking_mouse_switch', True)
-            else:
-                self.trackingMouseCheckBox.setChecked(False)
-                self.set_setting('tracking_mouse_switch', False)
+        if self.trackingMouseCheckBox.isChecked():
+            self.trackingMouseCheckBox.setChecked(True)
+            self.set_setting('tracking_mouse_switch', True)
+        else:
+            self.trackingMouseCheckBox.setChecked(False)
+            self.set_setting('tracking_mouse_switch', False)
 
-            if self.sleepCheckBox.isChecked():
-                self.sleepCheckBox.setChecked(True)
-                self.set_setting('sleep_switch', True)
-                self.timeScaleBox.setReadOnly(False)
-                scale_value = self.timeScaleBox.value()
-                self.set_setting('time_scale', scale_value)
-                self.sleepScheduleCheckBox.setEnabled(True)
+        if self.sleepCheckBox.isChecked():
+            self.sleepCheckBox.setChecked(True)
+            self.set_setting('sleep_switch', True)
+            self.timeScaleBox.setReadOnly(False)
+            scale_value = self.timeScaleBox.value()
+            self.set_setting('time_scale', scale_value)
+            self.sleepScheduleCheckBox.setEnabled(True)
 
-            else:
-                self.sleepCheckBox.setChecked(False)
-                self.set_setting('sleep_switch', False)
-                self.timeScaleBox.setReadOnly(True)
-                self.set_setting('time_scale', 1)
-                self.timeScaleBox.setValue(1)
-                self.sleepScheduleCheckBox.setEnabled(False)
+        else:
+            self.sleepCheckBox.setChecked(False)
+            self.set_setting('sleep_switch', False)
+            self.timeScaleBox.setReadOnly(True)
+            self.set_setting('time_scale', 1)
+            self.timeScaleBox.setValue(1)
+            self.sleepScheduleCheckBox.setEnabled(False)
 
-            if self.idleCheckBox.isChecked():
-                self.idleCheckBox.setChecked(True)
-                self.set_setting('idle_switch', True)
-            else:
-                self.idleCheckBox.setChecked(False)
-                self.set_setting('idle_switch', False)
+        if self.idleCheckBox.isChecked():
+            self.idleCheckBox.setChecked(True)
+            self.set_setting('idle_switch', True)
+        else:
+            self.idleCheckBox.setChecked(False)
+            self.set_setting('idle_switch', False)
 
-            if self.onMouseCheckBox.isChecked():
-                self.onMouseCheckBox.setChecked(True)
-                self.set_setting('on_mouse_switch', True)
-            else:
-                self.onMouseCheckBox.setChecked(False)
-                self.set_setting('on_mouse_switch', False)
+        if self.onMouseCheckBox.isChecked():
+            self.onMouseCheckBox.setChecked(True)
+            self.set_setting('on_mouse_switch', True)
+        else:
+            self.onMouseCheckBox.setChecked(False)
+            self.set_setting('on_mouse_switch', False)
 
-            if self.tapBodyCheckBox.isChecked():
-                self.tapBodyCheckBox.setChecked(True)
-                self.set_setting('tap_body_switch', True)
-            else:
-                self.tapBodyCheckBox.setChecked(False)
-                self.set_setting('tap_body_switch', False)
+        if self.tapBodyCheckBox.isChecked():
+            self.tapBodyCheckBox.setChecked(True)
+            self.set_setting('tap_body_switch', True)
+        else:
+            self.tapBodyCheckBox.setChecked(False)
+            self.set_setting('tap_body_switch', False)
 
-            if self.audioSystemCheckBox.isChecked():
-                self.audioSystemCheckBox.setChecked(True)
-                self.set_setting('audio_system', True)
-            else:
-                self.audioSystemCheckBox.setChecked(False)
-                self.set_setting('audio_system', False)
+        if self.audioSystemCheckBox.isChecked():
+            self.audioSystemCheckBox.setChecked(True)
+            self.set_setting('audio_system', True)
+        else:
+            self.audioSystemCheckBox.setChecked(False)
+            self.set_setting('audio_system', False)
 
-            if self.showTextWidgetCheckBox.isChecked():
-                self.showTextWidgetCheckBox.setChecked(True)
-                self.set_setting('show_text_widget', True)
-            else:
-                self.showTextWidgetCheckBox.setChecked(False)
-                self.set_setting('show_text_widget', False)
+        if self.showTextWidgetCheckBox.isChecked():
+            self.showTextWidgetCheckBox.setChecked(True)
+            self.set_setting('show_text_widget', True)
+        else:
+            self.showTextWidgetCheckBox.setChecked(False)
+            self.set_setting('show_text_widget', False)
 
-            if self.showNameCheckBox.isChecked():
-                self.showNameCheckBox.setChecked(True)
-                self.set_setting('show_name', True)
-            else:
-                self.showNameCheckBox.setChecked(False)
-                self.set_setting('show_name', False)
+        if self.showNameCheckBox.isChecked():
+            self.showNameCheckBox.setChecked(True)
+            self.set_setting('show_name', True)
+        else:
+            self.showNameCheckBox.setChecked(False)
+            self.set_setting('show_name', False)
 
-            if self.showKaomojiCheckBox.isChecked():
-                self.showKaomojiCheckBox.setChecked(True)
-                self.set_setting('show_kaomoji', True)
-            else:
-                self.showKaomojiCheckBox.setChecked(False)
-                self.set_setting('show_kaomoji', False)
+        if self.showKaomojiCheckBox.isChecked():
+            self.showKaomojiCheckBox.setChecked(True)
+            self.set_setting('show_kaomoji', True)
+        else:
+            self.showKaomojiCheckBox.setChecked(False)
+            self.set_setting('show_kaomoji', False)
 
-            if self.birthdayActiveCheckBox.isChecked():
-                self.birthdayActiveCheckBox.setChecked(True)
-                self.set_setting('birthday_active', True)
-            else:
-                self.birthdayActiveCheckBox.setChecked(False)
-                self.set_setting('birthday_active', False)
+        if self.birthdayActiveCheckBox.isChecked():
+            self.birthdayActiveCheckBox.setChecked(True)
+            self.set_setting('birthday_active', True)
+        else:
+            self.birthdayActiveCheckBox.setChecked(False)
+            self.set_setting('birthday_active', False)
 
-            self.language_org = self.langComboBox.currentText()
-            self.getLanguageName()
-            self.theme = self.themeComboBox.currentText()
-            self.set_setting('language', str(self.language_get))
-            self.set_setting('theme', str(self.theme))
-            #self.mainWindow.app_config.language = str(self.language_get)
-            #print(self.themeComboBox.currentText())
+        self.language_org = self.langComboBox.currentText()
+        self.getLanguageName()
+        self.theme = self.themeComboBox.currentText()
+        self.set_setting('language', str(self.language_get))
+        self.set_setting('theme', str(self.theme))
+        # self.mainWindow.app_config.language = str(self.language_get)
+        # print(self.themeComboBox.currentText())
 
         self.mainWindow.setSettings(flags)
-        self.mainWindow.show()
+        # self.mainWindow.show()
 
     def createCheckBox(self, text: str) -> QCheckBox:
         """Create CheckBox"""

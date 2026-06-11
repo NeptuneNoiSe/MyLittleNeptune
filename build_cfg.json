@@ -11,15 +11,15 @@
   },
   {
    "optionDest": "onefile",
-   "value": true
-  },
-  {
-   "optionDest": "console",
    "value": false
   },
   {
+   "optionDest": "console",
+   "value": true
+  },
+  {
    "optionDest": "icon_file",
-   "value": "C:/Users/Neptune/PycharmProjects/MyLittleNeptune/resource/icons/nep_main.ico"
+   "value": "C:/Users/Neptune/PycharmProjects/MyLittleNeptune/resource/icons/app_icon.ico"
   },
   {
    "optionDest": "name",
@@ -71,19 +71,15 @@
   },
   {
    "optionDest": "collect_all",
-   "value": "package"
-  },
-  {
-   "optionDest": "collect_all",
    "value": "OpenGL"
   },
   {
-   "optionDest": "pathex",
-   "value": "C:/Users/Neptune/PycharmProjects/MyLittleNeptune/package"
+   "optionDest": "datas",
+   "value": "C:/Users/Neptune/PycharmProjects/MyLittleNeptune/package;package/"
   },
   {
-   "optionDest": "datas",
-   "value": "C:/Users/Neptune/PycharmProjects/MyLittleNeptune/version.py;."
+   "optionDest": "collect_all",
+   "value": "package"
   }
  ],
  "nonPyinstallerOptions": {

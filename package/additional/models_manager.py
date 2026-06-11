@@ -99,7 +99,7 @@ class ModelsManager:
         new_height = int(win.my_param * scale_factor)
 
         # Set resize
-        win.resize(1, 1)  # reset size
+        win.resize(10, 10)  # reset size
         win.w_resize = new_width
         win.h_resize = new_height
         win.resize(new_width, new_height)
@@ -165,8 +165,8 @@ class ModelsManager:
         win.init_classes()
         win.character.tired_controller.reload_timer()
 
-        if win.talk_widget.talk_update:
-            win.talk_widget.update_widget()
+        #if win.talk_widget.talk_update:
+        #    win.talk_widget.update_widget()
 
     def _load_fallback_model(self, win) -> None:
         """Backup option for errors"""

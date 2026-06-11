@@ -346,9 +346,53 @@ class MainWindow(QOpenGLWidget):
         # Model Resize
         self.w_resize = self.app_config.w_resize
         self.h_resize = self.app_config.h_resize
+        if not self.app_config.FramelessWindowHint:
+            self.clamp_window_size_to_screen()
         self.resize(int(self.w_resize), int(self.h_resize))
         self.w_correction = self.app_config.w_correction
         self.h_correction = self.app_config.h_correction
+
+    def clamp_window_size_to_screen(self):
+        screen = self.screen().availableGeometry()
+
+        old_size = (self.w_resize, self.h_resize)
+        #print(old_size, self.w_resize, self.h_resize)
+
+        self.w_resize = min(self.w_resize, screen.width())
+        self.h_resize = min(self.h_resize, screen.height())
+
+        if self.mx_param == 0 or self.my_param == 0:
+            self.mx_param = self.app_config.mx_param
+            self.my_param = self.app_config.my_param
+
+        max_scale = min(
+            screen.width() / self.mx_param,
+            screen.height() / self.my_param
+        )
+
+        self.safe_models_scale = min(
+            self.models_scale,
+            max_scale
+        )
+
+        self.w_resize = int(
+            self.mx_param * self.safe_models_scale
+        )
+
+        self.h_resize = int(
+            self.my_param * self.safe_models_scale
+        )
+
+        self.models_scale = self.safe_models_scale
+
+
+        if old_size != (self.w_resize, self.h_resize) and self.models_log:
+            print(
+                f"Window size clamped: "
+                f"safe_scale: {self.safe_models_scale} "
+                f"{old_size} -> "
+                f"{(self.w_resize, self.h_resize)}"
+            )
 
     def position_window(self):
         """Set window position with conditions"""
@@ -500,10 +544,24 @@ class MainWindow(QOpenGLWidget):
         self.last_update_time = time.time()
         self.character = CharacterManager(self)
         self.talk_widget = TalkWidget(self)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+
+        if self.first_run:
+            self.talk_widget.talk_image_label_opacity.setOpacity(0)
+            QTimer.singleShot(self.target_fps * 10, self._after_first_show)
+
+    def _after_first_show(self):
         self.talk_widget.show_talk()
-        self.character.state.set_greeting_state(is_first_run=True)
+
+        self.character.state.set_greeting_state(
+            is_first_run=True
+        )
         self.input_handler.input_lock = True
+
         self.position_window()
+
         self.first_run = False
 
     def init_classes(self):
@@ -537,8 +595,22 @@ class MainWindow(QOpenGLWidget):
         if self.background:
             self.event_manager.draw_text_on_model()
 
+    def verify_startup_geometry(self):
+        expected = (self.w_resize, self.h_resize)
+        actual = (self.width(), self.height())
+
+        #if expected != actual:
+            #print(
+            #    f"Startup geometry mismatch. "
+            #    f"Expected {expected}, got {actual}"
+            #)
+            #self.restart_application()
+
     def paintGL(self) -> None:
         """Paint GL"""
+        #self.verify_startup_geometry()
+        #vp = gl.glGetIntegerv(gl.GL_VIEWPORT)
+        #print("viewport:", vp)
         if self.model:
             live2d.clearBuffer()
             if self.canvas_draw:
@@ -604,7 +676,7 @@ class MainWindow(QOpenGLWidget):
         """Set app title and icon"""
         self.setWindowTitle("My Little Neptune")
         self.setWindowIcon(QIcon(os.path.join(
-            resources.RESOURCES_DIRECTORY, "icons/nep_main.ico")))
+            resources.RESOURCES_DIRECTORY, "icons/app_icon.ico")))
 
     def set_theme(self):
         """Set app theme"""
@@ -625,7 +697,7 @@ class MainWindow(QOpenGLWidget):
                 2. Special styles (for example, WindowsVista)
                 3. System theme (Dark/Light)
         """
-        self.app = QGuiApplication.instance()
+        #self.app = QGuiApplication.instance()
         if not self.app:
             return "unknown"
 
@@ -659,7 +731,7 @@ class MainWindow(QOpenGLWidget):
 
     def get_color_scheme(self):
         """Returns actual system theme without any overrides"""
-        self.app = QGuiApplication.instance()
+        #self.app = QGuiApplication.instance()
         if not self.app:
             return "unknown"
 
@@ -715,7 +787,8 @@ class MainWindow(QOpenGLWidget):
             current_time = time.time()
             self.animation_manager.update_idle(current_time)
 
-        self.talk_widget.change_talk_widget_side()
+        if not self.first_run:
+            self.talk_widget.change_talk_widget_side()
 
         if self.isInL2DArea(local_x, local_y):
             self.isInLA = True
@@ -750,7 +823,6 @@ class MainWindow(QOpenGLWidget):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """Handling mouse button press"""
-        #self.particle_overlay.particle_presets.light_explosion()
         if event.button() == Qt.LeftButton and not self.input_handler.input_lock:
             x, y = event.scenePosition().x(), event.scenePosition().y()
             self.posX, self.posY = event.scenePosition().x(), event.scenePosition().y()
@@ -798,8 +870,12 @@ class MainWindow(QOpenGLWidget):
 
     def setSettings(self, flags: Qt.WindowType) -> None:
         """Set Settings from Settings Window"""
-        # print(f"setSettings flags: {flags}")
-        self.setWindowFlags(flags)
+        if self.talk_widget:
+            self.talk_widget.close_dialog_after_animation()
+
+        self.hide()
+        #self.setWindowFlags(flags)
+        self.setWindowFlags(flags | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
 
         windowType = flags & Qt.WindowType.WindowType_Mask
 
@@ -809,19 +885,32 @@ class MainWindow(QOpenGLWidget):
             if flags & hintFlag:
                 text += f"\n| Qt.{hintFlag.name}"
 
-        if self.auto_scale and self.auto_scale_init:
-            self.a_scale = self.app_config.get_auto_scale(int(self.sc_height_size))
-            self.models_manager.update_model(self)
+        self.show()
+        # QApplication.processEvents()
 
-        if not self.auto_scale and self.auto_scale_init:
-            self.a_scale = 1
+        need_update = False
+
+        if self.auto_scale_init:
+            if self.auto_scale:
+                self.a_scale = self.app_config.get_auto_scale(
+                    int(self.sc_height_size)
+                )
+            else:
+                self.a_scale = 1
+
+            need_update = True
+
+        if not self.frameless:
+            self.clamp_window_size_to_screen()
+            need_update = True
+
+        if need_update:
             self.models_manager.update_model(self)
 
         self.auto_scale_init = True
 
         self.setLanguage()
         self.set_theme()
-        # if self.talk_update:
         self.apply_character_config(self.character_name)
         self.position_window()
         self.models_window.set_language()
@@ -914,6 +1003,7 @@ class MainWindow(QOpenGLWidget):
             self.context_menu_overlay = None
 
     def about(self):
+        self.context_menu_overlay.context_menu_close()
         about_box = QMessageBox(self)
         about_box.setWindowTitle(self.lang['Actions']['AboutAlt'])
         about_box.setText(f"My Little Neptune\n{self.lang['Actions']['Version']}{self.version}\n{self.lang['Actions']['AboutText']}")
@@ -1128,6 +1218,7 @@ class MainWindow(QOpenGLWidget):
 
     def show_quit_dialog(self):
         """Show quit dialog"""
+        self.context_menu_overlay.context_menu_close()
         self.character.expressions.set_cry_expression()
         self.character.audio.set_really_quit_audio()
         self.kaomoji = "(o;TωT)o"

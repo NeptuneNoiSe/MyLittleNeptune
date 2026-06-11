@@ -173,7 +173,19 @@
                 "options": 1,
                 "priority": 3
             },
+            "LEFT HAIR ALT 2": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
             "RIGHT HAIR ALT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "RIGHT HAIR ALT 2": {
                 "anim_type": "Motion",
                 "group": "Extra",
                 "options": 1,

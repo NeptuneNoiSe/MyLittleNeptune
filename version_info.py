@@ -4,16 +4,17 @@ from pathlib import Path
 
 
 def parse_version(version_str: str) -> tuple:
-    """Converts the version string '1.0' to the tuple (1, 0)."""
+    """Converts the version string to the tuple"""
     parts = version_str.split('.')
-    while len(parts) < 1:
+    while len(parts) < 4:
         parts.append('0')
-    return tuple(int(p) for p in parts[:5])
+    return tuple(int(p) for p in parts[:4])
 
 
-def generate_version_info(version: str, output_path: Path):
-    """Generate version_info.txt."""
-    version_tuple = parse_version(version)
+def generate_version_info(version_str: str, output_path: Path):
+    """Генерирует version_info.txt."""
+    version_tuple = parse_version(version_str)
+    major, minor, build, revision = version_tuple
 
     content = f"""# UTF-8
 #
@@ -22,8 +23,8 @@ def generate_version_info(version: str, output_path: Path):
 
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers={version_tuple},
-    prodvers={version_tuple},
+    filevers=({major}, {minor}, {build}, {revision}),
+    prodvers=({major}, {minor}, {build}, {revision}),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -39,12 +40,12 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'Neptune Noise'),
             StringStruct(u'FileDescription', u'My Little Neptune'),
-            StringStruct(u'FileVersion', u'{version}'),
+            StringStruct(u'FileVersion', u'{version_str}'),
             StringStruct(u'InternalName', u'MyLittleNeptune.exe'),
             StringStruct(u'LegalCopyright', u'© 2026 Neptune Noise. All rights reserved.'),
             StringStruct(u'OriginalFilename', u'MyLittleNeptune.exe'),
             StringStruct(u'ProductName', u'My Little Neptune'),
-            StringStruct(u'ProductVersion', u'{version}'),
+            StringStruct(u'ProductVersion', u'{version_str}'),
           ]
         )
       ]
@@ -55,7 +56,7 @@ VSVersionInfo(
 """
 
     output_path.write_text(content, encoding='utf-8')
-    print(f" 📄 [DEV] Generated {output_path} with version: {version}")
+    print(f" 📄 [DEV] Generated {output_path} with version: {major}.{minor}.{build}.{revision}")
 
 
 if __name__ == "__main__":

@@ -288,6 +288,7 @@ class CharacterStateManager:
     def set_settings_state(self, text_key: str | None = None,) -> None:
         """Update Settings state"""
         self.cancel_congratulation_timer()
+        #self.character.win.talk_widget.talk_update = True
         self.character.audio.set_settings_audio()
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
@@ -442,6 +443,7 @@ class CharacterTiredController:
         self.schedule_timer.start(10000)
         self._check_schedule_state()
         self.sleep_again_timer = QTimer()
+        self._schedule_wake_up_done = False
 
     @property
     def sleep_move(self):
@@ -532,11 +534,13 @@ class CharacterTiredController:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
+                self._schedule_wake_up_done = False
         else:
             if current_minutes >= sleep_minutes or current_minutes < wake_minutes:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
+                self._schedule_wake_up_done = False
 
         self.last_schedule_check = now
 
@@ -550,6 +554,9 @@ class CharacterTiredController:
 
     def _should_wake_up_by_schedule(self, now=None):
         """Checks if the scheduled wake-up time has arrived"""
+        if self._schedule_wake_up_done:
+            return False
+
         if now is None:
             now = datetime.now()
 
@@ -560,18 +567,19 @@ class CharacterTiredController:
 
     def _wake_up_by_schedule(self):
         """Forced wake up by schedule"""
+        if self._schedule_wake_up_done:
+            return
+
         if self.timer_log:
             print(f"[SCHEDULE_WAKEUP] Time to wake up! ({self.wake_h:02d}:{self.wake_m:02d})")
 
+        self._schedule_wake_up_done = True
         self.character.tired_state.set_wake_up_state()
 
         if hasattr(self, '_sleep_function_called'):
             self._sleep_function_called = False
 
-        #self.timer_count = 1
-        #self.character.tired_state.set_idle_state()
-
-    def wake_up_function(self, short_wake_up = False):
+    def wake_up_function(self, short_wake_up=False):
         """Run if character wake_up"""
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
@@ -632,13 +640,17 @@ class CharacterTiredController:
             print(f"[SCHEDULE_IDLE] Outside sleep range - forced idle")
 
     def _handle_schedule_sleeping_mode(self):
+        """Sleep schedule handler"""
         now = datetime.now()
-        should_wake_up = self._should_wake_up_by_schedule(now)
 
-        if should_wake_up:
+        if not self._schedule_wake_up_done and self._should_wake_up_by_schedule(now):
             self._wake_up_by_schedule()
             return
-        self._modified_normal_logic()
+
+        if self._schedule_wake_up_done:
+            self._handle_schedule_idle_mode()
+        else:
+            self._modified_normal_logic()
 
     def _handle_normal_mode(self):
         """Normal mode withou schedule"""

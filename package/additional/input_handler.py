@@ -74,7 +74,7 @@ class InputHandler:
             flags = self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput
 
         self.win.hide()
-        self.win.setWindowFlags(flags)
+        self.win.setWindowFlags(flags | Qt.WindowType.WindowCloseButtonHint)
         self.win.setAttribute(Qt.WA_TranslucentBackground)
         self.win.show()
 
@@ -187,21 +187,49 @@ class InputHandler:
                 self._current_pos = global_pos.toPoint()
             else:
                 try:
-                    x = int(round(global_pos.x()))
-                    y = int(round(global_pos.y()))
+                    # Additional check on the string
+                    if isinstance(global_pos, str):
+                        print(f"Warning: global_pos is string: {global_pos}")
+                        return
+
+                    x = int(round(float(global_pos.x()))) if hasattr(global_pos, 'x') else 0
+                    y = int(round(float(global_pos.y()))) if hasattr(global_pos, 'y') else 0
                     self._current_pos = QPoint(x, y)
-                except (AttributeError, TypeError):
-                    print(f"Invalid pos: {global_pos}")
+                except (AttributeError, TypeError, ValueError) as e:
+                    print(f"Invalid pos: {global_pos}, error: {e}")
                     return
 
+            # Checking that self.start_pos and self.last_pos are correct
+            if not isinstance(self._current_pos, QPoint):
+                print(f"_current_pos is not QPoint: {type(self._current_pos)}")
+                return
+
             # The first call is initialization
-            if self.last_pos.isNull():
+            if not hasattr(self, 'last_pos') or self.last_pos.isNull():
+                self.start_pos = self._current_pos
+                self.last_pos = self._current_pos
+                return
+
+            # Type checking before the subtraction operation
+            if not isinstance(self.start_pos, QPoint):
                 self.start_pos = self._current_pos
                 self.last_pos = self._current_pos
                 return
 
             # Calculate deltas for both axes
-            distance = (self._current_pos - self.start_pos).manhattanLength()
+            try:
+                # Secure distance calculation
+                diff = self._current_pos - self.start_pos
+                if isinstance(diff, QPoint):
+                    distance = diff.manhattanLength()
+                else:
+                    # Fallback for when diff is not a QPoint
+                    distance = abs(self._current_pos.x() - self.start_pos.x()) + \
+                               abs(self._current_pos.y() - self.start_pos.y())
+            except Exception as e:
+                print(f"Distance calculation error: {e}")
+                distance = 0
+
             delta_x = self._current_pos.x() - self.last_pos.x()
             delta_y = self._current_pos.y() - self.last_pos.y()
 
@@ -216,11 +244,10 @@ class InputHandler:
                 self.drag_direction_y = 0  # Reset vertical direction
 
             # Vertical movement (Y axis)
-            elif abs_delta_y > (self.direction_threshold/2) and abs_delta_y > abs_delta_x:
+            elif abs_delta_y > (self.direction_threshold / 2) and abs_delta_y > abs_delta_x:
                 direction = 1 if delta_y > 0 else -1
                 self.drag_direction_y = round((0.7 * self.drag_direction_y + 0.3 * direction), 4)
                 self.drag_direction_x = 0  # Reset horizontal direction
-
 
             # Normalization of intensity
             self.drag_intensity = min(distance / self.distance_normalizer, 1.0)
@@ -242,7 +269,8 @@ class InputHandler:
                     self._trigger_drag_animation(self.drag_direction_y, "vertical")
 
             self.last_pos = self._current_pos
-            self.win.animation_manager.drag_animator.drag_intensity = self.drag_intensity
+            if hasattr(self.win.animation_manager.drag_animator, 'drag_intensity'):
+                self.win.animation_manager.drag_animator.drag_intensity = self.drag_intensity
 
         except Exception as e:
             print(f"Move error: {type(e).__name__}: {str(e)}")

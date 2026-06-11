@@ -112,7 +112,7 @@ def update_readme(version: str):
             readme.write_text(updated, encoding='utf-8')
             print(f" ✅ [DEV] Updated version in the README: {version}")
     except Exception as e:
-        print(f" ⚠️ [DEV] Couldn't update README: {e}")
+        print(f" ❌ [DEV] Couldn't update README: {e}")
 
 
 class Launcher:
@@ -140,13 +140,13 @@ class Launcher:
 
         # Check Resource path
         if not RESOURCE_PATH.exists():
-            print(f" ⚠️ [DEV] Attention: The resource folder was not found at the following path: {RESOURCE_PATH}")
+            print(f" ❌ [DEV] Attention: The resource folder was not found at the following path: {RESOURCE_PATH}")
             print(f"  [DEV] Project Root: {PROJECT_ROOT}")
             print(f"  [DEV] Path to exe: {Path(sys.executable).parent if getattr(sys, 'frozen', False) else 'N/A'}")
             if hasattr(sys, '_MEIPASS'):
                 print(f"  _MEIPASS: {sys._MEIPASS}")
         else:
-            print(f" ✅ [DEV] Resource found: {RESOURCE_PATH}")
+            print(f" 📦 [DEV] Resource found: {RESOURCE_PATH}")
 
         update_readme(version)
         live2d.init()
@@ -169,7 +169,10 @@ class Launcher:
         self._set_window_icon()
 
         print("─────────────────────────────────────────────────────────────")
-        print(f" ✅ The application is initialized (v{version})")
+        print(f" ✅ My Little Neptune (v{version}) is initialized")
+
+        # print(live2d.__file__)
+        # print(MainWindow.__module__)
 
     def _set_window_icon(self):
         """Setting the settings window icon"""
@@ -180,13 +183,13 @@ class Launcher:
                 from PySide6.QtGui import QIcon
                 self.settings_window.setWindowIcon(QIcon(str(icon_path)))
         except Exception as e:
-            print(f" ⚠️ [DEV] Couldn't install the icon: {e}")
+            print(f" ❌ [DEV] Couldn't install the icon: {e}")
 
     def run(self):
         """Run the main application cycle"""
         if self.app is None:
             raise RuntimeError(
-                "The application is not initialized. "
+                " ❌ The application is not initialized. "
             )
 
         try:
@@ -200,7 +203,7 @@ class Launcher:
         try:
             live2d.dispose()
         except Exception as e:
-            print(f" ⚠️ Error cleanup Live2D: {e}")
+            print(f" ❌ Error cleanup Live2D: {e}")
 
 
 if __name__ == "__main__":

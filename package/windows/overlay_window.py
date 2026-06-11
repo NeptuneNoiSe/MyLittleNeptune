@@ -138,10 +138,13 @@ class ContextMenuOverlay(QMenu):
             if not action.menu():
                 action.triggered.connect(self.close)
 
+    def context_menu_close(self):
+        self.close()
+
 class ParticleOverlayWindow(QWidget):
     """Overlay window for particles."""
     def __init__(self, parent=None, resources_dir: str = None):
-        super().__init__(parent)
+        super().__init__(None)
 
         self.particle_presets = ParticlePresets(self)
 

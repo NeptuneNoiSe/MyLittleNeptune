@@ -20,6 +20,7 @@ class ResourceManager:
         self.languages: Dict[str, Dict] = {}
         self.background_images: Dict[str, str] = {}
         self.item_images: Dict[str, str] = {}
+        self.msg_box_images: Dict[str, str] = {}
         self.animation_files: Dict[str, str] = {}
         self.extra_motions: Dict[str, str] = {}
         self._talk_images: Dict[str, str] = {}
@@ -28,39 +29,6 @@ class ResourceManager:
         self.audio_files = None
         self._logging_audio_system = False
 
-    def set_debug_audio_system_logging(self, enabled: bool):
-        """Logging management"""
-        self._logging_audio_system = enabled
-
-        # self.animation_player._log_callbacks = enabled
-
-    def _categorize_characters(self):
-        """Распределяет персонажей по категориям (base/hdd)"""
-        for char_name, config in self.character_configs.items():
-            # Получаем ключевое имя (используем name_key или оригинальное имя)
-            display_name = config.get('name_key', char_name)
-
-            # Проверяем, является ли персонаж HDD формой
-            is_hdd = config.get('hdd_form', False)
-
-            # Добавляем в соответствующий словарь
-            if is_hdd:
-                self.hdd_characters[display_name] = config
-            else:
-                self.base_characters[display_name] = config
-
-        # Логирование для отладки
-        # print(f"[ResourceManager] Categorized characters:")
-        # print(f"  Base: {list(self.base_characters.keys())}")
-        # print(f"  HDD: {list(self.hdd_characters.keys())}")
-        # print(f"  Total: {len(self.character_configs)} characters")
-
-    def _load_character_configs(self) -> Dict[str, Dict]:
-        """Loads character configs from a JSON file"""
-        config_path = os.path.join(self.resources_dir, "configs/models_config.json")
-        with open(config_path, encoding="utf-8") as f:
-            return json.load(f)
-
     def load_language(self, language: str) -> Dict[str, Any]:
         """Loads language file"""
         if language not in self.languages:
@@ -68,6 +36,17 @@ class ResourceManager:
             with open(lang_path, encoding="utf-8") as f:
                 self.languages[language] = json.load(f)
         return self.languages[language]
+
+    def _load_character_configs(self) -> Dict[str, Dict]:
+        """Loads character configs from a JSON file"""
+        config_path = os.path.join(self.resources_dir, "configs/models_config.json")
+        with open(config_path, encoding="utf-8") as f:
+            return json.load(f)
+
+    def get_character_config(self, character_name: str) -> Dict[str, Any]:
+        """Returns the configuration of the character by name"""
+
+        return self.character_configs.get(character_name, {})
 
     def load_background_image(self, image_name: str)-> str:
         if image_name not in self.background_images:
@@ -83,6 +62,13 @@ class ResourceManager:
             )
         return self.item_images[image_name]
 
+    def load_msg_box_image(self, image_name: str)-> str:
+        if image_name not in self.msg_box_images:
+            self.msg_box_images[image_name] = os.path.join(
+                self.resources_dir, f"images/msg_box/{image_name}.png"
+            )
+        return self.msg_box_images[image_name]
+
     def load_animation(self, anim_name: str) -> str:
         """Returns animation path"""
         if anim_name not in self.animation_files:
@@ -92,85 +78,79 @@ class ResourceManager:
         return self.animation_files[anim_name]
 
     def load_extra_motions(self) -> Dict[str, str]:
-        """Loads all extra animations"""
+        """Loads all extra animations by scanning the directory"""
         if not self.extra_motions:
             motions_dir = os.path.join(self.resources_dir, "external_motions")
             if not os.path.exists(motions_dir):
                 print(f"[Warning] Extra motions directory not found: {motions_dir}")
                 return {}
 
-            motion_files = {
-                "drag_down": "drag_down.motion3.json",
-                "side_touch_head": "side_touch_head.motion3.json",
-                "touch_body": "touch_body.motion3.json",
-                "touch_body2": "touch_body2.motion3.json",
-                "touch_body3": "touch_body3.motion3.json",
-                "touch_bra": "touch_bra.motion3.json",
-                "touch_bra1": "touch_bra1.motion3.json",
-                "touch_bra2": "touch_bra2.motion3.json",
-                "touch_bra3": "touch_bra3.motion3.json",
-                "touch_head": "touch_head.motion3.json",
-                "touch_head2": "touch_head2.motion3.json",
-                "touch_hl": "touch_hl.motion3.json",
-                "touch_hl1": "touch_hl1.motion3.json",
-                "touch_hl2": "touch_hl2.motion3.json",
-                "touch_hr": "touch_hr.motion3.json",
-                "touch_hr1": "touch_hr1.motion3.json",
-                "touch_hr2": "touch_hr2.motion3.json",
-                "touch_leg": "touch_leg.motion3.json",
-                "touch_leg1": "touch_leg1.motion3.json",
-                "touch_leg2": "touch_leg2.motion3.json",
-                "touch_leg3": "touch_leg3.motion3.json",
-            }
             self.extra_motions = {}
-            for name, filename in motion_files.items():
-                full_path = os.path.join(motions_dir, filename)
-                if os.path.exists(full_path):
+
+            # Scan files in directory
+            for filename in os.listdir(motions_dir):
+                if filename.endswith('.motion3.json'):
+                    name = filename.replace('.motion3.json', '')
+                    full_path = os.path.join(motions_dir, filename)
                     self.extra_motions[name] = full_path
-                else:
-                    print(f"[Warning] Motion file not found: {full_path}")
+                    # print(f"[Info] Loaded motion: {name}")
+
+            if not self.extra_motions:
+                print(f"[Warning] No motion files found in {motions_dir}")
         return self.extra_motions
 
+    def get_character_image_path(self, name):
+        character = name.replace(" ", "_").lower()
+        path = os.path.join(self.resources_dir, f"images/characters/{character}.png")
+        return path
+
     def load_talk_images(self) -> [Dict[str, str], Dict[str, str]]:
-        """Loads all images for speech widgets"""
+        """Loads all images for speech widgets by scanning directories"""
         if self._talk_images is not None:
             talk_dir = os.path.join(self.resources_dir, "images/talk")
             mirrored_dir = os.path.join(self.resources_dir, "images/talk_mirrored")
 
-            # File names for all characters
-            image_files = {
-                "Neptune": "neptune_talk.svg",
-                "Purple Heart": "purple_heart_talk.svg",
-                "Noire": "noire_talk.svg",
-                "Black Heart": "black_heart_talk.svg",
-                "Blanc": "blanc_talk.svg",
-                "White Heart": "white_heart_talk.svg",
-                "Vert": "vert_talk.svg",
-                "Green Heart": "green_heart_talk.svg",
-                "NepGear": "nepgear_talk.svg",
-                "Purple Sister": "purple_sister_talk.svg",
-                "Uni": "uni_talk.svg",
-                "Black Sister": "black_sister_talk.svg",
-                "Rom": "rom_talk.svg",
-                "White Sister Rom": "white_sister_rom_talk.svg",
-                "Ram": "ram_talk.svg",
-                "White Sister Ram": "white_sister_ram_talk.svg",
-                "Histoire": "histoire_talk.svg",
-                "Maho": "maho_talk.svg",
-                "Grey Sister": "grey_sister_talk.svg",
-                "default": "talk.svg"
-            }
+            # Check directory
+            if not os.path.exists(talk_dir):
+                print(f"[Warning] Talk images directory not found: {talk_dir}")
+                return {}, {}
 
-            # Creating paths for normal and mirror images
-            self._talk_images = {
-                name: os.path.join(talk_dir, filename)
-                for name, filename in image_files.items()
-            }
+            self._talk_images = {}
+            self._mirrored_talk_images = {}
 
-            self._mirrored_talk_images = {
-                name: os.path.join(mirrored_dir, filename.replace('.svg', '_mirrored.svg'))
-                for name, filename in image_files.items()
-            }
+            for filename in os.listdir(talk_dir):
+                if filename.endswith('.svg'):
+                    # Get name from file
+                    # "name_talk.svg" -> "Name"
+                    name = filename.replace('_talk.svg', '').replace('.svg', '')
+
+                    formatted_name = name.title().replace('_', ' ')
+
+                    # Save path
+                    full_path = os.path.join(talk_dir, filename)
+                    self._talk_images[formatted_name] = full_path
+
+                    # Find mirrored image
+                    mirrored_filename = filename.replace('.svg', '_mirrored.svg')
+                    mirrored_path = os.path.join(mirrored_dir, mirrored_filename)
+
+                    if os.path.exists(mirrored_path):
+                        self._mirrored_talk_images[formatted_name] = mirrored_path
+                    else:
+                        self._mirrored_talk_images[formatted_name] = full_path
+                        print(f"[Warning] Mirrored image not found for {filename}, using original")
+
+            default_path = os.path.join(talk_dir, "talk.svg")
+            if os.path.exists(default_path):
+                self._talk_images["default"] = default_path
+
+                default_mirrored = os.path.join(mirrored_dir, "talk_mirrored.svg")
+                if os.path.exists(default_mirrored):
+                    self._mirrored_talk_images["default"] = default_mirrored
+                else:
+                    self._mirrored_talk_images["default"] = default_path
+
+            # print(f"[Info] Loaded {len(self._talk_images)} talk image(s) from {talk_dir}")
 
         return self._talk_images, self._mirrored_talk_images
 
@@ -178,11 +158,29 @@ class ResourceManager:
         """Returns the path to the image for the specified character"""
         talk_images, mirrored_images = self.load_talk_images()
         image_map = mirrored_images if mirrored else talk_images
-        return image_map.get(character_name, image_map["default"])
 
-    def get_character_config(self, character_name: str) -> Dict[str, Any]:
-        """Returns the configuration of the character by name"""
-        return self.character_configs.get(character_name, {})
+        #print(f"[Debug] Available keys: {list(image_map.keys())}")
+        #print(f"[Debug] Looking for: '{character_name}'")
+
+        if character_name in image_map:
+            return image_map[character_name]
+
+        variants = [
+            character_name,
+            character_name.lower(),
+            character_name.lower().replace(' ', '_'),
+            character_name.replace(' ', '_'),
+            character_name.title(),
+            character_name.replace(' ', ''),
+        ]
+
+        for variant in variants:
+            if variant in image_map:
+                # print(f"[Info] Found match using variant: '{variant}'")
+                return image_map[variant]
+
+        print(f"[Warning] Image not found for character: {character_name}, using default")
+        return image_map.get("default", "")
 
     def get_model(self, character_name: str) -> live2d.Model:
         """Returns the character model, loading it if necessary"""
@@ -196,6 +194,16 @@ class ResourceManager:
             self.loaded_models[character_name] = model
         return self.loaded_models[character_name]
 
+    def unload_model(self, character_name: str) -> None:
+        """Unloads the model from memory"""
+        if character_name in self.loaded_models:
+            self.loaded_models.pop(character_name)
+
+    def clear_cache(self) -> None:
+        """Clears all cached resources"""
+        self.loaded_models.clear()
+        self.ui_labels.clear()
+
     def get_label(self, label_name: str, text: str = "", size: QSize = None) -> QLabel:
         """Creates or returns an existing QLabel"""
         if label_name not in self.ui_labels:
@@ -206,28 +214,53 @@ class ResourceManager:
         return self.ui_labels[label_name]
 
     def get_base_character_names(self) -> List[str]:
-        """Возвращает список имен базовых персонажей"""
+        """Returns the names of base characters"""
         return list(self.base_characters.keys())
 
     def get_hdd_character_names(self) -> List[str]:
-        """Возвращает список имен HDD персонажей"""
+        """Returns the names of HDD characters"""
         return list(self.hdd_characters.keys())
 
     def get_all_character_names(self, include_hdd: bool = True) -> List[str]:
-        """Возвращает список всех имен персонажей"""
+        """Returns the names of all characters"""
         if include_hdd:
             return self.get_base_character_names() + self.get_hdd_character_names()
         return self.get_base_character_names()
 
-    def unload_model(self, character_name: str) -> None:
-        """Unloads the model from memory"""
-        if character_name in self.loaded_models:
-            self.loaded_models.pop(character_name)
+    def get_alt_form_name(self, character_name: str) -> str:
+        config = self.character_configs.get(character_name)
+        alt_form_key = None
+        if config:
+            alt_form_key = config.get('alt_form_key')
+        return alt_form_key
 
-    def clear_cache(self) -> None:
-        """Clears all cached resources"""
-        self.loaded_models.clear()
-        self.ui_labels.clear()
+    def _categorize_characters(self):
+        """Categorize characters (base/hdd)"""
+        for char_name, config in self.character_configs.items():
+            display_name = config.get('name_key', char_name)
+
+            is_hdd = config.get('hdd_form', False)
+
+            if is_hdd:
+                self.hdd_characters[display_name] = config
+            else:
+                self.base_characters[display_name] = config
+
+        # Logs:
+        # print(f"[ResourceManager] Categorized characters:")
+        # print(f"  Base: {list(self.base_characters.keys())}")
+        # print(f"  HDD: {list(self.hdd_characters.keys())}")
+        # print(f"  Total: {len(self.character_configs)} characters")
+
+    def set_debug_audio_system_logging(self, enabled: bool):
+        """Logging management"""
+        self._logging_audio_system = enabled
+
+        # self.animation_player._log_callbacks = enabled
+
+    def _character_to_folder_name(self, character_name: str) -> str:
+        """Converts the character's name to a folder name (removes spaces)"""
+        return character_name.replace(" ", "")
 
     def load_audio_files(self) -> Dict[str, Dict[str, str]]:
         """Loads all audio files with fallback to root audio folder"""
@@ -266,10 +299,10 @@ class ResourceManager:
                         if os.path.exists(root_file):
                             character_dict[sound_type] = root_file
                         else:
-                            # Final fallback: use nep_nep.wav from the root
-                            nep_nep_root = os.path.join(audio_dir, "nep.wav")
-                            if os.path.exists(nep_nep_root):
-                                character_dict[sound_type] = nep_nep_root
+                            # Final fallback: use default_sound from the root
+                            default_root = os.path.join(audio_dir, "default_sound.wav")
+                            if os.path.exists(default_root):
+                                character_dict[sound_type] = default_root
                             else:
                                 # Ultimate fallback: leave the path, but there is no file
                                 character_dict[sound_type] = character_file
@@ -281,10 +314,6 @@ class ResourceManager:
                 print(f"✅ Audio files loaded with root fallback: {list(self._audio_files.keys())}")
 
         return self._audio_files
-
-    def _character_to_folder_name(self, character_name: str) -> str:
-        """Converts the character's name to a folder name (removes spaces)"""
-        return character_name.replace(" ", "")
 
     def get_audio(self, character_name: str, audio_type: str = "default") -> Optional[str]:
         """Gets audio file"""

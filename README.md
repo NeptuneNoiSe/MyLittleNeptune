@@ -7,7 +7,7 @@
     <img title="Python Version" src="https://img.shields.io/badge/Python-3.13-blue" alt="Python Version" style="margin: 0 10px;">
     <img title="PySide6 Version" src="https://img.shields.io/badge/PySide6-6.8.3-green" alt="PySide6 Version" style="margin: 0 10px;">
     <img title="live2d-py Version" src="https://img.shields.io/badge/live2d-0.6.1-orange" alt="live2d-py Version" style="margin: 0 10px;">
-    <img title="App Version" src="https://img.shields.io/badge/app_version-0.2.9-D362C4" alt="App Version" style="margin: 0 10px;">
+    <img title="App Version" src="https://img.shields.io/badge/app_version-0.3.0-D362C4" alt="App Version" style="margin: 0 10px;">
     <img title="DeepSeek AI" src="https://img.shields.io/badge/DeepSeek-Best_Friend-0056D2" alt="DeepSeek AI" style="margin: 0 10px;">
 </p>
 
@@ -17,6 +17,7 @@
 * Python 3.13
 * PySide6
 * [live2d-py by Arkueid](https://github.com/Arkueid/live2d-py)
+* [Particle Engine Supreme by jjkitch](https://github.com/jjkitch/Particle-Engine-Supreme)
 * Compile Heart / Idea Factory Live2D Models and Sounds
 * [DeepSeek AI](https://www.deepseek.com) - not just a tool, but a true coding partner that provided inspiration, debugging help, and countless hours of thoughtful discussion throughout development ❤️🚀
 
@@ -28,23 +29,21 @@
 1. Clone or Download Project on your desktop
 2. Install requirements `python -m pip install -r requirements.txt`
 
+## Install the Windows application:
+Download the **mln_setup.exe** installer from the releases and install the program in a convenient location for you
+
+**Important: Do not install the application in C:\Program Files.**
+
+### Requirements: 
+* Windows 10/11
+* OpenGL 2.0-compatible graphics card
+
 ## Usage:
 ### Run:
-`python package/neptune_main.py`
+`python launcher.py`
 
 ### Configuration file:
 The configuration file is created at the first startup, as config.ini
-
-### Models Select:
-Neptune model as default
-
-You can change character from the context menu while the application is running
-
-### Auto Scale:
-If Auto-scale function on, models is scaled based on the screen size
-
-### Models Scale:
-Edit Scale multiplier parameter in settings window, to manual scale model
 
 ### Logs:
 If you want, you can enable logging to the console, Edit parameter to `True`.
@@ -99,6 +98,9 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
     <img src="./docs/model_preview/maho.svg" alt="maho" width="250px" height="100px">
     <img src="./docs/model_preview/grey_sister.svg" alt="grey_sister" width="250px" height="100px">
 </div>
+<div align="left" style="padding-top: 10px">
+    <img src="./docs/model_preview/anri.svg" alt="anri" width="250px" height="100px">
+</div>
 
 ## Important to read:
 <div align="left" style="padding-left: 1px">
@@ -107,7 +109,7 @@ If you want, you can enable logging to the console, Edit parameter to `True`.
 
 1. The application is at an early stage of development and may have bugs.
 2. The animations need to be improved.
-3. In the next stages of development, it is planned to work on the GUI,add functions based on AI model and compile the application into an .exe file.
+3. In the next stages of development, it is planned to work on the GUI,add functions based on AI model.
 
 ### Legal Disclaimer & Fair Use Notice:
 > This application is a non-commercial, fan-made project created solely for personal, educational, and demonstrative purposes.

@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime, date, timedelta
 from time import sleep
 
@@ -80,6 +81,7 @@ class CharacterManager:
 class CharacterStateManager:
     def __init__(self, character):
         self.character = character
+        self.current_state = None
 
         # GoodBye timer
         self.goodByeTimer = QTimer()
@@ -130,6 +132,7 @@ class CharacterStateManager:
             is_first_run: If True, the callback is not called (for the first character display).
             example: on_finished=None if is_first_run else self._after_animation_fade_in_callback
         """
+        self.current_state = "Greeting"
         if self.character.current_event and self.character.show_event_greeting:
             current_event_group = self.character.current_event.replace(" ", "") + "Event"
             if self.character.special_stage:
@@ -143,6 +146,7 @@ class CharacterStateManager:
 
         if self.character.delay_congratulation_after_greeting:
             delay_ms = self.character.delay_congratulation_after_greeting
+            # event_name = self.character.current_event if self.win.birthday_active else None
             self.set_event_congratulation_state(delay_ms= delay_ms,
                                                 duration = 10000,
                                                 event_name= self.character.current_event,
@@ -181,10 +185,13 @@ class CharacterStateManager:
         self.character.expressions.set_smile_expression(fade_out=7000)
         self.character.movements.set_motion(group_name="Special", id=19)
         self.win.input_handler.input_lock = False
+        self.win.character_lock = False
 
     def set_goodbye_state(self):
         """Character say goodbye"""
+        self.current_state = "Goodbye"
         self.win.input_handler.input_lock = True
+        self.win.character_lock = True
         self.goodByeTimer.start(3000)
         self.character.audio.set_goodbye_audio()
         self.character.movements.set_motion(group_name="Special", id=1)
@@ -195,9 +202,11 @@ class CharacterStateManager:
             self.character.tired_controller.wake_up_function()
 
         self.character.win.talk_widget.talk_update = False
+        self.cancel_congratulation_timer()
 
     def set_drag_state(self):
         """Set drag state"""
+        #self.current_state = "Draging"
         self.character.audio.set_drag_audio()
         self.character.expressions.set_drag_expression()
         self.character.character_text.set_drag_text()
@@ -226,6 +235,22 @@ class CharacterStateManager:
 
     def set_transform_state(self):
         """Transform state"""
+        self.win.model_move = False
+        self.cancel_congratulation_timer()
+        if not self.win.can_transform or self.win.settings_lock:
+            if self.character.tired_state.condition != "Sleep":
+                self.set_transform_failure_state()
+            return
+
+        if self.character.tired_state.condition == "Sleep":
+            return
+
+        self.win.animation_manager.transform_animation_start()
+        self.character.tired_controller.timer_count = 1
+        #self.win.settings_close()
+        self.win.models_window.close()
+        self.win.animation_status = True
+
         self.character.expressions.fadeoutTimer.stop()
         self.character.audio.set_transform_audio()
         if not self.win.hdd_form:
@@ -258,9 +283,12 @@ class CharacterStateManager:
                 self.character.character_text.set_transformed_normal_text()
             self.character.transform_text_show = False
             self.character.transform_exp_show = False
+            self.win.animation_status = False
 
     def set_settings_state(self, text_key: str | None = None,) -> None:
         """Update Settings state"""
+        self.cancel_congratulation_timer()
+        #self.character.win.talk_widget.talk_update = True
         self.character.audio.set_settings_audio()
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
@@ -273,6 +301,7 @@ class CharacterStateManager:
 
     def set_quit_state(self, quit: str):
         """Quiting state"""
+        self.cancel_congratulation_timer()
         if quit == 'Yes':
             self.character.audio.set_quit_audio()
             self.character.expressions.set_cry_expression()
@@ -294,7 +323,7 @@ class CharacterStateManager:
                     end=0.0,
                     duration=500,
                     easing="out_quad",
-                    on_finished=lambda: exit(0))))
+                    on_finished=lambda: sys.exit(0))))
 
         elif quit == 'No':
             self.character.audio.set_happy_audio()
@@ -304,44 +333,85 @@ class CharacterStateManager:
 
     def set_crying_state(self):
         """Set crying state"""
+        self.cancel_congratulation_timer()
         self.character.movements.set_motion(group_name="Special", id=7)
         self.character.expressions.set_cry_expression()
 
-    def set_event_congratulation_state(self, delay_ms = 0, duration = 10000, event_name: str | None = None,
-                                     event_key: str | None = None) -> None:
+    def set_event_congratulation_state(self, delay_ms=0, duration=10000, event_name: str | None = None,
+                                       event_key: str | None = None) -> None:
         """Character say congratulation"""
-        timer_congratulate = QTimer()
+        if (self.win.settings_lock
+                or self.win.quit_box_active
+                or self.current_state == "Goodbye"
+                or self.goodByeTimer.isActive()):
+            return
+
+        self.timer_congratulate = QTimer()
+        self.timer_congratulate.setSingleShot(True)
+
         def start_congratulation():
             if (self.win.input_handler.input_lock
-                    or self.win.settings_update_state
-                    or self.win.quit_box_active):
-                timer_congratulate = None
+                    or self.win.settings_lock
+                    or self.win.quit_box_active
+                    or self.current_state == "Goodbye"
+                    or self.goodByeTimer.isActive()):
+                if hasattr(self, 'timer_congratulate'):
+                    self.timer_congratulate.stop()
+                    self.timer_congratulate.deleteLater()
+                    del self.timer_congratulate
                 return
+
+            self.win.input_handler.input_lock = True
+            self.win.animation_status = True
+            #self.win.input_handler.set_transparent_input(delay=duration)
+
+            audio_key = event_name.replace(" ", "_") + "_" + event_key
+            self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
+
+            self.character.expressions.set_happy_expression(fade_out=duration)
+            self.character.expressions.set_star_expression(fade_out=duration)
+
+            self.character.movements.set_motion(group_name="Special", id=3)
+
+            self.win.event_manager.congratulate_event(duration=duration)
+
+            text_group = event_name.replace(" ", "") + "Event"
+            if text_group == "ValentinesDayEvent":
+                self.character.character_text.set_event_congratulation_text(
+                    group_name=text_group,
+                    text_key=event_key,
+                    kaomoji="❤~(//◠‿◠//)"
+                )
             else:
-                self.win.input_handler.input_lock = True
-                self.win.input_handler.set_transparent_input(delay=duration)
-                audio_key = event_name.replace(" ", "_") + "_" + event_key
-                self.character.audio.set_event_congratulation_audio(audio_key=audio_key)
-                self.character.expressions.set_happy_expression(fade_out=duration)
-                self.character.expressions.set_star_expression(fade_out=duration)
-                self.character.movements.set_motion(group_name="Special", id=3)
-                self.win.event_manager.congratulate_event(duration=duration)
-                text_group = event_name.replace(" ", "") + "Event"
-                kaomoji = "❤~(//◠‿◠//)" if text_group == "ValentinesDayEvent" else None
-                self.character.character_text.set_event_congratulation_text(group_name=text_group,
-                                                                            text_key=event_key,
-                                                                            kaomoji = kaomoji)
-                QTimer.singleShot(duration, end_congratulation)
+                self.character.character_text.set_event_congratulation_text(
+                    group_name=text_group,
+                    text_key=event_key
+                )
+
+            QTimer.singleShot(duration, end_congratulation)
 
         def end_congratulation():
             self.win.input_handler.input_lock = False
-            timer_congratulate = None
+            self.win.animation_status = False
+            if hasattr(self, 'timer_congratulate'):
+                self.timer_congratulate.stop()
+                self.timer_congratulate.deleteLater()
+                del self.timer_congratulate
 
-        timer_congratulate.singleShot(delay_ms, start_congratulation)
+        self.timer_congratulate.timeout.connect(start_congratulation)
+        self.timer_congratulate.start(delay_ms)
+
+    def cancel_congratulation_timer(self):
+        """Force cancel congratulation timer"""
+        if hasattr(self, 'timer_congratulate'):
+            self.timer_congratulate.stop()
+            self.timer_congratulate.deleteLater()
+            del self.timer_congratulate
 
 
     def set_sing_song_state(self):
         """Character sings a song"""
+        self.cancel_congratulation_timer()
         self.win.audio_manager.play_song()
         self.character.movements.set_motion(group_name="Special", id=3)
         self.character.expressions.set_smile_expression(fade_out=self.win.song_duration)
@@ -366,14 +436,14 @@ class CharacterTiredController:
         self.timer = QTimer()
         self.timer.timeout.connect(self._update_state)
         self.start_timer()
-        # Добавляем состояния для расписания
         self.schedule_state = "NORMAL"  # NORMAL, SCHEDULE_SLEEPING, SCHEDULE_IDLE
         self.last_schedule_check = datetime.now()
         self.schedule_timer = QTimer()
         self.schedule_timer.timeout.connect(self._check_schedule_state)
-        self.schedule_timer.start(10000)  # Проверяем каждые 10 секунд
+        self.schedule_timer.start(10000)
         self._check_schedule_state()
         self.sleep_again_timer = QTimer()
+        self._schedule_wake_up_done = False
 
     @property
     def sleep_move(self):
@@ -449,7 +519,7 @@ class CharacterTiredController:
               f" | Thread: {QThread.currentThread()}")
 
     def _check_schedule_state(self):
-        """Проверяет и обновляет состояние по расписанию"""
+        """Check schedule State"""
         if not self.time_schedule:
             self.schedule_state = "NORMAL"
             return
@@ -459,19 +529,18 @@ class CharacterTiredController:
         sleep_minutes = self.sleep_h * 60 + self.sleep_m
         wake_minutes = self.wake_h * 60 + self.wake_m
 
-        # Определяем, в каком мы диапазоне
         if sleep_minutes <= wake_minutes:
-            # Обычный диапазон (сон ночью)
             if sleep_minutes <= current_minutes < wake_minutes:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
+                self._schedule_wake_up_done = False
         else:
-            # Диапазон через полночь
             if current_minutes >= sleep_minutes or current_minutes < wake_minutes:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
+                self._schedule_wake_up_done = False
 
         self.last_schedule_check = now
 
@@ -484,33 +553,33 @@ class CharacterTiredController:
         return self.timer_count < self.sleep_v
 
     def _should_wake_up_by_schedule(self, now=None):
-        """Проверяет, наступило ли время пробуждения по расписанию"""
+        """Checks if the scheduled wake-up time has arrived"""
+        if self._schedule_wake_up_done:
+            return False
+
         if now is None:
             now = datetime.now()
 
         current_minutes = now.hour * 60 + now.minute
         wake_minutes = self.wake_h * 60 + self.wake_m
 
-        # Просыпаемся, когда наступило время wake_up
         return current_minutes >= wake_minutes
 
     def _wake_up_by_schedule(self):
-        """Принудительное пробуждение по расписанию"""
+        """Forced wake up by schedule"""
+        if self._schedule_wake_up_done:
+            return
+
         if self.timer_log:
             print(f"[SCHEDULE_WAKEUP] Time to wake up! ({self.wake_h:02d}:{self.wake_m:02d})")
 
-        # Вызываем функцию пробуждения
+        self._schedule_wake_up_done = True
         self.character.tired_state.set_wake_up_state()
 
-        # Сбрасываем флаги
         if hasattr(self, '_sleep_function_called'):
             self._sleep_function_called = False
 
-        # Сбрасываем таймер
-        #self.timer_count = 1
-        #self.character.tired_state.set_idle_state()
-
-    def wake_up_function(self, short_wake_up = False):
+    def wake_up_function(self, short_wake_up=False):
         """Run if character wake_up"""
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
@@ -547,54 +616,44 @@ class CharacterTiredController:
 
         self.timer_count += 1
         now = datetime.now()
-        # Определяем текущий режим
         # Logging
         if self.timer_log:
             self._timer_logging()
         if self.time_schedule:
             if self.schedule_state == "SCHEDULE_IDLE":
-                # ВНЕ диапазона сна - персонаж всегда idle, не устает
                 self._handle_schedule_idle_mode()
                 return
             elif self.schedule_state == "SCHEDULE_SLEEPING":
-                # ВНУТРИ диапазона сна - обычная логика усталости
                 self._handle_schedule_sleeping_mode()
                 return
 
-        # Обычный режим (без расписания)
         self._handle_normal_mode()
 
     def _handle_schedule_idle_mode(self):
-        """Режим вне времени сна по расписанию"""
-        # Всегда сбрасываем таймер усталости и устанавливаем idle
-        self.timer_count = min(self.timer_count, self.sad_v - 1)  # Не даем уставать
+        self.timer_count = min(self.timer_count, self.sad_v - 1)
         self.character.tired_state.set_idle_state()
 
         if self.idle_switch:
             self.idle_anim = True
 
-        # Логирование
-        if self.timer_log and self.timer_count % 300 == 0:  # Раз в 5 минут
+        if self.timer_log and self.timer_count % 300 == 0:
             print(f"[SCHEDULE_IDLE] Outside sleep range - forced idle")
 
     def _handle_schedule_sleeping_mode(self):
-        """Режим внутри времени сна по расписании"""
-        # Включаем обычную логику усталости, но БЕЗ wake_up_state
-        # до наступления времени пробуждения
-
-        # Проверяем, не пора ли просыпаться по расписанию
+        """Sleep schedule handler"""
         now = datetime.now()
-        should_wake_up = self._should_wake_up_by_schedule(now)
 
-        if should_wake_up:
-            # Время просыпаться по расписанию
+        if not self._schedule_wake_up_done and self._should_wake_up_by_schedule(now):
             self._wake_up_by_schedule()
             return
-        # Обычная логика усталости, но модифицированная
-        self._modified_normal_logic()
+
+        if self._schedule_wake_up_done:
+            self._handle_schedule_idle_mode()
+        else:
+            self._modified_normal_logic()
 
     def _handle_normal_mode(self):
-        """Обычный режим без расписания"""
+        """Normal mode withou schedule"""
         # Processing states
         if self.timer_count <= self.sad_v:
             self.character.tired_state.set_idle_state()
@@ -619,21 +678,16 @@ class CharacterTiredController:
             self.character.tired_state.set_wake_up_state()
 
     def _modified_normal_logic(self):
-        """Модифицированная логика с явной стейт-машиной"""
-        # Определяем, какое состояние должно быть сейчас
-
+        """Modified normal logic with State machine"""
         target_state = self._get_target_sleep_state()
 
         if target_state == "Sleep" and self.character.tired_state.condition == "Sleep":
-            # Фиксируем timer_count на значении sleep_v
             self.timer_count = self.sleep_v
             return
 
-        # Если состояние не изменилось - ничего не делаем
         if self.character.tired_state.condition == target_state:
             return
 
-        # Устанавливаем новое состояние
         if target_state == "Idle":
             self.character.tired_state.set_idle_state()
         elif target_state == "Sad":
@@ -644,7 +698,7 @@ class CharacterTiredController:
             self.character.tired_state.set_sleep_state()
 
     def _get_target_sleep_state(self):
-        """Определяет целевое состояние для прогрессии сна"""
+        """Get target sleep state"""
         if self.timer_count < self.sad_v:
             return "Idle"
         elif self.sad_v <= self.timer_count < self.tired_v:
@@ -665,7 +719,6 @@ class CharacterTiredController:
     def reset_timer_with_reload(self, delay_ms=10000, reason=""):
         self.timer.stop()
         #self.sleep_again_timer.stop()
-        # Логируем причину
         if self.timer_log and reason:
             print(f"[TIMER_RESET] {reason}")
 
@@ -677,7 +730,7 @@ class CharacterTiredController:
 
     def start_timer(self):
         """Start timer"""
-        self.reset_timer()  # Сброс перед запуском
+        self.reset_timer()
         self.timer.start(int(1000 / self.time_scale))
 
 class CharacterTiredStateManager:
@@ -1078,7 +1131,6 @@ class CharacterMovementsManager:
                    id: int | None = None) -> None:
 
         self.character.win.animation_manager.play_animation(
-            model=self.model,
             anim_type='Motion',
             group_or_id=group_name,
             no=id,

@@ -33,6 +33,9 @@ class AppConfig(QObject):
             'random_character': 'False',
             'random_character_hdd': 'False',
             'character_name': 'Neptune',
+            'l2d_scale': '1',
+            'offset_x': '0',
+            'offset_y': '0',
             'x_param': '0',
             'y_param': '0',
             'w_resize': '0',
@@ -67,7 +70,11 @@ class AppConfig(QObject):
         'Other': {
             'show_text_widget': 'True',
             'show_name': 'True',
-            'show_kaomoji': 'True'
+            'show_kaomoji': 'True',
+            'birthday_active': 'False',
+            'birthday_year': '0',
+            'birthday_month': '0',
+            'birthday_day': '0'
         }
     }
 
@@ -274,6 +281,9 @@ class AppConfig(QObject):
     def update_model_params(
             self,
             character_name: Optional[str] = None,
+            l2d_scale: Optional[float] = None,
+            offset_x: Optional[float] = None,
+            offset_y: Optional[float] = None,
             x_param: Optional[int] = None,
             y_param: Optional[int] = None,
             w_resize: Optional[int] = None,
@@ -287,6 +297,12 @@ class AppConfig(QObject):
         """Updates the model parameters (all parameters are optional)"""
         if character_name is not None:
             self._config.set('Model', 'character_name', character_name)
+        if l2d_scale is not None:
+            self._config.set('Model', 'l2d_scale', str(l2d_scale))
+        if offset_x is not None:
+            self._config.set('Model', 'offset_x', str(offset_x))
+        if offset_y is not None:
+            self._config.set('Model', 'offset_y', str(offset_y))
         if x_param is not None:
             self._config.set('Model', 'x_param', str(x_param))
         if y_param is not None:
@@ -307,6 +323,33 @@ class AppConfig(QObject):
             self._config.set('Model', 'twmY', str(twm_y))
 
         self._save_and_notify('Model', 'params_updated', 'true')
+
+    @property
+    def l2d_scale(self) -> float:
+        return self._config.getfloat('Model', 'l2d_scale')
+
+    @l2d_scale.setter
+    def l2d_scale(self, value: float):
+        self._config.set('Model', 'l2d_scale', str(value))
+        self._save_and_notify('Model', 'l2d_scale', str(value))
+
+    @property
+    def offset_x(self) -> float:
+        return self._config.getfloat('Model', 'offset_x')
+
+    @offset_x.setter
+    def offset_x(self, value: float):
+        self._config.set('Model', 'offset_x', str(value))
+        self._save_and_notify('Model', 'offset_x', str(value))
+
+    @property
+    def offset_y(self) -> float:
+        return self._config.getfloat('Model', 'offset_y')
+
+    @offset_y.setter
+    def offset_y(self, value: float):
+        self._config.set('Model', 'offset_y', str(value))
+        self._save_and_notify('Model', 'offset_y', str(value))
 
     @property
     def mx_param(self) -> int:
@@ -615,6 +658,42 @@ class AppConfig(QObject):
     def show_kaomoji(self, value: bool):
         self._config.set('Other', 'show_kaomoji', str(value))
         self._save_and_notify('Other', 'show_kaomoji', str(value))
+
+    @property
+    def birthday_active(self) -> bool:
+        return self._config.getboolean('Other', 'birthday_active')
+
+    @birthday_active.setter
+    def birthday_active(self, value: bool):
+        self._config.set('Other', 'birthday_active', str(value))
+        self._save_and_notify('Other', 'birthday_active', str(value))
+
+    @property
+    def birthday_year(self) -> int:
+        return self._config.getint('Other', 'birthday_year')
+
+    @birthday_year.setter
+    def birthday_year(self, value: int):
+        self._config.set('Other', 'birthday_year', str(value))
+        self._save_and_notify('Other', 'birthday_year', str(value))
+
+    @property
+    def birthday_month(self) -> int:
+        return self._config.getint('Other', 'birthday_month')
+
+    @birthday_month.setter
+    def birthday_month(self, value: int):
+        self._config.set('Other', 'birthday_month', str(value))
+        self._save_and_notify('Other', 'birthday_month', str(value))
+
+    @property
+    def birthday_day(self) -> int:
+        return self._config.getint('Other', 'birthday_day')
+
+    @birthday_day.setter
+    def birthday_day(self, value: int):
+        self._config.set('Other', 'birthday_day', str(value))
+        self._save_and_notify('Other', 'birthday_day', str(value))
 
     # Save configs
     def _save_and_notify(self, section: str, key: str, value: str):

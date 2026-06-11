@@ -34,6 +34,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Purple Heart": {
@@ -66,6 +67,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Noire": {
@@ -103,6 +105,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Black Heart": {
@@ -135,6 +138,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Blanc": {
@@ -172,6 +176,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "White Heart": {
@@ -204,6 +209,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Vert": {
@@ -240,6 +246,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Green Heart": {
@@ -270,6 +277,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "NepGear": {
@@ -307,6 +315,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Purple Sister": {
@@ -338,6 +347,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Uni": {
@@ -373,6 +383,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Black Sister": {
@@ -403,6 +414,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Rom": {
@@ -438,6 +450,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "White Sister Rom": {
@@ -469,6 +482,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Ram": {
@@ -504,6 +518,7 @@
     "new_year_congratulation": "new_year.wav",
     "new_year_xmas": "christmas.wav",
     "valentines_day_congratulation": "valentines_day.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "White Sister Ram": {
@@ -535,6 +550,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Histoire": {
@@ -566,6 +582,7 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Maho": {
@@ -613,6 +630,7 @@
     "normal_maho": "normal_alt.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Grey Sister": {
@@ -644,12 +662,46 @@
     "normal": "normal.wav",
     "no": "no.wav",
     "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
+    "default": "default.wav"
+  },
+  "Anri": {
+    "greeting": "hello.wav",
+    "goodbye": "goodbye.wav",
+    "me": "me.wav",
+    "drag": "drag.wav",
+    "stay": "stay.wav",
+    "lost": "lost.wav",
+    "transform_fail": "transform_fail.wav",
+    "woke": "woke.wav",
+    "wake_up": "wake_up.wav",
+    "pre_sleep": "pre_sleep.wav",
+    "sleep": "sleep.wav",
+    "settings": "settings.wav",
+    "happy": "happy.wav",
+    "angry": "angry.wav",
+    "sad": "sad.wav",
+    "smile": "smile.wav",
+    "tired": "tired.wav",
+    "closedeyes": "closed_eyes.wav",
+    "cry": "cry.wav",
+    "fear": "fear.wav",
+    "star": "star.wav",
+    "surprised": "surprised.wav",
+    "funny": "funny.wav",
+    "really_quit": "really_quit.wav",
+    "quit": "quit.wav",
+    "normal": "normal.wav",
+    "no": "no.wav",
+    "yes": "yes.wav",
+    "birthday_congratulation": "birthday.wav",
     "default": "default.wav"
   },
   "Effects": {
     "transform_start": "transform_start.wav",
     "transform_finish": "transform_finish.wav",
-    "new_year_fanfare": "new_year_fanfare.wav"
+    "new_year_fanfare": "new_year_fanfare.wav",
+    "happy_birthday": "happy_birthday.wav"
   },
   "BGM": {
     "new_year_song": "new_year_song.wav",

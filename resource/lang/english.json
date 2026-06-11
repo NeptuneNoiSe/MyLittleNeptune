@@ -18,7 +18,8 @@
     "WhiteSisterRam": "White Sister Ram",
     "Histoire": "Histoire",
     "Maho": "Maho",
-    "GreySister": "Grey Sister"
+    "GreySister": "Grey Sister",
+    "Anri": "Anri"
   },
   "NamesActions": {
     "Neptune": "&Neptune",
@@ -39,6 +40,7 @@
     "WhiteSisterRam": "&White Sister Ram",
     "Histoire": "&Histoire",
     "Maho": "&Maho",
+    "Anri": "&Anri",
     "GreySister": "&Grey Sister"
   },
   "Talk": {
@@ -118,17 +120,22 @@
     "About": "&About",
     "AboutAlt": "About",
     "Quit": "Quit",
-    "AboutText": "My Little Neptune\nThe assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe: (https://github.com/NeptuneNoiSe)\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid: (https://github.com/Arkueid/live2d-py)\nCompile Heart / Idea Factory Live2D Models\n© 2025"
+    "Version": "Version: ",
+    "AboutText": "The assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
   },
-  "Settings": {
-    "Settings": "Settings",
-    "ResetPosition": "Reset Position",
-    "Quit": "Force Quit",
-    "WindowTitle": "Window",
-    "Controls": "Controls",
+  "Buttons": {
     "Apply": "Apply",
     "OK": "OK",
     "Cancel": "Cancel",
+    "Quit": "Force Quit",
+    "ResetModel": "Reset Model",
+    "Yes": "Yes",
+    "No": "No"
+  },
+  "Settings": {
+    "Settings": "Settings",
+    "WindowTitle": "Window",
+    "Controls": "Controls",
     "Error": "Error",
     "UnsavedChangesTitle": "Unsaved changes",
     "UnsavedChanges": "You have unsaved changes",
@@ -174,9 +181,31 @@
     "Mute": "Mute All",
     "Unmute": "Unmute All",
     "OtherTitle": "Other",
+    "BirthdayTitle": "Enter Your BirthDay:",
+    "DateText": "Date of Birth: ",
+    "Age": "Your Age: ",
+    "BirthdayInfo": "* The character will wish you a Happy Birthday on this day",
+    "TextWidget": "Text Widget Settings:",
     "ShowTextWidget": "Show text widget",
     "ShowName": "Show character name in widget",
-    "ShowKaomoji": "Show kaomoji in widget"
+    "ShowKaomoji": "Show kaomoji in widget",
+    "AutoCloseMessage": "Automatic closing via {seconds} sec."
+  },
+  "ModelsWindow": {
+    "Title": "Choose a character",
+    "HDDTitle": "HDD Characters",
+    "DelayMessage": "Wait a bit before making your next choice",
+    "InputLockMessage": "Input locked",
+    "SettingsLockMessage": "Apply the settings before selecting a character",
+    "AlreadyChangedMessage": "already changed",
+    "CharacterSelectedMessage": "Selected",
+    "AllowSelectionMessage": "You can choose a character"
+  },
+  "Time": {
+    "Days": "d.",
+    "Hours": "h.",
+    "Minutes": "min.",
+    "Seconds": "sec."
   },
   "NewYearEvent": {
     "Greeting": "Hi! The New Year is coming soon",
@@ -195,5 +224,8 @@
   },
   "ValentinesDayEvent": {
     "Congratulation": "Happy Valentine's Day!"
+  },
+  "BirthDayEvent": {
+    "Congratulation": "Happy Birthday!"
   }
 }

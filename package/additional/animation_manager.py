@@ -1,9 +1,11 @@
 from PySide6.QtCore import QSize, QObject, QTimer, QPropertyAnimation, QEasingCurve, QVariantAnimation, \
-    QParallelAnimationGroup
+    QParallelAnimationGroup, QSequentialAnimationGroup, QPoint
 from PySide6.QtGui import QMovie, Qt
-from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
+from PySide6.QtWidgets import QWidget, QApplication, QGraphicsOpacityEffect
 
 from package import resources
+import weakref
+import uuid
 import warnings
 import random
 import time
@@ -16,8 +18,8 @@ from package.additional.resource_manager import ResourceManager
 
 class AnimationsManager:
     """Main Animation Manager"""
-    def __init__(self, win, model):
-        self.model = model
+    def __init__(self, win):
+        # self.model = self.win.model
         self.win = win
         # LOGS
         self._log_callbacks = False
@@ -27,6 +29,7 @@ class AnimationsManager:
         self.transform_animator = TransformAnimator(self)
         self.blink_animator = BlinkAnimator(self)
         self.opacity_animator = OpacityAnimator(self)
+        self.bounce_animator = BounceAnimator(self)
         self.drag_animator = DragAnimator(self)
         self.color_animator = ColorAnimator(self)
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
@@ -76,7 +79,7 @@ class AnimationsManager:
 
         for name, path in motions.items():
             try:
-                motion_index = self.model.LoadExtraMotion("Extra", path)
+                motion_index = self.win.model.LoadExtraMotion("Extra", path)
 
                 # Save motion index
                 if not hasattr(self, '_extra_motion_indices'):
@@ -106,7 +109,7 @@ class AnimationsManager:
         self._sleep_mode = is_sleeping  # It can be used for special sleep animations.
 
     # Proxy-methods for AnimationPlayer
-    def play_animation(self, model, anim_type: str, group_or_id, no=None, priority=None,
+    def play_animation(self, anim_type: str, group_or_id, no=None, priority=None,
                        custom_start=None, custom_finish=None):
         """
         Proxy-Method for AnimationPlayer.play_animation
@@ -120,7 +123,6 @@ class AnimationsManager:
             priority = PRIORITY_MAP.get(priority.upper(), priority)
 
         return self.animation_player.play_animation(
-            model=model,
             anim_type=anim_type,
             group_or_id=group_or_id,
             no=no,
@@ -252,6 +254,21 @@ class AnimationsManager:
                                        fade_out=fade_out,
                                        fade_duration=fade_duration)
 
+    def animate_bounce_continuous(self, target, **kwargs):
+        return self.bounce_animator.animate_bounce_continuous(target, **kwargs)
+
+    def animate_bounce(self, target, **kwargs):
+        return self.bounce_animator.animate_bounce(target, **kwargs)
+
+    def animate_scale_bounce(self, target, **kwargs):
+        return self.bounce_animator.animate_scale_bounce(target, **kwargs)
+
+    def stop_scale_bounce(self, target):
+        self.bounce_animator.stop_scale_bounce(target)
+
+    def stop_bounce(self, target):
+        self.bounce_animator.stop_bounce(target)
+
 class AnimationPlayer:
     """Animation Player"""
     def __init__(self, animation_manager):
@@ -264,10 +281,6 @@ class AnimationPlayer:
     @property
     def win(self):
         return self.animation_manager.win
-
-    @property
-    def model(self):
-        return self.animation_manager.model
 
     @property
     def profiles(self):
@@ -288,7 +301,7 @@ class AnimationPlayer:
         pass  # Or you can allow it if necessary:
         # self.animation_manager._log_callbacks = value
 
-    def play_animation(self,model, anim_type: str, group_or_id, no=None, priority=None,
+    def play_animation(self, anim_type: str, group_or_id, no=None, priority=None,
                        custom_start=None, custom_finish=None):
         """
         A universal method for starting animations
@@ -303,14 +316,14 @@ class AnimationPlayer:
         }
 
         if anim_type == 'RandomMotion':
-            model.StartRandomMotion(
+            self.win.model.StartRandomMotion(
                 str(group_or_id),  # Group (str)
                 priority,
                 onStart=callbacks['start'],
                 onFinish=callbacks['finish']
             )
         elif anim_type == 'Motion':
-            model.StartMotion(
+            self.win.model.StartMotion(
                 str(group_or_id),  # Group (str)
                 int(no),  # Animation number (int)
                 int(priority),  # Live2d priority (int)
@@ -337,7 +350,7 @@ class AnimationPlayer:
     def _handle_motion_finish(self, group, no):
         """Callback with Animation Finish"""
         if not self.animation_manager.transform_animator.transform:
-            self.model.ResetAllParameters()
+            self.win.model.ResetAllParameters()
         if group != "Idle":  # If the NON-idle animation has ended
             self._reset_idle_state()
             self.animation_manager.blink_animator.set_blink_enabled(True)
@@ -379,7 +392,7 @@ class AnimationPlayer:
 
     def _play_idle_animation(self):
         """Running animations with timer updates"""
-        self.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE,
+        self.win.model.StartRandomMotion("Idle", live2d.MotionPriority.IDLE,
                                      onStart=lambda g, n: self._handle_idle_start(g, n),
                                      onFinish=lambda g, n: self._handle_idle_finish(g, n)
                                      )
@@ -415,7 +428,6 @@ class AnimationPlayer:
             options = profile['options']
             anim_id = random.choice([options] if isinstance(options, int) else options)
             self.play_animation(
-                model=self.model,
                 anim_type='Motion',
                 group_or_id=profile['group'],
                 no=anim_id,
@@ -423,7 +435,6 @@ class AnimationPlayer:
             )
         else:
             self.play_animation(
-                model=self.model,
                 anim_type='RandomMotion',
                 group_or_id=profile['group'],
                 priority=profile['priority']
@@ -505,9 +516,9 @@ class BlinkAnimator:
     def _set_eye_params(self, base_value: float):
         """Save apply eyes parameters"""
         if self._blink_state['override_blink']:
-            self.animation_manager.model.SetParameterValueById("ParamEyeLOpen",
+            self.win.model.SetParameterValueById("ParamEyeLOpen",
                                                                base_value * random.uniform(0.95, 1.0))
-            self.animation_manager.model.SetParameterValueById("ParamEyeROpen",
+            self.win.model.SetParameterValueById("ParamEyeROpen",
                                                                base_value * random.uniform(0.98, 1.0))
 
     def _start_new_blink(self):
@@ -551,7 +562,7 @@ class OpacityAnimator:
         return self.animation_manager.win
 
     def get_anim_for_object(self, obj):
-        """Возвращает уникальный аниматор для объекта"""
+        """Returns a unique animator for the object"""
         obj_id = id(obj)
         if obj_id not in self.animations:
             self.animations[obj_id] = QVariantAnimation()
@@ -567,13 +578,16 @@ class OpacityAnimator:
             warnings.simplefilter("ignore", RuntimeWarning)
             try:
                 self.anim.valueChanged.disconnect()
-            except RuntimeError:
+            except (RuntimeError, TypeError):
+                pass
+            try:
+                self.anim.finished.disconnect()
+            except (RuntimeError, TypeError):
                 pass
 
         self.anim.setDuration(duration)
         self.anim.setStartValue(float(start))
         self.anim.setEndValue(float(end))
-        self.anim.valueChanged.connect(source.SetOutputOpacity)
 
         # Process easing curve
         if not hasattr(self, 'EASING_TYPES'):
@@ -585,25 +599,341 @@ class OpacityAnimator:
             }
 
         easing_curve = self.EASING_TYPES.get(easing, QEasingCurve.Linear)
+        self.anim.setEasingCurve(easing_curve)
 
-        # Set Var SetOutputOpacity
-        # win.canvas.SetOutputOpacity
         self.anim.valueChanged.connect(source.SetOutputOpacity)
-
-        #  on_finished connect
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            if hasattr(self, "_last_finished_slot"):
-                try:
-                    self.anim.finished.disconnect(self._last_finished_slot)
-                except RuntimeError:
-                    pass
 
         if callable(on_finished):
             self.anim.finished.connect(on_finished)
-            self._last_finished_slot = on_finished  # Сохраняем для будущего отключения
 
         self.anim.start()
+
+class BounceAnimator:
+    """Universal bouncing animator for any object"""
+    def __init__(self, animation_manager):
+        self.animation_manager = animation_manager
+        self.bounce_loops = {}
+        self.bounce_animations = {}
+
+
+        self.easing_curves = {
+            "linear": QEasingCurve.Linear,
+            "out_quad": QEasingCurve.OutQuad,
+            "out_bounce": QEasingCurve.OutBounce,
+            "out_cubic": QEasingCurve.OutCubic,
+            "in_out_quad": QEasingCurve.InOutQuad,
+        }
+
+    def _get_easing(self, name):
+        """get easing curve on name"""
+        return self.easing_curves.get(name, QEasingCurve.Linear)
+
+    def _get_widget(self, target):
+        """Universal widget retrieval from any object"""
+
+        if isinstance(target, QWidget):
+            return target
+
+        if hasattr(target, 'label') and isinstance(target.label, QWidget):
+            return target.label
+
+        if hasattr(target, 'get_target_widget') and callable(target.get_target_widget):
+            widget = target.get_target_widget()
+            if isinstance(widget, QWidget):
+                return widget
+
+        if hasattr(target, 'widget') and isinstance(target.widget, QWidget):
+            return target.widget
+
+        return None
+
+    def _cleanup_animation(self, anim_id):
+        """Clearing a completed animation"""
+        if anim_id in self.bounce_animations:
+            del self.bounce_animations[anim_id]
+
+    # ============= Public Methods =============
+
+    def animate_bounce(self, target, height=30, duration=800,
+                       easing_up="out_quad", easing_down="out_bounce",
+                       on_finished=None):
+        """Single bounce animation"""
+        widget = self._get_widget(target)
+        if not widget:
+            print(f"Warning: Cannot get widget from {target}")
+            return None
+
+        try:
+            start_pos = widget.pos()
+            group = QSequentialAnimationGroup()
+
+            # Вверх
+            anim_up = QPropertyAnimation(widget, b"pos")
+            anim_up.setDuration(duration // 2)
+            anim_up.setStartValue(start_pos)
+            anim_up.setEndValue(QPoint(start_pos.x(), start_pos.y() - height))
+            anim_up.setEasingCurve(self._get_easing(easing_up))
+
+            # Вниз
+            anim_down = QPropertyAnimation(widget, b"pos")
+            anim_down.setDuration(duration // 2)
+            anim_down.setStartValue(QPoint(start_pos.x(), start_pos.y() - height))
+            anim_down.setEndValue(start_pos)
+            anim_down.setEasingCurve(self._get_easing(easing_down))
+
+            group.addAnimation(anim_up)
+            group.addAnimation(anim_down)
+
+            # Уникальный ID
+            anim_id = f"bounce_{id(target)}_{id(widget)}_{int(time.time() * 1000)}"
+
+            self.bounce_animations[anim_id] = {
+                'target': weakref.ref(target) if hasattr(target, '__class__') else target,
+                'widget': weakref.ref(widget),
+                'animation': group
+            }
+
+            if on_finished:
+                group.finished.connect(on_finished)
+
+            group.finished.connect(lambda: self._cleanup_animation(anim_id))
+
+            QTimer.singleShot(0, group.start)
+            return anim_id
+
+        except Exception as e:
+            print(f"Error in animate_bounce: {e}")
+            return None
+
+    def animate_bounce_continuous(self, target,
+                                  height=30,
+                                  bounce_duration=800,
+                                  bounces=3,
+                                  total_duration=10000,
+                                  on_finished=None):
+        """
+        Continuous bounce animation
+
+        Args:
+            target: target object
+            height: jump height
+            bounce_duration: jump duration
+            bounces: the number of jumps in one iteration
+            total_duration: animation duration
+            on_finished: callback when animation is finished
+        """
+
+        widget = self._get_widget(target)
+        if not widget:
+            return None
+
+        loop_id = f"bounce_loop_{id(target)}_{int(time.time() * 1000)}"
+
+        end_time = time.time() + (total_duration / 1000.0)
+
+        def bounce_iteration():
+            if loop_id not in self.bounce_loops:
+                return
+
+            if time.time() >= end_time:
+                # Завершаем
+                if loop_id in self.bounce_loops:
+                    del self.bounce_loops[loop_id]
+                if on_finished:
+                    on_finished()
+                return
+
+            self.animate_bounce_multiple(
+                target=target,
+                height=height,
+                duration=bounce_duration,
+                bounces=bounces,
+                on_finished=lambda: QTimer.singleShot(50, bounce_iteration)
+            )
+
+        self.bounce_loops[loop_id] = {
+            'target_id': id(target),
+            'end_time': end_time
+        }
+
+        QTimer.singleShot(0, bounce_iteration)
+
+        return loop_id
+
+    def animate_bounce_multiple(self, target, height=30, duration=800,
+                                bounces=3, damping=0.7, on_finished=None):
+        """Multiple bouncing with attenuation"""
+
+        widget = self._get_widget(target)
+        if not widget:
+            return None
+
+        try:
+            start_pos = widget.pos()
+            group = QSequentialAnimationGroup()
+
+            for i in range(bounces):
+                current_height = height * (damping ** i)
+
+                anim_up = QPropertyAnimation(widget, b"pos")
+                anim_up.setDuration(duration // 2)
+                anim_up.setStartValue(widget.pos() if i == 0 else widget.pos())
+                anim_up.setEndValue(QPoint(start_pos.x(), start_pos.y() - int(current_height)))
+                anim_up.setEasingCurve(self._get_easing("out_quad"))
+
+                anim_down = QPropertyAnimation(widget, b"pos")
+                anim_down.setDuration(duration // 2)
+                anim_down.setStartValue(QPoint(start_pos.x(), start_pos.y() - int(current_height)))
+                anim_down.setEndValue(start_pos)
+                anim_down.setEasingCurve(self._get_easing("out_bounce"))
+
+                group.addAnimation(anim_up)
+                group.addAnimation(anim_down)
+
+            anim_id = f"bounce_multi_{id(target)}_{int(time.time() * 1000)}"
+
+            self.bounce_animations[anim_id] = {
+                'target': weakref.ref(target) if hasattr(target, '__class__') else target,
+                'widget': weakref.ref(widget),
+                'animation': group
+            }
+
+            if on_finished:
+                group.finished.connect(on_finished)
+
+            group.finished.connect(lambda: self._cleanup_animation(anim_id))
+
+            QTimer.singleShot(0, group.start)
+            return anim_id
+
+        except Exception as e:
+            print(f"Error in animate_bounce_multiple: {e}")
+            return None
+
+    def animate_scale_bounce(self, target, start_scale=1.0, end_scale=1.2,
+                             duration=300, easing_up="out_quad", easing_down="in_out_quad",
+                             on_finished=None):
+        """
+        Bounce scale animation for any object with the scale property
+
+            Args:
+                target: the object to animate (must have the scale and anim_scale properties)
+                start_scale: the initial scale
+                end_scale: the final scale (peak)
+                duration: the duration of the animation in ms
+                easing_up: the curve for increasing
+                easing_down: the curve for decreasing
+                on_finished: the callback when the animation is complete
+        """
+
+        if not hasattr(target, 'anim_scale') or not hasattr(target, 'scale'):
+            print(f"Warning: Target {target} must have 'anim_scale' property")
+            return None
+
+        try:
+            if not hasattr(self, '_original_scales'):
+                self._original_scales = {}
+
+            target_id = id(target)
+            self._original_scales[target_id] = getattr(target, 'scale', start_scale)
+
+            group = QSequentialAnimationGroup()
+
+            scale_up = QPropertyAnimation(target, b"anim_scale")
+            scale_up.setDuration(duration // 2)
+            scale_up.setStartValue(start_scale)
+            scale_up.setEndValue(end_scale)
+            scale_up.setEasingCurve(self._get_easing(easing_up))
+
+            scale_down = QPropertyAnimation(target, b"anim_scale")
+            scale_down.setDuration(duration // 2)
+            scale_down.setStartValue(end_scale)
+            scale_down.setEndValue(start_scale)
+            scale_down.setEasingCurve(self._get_easing(easing_down))
+
+            group.addAnimation(scale_up)
+            group.addAnimation(scale_down)
+
+            anim_id = f"scale_bounce_{target_id}_{int(time.time() * 1000)}"
+
+            if not hasattr(self, 'scale_animations'):
+                self.scale_animations = {}
+
+            self.scale_animations[anim_id] = {
+                'target': weakref.ref(target) if hasattr(target, '__class__') else target,
+                'target_id': target_id,
+                'animation': group,
+                'original_scale': start_scale
+            }
+
+            if on_finished:
+                group.finished.connect(on_finished)
+
+            def cleanup():
+                if anim_id in self.scale_animations:
+                    # Восстанавливаем оригинальный масштаб если нужно
+                    # target.scale = self._original_scales.get(target_id, start_scale)
+                    del self.scale_animations[anim_id]
+                if target_id in self._original_scales:
+                    del self._original_scales[target_id]
+
+            group.finished.connect(cleanup)
+
+            QTimer.singleShot(0, group.start)
+            return anim_id
+
+        except Exception as e:
+            print(f"Error in animate_scale_bounce: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def stop_scale_bounce(self, target):
+        """Stop the zoom animation for an object"""
+        target_id = id(target)
+
+        if hasattr(self, 'scale_animations'):
+            to_delete = []
+            for anim_id, anim_data in self.scale_animations.items():
+                if anim_data.get('target_id') == target_id:
+                    if 'animation' in anim_data:
+                        anim_data['animation'].stop()
+                    to_delete.append(anim_id)
+
+            for anim_id in to_delete:
+                del self.scale_animations[anim_id]
+
+    def stop_bounce(self, target):
+        """Stop bounce animations for an object"""
+        target_id = id(target)
+
+        to_delete = []
+        for anim_id, anim_data in self.bounce_animations.items():
+            if anim_data.get('target_id') == target_id or \
+                    (hasattr(anim_data.get('target'), 'id') and anim_data['target']() is target):
+                if 'animation' in anim_data:
+                    anim_data['animation'].stop()
+                to_delete.append(anim_id)
+
+        for anim_id in to_delete:
+            del self.bounce_animations[anim_id]
+
+        to_delete = []
+        for loop_id, loop_data in self.bounce_loops.items():
+            if loop_data.get('target_id') == target_id:
+                to_delete.append(loop_id)
+
+        for loop_id in to_delete:
+            del self.bounce_loops[loop_id]
+
+    def stop_all_bounces(self):
+        """Stop all bounce animations"""
+        for anim_data in self.bounce_animations.values():
+            if 'animation' in anim_data:
+                anim_data['animation'].stop()
+
+        self.bounce_animations.clear()
+        self.bounce_loops.clear()
 
 class TransformAnimator:
     """Character transformation animation management"""
@@ -611,6 +941,8 @@ class TransformAnimator:
         self.animation_manager = animation_manager
 
         self._win = None
+
+        self.win.transformMovie = QMovie()
 
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._on_animation_tick)
@@ -620,12 +952,38 @@ class TransformAnimator:
         self.transform = False
         self.current_animation_win = None
         self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
-        self.transform_lock = False
+
+        self._current_transform_in = None
+        self._current_transform_out = None
 
     @property
     def win(self):
         """Actual window link"""
         return self.animation_manager.win
+
+    def _cleanup_current_movies(self):
+        try:
+            if self._current_transform_in:
+                self._current_transform_in.stop()
+                self._current_transform_in.deleteLater()
+                self._current_transform_in = None
+
+
+            if self._current_transform_out:
+                self._current_transform_out.stop()
+                self._current_transform_out.deleteLater()
+                self._current_transform_out = None
+
+            if hasattr(self.win, 'transformLabel') and self.win.transformLabel:
+                old_movie = self.win.transformLabel.movie()
+                if old_movie:
+                    old_movie.stop()
+                    old_movie.deleteLater()
+                self.win.transformLabel.setMovie(None)
+                self.win.transformLabel.clear()
+
+        except Exception as e:
+            print(f"Error cleaning up movies: {e}")
 
     # Transform Animations
     def play_transform_animation(self):
@@ -633,23 +991,31 @@ class TransformAnimator:
         if self.animation_phase != 0:
             return
 
+        self._cleanup_current_movies()
+
         self.current_animation_win = self.win
         self.animation_phase = 1
         self.win.input_handler.input_lock = True
-        self.transform = self.win.transform = True
+        self.win.transform = True
         self.win.canvas.SetOutputOpacity(1.0)
 
         self.animation_manager.start_rainbow_effect(speed=2.0)
+        self.win.particle_overlay.particle_presets.transform(name=self.win.character_name)
+        self.win.particle_overlay.particle_presets.transform_fairy_dust(particle_duration = 0.75)
 
         # Setup transform_in animation
         self._play_model_animation()
-        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_in"))
-        self.win.transformLabel.setMovie(self.win.transformMovie)
-        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+
+        movie_path = self.animation_manager.resource_manager.load_animation("transform_in")
+        self._current_transform_in = QMovie(movie_path)
+        self._current_transform_in.setCacheMode(QMovie.CacheAll)
+
+        self.win.transformLabel.setMovie(self._current_transform_in)
         self.win.transformLabel.raise_()
         self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
-        self.win.transformMovie.start()
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale),
+                                     int(self.win.trm_my * self.win.models_scale))
+        self._current_transform_in.start()
         self.win.transformLabel.show()
 
         self.animation_timer.start(16)  # 60 FPS
@@ -673,8 +1039,11 @@ class TransformAnimator:
 
     def _process_fade_out(self):
         """Handle transform_in animation and opacity fade"""
-        current_frame = self.win.transformMovie.currentFrameNumber()
-        total_frames = self.win.transformMovie.frameCount()
+        if not self._current_transform_in:
+            return
+
+        current_frame = self._current_transform_in.currentFrameNumber()
+        total_frames = self._current_transform_in.frameCount()
 
         # Smooth fade from 70% to 100% animation
         fade_start = int(total_frames * 0.70)
@@ -684,46 +1053,59 @@ class TransformAnimator:
 
         # When fade out completes, move to model swap
         if current_frame >= total_frames - 3:
-            self.win.transformMovie.stop()
+            self._current_transform_in.stop()
             self.animation_phase = 2
-         # Close dialog
+        # Close dialog
         if current_frame >= (total_frames - 3) / 2:
             self.win.talk_widget.close_dialog_after_animation()
 
     def _execute_model_swap(self):
         """Execute model transformation using your existing methods"""
         try:
-            if not self.win.hdd_form:
-                self._transform_to_hdd()  # Your HDD transformation
-            else:
-                self._transform_to_regular()  # Your regular transformation
+            self._transform_change()
         finally:
             self._transform_animation_reset()
 
     def _transform_animation_reset(self):
         """Reset animation"""
+        if self._current_transform_in:
+            self._current_transform_in.stop()
+            self._current_transform_in.deleteLater()
+            self._current_transform_in = None
+
         self.win.transformLabel.movie().setScaledSize(QSize(1, 1))
-        self.win.transformMovie.stop()
         self.win.transformLabel.close()
 
     def _init_fade_in(self):
         """Initialize transform_out animation"""
-        self.win.transformMovie = QMovie(self.animation_manager.resource_manager.load_animation("transform_out"))
-        self.win.transformLabel.setMovie(self.win.transformMovie)
-        self.win.transformMovie.setCacheMode(QMovie.CacheAll)
+        if self._current_transform_out:
+            self._current_transform_out.stop()
+            self._current_transform_out.deleteLater()
+            self._current_transform_out = None
+
+        movie_path = self.animation_manager.resource_manager.load_animation("transform_out")
+        self._current_transform_out = QMovie(movie_path)
+        self._current_transform_out.setCacheMode(QMovie.CacheAll)
+
+        self.win.transformLabel.setMovie(self._current_transform_out)
         self.win.transformLabel.movie().setScaledSize(
             self._calculate_animation_size()
         )
-        self.win.transformMovie.start()
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale), int(self.win.trm_my * self.win.models_scale))
+        self._current_transform_out.start()
+        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale),
+                                     int(self.win.trm_my * self.win.models_scale))
         self.win.transformLabel.show()
 
         self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
+        self.win.particle_overlay.particle_presets.transform(name=self.win.character_name, reverse=True)
 
     def _process_fade_in(self):
         """Handle transform_out animation with delayed opacity restore"""
-        current_frame = self.win.transformMovie.currentFrameNumber()
-        total_frames = self.win.transformMovie.frameCount()
+        if not self._current_transform_out:
+            return
+
+        current_frame = self._current_transform_out.currentFrameNumber()
+        total_frames = self._current_transform_out.frameCount()
 
         # Starting the appearance with 15% animation
         fade_start = int(total_frames * 0.15)
@@ -735,7 +1117,7 @@ class TransformAnimator:
         elif fade_start <= current_frame <= fade_end:
             # Smooth appearance from 25% to 70%
             progress = (current_frame - fade_start) / (fade_end - fade_start)
-            self. win.canvas.SetOutputOpacity(progress)
+            self.win.canvas.SetOutputOpacity(progress)
         else:
             # After 70%, set 100% transparency
             self.win.canvas.SetOutputOpacity(1.0)
@@ -747,6 +1129,11 @@ class TransformAnimator:
     def _finalize_transformation(self):
         """Cleanup after transformation"""
         try:
+            if self._current_transform_out:
+                self._current_transform_out.stop()
+                self._current_transform_out.deleteLater()
+                self._current_transform_out = None
+
             self.win.transformMovie.stop()
             self.win.transformLabel.close()
             self.win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
@@ -761,7 +1148,11 @@ class TransformAnimator:
             # Reset transformation flags
             self.win.character.transform_exp_show = False
             self.win.character.transform_text_show = False
+
+            self._cleanup_current_movies()
+
         finally:
+            self.win.particle_overlay.stop_particle_system()
             self.animation_timer.stop()
             self.current_animation_win = None
             self.animation_phase = 0
@@ -772,7 +1163,6 @@ class TransformAnimator:
         if not self.win.hdd_form:
             # Playing the transformation animation
             self.animation_manager.play_animation(
-                model=self.win.model,
                 anim_type='Motion',
                 group_or_id="Unique",
                 no=0,
@@ -786,45 +1176,24 @@ class TransformAnimator:
             int(self.win.h_resize + self.win.trm_cmy * self.win.models_scale)
         )
 
-    def _transform_to_hdd(self):
-        """Transformation to hdd form"""
-        transformations = {
-            "Neptune": self.win.action_handler.on_action_purple_heart,
-            "Noire": self.win.action_handler.on_action_black_heart,
-            "Blanc": self.win.action_handler.on_action_white_heart,
-            "Vert": self.win.action_handler.on_action_green_heart,
-            "NepGear": self.win.action_handler.on_action_purple_sister,
-            "Uni": self.win.action_handler.on_action_black_sister,
-            "Rom": self.win.action_handler.on_action_white_sister_rom,
-            "Ram": self.win.action_handler.on_action_white_sister_ram,
-            "Maho": self.win.action_handler.on_action_grey_sister
-        }
-        if self.win.character_name in transformations:
-            transformations[self.win.character_name]()
-        self.transform_lock = 1
+    def _transform_change(self):
+        target_name = self.win.resource_manager.get_alt_form_name(self.win.character_name)
+        if not target_name:
+            return
+        self.win.talk_widget.talk_update = False
+        self.win.character_name = target_name
+        self.win.models_manager.update_model(self.win)
+
         self.win.character.transform_exp_show = True
         self.win.character.transform_text_show = True
         self.win.character.expressions.set_funny_expression(fade_out=30000)
 
-    def _transform_to_regular(self):
-        """Transformation to regular form"""
-        transformations = {
-            "Purple Heart": self.win.action_handler.on_action_neptune,
-            "Black Heart": self.win.action_handler.on_action_noire,
-            "White Heart": self.win.action_handler.on_action_blanc,
-            "Green Heart": self.win.action_handler.on_action_vert,
-            "Purple Sister": self.win.action_handler.on_action_nepgear,
-            "Black Sister": self.win.action_handler.on_action_uni,
-            "White Sister Rom": self.win.action_handler.on_action_rom,
-            "White Sister Ram": self.win.action_handler.on_action_ram,
-            "Grey Sister": self.win.action_handler.on_action_maho
-        }
-        if self.win.character_name in transformations:
-            transformations[self.win.character_name]()
-        self.transform_lock = 1
-        self.win.character.transform_exp_show = True
-        self.win.character.transform_text_show = True
-        self.win.character.expressions.set_funny_expression(fade_out=30000)
+    def stop_all_animations(self):
+        """Method for an external call when closing"""
+        self._cleanup_current_movies()
+        self.animation_timer.stop()
+        self.animation_phase = 0
+        self._animation_active = False
 
 class BodyPartAnimator:
     def __init__(self, animation_manager):
@@ -836,8 +1205,8 @@ class BodyPartAnimator:
         self.last_time = time.perf_counter()
 
     @property
-    def model(self):
-        return self.animation_manager.model
+    def win(self):
+        return self.animation_manager.win
 
     @property
     def target_fps(self):
@@ -880,7 +1249,7 @@ class BodyPartAnimator:
     def stop_all(self):
         """Stop Animation"""
         for part_id in list(self.active_parts.keys()):
-            self.model.SetParameterValueById(part_id, 0)
+            self.win.model.SetParameterValueById(part_id, 0)
         self.active_parts.clear()
         self.body_part_timer.stop()
 
@@ -915,7 +1284,7 @@ class BodyPartAnimator:
                     new_value = config['range'][0]
                     config['direction'] = 1
 
-                self.model.SetParameterValueById(part_id, new_value)
+                self.win.model.SetParameterValueById(part_id, new_value)
                 config['value'] = new_value
 
             except Exception as e:
@@ -933,7 +1302,7 @@ class BodyPartAnimator:
         """Safely deleting a part from active_parts"""
         if part_id in self.active_parts:
             try:
-                self.model.SetParameterValueById(part_id, 0)
+                self.win.model.SetParameterValueById(part_id, 0)
             except:
                 pass
             del self.active_parts[part_id]
@@ -967,10 +1336,6 @@ class DragAnimator:
     @property
     def win(self):
         return self.animation_manager.win
-
-    @property
-    def model(self):
-        return self.animation_manager.model
 
     @property
     def profiles(self):

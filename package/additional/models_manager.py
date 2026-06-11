@@ -99,7 +99,7 @@ class ModelsManager:
         new_height = int(win.my_param * scale_factor)
 
         # Set resize
-        win.resize(1, 1)  # reset size
+        win.resize(10, 10)  # reset size
         win.w_resize = new_width
         win.h_resize = new_height
         win.resize(new_width, new_height)
@@ -129,6 +129,9 @@ class ModelsManager:
 
         # Save config
         win.app_config.update_model_params(character_name=win.character_name,
+                                           l2d_scale=win.l2d_scale,
+                                           offset_x=win.offset_x,
+                                           offset_y=win.offset_y,
                                            x_param=win.mx_param,
                                            y_param=win.my_param,
                                            w_resize=win.w_resize,
@@ -142,6 +145,7 @@ class ModelsManager:
     def _reload_model(self, win, config: dict) -> None:
         """Reload Live2D model"""
         if hasattr(win, 'model'):
+            live2d.Model.DestroyRenderer(win.model)
             del win.model
             win.model = None
 
@@ -161,8 +165,8 @@ class ModelsManager:
         win.init_classes()
         win.character.tired_controller.reload_timer()
 
-        if win.talk_widget.talk_update:
-            win.talk_widget.update_widget()
+        #if win.talk_widget.talk_update:
+        #    win.talk_widget.update_widget()
 
     def _load_fallback_model(self, win) -> None:
         """Backup option for errors"""

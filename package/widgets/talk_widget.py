@@ -11,6 +11,7 @@ class TalkWidget:
     def __init__(self, win):
         self.win = win
         self.widget = QWidget(win)
+        self._widget_opacity = 1.0
         self.init_ui()
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.talk_update = True
@@ -18,48 +19,17 @@ class TalkWidget:
         self.exp_fade_out_var = 7000
         self.is_quitting = True
 
+    @property
+    def widget_opacity(self):
+        return self._widget_opacity
 
-
-    # Dialog close timer
-    def dialog_timer(self, interval: int | None = None) -> None:
-        """Starts/updates the timer for closing the dialog"""
-        # The default time interval is
-        std_interval = 7000
-        # Create a timer only if there is none.
-        if not hasattr(self, 'dialogCloseTimer'):
-            self.dialogCloseTimer = QTimer()
-            self.dialogCloseTimer.setSingleShot(True)
-            self.dialogCloseTimer.timeout.connect(self.close_dialog)
-
-        # Determine the current interval
-        if interval == None:
-            current_interval = self.exp_fade_out_var if self.exp_fade_out_var != std_interval else std_interval
-        elif self.is_quitting:
-            current_interval = 3000
-        else:
-            current_interval = interval
-
-        # Stop and restart with a new interval
-        self.dialogCloseTimer.stop()
-        self.dialogCloseTimer.start(int(current_interval))
-
-        # Logging
-        if self.win.timer_log:
-            print(f"[DIALOG TIMER] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")
-
-    def init_ui(self):
-        """Initializing UI elements"""
-        self.show_widget = self.win.app_config.show_text_widget
-        self.grid_layout = QGridLayout(self.widget)
-        self.talk_frame = QFrame(self.widget)
-        self.frame_layout = QVBoxLayout(self.talk_frame)
-
-        self.talk_image_label = QLabel()
-        self.text_sub_widget = QWidget(self.talk_image_label)
-        self.talk_form_layout = QFormLayout(self.text_sub_widget)
-        self.talk_text_label = QLabel()
-
-        self.grid_layout.addWidget(self.talk_frame, 1, 0, 1, 1)
+    @widget_opacity.setter
+    def widget_opacity(self, value):
+        self._widget_opacity = max(0.0, min(1.0, value))
+        if hasattr(self, 'talk_image_label_opacity'):
+            self.talk_image_label_opacity.setOpacity(self._widget_opacity)
+            # Обновляем виджет
+            self.talk_image_label.update()
 
     @property
     def show_text_in_console(self):
@@ -149,6 +119,88 @@ class TalkWidget:
     def SrcSize(self):
         return self.win.SrcSize
 
+    # Dialog close timer
+    def dialog_timer(self, interval: int | None = None) -> None:
+        """Starts/updates the timer for closing the dialog"""
+        # The default time interval is
+        std_interval = 7000
+        # Create a timer only if there is none.
+        if not hasattr(self, 'dialogCloseTimer'):
+            self.dialogCloseTimer = QTimer()
+            self.dialogCloseTimer.setSingleShot(True)
+            self.dialogCloseTimer.timeout.connect(self.close_dialog)
+
+        # Determine the current interval
+        if interval == None:
+            current_interval = self.exp_fade_out_var if self.exp_fade_out_var != std_interval else std_interval
+        elif self.is_quitting:
+            current_interval = 3000
+        else:
+            current_interval = interval
+
+        # Stop and restart with a new interval
+        self.dialogCloseTimer.stop()
+        self.dialogCloseTimer.start(int(current_interval))
+
+        # Logging
+        if self.win.timer_log:
+            print(f"[DIALOG TIMER] Started with {current_interval}ms (Fade-out: {self.exp_fade_out_var})")
+
+    def init_ui(self):
+        self.talk_image_label = QLabel(self.widget)
+        self.talk_text_label = QLabel(self.talk_image_label)
+
+        self.talk_image_label_opacity = QGraphicsOpacityEffect()
+        self.talk_image_label_opacity.setOpacity(1.0)
+        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
+
+    def SetOutputOpacity(self, value):
+        """Метод для OpacityAnimator"""
+        self.widget_opacity = value
+
+    def show_appearance_animation(self):
+        """Show widget Animation using OpacityAnimator"""
+        self.talk_image_label_opacity.setOpacity(0)
+        self.win.animation_manager.opacity_animator.animate_opacity(
+            source=self,
+            start=0.0,
+            end=0.9,
+            duration=500,
+            easing="in_quad"
+        )
+
+    def close_dialog(self):
+        """Close dialog box with Animation using OpacityAnimator"""
+        if not self.win.app_config.show_text_widget:
+            return
+
+        self.dialogCloseTimer.stop()
+
+        if self.dialog_animation:
+            self.win.animation_manager.opacity_animator.animate_opacity(
+                source=self,
+                start=0.9,
+                end=0.0,
+                duration=500,
+                easing="out_quad",
+                on_finished=self.close_dialog_after_animation
+            )
+        else:
+            self.close_dialog_after_animation()
+
+    def close_dialog_after_animation(self):
+        """Close the dialog box after animation"""
+        self.talk = False
+        self.widget.close()
+        self.talk_text_label.repaint()
+
+        # If you need to process Qt events
+        # QApplication.processEvents()
+
+        # Sleep state processing
+        if hasattr(self.win.character, 'tired_state') and self.win.character.tired_state.condition == "Sleep":
+            self.win.character.tired_controller.sleep_function()
+
     def change_talk_widget_side(self):
         """Defines the side of the screen for displaying the widget"""
         vSizeX = self.vSize.width()
@@ -160,26 +212,9 @@ class TalkWidget:
         elif center <= 0:
             self.screenSide = "Left"
 
-    def show_appearance_animation(self):
-        """Show widget Animation"""
-        # Setting up transparency with animation
-        self.talk_image_label_opacity = QGraphicsOpacityEffect()
-        self.talk_image_label_opacity.setOpacity(0.0)  # Initial transparency value
-        self.talk_image_label.setGraphicsEffect(self.talk_image_label_opacity)
-
-        # Creating an animation
-        self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-        self.opacity_animation.setDuration(250)  # Animation duration in milliseconds
-        self.opacity_animation.setStartValue(0.0)  # Initial value
-        self.opacity_animation.setEndValue(0.9)  # Final value
-        self.opacity_animation.setEasingCurve(QEasingCurve.Type.InOutQuad)  # Smoothness of animation
-
-        # Adding animations to the queue (so as not to block the main thread)
-        QTimer.singleShot(0, self.opacity_animation.start)
-
     def show_talk(self):
         """Shows a widget with the text"""
-        if not self.show_widget:
+        if not self.win.app_config.show_text_widget:
             return
 
         if not self.talk:
@@ -200,9 +235,9 @@ class TalkWidget:
 
         # Widget positioning
         if is_mirrored:
-            self.widget.move(self.twmXR + self.twmXL, self.twmY + 10 * self.models_scale)
+            self.widget.move(self.twmXR + self.twmXL +30, self.twmY + 30 * self.models_scale)
         else:
-            self.widget.move(self.twmXR, self.twmY + 10 * self.models_scale)
+            self.widget.move(self.twmXR, self.twmY + 30 * self.models_scale)
 
         # Calculating the positioning
         varX, varY = self._calculate_position()
@@ -210,11 +245,8 @@ class TalkWidget:
         if self.dialog_animation:
             self.show_appearance_animation()
 
-        # Adding an image to the layout
-        self.frame_layout.addWidget(self.talk_image_label)
-
         # Positioning the subwidget with the text
-        self.text_sub_widget.move(
+        self.talk_text_label.move(
             varX * self.a_scale * self.models_scale,
             -varY * self.a_scale * self.models_scale)
 
@@ -237,10 +269,16 @@ class TalkWidget:
         self.talk_text_label.setFixedWidth(int((self.talkX - 25) * self.a_scale * self.models_scale))
         self.talk_text_label.setFixedHeight(int((self.talkY - 5) * self.a_scale * self.models_scale))
 
-        self.talk_form_layout.setWidget(0, QFormLayout.LabelRole, self.talk_text_label)
 
         if self.show_text_in_console:
             print(f"{self.name}: {self.text}\n{self.kaomoji}")
+
+        if self.win.input_handler.drag_intensity == 0:
+            self.win.animation_manager.animate_bounce(
+                target=self.widget,
+                height=15,
+                duration=1000
+            )
 
     def _setup_talk_image(self):
         """Adjusts the image in the widget"""
@@ -261,7 +299,111 @@ class TalkWidget:
         )
         self.talk_image_label.setPixmap(scaled_pixmap)
 
+        self.talk_image_label.adjustSize()
+
+        #self.talk_frame.adjustSize()
+
+        self.widget.adjustSize()
+
+        self.widget.updateGeometry()
+
+        # QApplication.processEvents()
+
     def _calculate_position(self):
+        """
+        Full position calculation with intelligent correction for both axes
+        """
+        CONFIG = {
+            'Right': {
+                'base_offset_x': 20,
+                'base_offset_y': 10,
+                'y_power': 1.5,
+                'base_y_step': 0.4,
+                'y_high_scale_factor': 1.5,
+                'y_high_scale_multiplier': -0.25,
+                'extra_offset_x': 0,
+                'image_padding': 15,
+            },
+            'Left': {
+                'base_offset_x': -5.5,
+                'base_offset_y': 10,
+                'y_power': 1.8,
+                'base_y_step': 0.35,
+                'y_high_scale_factor': 1.5,
+                'y_high_scale_multiplier': -0.2,
+                'extra_offset_x': 15,
+                'image_padding': 30,
+            }
+        }
+
+        CONTROL_POINTS = {
+            'Right': {0.5: 10, 1: 0, 2: -10, 3: -15, 4: -25, 5: -30},
+            'Left': {0.5: 10, 1: 0, 2: -10, 3: -15, 4: -25, 5: -30}
+        }
+
+        side = 'Left' if self.screenSide == "Left" else 'Right'
+        cfg = CONFIG[side]
+        total_scale = self.a_scale * self.models_scale
+
+        extra_offset_x = cfg['extra_offset_x']
+        if total_scale > 1:
+            extra_offset_x += (total_scale * 2)
+
+        base_x = self.interpolate_base_x(total_scale, CONTROL_POINTS[side])
+
+        if total_scale < 1 and side == 'Right':
+            offset_x = base_x + (cfg['base_offset_x'] + 5) * (total_scale ** 0.5)
+        else:
+            offset_x = base_x + cfg['base_offset_x'] * (total_scale ** 0.5)
+
+        # Additional X for Left side
+        if side == 'Left':
+            offset_x += extra_offset_x * (total_scale ** 0.5)
+            free_space = (cfg['image_padding'] + 25) * (total_scale ** 0.5) - abs(offset_x)
+            if free_space < 0:
+                offset_x += free_space * 0.4  # Soft Correction
+
+        # Calculate Y correction
+        base_y = cfg['base_offset_y']
+        y_adjust = 0
+
+        if total_scale != 1.0:
+            y_step = cfg['base_y_step']
+            if total_scale > cfg['y_high_scale_factor']:
+                y_step *= cfg['y_high_scale_multiplier']
+
+            y_diff = abs(total_scale - 1.0)
+            y_direction = 1 if total_scale > 1.0 else -1
+            if total_scale == 0.5:
+                base_y += 10
+            y_adjust = (y_diff ** cfg['y_power']) * y_step * base_y * y_direction
+
+        offset_y = base_y + y_adjust
+        return offset_x, offset_y
+
+    def interpolate_base_x(self, scale: float, points: dict[int, float]) -> float:
+        keys = sorted(points.keys())
+
+        # меньше минимального значения
+        if scale <= keys[0]:
+            return points[keys[0]]
+
+        # больше максимального значения
+        if scale >= keys[-1]:
+            return points[keys[-1]]
+
+        for left, right in zip(keys, keys[1:]):
+            if left <= scale <= right:
+                t = (scale - left) / (right - left)
+
+                return (
+                        points[left]
+                        + (points[right] - points[left]) * t
+                )
+
+        return 0
+
+    def _calculate_position_legacy(self):
         """
         Full position calculation with intelligent correction for both axes
         Features:
@@ -373,62 +515,43 @@ class TalkWidget:
 
         return offset_x, offset_y
 
-    def close_dialog(self):
-        """Close dialog box with Animation"""
-        if not self.show_widget:
-            return
-        self.dialogCloseTimer.stop()
-        if self.dialog_animation:
-            self.opacity_animation = QPropertyAnimation(self.talk_image_label_opacity, b"opacity")
-            self.opacity_animation.setDuration(500)
-            self.opacity_animation.setStartValue(0.9)
-            self.opacity_animation.setEndValue(0.0)
-            self.opacity_animation.setEasingCurve(QEasingCurve.Type.OutInQuad)  # Smoothness of animation
-            self.opacity_animation.finished.connect(self.close_dialog_after_animation)  # Hide after animation
-            QTimer.singleShot(0, self.opacity_animation.start)
-        else:
-            self.close_dialog_after_animation()
-
-    def close_dialog_after_animation(self):
-        """Closes the dialog box after animation"""
-        self.talk = False
-        self.widget.close()
-        self.talk_text_label.repaint()
-
-        # If you need to process Qt events
-        from PySide6.QtWidgets import QApplication
-        QApplication.processEvents()
-
-        # Sleep state processing
-        if hasattr(self.win.character, 'tired_state') and self.win.character.tired_state.condition == "Sleep":
-            self.win.character.tired_controller.sleep_function()
-
     def update_text(self):
         """Updates the text in the widget"""
         self.talk_text_label.repaint()
-        self.talk_frame.repaint()
+        #self.talk_frame.repaint()
 
-        # If you need to process Qt events
-        from PySide6.QtWidgets import QApplication
-        QApplication.processEvents()
+        # QApplication.processEvents()
 
         self.show_talk()
 
     def update_widget(self):
-        """Updates the widget (for example, after changing settings)"""
         try:
-            self.talk = True
-            # self.screenSide = "Right"
+            self.talk = False
 
-            # Completely cleaning the old widget
+            if hasattr(self, 'dialogCloseTimer'):
+                self.dialogCloseTimer.stop()
+
+            self.widget.updateGeometry()
+            self.widget.update()
+
+        except Exception as e:
+            print(f"Update error: {e}")
+
+    def update_widget_legacy(self):
+        try:
+            self.widget.hide()
+
             self._clear_widget()
-
-            # Reinitializing the UI (without creating new widgets)
             self._reinit_ui()
 
-            # Updating content
+            self.talk = False
+
+            if hasattr(self, 'dialogCloseTimer'):
+                self.dialogCloseTimer.stop()
+
             self.widget.updateGeometry()
-            self.win.character.state.set_settings_state(text_key='SettingsApplied')
+
+            #self.win.character.state.set_settings_state(text_key='SettingsApplied')
             # print("Widget updated successfully")
 
         except Exception as e:

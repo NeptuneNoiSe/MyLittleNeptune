@@ -15,6 +15,7 @@ class EventManager:
         self.special_stage = None
         self.delay_congratulation_after_greeting = None
         self.show_event_greeting = False
+        self.birthday_active = self.win.app_config.birthday_active
 
         self.event_time_manager = EventTimeManager(self)
 
@@ -60,11 +61,6 @@ class EventManager:
         if self.event_instance:
             self.event_instance.congratulate_event(duration)
 
-    #def draw_event_text(self, painter):
-    #    if self.current_event is None:
-    #        return
-    #    self.event_instance.draw_new_year_text(painter)
-
     def draw_text_on_model(self):
         if self.current_event is None:
             return
@@ -78,21 +74,26 @@ class EventTimeManager:
 
         self._special_event_schedule = self._load_special_day_schedule()
 
+    def get_birthday_date(self):
+        birthday_month = self.event_manager.win.app_config.birthday_month
+        birthday_day = self.event_manager.win.app_config.birthday_day
+        return birthday_month, birthday_day
+
     def _load_schedule(self) -> Dict:
         """Loads the event schedule"""
-        return {
-            "New Year": {
-                "start": {"month": 12, "day": 17},
-                "end": {"month": 1, "day": 11}
-            },
-            "Valentines Day": {
-                "start": {"month": 2, "day": 14},
-                "end": {"month": 2, "day": 15}
-            }
-            # Other Events:
-            # "Halloween": {"start": {"month": 10, "day": 28}, "end": {"month": 11, "day": 2}},
-            # "Birthday": {"start": {"month": 1, "day": 15}, "end": {"month": 1, "day": 15}},
+        month, day = self.get_birthday_date()
+        has_birthday = month != 0 and day != 0 and self.event_manager.birthday_active
+
+        schedule = {
+            "New Year": {"start": {"month": 12, "day": 17}, "end": {"month": 1, "day": 11}},
+            "Valentines Day": {"start": {"month": 2, "day": 14}, "end": {"month": 2, "day": 15}},
         }
+
+        if has_birthday:
+            schedule["BirthDay"] = {"start": {"month": month, "day": day}, "end": {"month": month, "day": day}}
+
+        return schedule
+
 
     def _load_special_day_schedule(self) -> Dict:
         """Loads the special day event schedule"""
@@ -116,6 +117,26 @@ class EventTimeManager:
                 return event_name
 
         return None
+
+    def get_current_event_birthday(self) -> Optional[str]:
+        """Determines the current active event with special birthday handling"""
+        today = date.today()
+        active_events = []
+
+        for event_name, schedule in self._event_schedule.items():
+            start = schedule["start"]
+            end = schedule["end"]
+
+            if self._is_date_in_period(today, start, end):
+                active_events.append(event_name)
+
+        if not active_events:
+            return None
+
+        if "BirthDay" in active_events:
+            return "BirthDay"
+
+        return active_events[0]
 
     def get_special_event(self) -> Optional[str]:
         """Defines the current active special event"""
@@ -591,7 +612,7 @@ class NewYearEvent:
         self.text_color = QColor(255, 255, 255)  # Белый
         self.text_shadow_color = QColor(0, 0, 0)  # Черный
 
-    def draw_new_year_text(self, painter: QPainter):
+    def draw_event_text(self, painter: QPainter):
         """Draws New Year's text on the widget"""
         if not self.new_year_event or not self.show_new_year_text or not self.text_visible:
             return
@@ -669,7 +690,7 @@ class NewYearEvent:
     def draw_on_model(self):
         if self.show_new_year_text:
             painter2 = QPainter(self.win)
-            self.draw_new_year_text(painter2)
+            self.draw_event_text(painter2)
             painter2.end()
 
     def event_end(self):
@@ -715,7 +736,7 @@ class ValentinesDayEvent:
                                                                     duration=1500,
                                                                     easing="in_quad")
 
-        self.win.image_manager.item_image.animate_bounce_continuous(animation = "animate_bounce",
+        self.win.image_manager.item_image.animate_bounce_continuous(target=self.win.image_manager.item_image,
                                                                     height=10,
                                                                     bounce_duration=duration/10,
                                                                     bounces=3,
@@ -731,5 +752,62 @@ class ValentinesDayEvent:
                 duration=end_duration,
                 easing="out_quad")
             QTimer.singleShot(duration, self.win.image_manager.item_image.hide)
+
+        QTimer.singleShot(duration, function_stop)
+
+class BirthDayEvent:
+    def __init__(self, event_manager):
+        self.event_manager = event_manager
+        self._win = None
+
+    @property
+    def win(self):
+        """Actual window link"""
+        return self.event_manager.win
+
+    def get_special_stage(self):
+        self.event_manager.delay_congratulation_after_greeting = 15000
+        return "Congratulation"
+
+    def draw_event_text(self, painter: QPainter):
+        """Draws Even text on the widget"""
+        pass
+
+    def draw_on_model(self):
+        pass
+
+    def congratulate_event(self, duration):
+        #self.win.animation_manager.play_color_pulse(pulse_duration=1000, r=255, g=126, b=147, stop_after_ms=duration)
+        self.win.audio_manager.play_audio("Effects", "happy_birthday", enable_lipsync=False, category="sfx",
+                                      stop_audio=False)
+        self.win.animation_manager.start_rainbow_effect(speed=3.0)
+        self.win.image_manager.item_image.set_item("cake", position=(0, -50 * self.win.a_scale),opacity=0)
+        self.win.image_manager.item_image.set_percentage_size(relative_to_model=True,
+                                                              width_percent=25,
+                                                              height_percent=25)
+        self.win.animation_manager.opacity_animator.animate_opacity(source=self.win.image_manager.item_image,
+                                                                    start=0,
+                                                                    end=1,
+                                                                    duration=1500,
+                                                                    easing="in_quad")
+
+        self.win.animation_manager.animate_bounce_continuous(target=self.win.image_manager.item_image,
+                                                             height=10,
+                                                             bounce_duration=duration/10,
+                                                             bounces=3,
+                                                             total_duration=duration)
+        self.win.particle_overlay.particle_presets.confetti(duration=duration)
+
+        def function_stop():
+            end_duration = duration / 4
+            self.win.image_manager.item_image.animate_scale_bounce(0, 0.5, duration=end_duration)
+            self.win.animation_manager.opacity_animator.animate_opacity(
+                source=self.win.image_manager.item_image,
+                start=1,
+                end=0,
+                duration=end_duration,
+                easing="out_quad")
+            QTimer.singleShot(duration, self.win.image_manager.item_image.hide)
+            self.win.animation_manager.stop_rainbow_effect()
 
         QTimer.singleShot(duration, function_stop)

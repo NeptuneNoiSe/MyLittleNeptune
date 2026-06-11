@@ -177,3 +177,13 @@ config.ini
 
 # Model ScreenShot
 screenshot.png
+
+# Build Output folder
+output
+
+# EXE Launcher
+MyLittleNeptune.exe
+
+# Version Info
+version_info.txt
+

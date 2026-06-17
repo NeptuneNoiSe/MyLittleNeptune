@@ -83,6 +83,7 @@ class ModelsWindow(QWidget):
         self.title_label.setText(self.win.lang['ModelsWindow']['Title'])
         self.load_characters()
 
+    # TODO: Add new character group
     def load_characters(self, include_hdd: bool = True):
         """Loads and displays all character buttons"""
         base_names = self.win.resource_manager.get_base_character_names()

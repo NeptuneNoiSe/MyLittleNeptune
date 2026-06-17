@@ -100,7 +100,7 @@ def update_readme(version: str):
     readme = PROJECT_ROOT / 'README.md'
     if not readme.exists():
         return
-
+    # TODO: Remove all icons from console log
     try:
         content = readme.read_text(encoding='utf-8')
         updated = re.sub(

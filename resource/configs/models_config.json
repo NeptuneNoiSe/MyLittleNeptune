@@ -286,8 +286,9 @@
   "Anri": {
     "model_path": "models/Anri/Anri.model3.json",
     "name_key": "Anri",
+    "alt_form_key": "F2P",
     "hdd_form": false,
-    "can_transform": false,
+    "can_transform": true,
     "l2d_scale": 1.25,
     "offset_x": 0.15,
     "offset_y": -0.2,
@@ -296,5 +297,20 @@
     "w_correction": -70,
     "h_correction": 0,
     "posXR": 65
-    }
+    },
+  "F2P": {
+    "model_path": "models/F2P/F2P.model3.json",
+    "name_key": "F2P",
+    "alt_form_key": "Anri",
+    "hdd_form": true,
+    "can_transform": true,
+    "l2d_scale": 1,
+    "offset_x": 0,
+    "offset_y": 0,
+    "mx_param": 700,
+    "my_param": 700,
+    "w_correction": -70,
+    "h_correction": 0,
+    "posXR": 145
+  }
 }

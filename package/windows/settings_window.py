@@ -330,6 +330,7 @@ class SettingsWindow(QWidget):
 
     def create_model_tab(self):
         """Creates a model settings tab"""
+        # TODO: Add new setting for save model position
         tab = QWidget()
         layout = QGridLayout()
         blank = QLabel()

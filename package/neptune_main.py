@@ -58,8 +58,12 @@ class MainWindow(QOpenGLWidget):
         # Show Characters Text in Console:
         self.show_text_in_console = False
 
+        ##### MAIN FLAGS #####
         # Set False if you want use model.Draw()
         self.canvas_draw = True
+
+        # Show Model Params
+        self.show_model_params = False
 
         # Initialize functions
         self._init_window_flags()
@@ -394,6 +398,7 @@ class MainWindow(QOpenGLWidget):
                 f"{(self.w_resize, self.h_resize)}"
             )
 
+    # TODO: Load and Save model position for startup
     def position_window(self):
         """Set window position with conditions"""
         window_width = self.width()
@@ -835,8 +840,9 @@ class MainWindow(QOpenGLWidget):
                 self.clickX, self.clickY = x, y
                 # self.audio_manager.play_audio("Neptune", "default", True)
                 # Get Params from model
-                # partIds = self.model.GetParameterIds()
-                # print(partIds)
+                if self.show_model_params:
+                    partIds = self.model.GetParameterIds()
+                    print(partIds)
                 self.input_handler.mouse_press_handler()
                 if self.mouse_click_log:
                     print("Left Button Pressed")
@@ -888,6 +894,7 @@ class MainWindow(QOpenGLWidget):
         self.show()
         # QApplication.processEvents()
 
+        # TODO: Model movements should only be possible when changing model settings and window flags
         need_update = False
 
         if self.auto_scale_init:

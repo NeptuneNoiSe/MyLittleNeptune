@@ -233,6 +233,7 @@ class CharacterStateManager:
                                                   text_key=self.character.text_key,
                                                   kaomoji=self.character.kaomoji)
 
+    # TODO: Add new transform (evil) state
     def set_transform_state(self):
         """Transform state"""
         self.win.model_move = False
@@ -422,6 +423,7 @@ class CharacterStateManager:
         if not self.character.tired_state.condition == "sleep":
             self.character.character_text.set_event_hint_text(event_name, hint_type)
 
+# TODO: Fix Sleep and WakeUp with Schedule
 class CharacterTiredController:
     def __init__(self, character):
         self.character = character

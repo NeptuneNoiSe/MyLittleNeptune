@@ -19,7 +19,8 @@
     "Histoire": "Histoire",
     "Maho": "Maho",
     "GreySister": "Grey Sister",
-    "Anri": "Anri"
+    "Anri": "Anri",
+    "F2P": "F2P"
   },
   "NamesActions": {
     "Neptune": "&Neptune",
@@ -40,8 +41,9 @@
     "WhiteSisterRam": "&White Sister Ram",
     "Histoire": "&Histoire",
     "Maho": "&Maho",
+    "GreySister": "&Grey Sister",
     "Anri": "&Anri",
-    "GreySister": "&Grey Sister"
+    "F2P": "&F2P"
   },
   "Talk": {
     "Hello": "Hello!",
@@ -86,7 +88,7 @@
     "TransformToHDD": "HDD Transformation Initiated!",
     "TransformToNormal": "I'm going back to my normal form",
     "TransformedHDD": "Divinity Form Online!",
-    "TransformedNormal": "I'm back to my normal form.",
+    "TransformedNormal": "I'm back to my normal form",
     "TransformNot": "I'm Can't Transform",
     "Quit": "Do you really want to leave?",
     "QuitAlt": "GoodBye! See you again!",

@@ -205,7 +205,6 @@ class ParticlePresets:
         if duration > 0:
             self.overlay_window.stop_particle_system(duration)
 
-
     def snow(self, duration=0, count=3):
         self.overlay_window.particle_system.clear_effects()
         snow_dir = os.path.join(self.overlay_window.image_path, "snow.png")
@@ -266,5 +265,50 @@ class ParticlePresets:
                                                               life_min=6,
                                                               count=2 * count,
                                                               interval=5)
+
+    def evil_transform(self, duration=1000, count=1, name = "", reverse=False):
+        self.overlay_window.particle_system.clear_effects()
+        self.overlay_window.set_width_reduction(150)
+        if reverse:
+            angle_min = 90
+            angle_max = 90
+            gravity = 0.2
+        else:
+            angle_min = -90
+            angle_max = -90
+            gravity = -0.2
+
+        self.overlay_window.particle_system.add_global_effect("rain",
+                                                              angle_min=angle_min,
+                                                              angle_max=angle_max,
+                                                              gravity=gravity,
+                                                              color=["#FF0000", "#EE204D", "#5E2129", "#FF2B2B",
+                                                                     "#412227"],
+                                                              color_curve=None,
+                                                              life_max=12,
+                                                              life_min=6,
+                                                              count=5 * count,
+                                                              interval=5)
+        self.overlay_window.particle_system.add_global_effect("energy",
+                                                              count=3 * count,
+                                                              color_curve=["#FF0000", "#EE204D", "#5E2129", "#FF2B2B",
+                                                                     "#412227"],
+                                                              speed_min=1,
+                                                              speed_max=1,
+                                                              life_max=40,
+                                                              life_min=20,
+                                                              size_min=1,
+                                                              size_max=10,
+                                                              interval=10)
+        self.overlay_window.particle_system.add_global_effect("warp_portal",
+                                                              count=1 * count,
+                                                              shape="circle",
+                                                              life_max=30,
+                                                              life_min=10,
+                                                              color=["#FF4D00", "#E34234", "#CD4A4C", "#D95030",
+                                                                     "#C51D34"],
+                                                              color_curve=None,
+                                                              vortex_radius=100
+                                                              )
 
 

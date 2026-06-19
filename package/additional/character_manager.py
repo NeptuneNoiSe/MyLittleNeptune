@@ -233,7 +233,6 @@ class CharacterStateManager:
                                                   text_key=self.character.text_key,
                                                   kaomoji=self.character.kaomoji)
 
-    # TODO: Add new transform (evil) state
     def set_transform_state(self):
         """Transform state"""
         self.win.model_move = False
@@ -254,12 +253,13 @@ class CharacterStateManager:
 
         self.character.expressions.fadeoutTimer.stop()
         self.character.audio.set_transform_audio()
+        transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
         if not self.win.hdd_form:
-            self.character.expressions.set_transform_to_hdd_expression()
-            self.character.character_text.set_transform_to_hdd_text()
+            self.character.expressions.set_transform_to_hdd_expression(transform_mode=transform_mode)
+            self.character.character_text.set_transform_to_hdd_text(transform_mode=transform_mode)
         else:
             self.character.expressions.set_funny_expression(fade_out=14000)
-            self.character.character_text.set_transform_to_normal_text()
+            self.character.character_text.set_transform_to_normal_text(transform_mode=transform_mode)
 
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
@@ -277,11 +277,13 @@ class CharacterStateManager:
             self.character.audio.set_transformed_audio()
             self.character.expressions.set_funny_expression(fade_out=7000)
 
+        transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
+
         if self.character.transform_text_show:
             if self.win.hdd_form:
-                self.character.character_text.set_transformed_hdd_text()
+                self.character.character_text.set_transformed_hdd_text(transform_mode=transform_mode)
             else:
-                self.character.character_text.set_transformed_normal_text()
+                self.character.character_text.set_transformed_normal_text(transform_mode=transform_mode)
             self.character.transform_text_show = False
             self.character.transform_exp_show = False
             self.win.animation_status = False
@@ -860,14 +862,17 @@ class CharacterExpressionManager:
         else:
             self._apply_expression("Surprised", fade_out)
 
-    def set_transform_to_hdd_expression(self, fade_out: int | None = None) -> None:
+    def set_transform_to_hdd_expression(self, fade_out: int | None = None, transform_mode = "Normal") -> None:
         # Setting the default expression for a regular form
-        if self.character.name in ["Neptune", "NepGear", "Maho"]:
-            self._apply_expression("Star", fade_out)
-        elif self.character.name in ["Vert"]:
-            self._apply_expression("Smile", fade_out)
-        else:
-            self._apply_expression("Serious", fade_out)
+        if transform_mode == "Normal":
+            if self.character.name in ["Neptune", "NepGear", "Maho"]:
+                self._apply_expression("Star", fade_out)
+            elif self.character.name in ["Vert"]:
+                self._apply_expression("Smile", fade_out)
+            else:
+                self._apply_expression("Serious", fade_out)
+        elif transform_mode == "Evil":
+            self._apply_expression("Angry", fade_out)
 
     def set_transform_end_expression(self, fade_out: int | None = None) -> None:
         self.character.model.ResetAllParameters()
@@ -1076,24 +1081,40 @@ class CharacterTextManager:
         self.kaomoji = "(O_~)/"
         self.update()
 
-    def set_transform_to_hdd_text(self):
-        self.text = ['Talk', 'TransformToHDD']
-        self.kaomoji = "(/￣ー￣)/~~☆"
+    def set_transform_to_hdd_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformToHDD']
+            self.kaomoji = "(/￣ー￣)/~~☆"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformToHDD_Evil']
+            self.kaomoji = "(►__◄)/~~☆"
         self.update()
 
-    def set_transform_to_normal_text(self):
-        self.text = ['Talk', 'TransformToNormal']
-        self.kaomoji = "(/￣ー￣)/"
+    def set_transform_to_normal_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformToNormal']
+            self.kaomoji = "(/￣ー￣)/"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformToNormal']
+            self.kaomoji = "(/►__◄)/"
         self.update()
 
-    def set_transformed_hdd_text(self):
-        self.text = ['Talk', 'TransformedHDD']
-        self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+    def set_transformed_hdd_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformedHDD']
+            self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformedHDD_Evil']
+            self.kaomoji = "╰(* ►__◄ *)つ"
         self.update()
 
-    def set_transformed_normal_text(self):
-        self.text = ['Talk', 'TransformedNormal']
-        self.kaomoji = "(> ͜ʖ <)"
+    def set_transformed_normal_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformedNormal']
+            self.kaomoji = "(> ͜ʖ <)"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformedNormal']
+            self.kaomoji = "(> ͜ʖ <)"
         self.update()
 
     def set_transform_failure_text(self):

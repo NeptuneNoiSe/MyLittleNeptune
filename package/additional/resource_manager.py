@@ -234,6 +234,13 @@ class ResourceManager:
             alt_form_key = config.get('alt_form_key')
         return alt_form_key
 
+    def get_transform_mode(self, character_name: str) -> str:
+        config = self.character_configs.get(character_name)
+        transform_mode = None
+        if config:
+            transform_mode = config.get('transform_mode')
+        return transform_mode
+
     def _categorize_characters(self):
         """Categorize characters (base/hdd)"""
         for char_name, config in self.character_configs.items():

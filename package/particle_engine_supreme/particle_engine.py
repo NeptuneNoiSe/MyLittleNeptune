@@ -148,14 +148,14 @@ class VisualEffectLayer(QWidget):
                 emitter.behaviors.append(VortexBehavior(
                     strength=full_settings.get("vortex_strength", 2.0),
                     radius=full_settings.get("vortex_radius", 300.0),
-                    center_pos=full_settings.get("vortex_center", (0,0))
+                    center=full_settings.get("vortex_center", (0,0))
                 ))
 
             elif beh == "attraction":
                 emitter.behaviors.append(AttractionBehavior(
                     strength=full_settings.get("attraction_strength", 0.5),
                     radius=full_settings.get("attraction_radius", 200.0),
-                    center_pos=full_settings.get("vortex_center", (0,0)) 
+                    point=full_settings.get("vortex_center", (0,0))
                 ))
             
             elif beh == "mouse_interaction":

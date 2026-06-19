@@ -246,7 +246,7 @@ class AnimationsManager:
 
     def stop_color_pulse(self):
         """Stop color pulse"""
-        self.color_animator.stop_pulse()  # Остановить все
+        self.color_animator.stop_pulse()
 
     def stop_specific_color_pulse(self, pulse_id, fade_out=True, fade_duration=1000):
         """Stop specific color pulse on id"""
@@ -951,10 +951,21 @@ class TransformAnimator:
         self.transform_text = False
         self.transform = False
         self.current_animation_win = None
-        self.animation_phase = 0   # 0-idle, 1-fade out, 2-model swap, 3-fade in
+        self.animation_phase = 0  # 0-idle, 1-fade out, 2-model swap, 3-fade in
 
         self._current_transform_in = None
         self._current_transform_out = None
+
+        # Сustom mode transformation state
+        self.transform_mode = None
+        self._custom_mode = False
+        self._custom_timer = QTimer()
+        self._custom_timer.timeout.connect(self._on_custom_tick)
+        self._custom_phase = 0
+        self._custom_elapsed = 0
+        self._custom_fade_out_duration = 3000  # 3 second fade out
+        self._custom_fade_in_duration = 3000  # 3 second fade in
+        self._custom_swap_delay = 500  # 0.5 second swap pause
 
     @property
     def win(self):
@@ -967,7 +978,6 @@ class TransformAnimator:
                 self._current_transform_in.stop()
                 self._current_transform_in.deleteLater()
                 self._current_transform_in = None
-
 
             if self._current_transform_out:
                 self._current_transform_out.stop()
@@ -991,38 +1001,153 @@ class TransformAnimator:
         if self.animation_phase != 0:
             return
 
-        self._cleanup_current_movies()
+        transform_mode = self.win.resource_manager.get_transform_mode(self.win.character_name)
 
+        self._cleanup_current_movies()
         self.current_animation_win = self.win
         self.animation_phase = 1
         self.win.input_handler.input_lock = True
         self.win.transform = True
         self.win.canvas.SetOutputOpacity(1.0)
 
-        self.animation_manager.start_rainbow_effect(speed=2.0)
-        self.win.particle_overlay.particle_presets.transform(name=self.win.character_name)
-        self.win.particle_overlay.particle_presets.transform_fairy_dust(particle_duration = 0.75)
+        if transform_mode == "Normal":
+            self._custom_mode = False
+            self.animation_manager.start_rainbow_effect(speed=2.0)
+            self.win.particle_overlay.particle_presets.transform(name=self.win.character_name)
+            self.win.particle_overlay.particle_presets.transform_fairy_dust(particle_duration=0.75)
+            anim_index = 0
 
+            movie_path = self.animation_manager.resource_manager.load_animation("transform_in")
+            self._current_transform_in = QMovie(movie_path)
+            self._current_transform_in.setCacheMode(QMovie.CacheAll)
+
+            self.win.transformLabel.setMovie(self._current_transform_in)
+            self.win.transformLabel.raise_()
+            self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
+            self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale),
+                                         int(self.win.trm_my * self.win.models_scale))
+            self._current_transform_in.start()
+            self.win.transformLabel.show()
+
+            self.animation_timer.start(16)  # 60 FPS
+
+        elif transform_mode == "Evil":
+            self._custom_mode = True
+            self.animation_manager.play_color_pulse(r=255, g=0, b=0, pulse_shape="torch")
+            self.win.particle_overlay.particle_presets.evil_transform()
+            #self.win.particle_overlay.particle_presets.transform_fairy_dust(particle_duration=0.75)
+            anim_index = 1
+
+            # Start custom mode timer
+            self._custom_phase = 1  # fade out phase
+            self._custom_elapsed = 0
+            self._custom_timer.start(16)  # 60 FPS for smooth opacity
         # Setup transform_in animation
-        self._play_model_animation()
+        self._play_model_animation(anim_index)
 
-        movie_path = self.animation_manager.resource_manager.load_animation("transform_in")
-        self._current_transform_in = QMovie(movie_path)
-        self._current_transform_in.setCacheMode(QMovie.CacheAll)
+    def _on_custom_tick(self):
+        """Handle Custom mode transformation using regular timer"""
+        if not self.current_animation_win:
+            self._custom_timer.stop()
+            return
 
-        self.win.transformLabel.setMovie(self._current_transform_in)
-        self.win.transformLabel.raise_()
-        self.win.transformLabel.movie().setScaledSize(self._calculate_animation_size())
-        self.win.transformLabel.move(int(self.win.trm_mx * self.win.models_scale),
-                                     int(self.win.trm_my * self.win.models_scale))
-        self._current_transform_in.start()
-        self.win.transformLabel.show()
+        self._win = self.current_animation_win
+        self._custom_elapsed += 16  # Increment by timer interval (16ms)
 
-        self.animation_timer.start(16)  # 60 FPS
+        if self._custom_phase == 1:
+            # Fade out phase
+            self._process_custom_fade_out()
+        elif self._custom_phase == 2:
+            # Swap phase - wait a bit then execute swap
+            self._process_custom_swap()
+        elif self._custom_phase == 3:
+            # Fade in phase
+            self._process_custom_fade_in()
+
+    def _process_custom_fade_out(self):
+        """Handle fade out for Custom mode"""
+        progress = min(self._custom_elapsed / self._custom_fade_out_duration, 1.0)
+        self.win.canvas.SetOutputOpacity(1.0 - progress)
+
+        # Close dialog at half fade
+        if self._custom_elapsed >= self._custom_fade_out_duration / 2:
+            self.win.talk_widget.close_dialog_after_animation()
+
+        # Complete fade out
+        if self._custom_elapsed >= self._custom_fade_out_duration:
+            self._custom_phase = 2
+            self._custom_elapsed = 0
+
+    def _process_custom_swap(self):
+        """Handle model swap for Custom mode"""
+        transform_mode = self.win.resource_manager.get_transform_mode(self.win.character_name)
+        # Wait for swap delay
+        if self._custom_elapsed >= self._custom_swap_delay:
+            # Execute model swap
+            self._execute_model_swap_no_animation()
+
+            # Prepare for fade in
+            self.win.canvas.SetOutputOpacity(0.0)
+            if transform_mode == "Evil":
+                self._custom_mode = True
+                #self.win.particle_overlay.particle_presets.transform_fairy_dust(particle_duration=0.75)
+            #self.win.particle_overlay.particle_presets.transform(name=self.win.character_name, reverse=True)
+
+            self._custom_phase = 3
+            self._custom_elapsed = 0
+
+    def _process_custom_fade_in(self):
+        """Handle fade in for Custom mode"""
+        progress = min(self._custom_elapsed / self._custom_fade_in_duration, 1.0)
+        self.win.canvas.SetOutputOpacity(progress)
+
+        # Complete fade in
+        if self._custom_elapsed >= self._custom_fade_in_duration:
+            self._finalize_custom_transformation()
+
+    def _execute_model_swap_no_animation(self):
+        """Execute model transformation without QMovie animations"""
+        try:
+            target_name = self.win.resource_manager.get_alt_form_name(self.win.character_name)
+            if not target_name:
+                return
+            self.win.talk_widget.talk_update = False
+            self.win.character_name = target_name
+            self.win.models_manager.update_model(self.win)
+
+            self.win.character.transform_exp_show = True
+            self.win.character.transform_text_show = True
+            self.win.character.expressions.set_funny_expression(fade_out=30000)
+        except Exception as e:
+            print(f"Error in custom mode swap: {e}")
+
+    def _finalize_custom_transformation(self):
+        """Cleanup after Custom transformation"""
+        try:
+            self._custom_timer.stop()
+            self._custom_phase = 0
+            self._custom_elapsed = 0
+            self._custom_mode = False
+
+            self.win.canvas.SetOutputOpacity(1.0)
+            self.win.input_handler.input_lock = False
+            self.win.transform_lock = False
+            self.win.talk_widget.talk_update = True
+            self.transform = self.win.transform = False
+            self.win.character.state.set_transformed_state()
+
+            self.win.character.transform_exp_show = False
+            self.win.character.transform_text_show = False
+
+        finally:
+            self.win.particle_overlay.stop_particle_system()
+            self.animation_manager.stop_color_pulse()
+            self.current_animation_win = None
+            self.animation_phase = 0
 
     def _on_animation_tick(self):
-        """Animation phases"""
-        if not self.current_animation_win:
+        """Animation phases (Normal mode only)"""
+        if not self.current_animation_win or self._custom_mode:
             self.animation_timer.stop()
             return
 
@@ -1045,17 +1170,15 @@ class TransformAnimator:
         current_frame = self._current_transform_in.currentFrameNumber()
         total_frames = self._current_transform_in.frameCount()
 
-        # Smooth fade from 70% to 100% animation
         fade_start = int(total_frames * 0.70)
         if current_frame >= fade_start:
             progress = (current_frame - fade_start) / (total_frames - fade_start)
             self.win.canvas.SetOutputOpacity(1.0 - progress)
 
-        # When fade out completes, move to model swap
         if current_frame >= total_frames - 3:
             self._current_transform_in.stop()
             self.animation_phase = 2
-        # Close dialog
+
         if current_frame >= (total_frames - 3) / 2:
             self.win.talk_widget.close_dialog_after_animation()
 
@@ -1096,7 +1219,7 @@ class TransformAnimator:
                                      int(self.win.trm_my * self.win.models_scale))
         self.win.transformLabel.show()
 
-        self.win.canvas.SetOutputOpacity(0.0)  # Start fully transparent
+        self.win.canvas.SetOutputOpacity(0.0)
         self.win.particle_overlay.particle_presets.transform(name=self.win.character_name, reverse=True)
 
     def _process_fade_in(self):
@@ -1107,22 +1230,17 @@ class TransformAnimator:
         current_frame = self._current_transform_out.currentFrameNumber()
         total_frames = self._current_transform_out.frameCount()
 
-        # Starting the appearance with 15% animation
         fade_start = int(total_frames * 0.15)
-        fade_end = int(total_frames * 0.7)  # Finalize on 70%
+        fade_end = int(total_frames * 0.7)
 
         if current_frame < fade_start:
-            # Transparency Delay from 0% to 25% of the animation
             self.win.canvas.SetOutputOpacity(0.0)
         elif fade_start <= current_frame <= fade_end:
-            # Smooth appearance from 25% to 70%
             progress = (current_frame - fade_start) / (fade_end - fade_start)
             self.win.canvas.SetOutputOpacity(progress)
         else:
-            # After 70%, set 100% transparency
             self.win.canvas.SetOutputOpacity(1.0)
 
-        # Final Animation with end
         if current_frame >= total_frames - 3:
             self._finalize_transformation()
 
@@ -1136,7 +1254,7 @@ class TransformAnimator:
 
             self.win.transformMovie.stop()
             self.win.transformLabel.close()
-            self.win.canvas.SetOutputOpacity(1.0)  # Ensure full visibility
+            self.win.canvas.SetOutputOpacity(1.0)
             self.win.input_handler.input_lock = False
             self.win.transform_lock = False
             self.win.talk_widget.talk_update = True
@@ -1145,7 +1263,6 @@ class TransformAnimator:
 
             self.animation_manager.stop_rainbow_effect()
 
-            # Reset transformation flags
             self.win.character.transform_exp_show = False
             self.win.character.transform_text_show = False
 
@@ -1157,15 +1274,13 @@ class TransformAnimator:
             self.current_animation_win = None
             self.animation_phase = 0
 
-    def _play_model_animation(self):
+    def _play_model_animation(self, anim_index = 0):
         """Model animation playback"""
-        # Regular form processing (hdd_form=False)
         if not self.win.hdd_form:
-            # Playing the transformation animation
             self.animation_manager.play_animation(
                 anim_type='Motion',
                 group_or_id="Unique",
-                no=0,
+                no=anim_index,
                 priority="FORCE",
             )
 
@@ -1192,7 +1307,11 @@ class TransformAnimator:
         """Method for an external call when closing"""
         self._cleanup_current_movies()
         self.animation_timer.stop()
+        self._custom_timer.stop()
         self.animation_phase = 0
+        self._custom_phase = 0
+        self._custom_elapsed = 0
+        self._custom_mode = False
         self._animation_active = False
 
 class BodyPartAnimator:

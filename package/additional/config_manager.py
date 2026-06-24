@@ -32,6 +32,7 @@ class AppConfig(QObject):
             'models_scale': '1',
             'random_character': 'False',
             'random_character_hdd': 'False',
+            'random_character_evil_transformed': 'False',
             'character_name': 'Neptune',
             'l2d_scale': '1',
             'offset_x': '0',
@@ -86,11 +87,8 @@ class AppConfig(QObject):
         """Loads the config or creates a new one with default values"""
         config = ConfigParser()
 
-        # Читаем существующий конфиг
         if os.path.exists('config.ini'):
             config.read('config.ini')
-
-        # Проверяем и создаем недостающие секции и ключи
         self._validate_and_fix_config(config)
 
         return config
@@ -100,18 +98,15 @@ class AppConfig(QObject):
         config_changed = False
 
         for section, options in self.DEFAULT_CONFIG.items():
-            # Создаем секцию, если ее нет
             if not config.has_section(section):
                 config.add_section(section)
                 config_changed = True
 
-            # Добавляем недостающие ключи
             for key, default_value in options.items():
                 if not config.has_option(section, key):
                     config.set(section, key, default_value)
                     config_changed = True
 
-        # Сохраняем, если были изменения
         if config_changed:
             self._save_full_config(config)
 
@@ -450,6 +445,15 @@ class AppConfig(QObject):
     def random_character_hdd(self, value: bool):
         self._config.set('Model', 'random_character_hdd', str(value))
         self._save_and_notify('Model', 'random_character_hdd', str(value))
+
+    @property
+    def random_character_evil_transformed(self) -> bool:
+        return self._config.getboolean('Model', 'random_character_evil_transformed')
+
+    @random_character_evil_transformed.setter
+    def random_character_evil_transformed(self, value: bool):
+        self._config.set('Model', 'random_character_evil_transformed', str(value))
+        self._save_and_notify('Model', 'random_character_evil_transformed', str(value))
 
     # Animation switches config
     @property

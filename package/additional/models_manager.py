@@ -183,14 +183,29 @@ class ModelsManager:
     def load_random_character(self, win):
         """Load Random Character"""
         self.random_hdd = win.app_config.random_character_hdd
+        self.random_evil_transformed = win.app_config.random_character_evil_transformed
         base_characters = self.resource_manager.get_base_character_names()
         hdd_characters = self.resource_manager.get_hdd_character_names()
+        evil_transformed_characters = self.resource_manager.get_evil_transformed_character_names()
         all_characters = self.resource_manager.get_all_character_names()
+        #print("BASE: ",base_characters, "HDD: ",hdd_characters, "Evil Transformed: ",evil_transformed_characters)
 
-        if self.random_hdd:
+        if self.random_hdd and not self.random_evil_transformed:
             selected_character = random.choice(base_characters + hdd_characters)
+            if win.models_log:
+                print("Base + HDD Only",selected_character)
+        elif self.random_hdd and self.random_evil_transformed:
+            selected_character = random.choice(base_characters + hdd_characters + evil_transformed_characters)
+            if win.models_log:
+                print("Base + HDD And Evil T.",selected_character)
+        elif not self.random_hdd and self.random_evil_transformed:
+            selected_character = random.choice(base_characters + evil_transformed_characters)
+            if win.models_log:
+                print("Base + Evil T. Only",selected_character)
         else:
             selected_character = random.choice(base_characters)
+            if win.models_log:
+                print("Base Only",selected_character)
 
         win.character_name = selected_character
         startup_config = win.resource_manager.get_character_config(selected_character)

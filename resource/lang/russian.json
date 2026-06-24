@@ -158,6 +158,7 @@
     "ScaleMultiplier": "Множитель масштаба:",
     "RandomCharacter": "Случайный персонаж при запуске",
     "RandomCharacterHDD": "Случайный персонаж при запуске (включая HDD)",
+    "RandomCharacterEvilTransformed": "Случайный персонаж при запуске (включая Злых Т.)",
     "Behavior": "Поведение",
     "AutoBlink": "Моргание",
     "AutoBreath": "Дыхание",
@@ -199,6 +200,7 @@
   "ModelsWindow": {
     "Title": "Выберите персонажа",
     "HDDTitle": "HDD Персонажи",
+    "EvilTransformedTitle": "Трансформированные Злые Персонажи",
     "DelayMessage": "Подождите немного перед следующим выбором",
     "InputLockMessage": "Ввод заблокирован",
     "SettingsLockMessage": "Примените настройки, перед выбором персонажа",

@@ -83,11 +83,11 @@ class ModelsWindow(QWidget):
         self.title_label.setText(self.win.lang['ModelsWindow']['Title'])
         self.load_characters()
 
-    # TODO: Add new character group
-    def load_characters(self, include_hdd: bool = True):
+    def load_characters(self, include_hdd: bool = True, is_evil_transformedl: bool = True):
         """Loads and displays all character buttons"""
         base_names = self.win.resource_manager.get_base_character_names()
         hdd_names = self.win.resource_manager.get_hdd_character_names() if include_hdd else []
+        evil_transformed_names = self.win.resource_manager.get_evil_transformed_character_names() if is_evil_transformedl else []
 
         self.clear_layout(self.scroll_layout)
 
@@ -102,28 +102,30 @@ class ModelsWindow(QWidget):
                 return self.win.lang['Names'].get(normalized_name, orig_name)
             return orig_name
 
-        def create_character_button(orig_name: str, is_hdd: bool = False):
+        def create_character_button(orig_name: str, is_hdd: bool = False, is_evil_transformed: bool = False):
             display_name = get_localized_name(orig_name)
-
             image_path = self.win.resource_manager.get_character_image_path(orig_name)
 
             btn = CharacterButton(
                 character_name=display_name,
                 image_path=image_path,
-                is_hdd=is_hdd
+                is_hdd=is_hdd,
+                is_evil_transformed=is_evil_transformed
             )
 
             btn.clicked.connect(lambda checked, name=orig_name: self.on_character_selected(name))
             return btn
 
+        # Base Characters
         for orig_name in base_names:
             if col >= max_cols:
                 row += 1
                 col = 0
-            btn = create_character_button(orig_name, is_hdd=False)
+            btn = create_character_button(orig_name, is_hdd=False, is_evil_transformed=False)
             self.scroll_layout.addWidget(btn, row, col)
             col += 1
 
+        # HDD Characters
         if hdd_names:
             row += 1
             col = 0
@@ -146,7 +148,35 @@ class ModelsWindow(QWidget):
                 if col >= max_cols:
                     row += 1
                     col = 0
-                btn = create_character_button(orig_name, is_hdd=True)
+                btn = create_character_button(orig_name, is_hdd=True, is_evil_transformed=False)
+                self.scroll_layout.addWidget(btn, row, col)
+                col += 1
+
+        # Evil Transformed Characters
+        if evil_transformed_names:
+            row += 1
+            col = 0
+
+            transformed_evil_label_text = "Evil Transformed Characters"
+            if hasattr(self.win, 'lang') and 'ModelsWindow' in self.win.lang:
+                transformed_evil_label_text = self.win.lang['ModelsWindow'].get('EvilTransformedTitle',
+                                                                                transformed_evil_label_text)
+
+            transformed_evil_label = QLabel(transformed_evil_label_text)
+            transformed_evil_label.setStyleSheet("""
+                font-weight: bold;
+                color: #f44336;
+                font-size: 14px;
+                padding: 10px 0 5px 0;
+            """)
+            self.scroll_layout.addWidget(transformed_evil_label, row, 0, 1, max_cols)
+            row += 1
+
+            for orig_name in evil_transformed_names:
+                if col >= max_cols:
+                    row += 1
+                    col = 0
+                btn = create_character_button(orig_name, is_hdd=False, is_evil_transformed=True)
                 self.scroll_layout.addWidget(btn, row, col)
                 col += 1
 
@@ -303,7 +333,7 @@ class CharacterButton(QFrame):
     clicked = Signal(str)
 
     def __init__(self, character_name: str, image_path: Optional[str] = None,
-                 is_hdd: bool = False, orig_name: Optional[str] = None, parent=None):
+                 is_hdd: bool = False, is_evil_transformed: bool = False, orig_name: Optional[str] = None, parent=None):
         super().__init__(parent)
 
         self.character_name = character_name
@@ -311,6 +341,7 @@ class CharacterButton(QFrame):
         self.orig_name = orig_name or character_name
         self.image_path = image_path
         self.is_hdd = is_hdd
+        self.is_evil_transformed = is_evil_transformed
         self.is_pressed = False
         self.pressed_image_path = None
         self.return_timer = QTimer()
@@ -357,43 +388,68 @@ class CharacterButton(QFrame):
 
     def get_base_style(self, normal: bool = True) -> str:
         """Returns the base style based on the character type"""
-        if self.is_hdd:
-            base_style = """
-                CharacterButton {
-                    background-color: #fff3e0;
-                    border: 2px solid #ff9800;
-                    border-radius: 12px;
-                }
-                CharacterButton:hover {
-                    background-color: #ffe0b2;
-                    border-color: #f57c00;
-                }
-            """
+        if self.is_evil_transformed:
+            bg_color = "#ffebee"  # Light red background
+            hover_bg = "#ffcdd2"  # Red on hover
+            border_color = "#f44336"  # Red frame
+            hover_border = "#d32f2f"  # Dark red frame on hover
+            text_color = "#c62828"  # Dark red text
+        elif self.is_hdd:
+            bg_color = "#fff3e0"  # Light orange background
+            hover_bg = "#ffe0b2"  # Orange on hover
+            border_color = "#ff9800"  # Orange frame
+            hover_border = "#f57c00"  # Dark orange frame on hover
+            text_color = "#e65100"  # Orange text
         else:
-            base_style = """
-                CharacterButton {
-                    background-color: #f5f5f5;
-                    border: 2px solid #ddd;
-                    border-radius: 12px;
-                }
-                CharacterButton:hover {
-                    background-color: #e8e8e8;
-                    border-color: #2196F3;
-                }
+            bg_color = "#f5f5f5"  # Light grey background
+            hover_bg = "#e8e8e8"  # Light grey on hover
+            border_color = "#ddd"  # Grey frame
+            hover_border = "#2196F3"  # Blue frame on hover
+            text_color = "#333"  # Dark grey text
+
+        base_style = f"""
+            CharacterButton {{
+                background-color: {bg_color};
+                border: 2px solid {border_color};
+                border-radius: 12px;
+            }}
+            CharacterButton:hover {{
+                background-color: {hover_bg};
+                border-color: {hover_border};
+            }}
+            QLabel {{
+                color: {text_color};
+            }}
+        """
+
+        if not normal:
+            base_style += f"""
+                CharacterButton {{
+                    background-color: #d0d0d0;
+                }}
             """
 
-        if normal:
-            return base_style
-        else:
-            return base_style + """
-                CharacterButton {
-                    background-color: #d0d0d0;
-                }
-            """
+        return base_style
 
     def update_style(self, normal: bool = True):
         """Update button style"""
         self.setStyleSheet(self.get_base_style(normal))
+
+        # Update text color
+        #if self.is_evil_transformed:
+        #    text_color = "#c62828"
+        #elif self.is_hdd:
+        #    text_color = "#e65100"
+        #else:
+        #    text_color = "#333"
+
+        #self.name_label.setStyleSheet(f"""
+        #    font-weight: bold;
+        #    color: {text_color};
+        #    font-size: 12px;
+        #    padding: 2px;
+        #    background-color: transparent;
+        #""")
 
     def set_normal_image(self):
         """Set Normal Image"""

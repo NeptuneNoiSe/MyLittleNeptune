@@ -158,6 +158,7 @@
     "ScaleMultiplier": "Scale multiplier:",
     "RandomCharacter": "Random character on startup",
     "RandomCharacterHDD": "Random character on startup (include HDD)",
+    "RandomCharacterEvilTransformed": "Random character on startup (include Evil T.)",
     "Behavior": "Behavior",
     "AutoBlink": "Blink",
     "AutoBreath": "Breath",
@@ -199,6 +200,7 @@
   "ModelsWindow": {
     "Title": "Choose a character",
     "HDDTitle": "HDD Characters",
+    "EvilTransformedTitle": "Evil Transformed Characters",
     "DelayMessage": "Wait a bit before making your next choice",
     "InputLockMessage": "Input locked",
     "SettingsLockMessage": "Apply the settings before selecting a character",

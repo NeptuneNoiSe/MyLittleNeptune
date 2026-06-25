@@ -6,7 +6,7 @@ import resources
 import OpenGL.GL as gl
 import numpy as np
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt, QTimer
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QRect
 from PySide6.QtGui import QGuiApplication, QMouseEvent, QCursor, QScreen, QAction, QIcon, QPalette, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QStyleFactory, QApplication, QProgressBar, \
@@ -186,6 +186,8 @@ class MainWindow(QOpenGLWidget):
         self.talkY = 150
         self.modelRotate = 0
         self.sleepMoveY = 0
+        self.saved_position_x = 0
+        self.saved_position_y = 0
 
         # Model state
         self.transform = False
@@ -398,41 +400,87 @@ class MainWindow(QOpenGLWidget):
                 f"{(self.w_resize, self.h_resize)}"
             )
 
-    # TODO: Load and Save model position for startup
-    def position_window(self):
+    def position_window(self, ignore_saved_position=False):
         """Set window position with conditions"""
         window_width = self.width()
         window_height = self.height()
         screen_geom = self.screen().availableGeometry()
+        self.saved_position_x = self.app_config.saved_position_x
+        self.saved_position_y = self.app_config.saved_position_y
 
-        # Checking that the model is SMALLER or EQUAL to the screen size
-        if (window_width <= screen_geom.width() and
-                window_height <= screen_geom.height()):
-
-            if self.frameless and not self.background:
-                self.frmX = (self.SrcSize.width() - window_width) - self.w_correction
-            else:
-                self.frmX = (self.SrcSize.width() - window_width)
-
-            self.frmY = (self.SrcSize.height() - window_height) - self.h_correction
-            if self.first_run:
-                fr_c = 25
-            else:
-                fr_c = 0
-            self.move(int(self.frmX), int(self.frmY - fr_c))
-
+        # Calculate default position
+        if self.frameless and not self.background:
+            default_x = (self.SrcSize.width() - window_width) - self.w_correction
         else:
-            # Defensive logic for large models
-            if window_width > screen_geom.width():
-                safe_x = screen_geom.left() - (window_width - screen_geom.width()) // 2
-            else:
-                safe_x = (self.SrcSize.width() - window_width) - self.w_correction
+            default_x = (self.SrcSize.width() - window_width)
 
-            # Fix the upper limit, allow going beyond the bottom
-            safe_y = max(screen_geom.top(),
-                         (self.SrcSize.height() - window_height) - self.h_correction)
+        default_y = (self.SrcSize.height() - window_height) - self.h_correction
+        if self.first_run:
+            default_y -= 25  # Title bar offset
 
+        # Determine if we should use saved position
+        use_saved = (
+                self.frameless and
+                not ignore_saved_position and
+                self._is_position_visible_on_any_screen(
+                    self.saved_position_x,
+                    self.saved_position_y,
+                    window_width,
+                    window_height
+                )
+        )
+
+        if use_saved:
+            self.move(int(self.saved_position_x), int(self.saved_position_y))
+        else:
+            # Calculate safe position (handles large windows too)
+            safe_x, safe_y = self._calculate_safe_position(
+                default_x, default_y, window_width, window_height, screen_geom
+            )
             self.move(int(safe_x), int(safe_y))
+
+    def _calculate_safe_position(self, default_x, default_y, window_w, window_h, screen_geom):
+        """Calculate safe position, handling windows larger than screen"""
+        # X position
+        if window_w > screen_geom.width():
+            safe_x = screen_geom.left() - (window_w - screen_geom.width()) // 2
+        else:
+            safe_x = max(screen_geom.left(), min(default_x, screen_geom.right() - window_w))
+
+        # Y position - keep title bar accessible, allow extending below
+        safe_y = max(screen_geom.top(), default_y)
+
+        return safe_x, safe_y
+
+    def _is_position_visible_on_any_screen(self, x, y, width, height):
+        """Check if at least 50% of window is visible on any connected screen"""
+        if not self.app_config.save_position:
+            return False
+
+        if x == 0 and y == 0:
+            return False
+
+        window_rect = QRect(int(x), int(y), width, height)
+
+        screens = QGuiApplication.screens()
+
+        for screen in screens:
+            screen_geom = screen.availableGeometry()
+            intersection = screen_geom.intersected(window_rect)
+
+            # At least 50% visible in both dimensions
+            if (intersection.width() >= width / 2 and
+                    intersection.height() >= height / 2):
+                return True
+
+        return False
+
+    def save_window_position(self, reset=False):
+        self.app_config.saved_position_x = int(self.x())
+        self.app_config.saved_position_y = int(self.y())
+        if reset:
+            self.app_config.saved_position_x = 0
+            self.app_config.saved_position_y = 0
 
     def _position_widget(self):
         """Position the widget"""
@@ -860,6 +908,8 @@ class MainWindow(QOpenGLWidget):
         #if self.isInLA:
         self.input_handler.mouse_release_handler()
 
+        self.save_window_position()
+
         if self.mouse_click_log:
             print("Left Button Released")
 
@@ -874,7 +924,7 @@ class MainWindow(QOpenGLWidget):
 
         self.input_handler.mouse_move_handler(event.globalPosition())
 
-    def setSettings(self, flags: Qt.WindowType) -> None:
+    def setSettings(self, flags: Qt.WindowType, update_model = False) -> None:
         """Set Settings from Settings Window"""
         if self.talk_widget:
             self.talk_widget.close_dialog_after_animation()
@@ -893,8 +943,6 @@ class MainWindow(QOpenGLWidget):
 
         self.show()
         # QApplication.processEvents()
-
-        # TODO: Model movements should only be possible when changing model settings and window flags
         need_update = False
 
         if self.auto_scale_init:
@@ -911,15 +959,17 @@ class MainWindow(QOpenGLWidget):
             self.clamp_window_size_to_screen()
             need_update = True
 
-        if need_update:
+        if need_update and update_model:
             self.models_manager.update_model(self)
+            self.save_window_position(reset=True)
 
         self.auto_scale_init = True
 
         self.setLanguage()
         self.set_theme()
         self.apply_character_config(self.character_name)
-        self.position_window()
+        if update_model:
+            self.position_window(ignore_saved_position=True)
         self.models_window.set_language()
 
     def settings_show(self):

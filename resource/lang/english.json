@@ -156,6 +156,7 @@
     "ModelTitle": "Model",
     "AutoScale": "AutoScale",
     "ScaleMultiplier": "Scale multiplier:",
+    "SavePosition": "Save current model position",
     "RandomCharacter": "Random character on startup",
     "RandomCharacterHDD": "Random character on startup (include HDD)",
     "RandomCharacterEvilTransformed": "Random character on startup (include Evil T.)",

@@ -42,7 +42,10 @@ class AppConfig(QObject):
             'w_resize': '0',
             'h_resize': '0',
             'w_correction': '0',
-            'h_correction': '0'
+            'h_correction': '0',
+            'save_position': 'False',
+            'saved_position_x': '0',
+            'saved_position_y': '0'
         },
         'Behavior': {
             'auto_blink': 'True',
@@ -418,6 +421,33 @@ class AppConfig(QObject):
     def twmY(self, value: float):
         self._config.set('Model', 'twmY', str(value))
         self._save_and_notify('Model', 'twmY', str(value))
+
+    @property
+    def save_position(self) -> bool:
+        return self._config.getboolean('Model', 'save_position')
+
+    @save_position.setter
+    def save_position(self, value: bool):
+        self._config.set('Model', 'save_position', str(value))
+        self._save_and_notify('Model', 'save_position', str(value))
+
+    @property
+    def saved_position_x(self) -> int:
+        return self._config.getint('Model', 'saved_position_x')
+
+    @saved_position_x.setter
+    def saved_position_x(self, value: int):
+        self._config.set('Model', 'saved_position_x', str(value))
+        self._save_and_notify('Model', 'saved_position_x', str(value))
+
+    @property
+    def saved_position_y(self) -> int:
+        return self._config.getint('Model', 'saved_position_y')
+
+    @saved_position_y.setter
+    def saved_position_y(self, value: int):
+        self._config.set('Model', 'saved_position_y', str(value))
+        self._save_and_notify('Model', 'saved_position_y', str(value))
 
     @property
     def character_name(self) -> str:

@@ -156,6 +156,7 @@
     "ModelTitle": "Модель",
     "AutoScale": "Авто Масштаб",
     "ScaleMultiplier": "Множитель масштаба:",
+    "SavePosition": "Сохранять текущую позицию модели",
     "RandomCharacter": "Случайный персонаж при запуске",
     "RandomCharacterHDD": "Случайный персонаж при запуске (включая HDD)",
     "RandomCharacterEvilTransformed": "Случайный персонаж при запуске (включая Злых Т.)",

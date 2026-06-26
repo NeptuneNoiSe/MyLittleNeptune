@@ -963,9 +963,9 @@ class TransformAnimator:
         self._custom_timer.timeout.connect(self._on_custom_tick)
         self._custom_phase = 0
         self._custom_elapsed = 0
-        self._custom_fade_out_duration = 3000  # 3 second fade out
-        self._custom_fade_in_duration = 3000  # 3 second fade in
-        self._custom_swap_delay = 500  # 0.5 second swap pause
+        self._custom_fade_out_duration = 5000
+        self._custom_fade_in_duration = 5000
+        self._custom_swap_delay = 500
 
     @property
     def win(self):

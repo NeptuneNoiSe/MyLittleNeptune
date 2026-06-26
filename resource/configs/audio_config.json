@@ -728,8 +728,10 @@
     "default": "default.wav"
   },
   "Effects": {
-    "transform_start": "transform_start.wav",
-    "transform_finish": "transform_finish.wav",
+    "normal_transform_start": "transform_start.wav",
+    "normal_transform_finish": "transform_finish.wav",
+    "evil_transform_start": "evil_transform_start.wav",
+    "evil_transform_finish": "evil_transform_finish.wav",
     "new_year_fanfare": "new_year_fanfare.wav",
     "happy_birthday": "happy_birthday.wav"
   },

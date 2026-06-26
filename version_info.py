@@ -56,7 +56,7 @@ VSVersionInfo(
 """
 
     output_path.write_text(content, encoding='utf-8')
-    print(f" 📄 [DEV] Generated {output_path} with version: {major}.{minor}.{build}.{revision}")
+    print(f"[INFO] Generated {output_path} with version: {major}.{minor}.{build}.{revision}")
 
 
 if __name__ == "__main__":
@@ -69,6 +69,6 @@ if __name__ == "__main__":
             version = match.group(1)
             generate_version_info(version, Path(__file__).parent / 'version_info.txt')
         else:
-            print(" ❌ [DEV] Not Found __version__ в version.py")
+            print("[ERROR] Not Found __version__ в version.py")
     else:
-        print(" ❌ [DEV] version.py not found")
+        print("[ERROR] version.py not found")

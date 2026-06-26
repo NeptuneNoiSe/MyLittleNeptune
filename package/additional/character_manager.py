@@ -256,9 +256,11 @@ class CharacterStateManager:
         self.win.models_window.close()
         self.win.animation_status = True
 
-        self.character.expressions.fadeoutTimer.stop()
-        self.character.audio.set_transform_audio()
         transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
+
+        self.character.expressions.fadeoutTimer.stop()
+        self.character.audio.set_transform_audio(transform_mode=transform_mode)
+
         if not self.win.hdd_form:
             self.character.expressions.set_transform_to_hdd_expression(transform_mode=transform_mode)
             self.character.character_text.set_transform_to_hdd_text(transform_mode=transform_mode)
@@ -278,11 +280,12 @@ class CharacterStateManager:
 
     def set_transformed_state(self):
         """Transformed State"""
+        transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
         if self.character.transform_exp_show:
-            self.character.audio.set_transformed_audio()
+            self.character.audio.set_transformed_audio(transform_mode=transform_mode)
             self.character.expressions.set_funny_expression(fade_out=7000)
 
-        transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
+
 
         if self.character.transform_text_show:
             if self.win.hdd_form:
@@ -1290,19 +1293,19 @@ class CharacterAudioManager:
         self.audio_manager.play_audio(self.character.name, "wake_up", enable_lipsync=True, category="voice",
                               stop_audio=True)
 
-    def set_transform_audio(self):
+    def set_transform_audio(self, transform_mode="Normal"):
         self.audio_manager.play_audio(self.character.name, "transform", enable_lipsync=True, category="voice",
                               stop_audio=True)
-        self.audio_manager.play_audio("Effects", "transform_start", enable_lipsync=False, category="sfx",
-                              stop_audio=False)
+        self.audio_manager.play_audio("Effects", f"{transform_mode.lower()}_transform_start", enable_lipsync=False, category="sfx",
+                                      stop_audio=False)
+        self.transform_mode = transform_mode
 
-    def set_transformed_audio(self):
+    def set_transformed_audio(self, transform_mode="Normal"):
         self.audio_manager.play_audio(self.character.name, "transformed", enable_lipsync=True, category="voice",
                               stop_audio=True)
-        self.audio_manager.stop_audio("Effects", "transform_start")
-
-        self.audio_manager.play_audio("Effects", "transform_finish", enable_lipsync=False, category="sfx",
-                              stop_audio=False)
+        self.audio_manager.stop_audio("Effects", f"{transform_mode.lower()}_transform_start")
+        self.audio_manager.play_audio("Effects", f"{transform_mode.lower()}_transform_finish",
+                                      enable_lipsync=False, category="sfx", stop_audio=False)
 
     def set_transform_failure_audio(self):
         self.audio_manager.play_audio(self.character.name, "transform_fail", enable_lipsync=True, category="voice",

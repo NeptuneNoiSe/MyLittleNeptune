@@ -100,7 +100,6 @@ def update_readme(version: str):
     readme = PROJECT_ROOT / 'README.md'
     if not readme.exists():
         return
-    # TODO: Remove all icons from console log
     try:
         content = readme.read_text(encoding='utf-8')
         updated = re.sub(
@@ -110,9 +109,9 @@ def update_readme(version: str):
         )
         if updated != content:
             readme.write_text(updated, encoding='utf-8')
-            print(f" ✅ [DEV] Updated version in the README: {version}")
+            print(f"[INFO]  [PASS] Updated version in the README: {version}")
     except Exception as e:
-        print(f" ❌ [DEV] Couldn't update README: {e}")
+        print(f"[ERROR] Couldn't update README: {e}")
 
 
 class Launcher:
@@ -140,13 +139,13 @@ class Launcher:
 
         # Check Resource path
         if not RESOURCE_PATH.exists():
-            print(f" ❌ [DEV] Attention: The resource folder was not found at the following path: {RESOURCE_PATH}")
-            print(f"  [DEV] Project Root: {PROJECT_ROOT}")
-            print(f"  [DEV] Path to exe: {Path(sys.executable).parent if getattr(sys, 'frozen', False) else 'N/A'}")
+            print(f"[FATAL ERROR] Attention: The resource folder was not found at the following path: {RESOURCE_PATH}")
+            print(f"[INFO] Project Root: {PROJECT_ROOT}")
+            print(f"[INFO] Path to exe: {Path(sys.executable).parent if getattr(sys, 'frozen', False) else 'N/A'}")
             if hasattr(sys, '_MEIPASS'):
                 print(f"  _MEIPASS: {sys._MEIPASS}")
         else:
-            print(f" 📦 [DEV] Resource found: {RESOURCE_PATH}")
+            print(f"[INFO] Resource found: {RESOURCE_PATH}")
 
         update_readme(version)
         live2d.init()
@@ -169,7 +168,7 @@ class Launcher:
         self._set_window_icon()
 
         print("─────────────────────────────────────────────────────────────")
-        print(f" ✅ My Little Neptune (v{version}) is initialized")
+        print(f"[INFO] My Little Neptune (v{version}) is initialized")
 
         # print(live2d.__file__)
         # print(MainWindow.__module__)
@@ -183,17 +182,17 @@ class Launcher:
                 from PySide6.QtGui import QIcon
                 self.settings_window.setWindowIcon(QIcon(str(icon_path)))
         except Exception as e:
-            print(f" ❌ [DEV] Couldn't install the icon: {e}")
+            print(f"[ERROR] Couldn't install the icon: {e}")
 
     def run(self):
         """Run the main application cycle"""
         if self.app is None:
             raise RuntimeError(
-                " ❌ The application is not initialized. "
+                "[FATAL ERROR] The application is not initialized. "
             )
 
         try:
-            print(" 🎮 Launching the application...")
+            print("[INFO] Launching the application...")
             sys.exit(self.app.exec())
         finally:
             self._cleanup()
@@ -203,7 +202,7 @@ class Launcher:
         try:
             live2d.dispose()
         except Exception as e:
-            print(f" ❌ Error cleanup Live2D: {e}")
+            print(f"[ERROR] Error cleanup Live2D: {e}")
 
 
 if __name__ == "__main__":

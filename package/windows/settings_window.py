@@ -3,7 +3,7 @@ import sys
 
 import package.resources as resources
 
-from PySide6.QtCore import Qt, Slot, QSize, QTimer
+from PySide6.QtCore import Qt, Slot, QSize, QTimer, QEvent
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QWidget, QPushButton, QHBoxLayout, \
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory, QTabWidget, QDialogButtonBox, QDial, \
@@ -167,10 +167,18 @@ class SettingsWindow(QWidget):
         self.updateMainWindow()
         # UNBLOCKING the signals after initialization
         self.block_signals_during_init = False
+        #self.raise_()
 
     @property
     def icon_color_folder(self):
         return self.mainWindow.ICON_COLOR_FOLDER
+
+    def changeEvent(self, event):
+        if event.type() == QEvent.Type.ActivationChange:
+            if self.isActiveWindow():
+                self.raise_()
+                #self.mainWindow.lower()
+        super().changeEvent(event)
 
     def save_initial_values(self):
         """Saves the initial settings values"""
@@ -1603,8 +1611,10 @@ class SettingsWindow(QWidget):
             if current_settings['stays_on_top']:
                 flags = flags | Qt.WindowType.WindowStaysOnTopHint
                 self.app_config.WindowStaysOnTopHint = True
+                self.mainWindow.on_top = True
             else:
                 self.app_config.WindowStaysOnTopHint = False
+                self.mainWindow.on_top = False
 
             # Apply additional settings
             self.set_setting('color_icons', current_settings['color_icons'])
@@ -2031,9 +2041,11 @@ class SettingsWindow(QWidget):
         if self.windowStaysOnTopCheckBox.isChecked():
             flags = flags | Qt.WindowType.WindowStaysOnTopHint
             self.app_config.WindowStaysOnTopHint = True
+            self.mainWindow.on_top = True
             self.windowStaysOnTopCheckBox.setChecked(True)
         else:
             self.app_config.WindowStaysOnTopHint = False
+            self.mainWindow.on_top = False
             self.windowStaysOnTopCheckBox.setChecked(False)
             self.app_config.WindowStaysOnBottomHint = True
 

@@ -5,6 +5,9 @@ import time
 import resources
 import OpenGL.GL as gl
 import numpy as np
+import ctypes
+from ctypes import wintypes
+
 from PIL import Image
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QRect
 from PySide6.QtGui import QGuiApplication, QMouseEvent, QCursor, QScreen, QAction, QIcon, QPalette, QPixmap
@@ -31,6 +34,69 @@ from widgets.talk_widget import TalkWidget
 from windows.models_window import ModelsWindow
 from windows.overlay_window import ContextMenuOverlay, ParticleOverlayWindow
 
+user32 = ctypes.windll.user32
+dwmapi = ctypes.windll.dwmapi
+
+MONITOR_DEFAULTTONEAREST = 2
+DWMWA_EXTENDED_FRAME_BOUNDS = 9
+
+def is_window_fullscreen(hwnd):
+    if not user32.IsWindowVisible(hwnd):
+        return False
+
+    if user32.IsIconic(hwnd):
+        return False
+
+    rect = get_window_rect(hwnd)
+    mon = get_monitor_rect(hwnd)
+
+    tolerance = 2
+
+    return (
+            abs(rect.left - mon.left) <= tolerance and
+            abs(rect.top - mon.top) <= tolerance and
+            abs(rect.right - mon.right) <= tolerance and
+            abs(rect.bottom - mon.bottom) <= tolerance
+    )
+
+def get_window_rect(hwnd):
+    rect = RECT()
+
+    if dwmapi.DwmGetWindowAttribute(
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+            ctypes.byref(rect),
+            ctypes.sizeof(rect)) == 0:
+        return rect
+
+    user32.GetWindowRect(hwnd, ctypes.byref(rect))
+    return rect
+
+def get_monitor_rect(hwnd):
+    monitor = user32.MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
+
+    info = MONITORINFO()
+    info.cbSize = ctypes.sizeof(info)
+
+    user32.GetMonitorInfoW(monitor, ctypes.byref(info))
+
+    return info.rcMonitor
+
+class RECT(ctypes.Structure):
+    _fields_ = [
+        ("left", wintypes.LONG),
+        ("top", wintypes.LONG),
+        ("right", wintypes.LONG),
+        ("bottom", wintypes.LONG),
+    ]
+
+class MONITORINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", wintypes.DWORD),
+        ("rcMonitor", RECT),
+        ("rcWork", RECT),
+        ("dwFlags", wintypes.DWORD),
+    ]
 
 class MainWindow(QOpenGLWidget):
     def __init__(self, app, version) -> None:
@@ -188,6 +254,7 @@ class MainWindow(QOpenGLWidget):
         self.sleepMoveY = 0
         self.saved_position_x = 0
         self.saved_position_y = 0
+        self.frame = 0
 
         # Model state
         self.transform = False
@@ -239,11 +306,13 @@ class MainWindow(QOpenGLWidget):
         self.talk = True
         self.reset_expression = True
         self.frameless = False
+        self.on_top = False
         self.background = False
         self.background_available = False
         self.first_run = True
         self.quit_box_active = False
         self.animation_status = False
+        self.was_fullscreen = False
 
         # Mouse position
         self.clickX = -1
@@ -631,6 +700,53 @@ class MainWindow(QOpenGLWidget):
         self.mouse_tracker.set_perfomance_logging(self.mouse_tracking_log)
         self.resource_manager.set_debug_audio_system_logging(self.debug_audio_system_log)
 
+    def check_fullscreen(self):
+        if not self.on_top:
+            return
+        is_fullscreen = self.is_fullscreen_window_active()
+
+        if is_fullscreen and not self.was_fullscreen:
+            # print(f"FullScreen App on: {self.screen().name()}")
+            self.on_fullscreen_enter()
+        elif not is_fullscreen and self.was_fullscreen:
+            # print("Exit FullScreen App")
+            self.on_fullscreen_exit()
+
+        self.was_fullscreen = is_fullscreen
+
+    def is_fullscreen_window_active(self):
+        hwnd = user32.GetForegroundWindow()
+
+        # if hwnd == int(self.winId()):
+        #    return False
+        my_hwnd = self.windowHandle().winId()
+
+        if hwnd == my_hwnd:
+            return False
+
+        my_monitor = user32.MonitorFromWindow(
+            int(self.winId()),
+            MONITOR_DEFAULTTONEAREST
+        )
+
+        other_monitor = user32.MonitorFromWindow(
+            hwnd,
+            MONITOR_DEFAULTTONEAREST
+        )
+
+        if my_monitor != other_monitor:
+            return False
+
+        return is_window_fullscreen(hwnd)
+
+    def on_fullscreen_enter(self):
+        """Actions when entering full-screen mode"""
+        self.showMinimized()
+
+    def on_fullscreen_exit(self):
+        """Actions when exiting full-screen mode"""
+        self.showNormal()
+
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""
         if self.model:
@@ -820,8 +936,15 @@ class MainWindow(QOpenGLWidget):
         if self.settings_update_state:
             self.settings.updateSettings()
 
-        # Check current system color scheme
-        self.get_system_theme()
+        self.frame = (self.frame + 1) % 60
+
+        if self.frame == 0:
+            self.get_system_theme()
+            # print(self.theme)
+
+        if self.frame % 6 == 0:
+            self.check_fullscreen()
+
         self.input_handler.checkCursor()
         self._update_overlay_position()
 
@@ -830,14 +953,17 @@ class MainWindow(QOpenGLWidget):
         #v = abs(math.cos(self.total_radius))
         # change opacity
         #self.canvas.SetOutputOpacity(v)
-        #print(self.theme)
-        local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
-        # Tired Timer check
+
+        cursor = QCursor.pos()
+
+        local_x = cursor.x() - self.x()
+        local_y = cursor.y() - self.y()
+
         # Check idle_animation
         self.idle_anim = self.character.tired_controller.should_enable_idle_anim()
 
         if self.idle_switch and self.idle_anim:
-            current_time = time.time()
+            current_time = time.monotonic()
             self.animation_manager.update_idle(current_time)
 
         if not self.first_run:
@@ -900,12 +1026,9 @@ class MainWindow(QOpenGLWidget):
         if event.button() != Qt.LeftButton or self.input_handler.input_lock:
             return
 
-        # Fixing the release position
         pos = event.scenePosition()
         self.posX, self.posY = pos.x(), pos.y()
 
-        # Processing actions in the LA
-        #if self.isInLA:
         self.input_handler.mouse_release_handler()
 
         self.save_window_position()

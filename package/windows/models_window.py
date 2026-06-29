@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QScrollArea,
                                QGridLayout, QPushButton, QLabel, QFrame, QToolButton)
-from PySide6.QtCore import Qt, Signal, Slot, QSize, QPropertyAnimation, QEasingCurve, QPoint, Property, QTimer
+from PySide6.QtCore import Qt, Signal, Slot, QSize, QPropertyAnimation, QEasingCurve, QPoint, Property, QTimer, QEvent
 from PySide6.QtGui import QIcon, QPixmap
 import os
 from typing import List, Dict, Optional
@@ -14,7 +14,7 @@ class ModelsWindow(QWidget):
         super().__init__()
         self.win = win
 
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        #self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         self.can_select = True
         self.selection_timer = QTimer()

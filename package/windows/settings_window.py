@@ -9,9 +9,7 @@ from PySide6.QtWidgets import QMessageBox, QLabel, QVBoxLayout, QWidget, QPushBu
     QGroupBox, QGridLayout, QCheckBox, QDoubleSpinBox, QComboBox, QStyleFactory, QTabWidget, QDialogButtonBox, QDial, \
     QFrame, QSpacerItem, QSizePolicy, QApplication
 
-from package.widgets.time_widget import PowerOfTwoSpinBox
-from package.widgets.time_widget import SleepSchedule
-from package.widgets.time_widget import BirthdayDateEdit
+from package.widgets import PowerOfTwoSpinBox, SleepSchedule, BirthdayDateEdit
 
 class SettingsWindow(QWidget):
     """Settings Window Class"""
@@ -2083,7 +2081,6 @@ class SettingsWindow(QWidget):
             self.set_setting('save_position', True)
         else:
             self.savePositionCheckBox.setChecked(False)
-            self.modelScaleBox.setReadOnly(False)
             self.set_setting('save_position', False)
 
         if self.randomCharacterCheckBox.isChecked():

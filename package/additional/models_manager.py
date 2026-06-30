@@ -2,7 +2,7 @@ import os
 import random
 import live2d.v3 as live2d
 from live2d.v3 import Parameter
-from package.additional.resource_manager import ResourceManager
+from .resource_manager import ResourceManager
 
 class ModelsManager:
     def __init__(self, resources_dir: str):
@@ -106,7 +106,7 @@ class ModelsManager:
 
         # Position correction
         if win.model_move:
-            win.position_window()
+            win.position_window_controller.position_window()
             win.model_move = False
         else:
             # Fixing the lower bound (new position Y = current bottom - new height)

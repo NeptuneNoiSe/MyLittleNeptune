@@ -1,1 +1,1 @@
-__version__ = "0.3.0.7" # TODO: Check version before push
+__version__ = "0.3.0.8" # TODO: Check version before push

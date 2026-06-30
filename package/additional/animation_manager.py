@@ -13,8 +13,8 @@ import math
 import json
 import os
 import live2d.v3 as live2d
-from package.additional.models_manager import ModelsManager
-from package.additional.resource_manager import ResourceManager
+from .models_manager import ModelsManager
+from .resource_manager import ResourceManager
 
 class AnimationsManager:
     """Main Animation Manager"""

@@ -5,8 +5,6 @@ import time
 import resources
 import OpenGL.GL as gl
 import numpy as np
-import ctypes
-from ctypes import wintypes
 
 from PIL import Image
 from PySide6.QtCore import QTimerEvent, Qt, QTimer, QRect
@@ -21,82 +19,15 @@ from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 
-from additional.config_manager import AppConfig
-from additional.models_manager import ModelsManager
-from additional.character_manager import CharacterManager
-from additional.input_handler import InputHandler, MouseTracker
-from additional.resource_manager import ResourceManager
-from additional.animation_manager import AnimationsManager
-from additional.image_manager import ImageManager
-from additional.event_manager import EventManager
-from additional.audio_manager import AudioManager
-from widgets.talk_widget import TalkWidget
-from windows.models_window import ModelsWindow
-from windows.overlay_window import ContextMenuOverlay, ParticleOverlayWindow
-
-user32 = ctypes.windll.user32
-dwmapi = ctypes.windll.dwmapi
-
-MONITOR_DEFAULTTONEAREST = 2
-DWMWA_EXTENDED_FRAME_BOUNDS = 9
-
-def is_window_fullscreen(hwnd):
-    if not user32.IsWindowVisible(hwnd):
-        return False
-
-    if user32.IsIconic(hwnd):
-        return False
-
-    rect = get_window_rect(hwnd)
-    mon = get_monitor_rect(hwnd)
-
-    tolerance = 2
-
-    return (
-            abs(rect.left - mon.left) <= tolerance and
-            abs(rect.top - mon.top) <= tolerance and
-            abs(rect.right - mon.right) <= tolerance and
-            abs(rect.bottom - mon.bottom) <= tolerance
-    )
-
-def get_window_rect(hwnd):
-    rect = RECT()
-
-    if dwmapi.DwmGetWindowAttribute(
-            hwnd,
-            DWMWA_EXTENDED_FRAME_BOUNDS,
-            ctypes.byref(rect),
-            ctypes.sizeof(rect)) == 0:
-        return rect
-
-    user32.GetWindowRect(hwnd, ctypes.byref(rect))
-    return rect
-
-def get_monitor_rect(hwnd):
-    monitor = user32.MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
-
-    info = MONITORINFO()
-    info.cbSize = ctypes.sizeof(info)
-
-    user32.GetMonitorInfoW(monitor, ctypes.byref(info))
-
-    return info.rcMonitor
-
-class RECT(ctypes.Structure):
-    _fields_ = [
-        ("left", wintypes.LONG),
-        ("top", wintypes.LONG),
-        ("right", wintypes.LONG),
-        ("bottom", wintypes.LONG),
-    ]
-
-class MONITORINFO(ctypes.Structure):
-    _fields_ = [
-        ("cbSize", wintypes.DWORD),
-        ("rcMonitor", RECT),
-        ("rcWork", RECT),
-        ("dwFlags", wintypes.DWORD),
-    ]
+from additional import (
+    AppConfig, ModelsManager, CharacterManager,
+    InputHandler, MouseTracker, ResourceManager,
+    AnimationsManager, ImageManager, EventManager,
+    AudioManager
+)
+from widgets import TalkWidget
+from windows import ModelsWindow, ContextMenuOverlay, ParticleOverlayWindow, PositionWindowController
+from platforms import FullscreenController
 
 class MainWindow(QOpenGLWidget):
     def __init__(self, app, version) -> None:
@@ -146,7 +77,7 @@ class MainWindow(QOpenGLWidget):
 
         self._resize_model()
 
-        self.position_window()
+        self.position_window_controller.position_window()
 
         self._position_widget()
 
@@ -312,7 +243,6 @@ class MainWindow(QOpenGLWidget):
         self.first_run = True
         self.quit_box_active = False
         self.animation_status = False
-        self.was_fullscreen = False
 
         # Mouse position
         self.clickX = -1
@@ -332,6 +262,8 @@ class MainWindow(QOpenGLWidget):
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
+        self.position_window_controller = PositionWindowController(self)
+        self.fullscreen_controller = FullscreenController(self)
         self.model: live2d.Model | None = None
         self.canvas: Canvas | None = None
         self.character = None
@@ -469,88 +401,6 @@ class MainWindow(QOpenGLWidget):
                 f"{(self.w_resize, self.h_resize)}"
             )
 
-    def position_window(self, ignore_saved_position=False):
-        """Set window position with conditions"""
-        window_width = self.width()
-        window_height = self.height()
-        screen_geom = self.screen().availableGeometry()
-        self.saved_position_x = self.app_config.saved_position_x
-        self.saved_position_y = self.app_config.saved_position_y
-
-        # Calculate default position
-        if self.frameless and not self.background:
-            default_x = (self.SrcSize.width() - window_width) - self.w_correction
-        else:
-            default_x = (self.SrcSize.width() - window_width)
-
-        default_y = (self.SrcSize.height() - window_height) - self.h_correction
-        if self.first_run:
-            default_y -= 25  # Title bar offset
-
-        # Determine if we should use saved position
-        use_saved = (
-                self.frameless and
-                not ignore_saved_position and
-                self._is_position_visible_on_any_screen(
-                    self.saved_position_x,
-                    self.saved_position_y,
-                    window_width,
-                    window_height
-                )
-        )
-
-        if use_saved:
-            self.move(int(self.saved_position_x), int(self.saved_position_y))
-        else:
-            # Calculate safe position (handles large windows too)
-            safe_x, safe_y = self._calculate_safe_position(
-                default_x, default_y, window_width, window_height, screen_geom
-            )
-            self.move(int(safe_x), int(safe_y))
-
-    def _calculate_safe_position(self, default_x, default_y, window_w, window_h, screen_geom):
-        """Calculate safe position, handling windows larger than screen"""
-        # X position
-        if window_w > screen_geom.width():
-            safe_x = screen_geom.left() - (window_w - screen_geom.width()) // 2
-        else:
-            safe_x = max(screen_geom.left(), min(default_x, screen_geom.right() - window_w))
-
-        # Y position - keep title bar accessible, allow extending below
-        safe_y = max(screen_geom.top(), default_y)
-
-        return safe_x, safe_y
-
-    def _is_position_visible_on_any_screen(self, x, y, width, height):
-        """Check if at least 50% of window is visible on any connected screen"""
-        if not self.app_config.save_position:
-            return False
-
-        if x == 0 and y == 0:
-            return False
-
-        window_rect = QRect(int(x), int(y), width, height)
-
-        screens = QGuiApplication.screens()
-
-        for screen in screens:
-            screen_geom = screen.availableGeometry()
-            intersection = screen_geom.intersected(window_rect)
-
-            # At least 50% visible in both dimensions
-            if (intersection.width() >= width / 2 and
-                    intersection.height() >= height / 2):
-                return True
-
-        return False
-
-    def save_window_position(self, reset=False):
-        self.app_config.saved_position_x = int(self.x())
-        self.app_config.saved_position_y = int(self.y())
-        if reset:
-            self.app_config.saved_position_x = 0
-            self.app_config.saved_position_y = 0
-
     def _position_widget(self):
         """Position the widget"""
         # Widget Move Params
@@ -571,7 +421,7 @@ class MainWindow(QOpenGLWidget):
         self.sleep_switch = self.app_config.sleep_switch
         self.tracking_mouse_switch = self.app_config.tracking_mouse_switch
 
-        self.lastUpdateTime = time.time()
+        self.lastUpdateTime = time.monotonic()
 
     def _init_sound(self):
         """Initialize sound"""
@@ -663,7 +513,7 @@ class MainWindow(QOpenGLWidget):
         self.canvas.SetOutputOpacity(0)
         self.init_classes()
         self.init_logs()
-        self.last_update_time = time.time()
+        self.last_update_time = time.monotonic()
         self.character = CharacterManager(self)
         self.talk_widget = TalkWidget(self)
 
@@ -682,7 +532,7 @@ class MainWindow(QOpenGLWidget):
         )
         self.input_handler.input_lock = True
 
-        self.position_window()
+        # self.position_window_controller.position_window()
 
         self.first_run = False
 
@@ -699,53 +549,6 @@ class MainWindow(QOpenGLWidget):
         self.animation_manager.set_logging(self.callbacks_log)
         self.mouse_tracker.set_perfomance_logging(self.mouse_tracking_log)
         self.resource_manager.set_debug_audio_system_logging(self.debug_audio_system_log)
-
-    def check_fullscreen(self):
-        if not self.on_top:
-            return
-        is_fullscreen = self.is_fullscreen_window_active()
-
-        if is_fullscreen and not self.was_fullscreen:
-            # print(f"FullScreen App on: {self.screen().name()}")
-            self.on_fullscreen_enter()
-        elif not is_fullscreen and self.was_fullscreen:
-            # print("Exit FullScreen App")
-            self.on_fullscreen_exit()
-
-        self.was_fullscreen = is_fullscreen
-
-    def is_fullscreen_window_active(self):
-        hwnd = user32.GetForegroundWindow()
-
-        # if hwnd == int(self.winId()):
-        #    return False
-        my_hwnd = self.windowHandle().winId()
-
-        if hwnd == my_hwnd:
-            return False
-
-        my_monitor = user32.MonitorFromWindow(
-            int(self.winId()),
-            MONITOR_DEFAULTTONEAREST
-        )
-
-        other_monitor = user32.MonitorFromWindow(
-            hwnd,
-            MONITOR_DEFAULTTONEAREST
-        )
-
-        if my_monitor != other_monitor:
-            return False
-
-        return is_window_fullscreen(hwnd)
-
-    def on_fullscreen_enter(self):
-        """Actions when entering full-screen mode"""
-        self.showMinimized()
-
-    def on_fullscreen_exit(self):
-        """Actions when exiting full-screen mode"""
-        self.showNormal()
 
     def resizeGL(self, w: int, h: int) -> None:
         """Resize GL"""
@@ -943,7 +746,7 @@ class MainWindow(QOpenGLWidget):
             # print(self.theme)
 
         if self.frame % 6 == 0:
-            self.check_fullscreen()
+            self.fullscreen_controller.check_fullscreen()
 
         self.input_handler.checkCursor()
         self._update_overlay_position()
@@ -1031,7 +834,7 @@ class MainWindow(QOpenGLWidget):
 
         self.input_handler.mouse_release_handler()
 
-        self.save_window_position()
+        self.position_window_controller.save_window_position()
 
         if self.mouse_click_log:
             print("Left Button Released")
@@ -1053,7 +856,6 @@ class MainWindow(QOpenGLWidget):
             self.talk_widget.close_dialog_after_animation()
 
         self.hide()
-        #self.setWindowFlags(flags)
         self.setWindowFlags(flags | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
 
         windowType = flags & Qt.WindowType.WindowType_Mask
@@ -1065,7 +867,7 @@ class MainWindow(QOpenGLWidget):
                 text += f"\n| Qt.{hintFlag.name}"
 
         self.show()
-        # QApplication.processEvents()
+
         need_update = False
 
         if self.auto_scale_init:
@@ -1084,7 +886,7 @@ class MainWindow(QOpenGLWidget):
 
         if need_update and update_model:
             self.models_manager.update_model(self)
-            self.save_window_position(reset=True)
+            self.position_window_controller.save_window_position(reset=True)
 
         self.auto_scale_init = True
 
@@ -1092,7 +894,7 @@ class MainWindow(QOpenGLWidget):
         self.set_theme()
         self.apply_character_config(self.character_name)
         if update_model:
-            self.position_window(ignore_saved_position=True)
+            self.position_window_controller.position_window(ignore_saved_position=True)
         self.models_window.set_language()
 
     def settings_show(self):

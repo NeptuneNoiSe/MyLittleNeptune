@@ -303,6 +303,7 @@ class CharacterStateManager:
         self.character.audio.set_settings_audio()
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
+        self.character.tired_controller.reset_timer_with_reload(reason="Settings State Activate")
 
     def set_character_lock_state(self):
         self.character.expressions.set_sad_expression()
@@ -531,6 +532,7 @@ class CharacterTiredController:
         state = self.character.tired_state.condition
         print(f"[TIRED TIMER]"
               f" | Active: {self.timer.isActive()}"
+              f" | Time Scale: {self.time_scale}"
               f" | Mode: {timer_mode}"
               f" | Count: {self.timer_count}"
               f" | Condition: {state}"
@@ -601,13 +603,14 @@ class CharacterTiredController:
             self.character.model.ResetExpressions()
             self.character.tired_state.set_idle_state()
 
-    def wake_up_function(self, short_wake_up = False):
+    def wake_up_function(self, short_wake_up = False, timer_reset = False):
         """Run if character wake_up"""
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
 
         if not short_wake_up:
-            self.reset_timer_with_reload()
+            if not timer_reset:
+                self.reset_timer_with_reload()
             self.timer_count = 0
             self.character.tired_state.condition = None
             self.character.tired_state.set_idle_state()
@@ -733,6 +736,9 @@ class CharacterTiredController:
         #self.sleep_again_timer.stop()
         if self.timer_log and reason:
             print(f"[TIMER_RESET] {reason}")
+        if reason == "Settings State Activate" or reason == "Reset Model":
+            if self.character.tired_state.condition == "Sleep":
+                self.wake_up_function(timer_reset=True)
 
         QTimer.singleShot(delay_ms, self.start_timer)
 

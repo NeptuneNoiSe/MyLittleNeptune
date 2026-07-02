@@ -27,7 +27,7 @@ from additional import (
 )
 from widgets import TalkWidget
 from windows import ModelsWindow, ContextMenuOverlay, ParticleOverlayWindow, PositionWindowController
-from platforms import FullscreenController
+from platforms import FullScreenController
 
 class MainWindow(QOpenGLWidget):
     def __init__(self, app, version) -> None:
@@ -263,7 +263,7 @@ class MainWindow(QOpenGLWidget):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
         self.position_window_controller = PositionWindowController(self)
-        self.fullscreen_controller = FullscreenController(self)
+        self.fullscreen_controller = FullScreenController(self)
         self.model: live2d.Model | None = None
         self.canvas: Canvas | None = None
         self.character = None
@@ -595,7 +595,7 @@ class MainWindow(QOpenGLWidget):
             return
 
         try:
-            ct = time.time()
+            ct = time.monotonic()
             delta_secs = max(0.0001, ct - self.last_update_time)
             self.last_update_time = ct
 

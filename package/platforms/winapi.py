@@ -1,5 +1,16 @@
+"""
+Fullscreen detection is heuristic-based.
+
+Windows doesn't provide an official API to determine whether
+the foreground application is running in fullscreen mode.
+
+The implementation compares the foreground window bounds with
+the monitor bounds and filters known shell windows.
+"""
 import ctypes
 from ctypes import wintypes
+
+from PySide6.QtCore import Qt
 
 user32 = ctypes.windll.user32
 dwmapi = ctypes.windll.dwmapi
@@ -7,7 +18,17 @@ dwmapi = ctypes.windll.dwmapi
 MONITOR_DEFAULTTONEAREST = 2
 DWMWA_EXTENDED_FRAME_BOUNDS = 9
 
+IGNORED_CLASSES = {
+    "Progman",
+    "WorkerW",
+    "Shell_TrayWnd",
+}
+
+
 def is_window_fullscreen(hwnd):
+    if get_window_class(hwnd) in IGNORED_CLASSES:
+        return False
+
     if not user32.IsWindowVisible(hwnd):
         return False
 
@@ -18,6 +39,7 @@ def is_window_fullscreen(hwnd):
     mon = get_monitor_rect(hwnd)
 
     tolerance = 2
+    # print(hex(hwnd), get_window_class(hwnd))
 
     return (
             abs(rect.left - mon.left) <= tolerance and
@@ -49,6 +71,12 @@ def get_monitor_rect(hwnd):
 
     return info.rcMonitor
 
+def get_window_class(hwnd):
+    buf = ctypes.create_unicode_buffer(256)
+    user32.GetClassNameW(hwnd, buf, 256)
+    #print(buf.value)
+    return buf.value
+
 class RECT(ctypes.Structure):
     _fields_ = [
         ("left", wintypes.LONG),
@@ -65,7 +93,7 @@ class MONITORINFO(ctypes.Structure):
         ("dwFlags", wintypes.DWORD),
     ]
 
-class FullscreenController:
+class FullScreenController:
     def __init__(self, win):
         self.win = win
         self.was_fullscreen = False
@@ -76,21 +104,30 @@ class FullscreenController:
         is_fullscreen = self.is_fullscreen_window_active()
 
         if is_fullscreen and not self.was_fullscreen:
-            # print(f"FullScreen App on: {self.screen().name()}")
+            #print(f"FullScreen App on: {self.win.screen().name()}")
             self.on_fullscreen_enter()
         elif not is_fullscreen and self.was_fullscreen:
-            # print("Exit FullScreen App")
+            #print("Exit FullScreen App")
             self.on_fullscreen_exit()
 
         self.was_fullscreen = is_fullscreen
 
     def on_fullscreen_enter(self):
         """Actions when entering full-screen mode"""
-        self.win.showMinimized()
+        # IMPORTANT:
+        # hide() must be called before showMinimized().
+        # Reversing the order causes the OpenGL window to be destroyed.
+        if self.win.windowFlags() & Qt.WindowType.WindowStaysOnTopHint:
+            self.win.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
+            self.win.hide()
+            self.win.showMinimized()
 
     def on_fullscreen_exit(self):
         """Actions when exiting full-screen mode"""
-        self.win.showNormal()
+        if not (self.win.windowFlags() & Qt.WindowType.WindowStaysOnTopHint):
+            self.win.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+            self.win.show()
+            self.win.showNormal()
 
     def is_fullscreen_window_active(self):
         hwnd = user32.GetForegroundWindow()

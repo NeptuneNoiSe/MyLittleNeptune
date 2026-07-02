@@ -1,6 +1,7 @@
-class FullscreenController:
+class FullScreenController:
     def __init__(self, win):
         self.win = win
+        self.was_fullscreen = False
 
     def check_fullscreen(self):
         return False

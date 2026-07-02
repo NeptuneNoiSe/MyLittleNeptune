@@ -71,7 +71,7 @@ class InputHandler:
         self.win.hide()
         update_flags = (not self.win.on_top
                         and not self.win.quit_box_active
-                        and not self.win.was_fullscreen)
+                        and not self.win.fullscreen_controller.was_fullscreen)
         if update_flags:
             if is_on_character:
                 flags = ((self.win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput) |

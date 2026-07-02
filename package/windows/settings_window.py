@@ -1693,7 +1693,8 @@ class SettingsWindow(QWidget):
                     self.mainWindow.audio_manager.set_category_volume(category, audio_value)
 
             # Update Main Window
-            if (current_settings['auto_scale'] != initial_auto_scale or
+            if (
+                    current_settings['auto_scale'] != initial_auto_scale or
                     current_settings['models_scale'] != initial_models_scale or
                     current_settings['frameless_window'] != initial_frameless_windows):
                 update_model = True
@@ -1874,6 +1875,7 @@ class SettingsWindow(QWidget):
         if self.mainWindow.animation_status:
             return
         self.mainWindow.model_move = True
+        self.mainWindow.character.tired_controller.reset_timer_with_reload(reason="Reset Model")
         self.updateMainWindow(update_model=True)
 
     def modelMoveOn(self):

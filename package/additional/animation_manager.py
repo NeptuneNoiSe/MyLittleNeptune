@@ -397,7 +397,7 @@ class AnimationPlayer:
                                      onFinish=lambda g, n: self._handle_idle_finish(g, n)
                                      )
         self._is_idle_playing = True
-        self._last_idle_time = time.time()
+        self._last_idle_time = time.monotonic()
         self._next_idle_delay = random.uniform(5.0, 15.0)  # Pause 5-15 sec
 
     def _handle_idle_start(self, group, no):
@@ -471,7 +471,7 @@ class BlinkAnimator:
             'enabled': True,
             'is_active': False,
             'progress': 0.0,
-            'last_blink': time.time(),
+            'last_blink': time.monotonic(),
             'next_delay': self._random_blink_delay(),
             'override_blink': True  # A critical flag
         }
@@ -489,7 +489,7 @@ class BlinkAnimator:
 
         # Run new blink logic
         if not self._blink_state['is_active']:
-            if time.time() - self._blink_state['last_blink'] > self._blink_state['next_delay']:
+            if time.monotonic() - self._blink_state['last_blink'] > self._blink_state['next_delay']:
                 self._start_new_blink()
 
         # Blink animation
@@ -526,7 +526,7 @@ class BlinkAnimator:
         self._blink_state.update({
             'is_active': True,
             'progress': 0.0,
-            'last_blink': time.time(),
+            'last_blink': time.monotonic(),
             'next_delay': self._random_blink_delay()
         })
 

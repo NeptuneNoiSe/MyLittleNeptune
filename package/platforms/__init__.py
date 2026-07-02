@@ -1,10 +1,10 @@
 import sys
 
 if sys.platform == "win32":
-    from .winapi import FullscreenController
+    from .winapi import FullScreenController
 elif sys.platform.startswith("linux"):
-    from .linux import FullscreenController
+    from .linux import FullScreenController
 elif sys.platform == "darwin":
-    from .macos import FullscreenController
+    from .macos import FullScreenController
 else:
     raise NotImplementedError(f"Unsupported platform: {sys.platform}")

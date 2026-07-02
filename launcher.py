@@ -23,6 +23,8 @@ from package.neptune_main import MainWindow
 from package.windows.settings_window import SettingsWindow
 from version import __version__
 
+os.environ["QT_LOGGING_RULES"] = "*.warning=false;*.critical=true;*.fatal=true"
+
 def prepare_build():
     """Preparing files before build"""
     # Generate version_info.txt

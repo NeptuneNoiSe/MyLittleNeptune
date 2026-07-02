@@ -42,7 +42,7 @@ VSVersionInfo(
             StringStruct(u'FileDescription', u'My Little Neptune'),
             StringStruct(u'FileVersion', u'{version_str}'),
             StringStruct(u'InternalName', u'MyLittleNeptune.exe'),
-            StringStruct(u'LegalCopyright', u'© 2026 Neptune Noise. All rights reserved.'),
+            StringStruct(u'LegalCopyright', u'© 2025-2026 Neptune Noise. All rights reserved.'),
             StringStruct(u'OriginalFilename', u'MyLittleNeptune.exe'),
             StringStruct(u'ProductName', u'My Little Neptune'),
             StringStruct(u'ProductVersion', u'{version_str}'),

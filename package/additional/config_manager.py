@@ -32,6 +32,7 @@ class AppConfig(QObject):
             'models_scale': '1',
             'random_character': 'False',
             'random_character_hdd': 'False',
+            'random_character_evil_transformed': 'False',
             'character_name': 'Neptune',
             'l2d_scale': '1',
             'offset_x': '0',
@@ -41,7 +42,10 @@ class AppConfig(QObject):
             'w_resize': '0',
             'h_resize': '0',
             'w_correction': '0',
-            'h_correction': '0'
+            'h_correction': '0',
+            'save_position': 'False',
+            'saved_position_x': '0',
+            'saved_position_y': '0'
         },
         'Behavior': {
             'auto_blink': 'True',
@@ -86,11 +90,8 @@ class AppConfig(QObject):
         """Loads the config or creates a new one with default values"""
         config = ConfigParser()
 
-        # Читаем существующий конфиг
         if os.path.exists('config.ini'):
             config.read('config.ini')
-
-        # Проверяем и создаем недостающие секции и ключи
         self._validate_and_fix_config(config)
 
         return config
@@ -100,18 +101,15 @@ class AppConfig(QObject):
         config_changed = False
 
         for section, options in self.DEFAULT_CONFIG.items():
-            # Создаем секцию, если ее нет
             if not config.has_section(section):
                 config.add_section(section)
                 config_changed = True
 
-            # Добавляем недостающие ключи
             for key, default_value in options.items():
                 if not config.has_option(section, key):
                     config.set(section, key, default_value)
                     config_changed = True
 
-        # Сохраняем, если были изменения
         if config_changed:
             self._save_full_config(config)
 
@@ -425,6 +423,33 @@ class AppConfig(QObject):
         self._save_and_notify('Model', 'twmY', str(value))
 
     @property
+    def save_position(self) -> bool:
+        return self._config.getboolean('Model', 'save_position')
+
+    @save_position.setter
+    def save_position(self, value: bool):
+        self._config.set('Model', 'save_position', str(value))
+        self._save_and_notify('Model', 'save_position', str(value))
+
+    @property
+    def saved_position_x(self) -> int:
+        return self._config.getint('Model', 'saved_position_x')
+
+    @saved_position_x.setter
+    def saved_position_x(self, value: int):
+        self._config.set('Model', 'saved_position_x', str(value))
+        self._save_and_notify('Model', 'saved_position_x', str(value))
+
+    @property
+    def saved_position_y(self) -> int:
+        return self._config.getint('Model', 'saved_position_y')
+
+    @saved_position_y.setter
+    def saved_position_y(self, value: int):
+        self._config.set('Model', 'saved_position_y', str(value))
+        self._save_and_notify('Model', 'saved_position_y', str(value))
+
+    @property
     def character_name(self) -> str:
         return self._config.get('Model', 'character_name')
 
@@ -450,6 +475,15 @@ class AppConfig(QObject):
     def random_character_hdd(self, value: bool):
         self._config.set('Model', 'random_character_hdd', str(value))
         self._save_and_notify('Model', 'random_character_hdd', str(value))
+
+    @property
+    def random_character_evil_transformed(self) -> bool:
+        return self._config.getboolean('Model', 'random_character_evil_transformed')
+
+    @random_character_evil_transformed.setter
+    def random_character_evil_transformed(self, value: bool):
+        self._config.set('Model', 'random_character_evil_transformed', str(value))
+        self._save_and_notify('Model', 'random_character_evil_transformed', str(value))
 
     # Animation switches config
     @property

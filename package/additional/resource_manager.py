@@ -15,7 +15,9 @@ class ResourceManager:
         self.ui_labels: Dict[str, QLabel] = {}
         self.character_configs: Dict[str, Dict] = self._load_character_configs()
         self.base_characters: Dict[str, Dict] = {}
+        self.base_evil_characters: Dict[str, Dict] = {}
         self.hdd_characters: Dict[str, Dict] = {}
+        self.evil_transformed_characters: Dict[str, Dict] = {}
         self._categorize_characters()
         self.languages: Dict[str, Dict] = {}
         self.background_images: Dict[str, str] = {}
@@ -221,10 +223,16 @@ class ResourceManager:
         """Returns the names of HDD characters"""
         return list(self.hdd_characters.keys())
 
-    def get_all_character_names(self, include_hdd: bool = True) -> List[str]:
+    def get_evil_transformed_character_names(self) -> List[str]:
+        """Returns the names of HDD characters"""
+        return list(self.evil_transformed_characters.keys())
+
+    def get_all_character_names(self, include_hdd: bool = True, include_hdd_evil: bool = True) -> List[str]:
         """Returns the names of all characters"""
         if include_hdd:
             return self.get_base_character_names() + self.get_hdd_character_names()
+        if include_hdd_evil:
+            return self.get_base_character_names() + self.get_hdd_character_names() + self.get_hdd_evil_character_names()
         return self.get_base_character_names()
 
     def get_alt_form_name(self, character_name: str) -> str:
@@ -234,12 +242,44 @@ class ResourceManager:
             alt_form_key = config.get('alt_form_key')
         return alt_form_key
 
+    def get_transform_mode(self, character_name: str) -> str:
+        config = self.character_configs.get(character_name)
+        transform_mode = None
+        if config:
+            transform_mode = config.get('transform_mode')
+        return transform_mode
+
     def _categorize_characters(self):
+        """Categorize characters by type and alignment"""
+        for char_name, config in self.character_configs.items():
+            display_name = config.get('name_key', char_name)
+            is_hdd = config.get('hdd_form', False)
+            transform_mode = config.get('transform_mode', 'Normal')
+            alignment = config.get('alignment', transform_mode.lower())
+
+            is_evil = alignment == 'Evil' or transform_mode == 'Evil'
+
+            if is_hdd:
+                if is_evil:
+                    self.evil_transformed_characters[display_name] = config
+                else:
+                    self.hdd_characters[display_name] = config
+            else:
+                self.base_characters[display_name] = config
+
+            #if is_evil:
+            #    self.evil_characters[display_name] = config
+            #else:
+            #    self.good_characters[display_name] = config
+
+    def _categorize_characters_legacy(self):
         """Categorize characters (base/hdd)"""
         for char_name, config in self.character_configs.items():
             display_name = config.get('name_key', char_name)
 
             is_hdd = config.get('hdd_form', False)
+
+            #is_hdd_evil = config.get('hdd_evil', False)
 
             if is_hdd:
                 self.hdd_characters[display_name] = config

@@ -5,8 +5,9 @@ import time
 import resources
 import OpenGL.GL as gl
 import numpy as np
+
 from PIL import Image
-from PySide6.QtCore import QTimerEvent, Qt, QTimer
+from PySide6.QtCore import QTimerEvent, Qt, QTimer, QRect
 from PySide6.QtGui import QGuiApplication, QMouseEvent, QCursor, QScreen, QAction, QIcon, QPalette, QPixmap
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QMenu, QMessageBox, QLabel, QVBoxLayout, QStyleFactory, QApplication, QProgressBar, \
@@ -18,19 +19,15 @@ from live2d.utils.lipsync import WavHandler
 # from live2d.v3 import StandardParams
 # import live2d.v2 as live2d
 
-from additional.config_manager import AppConfig
-from additional.models_manager import ModelsManager
-from additional.character_manager import CharacterManager
-from additional.input_handler import InputHandler, MouseTracker
-from additional.resource_manager import ResourceManager
-from additional.animation_manager import AnimationsManager
-from additional.image_manager import ImageManager
-from additional.event_manager import EventManager
-from additional.audio_manager import AudioManager
-from widgets.talk_widget import TalkWidget
-from windows.models_window import ModelsWindow
-from windows.overlay_window import ContextMenuOverlay, ParticleOverlayWindow
-
+from additional import (
+    AppConfig, ModelsManager, CharacterManager,
+    InputHandler, MouseTracker, ResourceManager,
+    AnimationsManager, ImageManager, EventManager,
+    AudioManager
+)
+from widgets import TalkWidget
+from windows import ModelsWindow, ContextMenuOverlay, ParticleOverlayWindow, PositionWindowController
+from platforms import FullScreenController
 
 class MainWindow(QOpenGLWidget):
     def __init__(self, app, version) -> None:
@@ -58,8 +55,12 @@ class MainWindow(QOpenGLWidget):
         # Show Characters Text in Console:
         self.show_text_in_console = False
 
+        ##### MAIN FLAGS #####
         # Set False if you want use model.Draw()
         self.canvas_draw = True
+
+        # Show Model Params
+        self.show_model_params = False
 
         # Initialize functions
         self._init_window_flags()
@@ -76,7 +77,7 @@ class MainWindow(QOpenGLWidget):
 
         self._resize_model()
 
-        self.position_window()
+        self.position_window_controller.position_window()
 
         self._position_widget()
 
@@ -182,6 +183,9 @@ class MainWindow(QOpenGLWidget):
         self.talkY = 150
         self.modelRotate = 0
         self.sleepMoveY = 0
+        self.saved_position_x = 0
+        self.saved_position_y = 0
+        self.frame = 0
 
         # Model state
         self.transform = False
@@ -233,6 +237,7 @@ class MainWindow(QOpenGLWidget):
         self.talk = True
         self.reset_expression = True
         self.frameless = False
+        self.on_top = False
         self.background = False
         self.background_available = False
         self.first_run = True
@@ -257,6 +262,8 @@ class MainWindow(QOpenGLWidget):
     def _init_ui(self):
         """Initialize UI Elements"""
         self.resource_manager = ResourceManager(resources.RESOURCES_DIRECTORY)
+        self.position_window_controller = PositionWindowController(self)
+        self.fullscreen_controller = FullScreenController(self)
         self.model: live2d.Model | None = None
         self.canvas: Canvas | None = None
         self.character = None
@@ -394,41 +401,6 @@ class MainWindow(QOpenGLWidget):
                 f"{(self.w_resize, self.h_resize)}"
             )
 
-    def position_window(self):
-        """Set window position with conditions"""
-        window_width = self.width()
-        window_height = self.height()
-        screen_geom = self.screen().availableGeometry()
-
-        # Checking that the model is SMALLER or EQUAL to the screen size
-        if (window_width <= screen_geom.width() and
-                window_height <= screen_geom.height()):
-
-            if self.frameless and not self.background:
-                self.frmX = (self.SrcSize.width() - window_width) - self.w_correction
-            else:
-                self.frmX = (self.SrcSize.width() - window_width)
-
-            self.frmY = (self.SrcSize.height() - window_height) - self.h_correction
-            if self.first_run:
-                fr_c = 25
-            else:
-                fr_c = 0
-            self.move(int(self.frmX), int(self.frmY - fr_c))
-
-        else:
-            # Defensive logic for large models
-            if window_width > screen_geom.width():
-                safe_x = screen_geom.left() - (window_width - screen_geom.width()) // 2
-            else:
-                safe_x = (self.SrcSize.width() - window_width) - self.w_correction
-
-            # Fix the upper limit, allow going beyond the bottom
-            safe_y = max(screen_geom.top(),
-                         (self.SrcSize.height() - window_height) - self.h_correction)
-
-            self.move(int(safe_x), int(safe_y))
-
     def _position_widget(self):
         """Position the widget"""
         # Widget Move Params
@@ -449,7 +421,7 @@ class MainWindow(QOpenGLWidget):
         self.sleep_switch = self.app_config.sleep_switch
         self.tracking_mouse_switch = self.app_config.tracking_mouse_switch
 
-        self.lastUpdateTime = time.time()
+        self.lastUpdateTime = time.monotonic()
 
     def _init_sound(self):
         """Initialize sound"""
@@ -541,7 +513,7 @@ class MainWindow(QOpenGLWidget):
         self.canvas.SetOutputOpacity(0)
         self.init_classes()
         self.init_logs()
-        self.last_update_time = time.time()
+        self.last_update_time = time.monotonic()
         self.character = CharacterManager(self)
         self.talk_widget = TalkWidget(self)
 
@@ -560,7 +532,7 @@ class MainWindow(QOpenGLWidget):
         )
         self.input_handler.input_lock = True
 
-        self.position_window()
+        # self.position_window_controller.position_window()
 
         self.first_run = False
 
@@ -623,7 +595,7 @@ class MainWindow(QOpenGLWidget):
             return
 
         try:
-            ct = time.time()
+            ct = time.monotonic()
             delta_secs = max(0.0001, ct - self.last_update_time)
             self.last_update_time = ct
 
@@ -767,8 +739,15 @@ class MainWindow(QOpenGLWidget):
         if self.settings_update_state:
             self.settings.updateSettings()
 
-        # Check current system color scheme
-        self.get_system_theme()
+        self.frame = (self.frame + 1) % 60
+
+        if self.frame == 0:
+            self.get_system_theme()
+            # print(self.theme)
+
+        if self.frame % 6 == 0:
+            self.fullscreen_controller.check_fullscreen()
+
         self.input_handler.checkCursor()
         self._update_overlay_position()
 
@@ -777,14 +756,17 @@ class MainWindow(QOpenGLWidget):
         #v = abs(math.cos(self.total_radius))
         # change opacity
         #self.canvas.SetOutputOpacity(v)
-        #print(self.theme)
-        local_x, local_y = QCursor.pos().x() - self.x(), QCursor.pos().y() - self.y()
-        # Tired Timer check
+
+        cursor = QCursor.pos()
+
+        local_x = cursor.x() - self.x()
+        local_y = cursor.y() - self.y()
+
         # Check idle_animation
         self.idle_anim = self.character.tired_controller.should_enable_idle_anim()
 
         if self.idle_switch and self.idle_anim:
-            current_time = time.time()
+            current_time = time.monotonic()
             self.animation_manager.update_idle(current_time)
 
         if not self.first_run:
@@ -835,8 +817,9 @@ class MainWindow(QOpenGLWidget):
                 self.clickX, self.clickY = x, y
                 # self.audio_manager.play_audio("Neptune", "default", True)
                 # Get Params from model
-                # partIds = self.model.GetParameterIds()
-                # print(partIds)
+                if self.show_model_params:
+                    partIds = self.model.GetParameterIds()
+                    print(partIds)
                 self.input_handler.mouse_press_handler()
                 if self.mouse_click_log:
                     print("Left Button Pressed")
@@ -846,13 +829,12 @@ class MainWindow(QOpenGLWidget):
         if event.button() != Qt.LeftButton or self.input_handler.input_lock:
             return
 
-        # Fixing the release position
         pos = event.scenePosition()
         self.posX, self.posY = pos.x(), pos.y()
 
-        # Processing actions in the LA
-        #if self.isInLA:
         self.input_handler.mouse_release_handler()
+
+        self.position_window_controller.save_window_position()
 
         if self.mouse_click_log:
             print("Left Button Released")
@@ -868,13 +850,12 @@ class MainWindow(QOpenGLWidget):
 
         self.input_handler.mouse_move_handler(event.globalPosition())
 
-    def setSettings(self, flags: Qt.WindowType) -> None:
+    def setSettings(self, flags: Qt.WindowType, update_model = False) -> None:
         """Set Settings from Settings Window"""
         if self.talk_widget:
             self.talk_widget.close_dialog_after_animation()
 
         self.hide()
-        #self.setWindowFlags(flags)
         self.setWindowFlags(flags | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowMinimizeButtonHint)
 
         windowType = flags & Qt.WindowType.WindowType_Mask
@@ -886,7 +867,6 @@ class MainWindow(QOpenGLWidget):
                 text += f"\n| Qt.{hintFlag.name}"
 
         self.show()
-        # QApplication.processEvents()
 
         need_update = False
 
@@ -904,15 +884,17 @@ class MainWindow(QOpenGLWidget):
             self.clamp_window_size_to_screen()
             need_update = True
 
-        if need_update:
+        if need_update and update_model:
             self.models_manager.update_model(self)
+            self.position_window_controller.save_window_position(reset=True)
 
         self.auto_scale_init = True
 
         self.setLanguage()
         self.set_theme()
         self.apply_character_config(self.character_name)
-        self.position_window()
+        if update_model:
+            self.position_window_controller.position_window(ignore_saved_position=True)
         self.models_window.set_language()
 
     def settings_show(self):

@@ -19,7 +19,8 @@
     "Histoire": "Хистоар",
     "Maho": "Махо",
     "GreySister": "Серая Сестра",
-    "Anri": "Анри"
+    "Anri": "Анри",
+    "F2P": "Ф2П"
   },
   "NamesActions": {
     "Neptune": "&Нептун",
@@ -41,7 +42,8 @@
     "Histoire": "&Хистоар",
     "Maho": "&Махо",
     "GreySister": "&Серая Сестра",
-    "Anri": "&Анри"
+    "Anri": "&Анри",
+    "F2P": "&Ф2П"
   },
   "Talk": {
     "Hello": "Привет!",
@@ -83,10 +85,13 @@
     "SleepAgain": "Я еще посплю!",
     "WakeUp": "Я Проснулась",
     "Woke": "Ты меня разбудил",
+    "TransformSleep": "Я не хочу, Я сплю!",
     "TransformToHDD": "Активация HDD-формы!",
+    "TransformToHDD_Evil": "Превращение!",
     "TransformToNormal": "Я возвращаюсь в свою обычную форму",
     "TransformedHDD": "Режим Богини активирован!",
-    "TransformedNormal": "Я вернулась в свою обычную форму.",
+    "TransformedHDD_Evil": "Превращение Завершено!",
+    "TransformedNormal": "Я вернулась в свою обычную форму",
     "TransformNot": "Я не могу трансформироваться",
     "Quit": "Ты и вправду хочешь уйти?",
     "QuitAlt": "Пока! Увидимся Снова!",
@@ -121,7 +126,7 @@
     "AboutAlt": "О Себе",
     "Quit": "Выход",
     "Version": "Версия: ",
-    "AboutText": "Приложение-помощник на вашем рабочем столе,\nкоторое каждый день дарит вам радость своим внешним видом!:)\nРазработчик: Neptune NoiSe\nПриложение основано на:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
+    "AboutText": "Приложение-помощник на вашем рабочем столе,\nкоторое каждый день дарит вам радость своим внешним видом!:)\nРазработчик: Neptune NoiSe\nПриложение основано на:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2025-2026"
   },
   "Buttons": {
     "Apply": "Применить",
@@ -151,8 +156,10 @@
     "ModelTitle": "Модель",
     "AutoScale": "Авто Масштаб",
     "ScaleMultiplier": "Множитель масштаба:",
+    "SavePosition": "Сохранять текущую позицию модели",
     "RandomCharacter": "Случайный персонаж при запуске",
     "RandomCharacterHDD": "Случайный персонаж при запуске (включая HDD)",
+    "RandomCharacterEvilTransformed": "Случайный персонаж при запуске (включая Злых Т.)",
     "Behavior": "Поведение",
     "AutoBlink": "Моргание",
     "AutoBreath": "Дыхание",
@@ -194,6 +201,7 @@
   "ModelsWindow": {
     "Title": "Выберите персонажа",
     "HDDTitle": "HDD Персонажи",
+    "EvilTransformedTitle": "Трансформированные Злые Персонажи",
     "DelayMessage": "Подождите немного перед следующим выбором",
     "InputLockMessage": "Ввод заблокирован",
     "SettingsLockMessage": "Примените настройки, перед выбором персонажа",

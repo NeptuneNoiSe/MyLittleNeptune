@@ -19,7 +19,8 @@
     "Histoire": "Histoire",
     "Maho": "Maho",
     "GreySister": "Grey Sister",
-    "Anri": "Anri"
+    "Anri": "Anri",
+    "F2P": "F2P"
   },
   "NamesActions": {
     "Neptune": "&Neptune",
@@ -40,8 +41,9 @@
     "WhiteSisterRam": "&White Sister Ram",
     "Histoire": "&Histoire",
     "Maho": "&Maho",
+    "GreySister": "&Grey Sister",
     "Anri": "&Anri",
-    "GreySister": "&Grey Sister"
+    "F2P": "&F2P"
   },
   "Talk": {
     "Hello": "Hello!",
@@ -83,10 +85,13 @@
     "SleepAgain": "I'll get some more sleep!",
     "WakeUp": "I'm WakeUp",
     "Woke": "You woke me up",
+    "TransformSleep": "I don't want to, I'm dreaming!",
     "TransformToHDD": "HDD Transformation Initiated!",
+    "TransformToHDD_Evil": "Transform!",
     "TransformToNormal": "I'm going back to my normal form",
     "TransformedHDD": "Divinity Form Online!",
-    "TransformedNormal": "I'm back to my normal form.",
+    "TransformedHDD_Evil": "Transformation Complete!",
+    "TransformedNormal": "I'm back to my normal form",
     "TransformNot": "I'm Can't Transform",
     "Quit": "Do you really want to leave?",
     "QuitAlt": "GoodBye! See you again!",
@@ -121,7 +126,7 @@
     "AboutAlt": "About",
     "Quit": "Quit",
     "Version": "Version: ",
-    "AboutText": "The assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2026"
+    "AboutText": "The assistant application on your desktop,\nwhich pleases you with its appearance every day:)\nDeveloper: Neptune NoiSe\nThe application is based on:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2025-2026"
   },
   "Buttons": {
     "Apply": "Apply",
@@ -151,8 +156,10 @@
     "ModelTitle": "Model",
     "AutoScale": "AutoScale",
     "ScaleMultiplier": "Scale multiplier:",
+    "SavePosition": "Save current model position",
     "RandomCharacter": "Random character on startup",
     "RandomCharacterHDD": "Random character on startup (include HDD)",
+    "RandomCharacterEvilTransformed": "Random character on startup (include Evil T.)",
     "Behavior": "Behavior",
     "AutoBlink": "Blink",
     "AutoBreath": "Breath",
@@ -194,6 +201,7 @@
   "ModelsWindow": {
     "Title": "Choose a character",
     "HDDTitle": "HDD Characters",
+    "EvilTransformedTitle": "Evil Transformed Characters",
     "DelayMessage": "Wait a bit before making your next choice",
     "InputLockMessage": "Input locked",
     "SettingsLockMessage": "Apply the settings before selecting a character",

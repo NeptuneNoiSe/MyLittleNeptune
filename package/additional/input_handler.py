@@ -68,12 +68,23 @@ class InputHandler:
             self.state_change_counter = 0
 
     def change_input_state(self, is_on_character):
-        if is_on_character:
-            flags = self.win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput
-        else:
-            flags = self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput
-
         self.win.hide()
+        update_flags = (not self.win.on_top
+                        and not self.win.quit_box_active
+                        and not self.win.fullscreen_controller.was_fullscreen)
+        if update_flags:
+            if is_on_character:
+                flags = ((self.win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput) |
+                         Qt.WindowType.WindowStaysOnTopHint)
+            else:
+                flags = ((self.win.windowFlags() & ~Qt.WindowType.WindowStaysOnTopHint) |
+                         QtCore.Qt.WindowTransparentForInput)
+        else:
+            if is_on_character:
+                flags = self.win.windowFlags() & ~QtCore.Qt.WindowTransparentForInput
+            else:
+                flags = self.win.windowFlags() | QtCore.Qt.WindowTransparentForInput
+
         self.win.setWindowFlags(flags | Qt.WindowType.WindowCloseButtonHint)
         self.win.setAttribute(Qt.WA_TranslucentBackground)
         self.win.show()

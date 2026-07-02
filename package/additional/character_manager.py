@@ -186,6 +186,9 @@ class CharacterStateManager:
         self.character.movements.set_motion(group_name="Special", id=19)
         self.win.input_handler.input_lock = False
         self.win.character_lock = False
+        #if self.character.tired_controller.schedule_state == "SCHEDULE_SLEEPING":
+        #    QTimer.singleShot(5000, lambda: self.character.tired_controller.force_sleep_on_startup())
+
 
     def set_goodbye_state(self):
         """Character say goodbye"""
@@ -243,6 +246,8 @@ class CharacterStateManager:
             return
 
         if self.character.tired_state.condition == "Sleep":
+            self.character.character_text.set_sleepy_transform_text()
+            self.character.audio.set_no_audio()
             return
 
         self.win.animation_manager.transform_animation_start()
@@ -251,14 +256,17 @@ class CharacterStateManager:
         self.win.models_window.close()
         self.win.animation_status = True
 
+        transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
+
         self.character.expressions.fadeoutTimer.stop()
-        self.character.audio.set_transform_audio()
+        self.character.audio.set_transform_audio(transform_mode=transform_mode)
+
         if not self.win.hdd_form:
-            self.character.expressions.set_transform_to_hdd_expression()
-            self.character.character_text.set_transform_to_hdd_text()
+            self.character.expressions.set_transform_to_hdd_expression(transform_mode=transform_mode)
+            self.character.character_text.set_transform_to_hdd_text(transform_mode=transform_mode)
         else:
             self.character.expressions.set_funny_expression(fade_out=14000)
-            self.character.character_text.set_transform_to_normal_text()
+            self.character.character_text.set_transform_to_normal_text(transform_mode=transform_mode)
 
     def set_transform_failure_state(self):
         """Processing an unsuccessful transformation"""
@@ -272,15 +280,18 @@ class CharacterStateManager:
 
     def set_transformed_state(self):
         """Transformed State"""
+        transform_mode = self.win.resource_manager.get_transform_mode(self.character.name)
         if self.character.transform_exp_show:
-            self.character.audio.set_transformed_audio()
+            self.character.audio.set_transformed_audio(transform_mode=transform_mode)
             self.character.expressions.set_funny_expression(fade_out=7000)
+
+
 
         if self.character.transform_text_show:
             if self.win.hdd_form:
-                self.character.character_text.set_transformed_hdd_text()
+                self.character.character_text.set_transformed_hdd_text(transform_mode=transform_mode)
             else:
-                self.character.character_text.set_transformed_normal_text()
+                self.character.character_text.set_transformed_normal_text(transform_mode=transform_mode)
             self.character.transform_text_show = False
             self.character.transform_exp_show = False
             self.win.animation_status = False
@@ -292,6 +303,7 @@ class CharacterStateManager:
         self.character.audio.set_settings_audio()
         self.character.movements.set_motion(group_name="Special", id=6)
         self.character.character_text.set_settings_text(text_key)
+        self.character.tired_controller.reset_timer_with_reload(reason="Settings State Activate")
 
     def set_character_lock_state(self):
         self.character.expressions.set_sad_expression()
@@ -443,7 +455,6 @@ class CharacterTiredController:
         self.schedule_timer.start(10000)
         self._check_schedule_state()
         self.sleep_again_timer = QTimer()
-        self._schedule_wake_up_done = False
 
     @property
     def sleep_move(self):
@@ -505,6 +516,14 @@ class CharacterTiredController:
     def wake_m(self):
         return self.character.app_config.wake_m
 
+    def force_sleep_on_startup(self):
+        if self.character.tired_state.condition == "Sleep":
+            return
+
+        self.timer_count = self.sleep_v
+        self.character.tired_state.set_sleep_state()
+        self.sleep_function()
+
     def _timer_logging(self):
         if not self.time_schedule:
             timer_mode = "NORMAL"
@@ -513,6 +532,7 @@ class CharacterTiredController:
         state = self.character.tired_state.condition
         print(f"[TIRED TIMER]"
               f" | Active: {self.timer.isActive()}"
+              f" | Time Scale: {self.time_scale}"
               f" | Mode: {timer_mode}"
               f" | Count: {self.timer_count}"
               f" | Condition: {state}"
@@ -524,6 +544,8 @@ class CharacterTiredController:
             self.schedule_state = "NORMAL"
             return
 
+        old_state = self.schedule_state
+
         now = datetime.now()
         current_minutes = now.hour * 60 + now.minute
         sleep_minutes = self.sleep_h * 60 + self.sleep_m
@@ -534,15 +556,17 @@ class CharacterTiredController:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
-                self._schedule_wake_up_done = False
         else:
             if current_minutes >= sleep_minutes or current_minutes < wake_minutes:
                 self.schedule_state = "SCHEDULE_SLEEPING"
             else:
                 self.schedule_state = "SCHEDULE_IDLE"
-                self._schedule_wake_up_done = False
 
-        self.last_schedule_check = now
+        if (
+                old_state == "SCHEDULE_SLEEPING"
+                and self.schedule_state == "SCHEDULE_IDLE"
+        ):
+            self._wake_up_by_schedule()
 
     def should_enable_idle_anim(self) -> bool:
         """Checks whether idle animation can be enabled."""
@@ -554,9 +578,6 @@ class CharacterTiredController:
 
     def _should_wake_up_by_schedule(self, now=None):
         """Checks if the scheduled wake-up time has arrived"""
-        if self._schedule_wake_up_done:
-            return False
-
         if now is None:
             now = datetime.now()
 
@@ -567,25 +588,29 @@ class CharacterTiredController:
 
     def _wake_up_by_schedule(self):
         """Forced wake up by schedule"""
-        if self._schedule_wake_up_done:
-            return
+        self.schedule_state = "SCHEDULE_IDLE"
 
-        if self.timer_log:
-            print(f"[SCHEDULE_WAKEUP] Time to wake up! ({self.wake_h:02d}:{self.wake_m:02d})")
+        if self.character.tired_state.condition == "Sleep":
+            if self.timer_log:
+                print(
+                    f"[SCHEDULE_WAKEUP] Time to wake up! "
+                    f"({self.wake_h:02d}:{self.wake_m:02d})"
+                )
+            self.character.tired_state.set_wake_up_state()
+            self.wake_up_function()
+        else:
+            self.character.model.ResetAllParameters()
+            self.character.model.ResetExpressions()
+            self.character.tired_state.set_idle_state()
 
-        self._schedule_wake_up_done = True
-        self.character.tired_state.set_wake_up_state()
-
-        if hasattr(self, '_sleep_function_called'):
-            self._sleep_function_called = False
-
-    def wake_up_function(self, short_wake_up=False):
+    def wake_up_function(self, short_wake_up = False, timer_reset = False):
         """Run if character wake_up"""
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
 
         if not short_wake_up:
-            self.reset_timer_with_reload()
+            if not timer_reset:
+                self.reset_timer_with_reload()
             self.timer_count = 0
             self.character.tired_state.condition = None
             self.character.tired_state.set_idle_state()
@@ -640,17 +665,7 @@ class CharacterTiredController:
             print(f"[SCHEDULE_IDLE] Outside sleep range - forced idle")
 
     def _handle_schedule_sleeping_mode(self):
-        """Sleep schedule handler"""
-        now = datetime.now()
-
-        if not self._schedule_wake_up_done and self._should_wake_up_by_schedule(now):
-            self._wake_up_by_schedule()
-            return
-
-        if self._schedule_wake_up_done:
-            self._handle_schedule_idle_mode()
-        else:
-            self._modified_normal_logic()
+        self._modified_normal_logic()
 
     def _handle_normal_mode(self):
         """Normal mode withou schedule"""
@@ -721,6 +736,9 @@ class CharacterTiredController:
         #self.sleep_again_timer.stop()
         if self.timer_log and reason:
             print(f"[TIMER_RESET] {reason}")
+        if reason == "Settings State Activate" or reason == "Reset Model":
+            if self.character.tired_state.condition == "Sleep":
+                self.wake_up_function(timer_reset=True)
 
         QTimer.singleShot(delay_ms, self.start_timer)
 
@@ -737,6 +755,7 @@ class CharacterTiredStateManager:
     def __init__(self, character):
         self.character = character
         self.condition = "idle"
+        self.wake_count = 0
         #self._setup_timers()
 
     def set_idle_state(self):
@@ -776,12 +795,19 @@ class CharacterTiredStateManager:
         self.character.movements.set_motion(group_name="Special", id=19)
         self.character.expressions.set_wake_up_expression(fade_out=10000)
         self.character.character_text.set_wake_up_text()
+        self.wake_count = 0
 
     def set_woke_up_state(self):
         """Set woke up state"""
         short_woke_up = False
         if self.character.tired_controller.time_schedule:
-            short_woke_up = True
+            self.wake_count += 1
+            if self.wake_count >= 2:
+                short_woke_up = False
+                self.wake_count = 0
+            else:
+                short_woke_up = True
+
         self.character.tired_controller.sleep = False
         self.character.model.ResetAllParameters()
         self.character.model.ResetExpressions()
@@ -858,14 +884,17 @@ class CharacterExpressionManager:
         else:
             self._apply_expression("Surprised", fade_out)
 
-    def set_transform_to_hdd_expression(self, fade_out: int | None = None) -> None:
+    def set_transform_to_hdd_expression(self, fade_out: int | None = None, transform_mode = "Normal") -> None:
         # Setting the default expression for a regular form
-        if self.character.name in ["Neptune", "NepGear", "Maho"]:
-            self._apply_expression("Star", fade_out)
-        elif self.character.name in ["Vert"]:
-            self._apply_expression("Smile", fade_out)
-        else:
-            self._apply_expression("Serious", fade_out)
+        if transform_mode == "Normal":
+            if self.character.name in ["Neptune", "NepGear", "Maho"]:
+                self._apply_expression("Star", fade_out)
+            elif self.character.name in ["Vert"]:
+                self._apply_expression("Smile", fade_out)
+            else:
+                self._apply_expression("Serious", fade_out)
+        elif transform_mode == "Evil":
+            self._apply_expression("Angry", fade_out)
 
     def set_transform_end_expression(self, fade_out: int | None = None) -> None:
         self.character.model.ResetAllParameters()
@@ -1059,6 +1088,11 @@ class CharacterTextManager:
         self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
         self.update()
 
+    def set_sleepy_transform_text(self):
+        self.text = ['Talk', 'TransformSleep']
+        self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
+        self.update()
+
     def set_sleep_again_text(self):
         self.text = ['Talk', 'SleepAgain']
         self.kaomoji = "(ᴗ˳ᴗ)ｚｚＺ"
@@ -1074,24 +1108,40 @@ class CharacterTextManager:
         self.kaomoji = "(O_~)/"
         self.update()
 
-    def set_transform_to_hdd_text(self):
-        self.text = ['Talk', 'TransformToHDD']
-        self.kaomoji = "(/￣ー￣)/~~☆"
+    def set_transform_to_hdd_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformToHDD']
+            self.kaomoji = "(/￣ー￣)/~~☆"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformToHDD_Evil']
+            self.kaomoji = "(►__◄)/~~☆"
         self.update()
 
-    def set_transform_to_normal_text(self):
-        self.text = ['Talk', 'TransformToNormal']
-        self.kaomoji = "(/￣ー￣)/"
+    def set_transform_to_normal_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformToNormal']
+            self.kaomoji = "(/￣ー￣)/"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformToNormal']
+            self.kaomoji = "(/►__◄)/"
         self.update()
 
-    def set_transformed_hdd_text(self):
-        self.text = ['Talk', 'TransformedHDD']
-        self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+    def set_transformed_hdd_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformedHDD']
+            self.kaomoji = "╰(☆ ͡° ͜ʖ ͡° ☆)つ"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformedHDD_Evil']
+            self.kaomoji = "╰(* ►__◄ *)つ"
         self.update()
 
-    def set_transformed_normal_text(self):
-        self.text = ['Talk', 'TransformedNormal']
-        self.kaomoji = "(> ͜ʖ <)"
+    def set_transformed_normal_text(self, transform_mode="Normal"):
+        if transform_mode == "Normal":
+            self.text = ['Talk', 'TransformedNormal']
+            self.kaomoji = "(> ͜ʖ <)"
+        elif transform_mode == "Evil":
+            self.text = ['Talk', 'TransformedNormal']
+            self.kaomoji = "(> ͜ʖ <)"
         self.update()
 
     def set_transform_failure_text(self):
@@ -1249,19 +1299,19 @@ class CharacterAudioManager:
         self.audio_manager.play_audio(self.character.name, "wake_up", enable_lipsync=True, category="voice",
                               stop_audio=True)
 
-    def set_transform_audio(self):
+    def set_transform_audio(self, transform_mode="Normal"):
         self.audio_manager.play_audio(self.character.name, "transform", enable_lipsync=True, category="voice",
                               stop_audio=True)
-        self.audio_manager.play_audio("Effects", "transform_start", enable_lipsync=False, category="sfx",
-                              stop_audio=False)
+        self.audio_manager.play_audio("Effects", f"{transform_mode.lower()}_transform_start", enable_lipsync=False, category="sfx",
+                                      stop_audio=False)
+        self.transform_mode = transform_mode
 
-    def set_transformed_audio(self):
+    def set_transformed_audio(self, transform_mode="Normal"):
         self.audio_manager.play_audio(self.character.name, "transformed", enable_lipsync=True, category="voice",
                               stop_audio=True)
-        self.audio_manager.stop_audio("Effects", "transform_start")
-
-        self.audio_manager.play_audio("Effects", "transform_finish", enable_lipsync=False, category="sfx",
-                              stop_audio=False)
+        self.audio_manager.stop_audio("Effects", f"{transform_mode.lower()}_transform_start")
+        self.audio_manager.play_audio("Effects", f"{transform_mode.lower()}_transform_finish",
+                                      enable_lipsync=False, category="sfx", stop_audio=False)
 
     def set_transform_failure_audio(self):
         self.audio_manager.play_audio(self.character.name, "transform_fail", enable_lipsync=True, category="voice",

@@ -6,7 +6,7 @@ import time
 import math
 
 from package import resources
-from package.additional.resource_manager import ResourceManager
+from .resource_manager import ResourceManager
 
 class ImageManager:
     def __init__(self, win):

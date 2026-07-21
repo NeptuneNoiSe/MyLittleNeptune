@@ -19,6 +19,7 @@
     "Histoire": "Хистоар",
     "Maho": "Махо",
     "GreySister": "Серая Сестра",
+    "Ziri": "Зири",
     "Anri": "Анри",
     "F2P": "Ф2П"
   },
@@ -41,6 +42,7 @@
     "WhiteSisterRam": "&Белая Сестра Рам",
     "Histoire": "&Хистоар",
     "Maho": "&Махо",
+    "Ziri": "&Зири",
     "GreySister": "&Серая Сестра",
     "Anri": "&Анри",
     "F2P": "&Ф2П"
@@ -126,7 +128,7 @@
     "AboutAlt": "О Себе",
     "Quit": "Выход",
     "Version": "Версия: ",
-    "AboutText": "Приложение-помощник на вашем рабочем столе,\nкоторое каждый день дарит вам радость своим внешним видом!:)\nРазработчик: Neptune NoiSe\nПриложение основано на:\nPython 3.13\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2025-2026"
+    "AboutText": "Приложение-помощник на вашем рабочем столе,\nкоторое каждый день дарит вам радость своим внешним видом!:)\nРазработчик: Neptune NoiSe\nПриложение основано на:\nPython\nPySide6\nlive2d-py by Arkueid\nParticle Engine Supreme by jjkitch\nCompile Heart / Idea Factory Live2D Models\n© 2025-2026"
   },
   "Buttons": {
     "Apply": "Применить",

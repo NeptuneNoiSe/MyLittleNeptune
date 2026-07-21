@@ -595,6 +595,7 @@ class MainWindow(QOpenGLWidget):
             return
 
         try:
+            # TODO: Fix lost mouse drag and model update with windows resume after sleep
             ct = time.monotonic()
             delta_secs = max(0.0001, ct - self.last_update_time)
             self.last_update_time = ct

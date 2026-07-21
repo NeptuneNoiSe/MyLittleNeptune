@@ -33,16 +33,49 @@ class PositionWindowController:
             min(y, total_geom.bottom() - window_h)
         )
 
+    def _clamp_y_to_screen_overlap(self, y, window_h):
+        """
+        Experimental alternative implementation.
+
+        Instead of clamping against the united desktop geometry,
+        chooses the screen with the greatest vertical overlap.
+        """
+        top = y
+        bottom = y + window_h
+
+        best_y = y
+        max_overlap = 0
+
+        for screen in QGuiApplication.screens():
+            g = screen.availableGeometry()
+            overlap = max(
+                0,
+                min(bottom, g.bottom() + 1) - max(top, g.top())
+            )
+
+            if overlap >= window_h:
+                return y
+
+            if overlap > max_overlap:
+                max_overlap = overlap
+                if window_h <= g.height():
+                    best_y = max(g.top(), min(y, g.bottom() - window_h))
+                else:
+                    best_y = g.top()
+
+        return best_y
+
     def _is_x_visible_on_any_screen(self, x, width):
         """Check 50% width visibility on any screen"""
-        window_rect = QRect(int(x), 0, width, 100)
+        left = x
+        right = x + width
 
-        screens = QGuiApplication.screens()
-        for screen in screens:
-            screen_geom = screen.availableGeometry()
-            intersection = screen_geom.intersected(window_rect)
+        for screen in QGuiApplication.screens():
+            g = screen.availableGeometry()
 
-            if intersection.width() >= width / 2:
+            overlap = min(right, g.right() + 1) - max(left, g.left())
+
+            if overlap >= width / 2:
                 return True
 
         return False

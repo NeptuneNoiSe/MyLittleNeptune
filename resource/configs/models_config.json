@@ -27,7 +27,7 @@
     "l2d_scale": 1,
     "offset_x": 0,
     "offset_y": 0,
-    "mx_param": 700,
+    "mx_param": 800,
     "my_param": 700,
     "w_correction": -70,
     "h_correction": 0,
@@ -319,6 +319,22 @@
     "w_correction": -70,
     "h_correction": 0,
     "posXR": 65
+    },
+  "Ziri": {
+    "model_path": "models/Ziri/Ziri.model3.json",
+    "name_key": "Ziri",
+    "alignment": "Good",
+    "hdd_form": false,
+    "can_transform": false,
+    "transform_mode": "Normal",
+    "l2d_scale": 0.9,
+    "offset_x": -0.07,
+    "offset_y": 0,
+    "mx_param": 700,
+    "my_param": 700,
+    "w_correction": -70,
+    "h_correction": 0,
+    "posXR": 60
     },
   "Anri": {
     "model_path": "models/Anri/Anri.model3.json",

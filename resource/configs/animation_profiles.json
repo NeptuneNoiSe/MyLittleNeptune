@@ -4226,5 +4226,110 @@
             ]
           }
         }
+    },
+    "Ziri": {
+        "hit_zones": {
+            "HAIR": ["Part13"],
+            "EYES": ["Part14"],
+            "HEAD": ["Part22"],
+            "LEFT HAND": ["Part23"],
+            "RIGHT HAND": ["Part28"],
+            "BODY ALT": ["Part34"],
+            "SKIRT": ["Part24"],
+            "LEGS": ["Part33"]
+        },
+        "animations": {
+            "HAIR": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": 1,
+                "priority": 3
+            },
+            "EYES": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "HEAD": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [9, 10],
+                "priority": 3
+            },
+            "LEFT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [11, 12, 13],
+                "priority": 3
+            },
+            "RIGHT HAND": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [14, 15, 16],
+                "priority": 3
+            },
+            "BODY ALT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [2, 3, 4],
+                "priority": 3
+            },
+            "SKIRT": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [2, 3, 4],
+                "priority": 3
+            },
+            "LEGS": {
+                "anim_type": "Motion",
+                "group": "Extra",
+                "options": [17, 18, 19, 20],
+                "priority": 3
+            },
+            "default": {
+                "anim_type": "RandomMotion",
+                "group": "TapBody",
+                "priority": 3
+            }
+        },
+        "drag_animations": {
+          "left": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [0, 30]},
+                {"part": "_ParamAngleX", "range": [0, 30]},
+                {"part": "_ParamBodyAngleX", "range": [0, 10]},
+
+                {"part": "Param", "range": [0, 30]},
+                {"part": "Param4", "range": [0, 30]}
+            ]
+          },
+          "right": {
+            "parts": [
+                {"part": "_ParamAngleY", "range": [-30, 0]},
+                {"part": "_ParamAngleX", "range": [-30, 0]},
+                {"part": "_ParamBodyAngleX", "range": [-10, 0]},
+
+                {"part": "Param", "range": [-30, 0]},
+                {"part": "Param4", "range": [-30, 0]}
+            ]
+          },
+          "up": {
+            "parts": [
+                {"part": "Param2", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param3", "range": [0.0, 1.0], "speed": 0.05},
+                {"part": "Param5", "range": [0, 30]},
+                {"part": "Param6", "range": [0, 30]}
+            ]
+          },
+          "down": {
+            "parts": [
+                {"part": "Param2", "range": [-1.0, 0.0], "speed": 0.05},
+                {"part": "Param3", "range": [-1.0, 0.0], "speed": 0.05},
+                {"part": "Param5", "range": [-30, 0]},
+                {"part": "Param6", "range": [-30, 0]}
+            ]
+          }
+        }
     }
 }
